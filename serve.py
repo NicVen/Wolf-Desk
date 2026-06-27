@@ -10,7 +10,7 @@ Routes:
   /refresh?class=fx run pipeline for that class, return fresh json
   /news?name=Gold   live headlines on demand
 """
-import http.server, socketserver, json, os, sys, io, contextlib
+import http.server, socketserver, json, os, sys, io, contextlib, threading, time
 from urllib.parse import urlparse, parse_qs
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -19,9 +19,22 @@ sys.path.insert(0, HERE)
 import run                      # noqa
 from scout.news import headlines
 
-PORT     = int(os.environ.get("PORT", "8777"))
-WOLF_PASS = os.environ.get("WOLF_PASS", "")        # empty = open (local)
-CLASSES  = ("commodities", "fx", "indices", "stocks")
+PORT        = int(os.environ.get("PORT", "8777"))
+WOLF_PASS   = os.environ.get("WOLF_PASS", "")      # empty = open (local)
+REFRESH_MIN = int(os.environ.get("REFRESH_MIN", "20"))   # auto-refresh interval; 0 = off
+CLASSES     = ("commodities", "fx", "indices", "stocks")
+
+
+def refresh_loop():
+    """Background: rebuild all classes on boot, then every REFRESH_MIN minutes."""
+    while True:
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                run.main()
+            print("WOLF: auto-refresh complete")
+        except Exception as e:
+            print("WOLF: auto-refresh error:", e)
+        time.sleep(REFRESH_MIN * 60)
 
 LOGIN = """<!doctype html><meta charset=utf-8><title>THE WOLF</title>
 <body style="background:#0c1016;color:#cdd6df;font-family:Segoe UI,Arial;display:flex;
@@ -101,7 +114,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"WOLF dashboard -> port {PORT}  (gate: {'ON' if WOLF_PASS else 'OFF/local'})")
+    print(f"WOLF dashboard -> port {PORT}  (gate: {'ON' if WOLF_PASS else 'OFF/local'}, "
+          f"auto-refresh: {REFRESH_MIN}m)")
+    if REFRESH_MIN > 0:
+        threading.Thread(target=refresh_loop, daemon=True).start()
     class Server(socketserver.ThreadingTCPServer):
         allow_reuse_address = True
         daemon_threads = True
