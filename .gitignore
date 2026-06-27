@@ -1,6 +1,12 @@
 __pycache__/
+**/__pycache__/
 *.pyc
 *.log
 .venv/
 venv/
+Lib/
+Scripts/
+Include/
+share/
+pyvenv.cfg
 *.original.md
