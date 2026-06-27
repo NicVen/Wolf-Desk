@@ -1,0 +1,13 @@
+{
+  "_doc": "Manual FX scout inputs. catalyst<=25, position<=20, supply<=20 (fundamentals/rate-diff). Updated 2026-06-27.",
+  "EUR/USD": {"catalyst": 15, "position": 13, "supply": 11, "note": "NFP Fri; JPM/Nomura 1.20 YE if DXY breaks below 100"},
+  "GBP/USD": {"catalyst": 11, "position": 9,  "supply": 8,  "note": "BoE path vs Fed; risk-sentiment driven"},
+  "USD/JPY": {"catalyst": 13, "position": 12, "supply": 10, "note": "BoJ normalisation vs hawkish Fed; MoF intervention risk near highs"},
+  "USD/CHF": {"catalyst": 7,  "position": 7,  "supply": 7,  "note": "SNB + safe-haven flows"},
+  "USD/CAD": {"catalyst": 9,  "position": 8,  "supply": 9,  "note": "oil-linked CAD + BoC"},
+  "AUD/USD": {"catalyst": 10, "position": 9,  "supply": 9,  "note": "RBA minutes + China demand"},
+  "NZD/USD": {"catalyst": 8,  "position": 8,  "supply": 7,  "note": "RBNZ + risk appetite"},
+  "EUR/JPY": {"catalyst": 9,  "position": 10, "supply": 8,  "note": "carry + BoJ; volatile"},
+  "GBP/JPY": {"catalyst": 9,  "position": 10, "supply": 8,  "note": "biggest mover; carry unwind risk"},
+  "EUR/GBP": {"catalyst": 6,  "position": 7,  "supply": 7,  "note": "range-bound; ECB vs BoE spread"}
+}

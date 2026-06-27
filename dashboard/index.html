@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE WOLF PROJECT</title>
+<style>
+  :root{ --gold:#D4A017; --gold2:#E8B92E; --steel:#6E767E; --steeldk:#454C53;
+         --bg:#0c1016; --panel:#141a22; --panel2:#1a212b; --line:#222b36;
+         --txt:#cdd6df; --mut:#8a929b; --green:#3fcf6b; --red:#e0564f; --amber:#e0a23a; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:Segoe UI,Arial,sans-serif;font-size:14px}
+  .wrap{max-width:1180px;margin:0 auto;padding:16px}
+  header{display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--gold);padding-bottom:12px}
+  .logo{display:flex;align-items:center;gap:10px}
+  .hex{width:34px;height:38px}
+  .brand{font-size:22px;font-weight:800;letter-spacing:2px}
+  .brand .s{color:var(--steel)} .brand .w{color:var(--gold)}
+  .sub{color:var(--mut);font-size:12px;letter-spacing:3px}
+  .spacer{flex:1}
+  #upd{color:var(--mut);font-size:12px;margin-right:6px}
+  button{background:var(--gold);color:#1a1404;border:0;font-weight:800;letter-spacing:1px;
+         padding:10px 18px;border-radius:6px;cursor:pointer;font-size:14px}
+  button:disabled{opacity:.6;cursor:wait}
+  h2{font-size:13px;letter-spacing:2px;color:var(--mut);font-weight:600;margin:22px 0 8px;text-transform:uppercase}
+  .tape{display:flex;gap:0;overflow:hidden;border:1px solid var(--line);border-radius:6px;background:#0a0d12;white-space:nowrap}
+  .tape .run{display:inline-flex;animation:scroll 38s linear infinite}
+  .tape:hover .run{animation-play-state:paused}
+  @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .tk{padding:8px 18px;border-right:1px solid var(--line);font-variant-numeric:tabular-nums}
+  .tk b{color:#fff} .up{color:var(--green)} .dn{color:var(--red)}
+  .tabs{display:flex;gap:6px;margin:16px 0 2px;flex-wrap:wrap}
+  .tab{padding:9px 18px;border:1px solid var(--line);border-radius:6px;cursor:pointer;color:var(--mut);background:var(--panel);font-weight:600;letter-spacing:1px}
+  .tab:hover{border-color:var(--gold)}
+  .tab.on{background:var(--gold);color:#1a1404;border-color:var(--gold);font-weight:800}
+  .auto{display:flex;align-items:center;gap:6px;color:var(--mut);font-size:12px;margin-right:10px}
+  .auto input{accent-color:var(--gold)}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  th{color:var(--mut);font-size:11px;letter-spacing:1px;text-transform:uppercase}
+  .bar{height:8px;border-radius:4px;background:var(--steeldk);overflow:hidden;min-width:90px}
+  .bar>i{display:block;height:100%}
+  .pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;background:var(--panel2);color:var(--mut);margin:1px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;border-top:3px solid var(--gold)}
+  .card .rank{float:right;color:var(--mut);font-size:12px}
+  .card .nm{font-size:17px;font-weight:700}
+  .card .sc{font-size:30px;font-weight:800}
+  .brk{margin-top:8px}
+  .brk .row{display:flex;align-items:center;gap:8px;margin:3px 0;font-size:11px;color:var(--mut)}
+  .brk .row .bar{flex:1;min-width:0}
+  .note{color:var(--mut);font-size:12px;margin-top:8px;line-height:1.45}
+  .ctrls{display:flex;align-items:center;gap:10px;margin:6px 0}
+  select{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+  .dim{opacity:.32}
+  .yes{color:var(--green)} .no{color:var(--steel)}
+  .foot{color:var(--mut);font-size:11px;margin-top:24px;border-top:1px solid var(--line);padding-top:10px}
+  .card{cursor:pointer;transition:border-color .15s}
+  .card:hover{border-color:var(--gold)}
+  .hint{color:var(--gold);font-size:11px;margin-top:8px;letter-spacing:1px}
+  .ov{position:fixed;inset:0;background:rgba(0,0,0,.66);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+  .ov.on{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--gold);border-radius:12px;max-width:680px;width:100%;max-height:88vh;overflow:auto;padding:22px}
+  .modal h3{margin:0;font-size:24px}
+  .vd{display:inline-block;padding:4px 12px;border-radius:6px;font-weight:800;letter-spacing:1px;font-size:14px}
+  .vd.buy{background:#13351d;color:var(--green)} .vd.sell{background:#3a1715;color:var(--red)} .vd.watch{background:#3a2f12;color:var(--amber)}
+  .modal .lead{color:var(--txt);margin:12px 0;line-height:1.55}
+  .sec{margin-top:16px} .sec h4{margin:0 0 6px;font-size:12px;letter-spacing:2px;color:var(--mut);text-transform:uppercase}
+  .sec p{margin:0;color:var(--txt);line-height:1.55;font-size:13px}
+  ul.case{margin:6px 0 0;padding-left:18px} ul.case li{margin:4px 0;line-height:1.45;font-size:13px}
+  ul.bull li{color:#bfe6cb} ul.bear li{color:#e6c4c1}
+  .x{float:right;cursor:pointer;color:var(--mut);font-size:22px;line-height:1}
+  .modal .disc{color:var(--mut);font-size:11px;margin-top:16px;border-top:1px solid var(--line);padding-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <svg class="hex" viewBox="0 0 60 66"><polygon points="58,33 44,58 16,58 2,33 16,8 44,8" fill="#6E767E" stroke="#454C53" stroke-width="2"/><rect x="16" y="40" width="6" height="12" fill="#D4A017"/><rect x="26" y="32" width="6" height="20" fill="#D4A017"/><rect x="36" y="24" width="6" height="28" fill="#E8B92E"/><polyline points="18,38 30,30 42,22" fill="none" stroke="#f2f3f4" stroke-width="2"/></svg>
+      <div><div class="brand"><span class="s">THE&nbsp;</span><span class="w">WOLF</span></div>
+      <div class="sub">MARKET INTEL DESK</div></div>
+    </div>
+    <div class="spacer"></div>
+    <span id="upd">—</span>
+    <label class="auto"><input type="checkbox" id="autock" onchange="toggleAuto()"> auto</label>
+    <button id="get" onclick="getData()">GET DATA</button>
+  </header>
+
+  <h2>Live tape</h2>
+  <div class="tape"><div class="run" id="tape"></div></div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <h2 id="topttl">Top opportunities</h2>
+  <div class="cards" id="cards"></div>
+
+  <h2>Leaderboard &amp; broker coverage</h2>
+  <div class="ctrls">
+    <span style="color:var(--mut)">Only show where tradeable at:</span>
+    <select id="venue" onchange="render(LAST)"><option value="">All venues</option></select>
+  </div>
+  <div style="overflow-x:auto"><table id="tbl"></table></div>
+
+  <div class="foot">Research/intel only — leads to investigate, not trade signals or advice. Verify before risking capital.</div>
+</div>
+
+<div class="ov" id="ov" onclick="if(event.target===this)closeCase()">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+let LAST=null;
+const sc=s=> s>=65?'var(--green)': s>=50?'var(--gold2)': s>=40?'var(--amber)':'var(--red)';
+const fmt=n=> (n===null||n===undefined)?'-':(typeof n==='number'?n.toLocaleString():n);
+
+const CLASSES=[['commodities','Commodities'],['fx','FX'],['indices','Indices'],['stocks','Stocks']];
+let CUR='commodities', AUTO=null;
+
+function buildTabs(){
+  document.getElementById('tabs').innerHTML=CLASSES.map(([k,l])=>
+    `<div class="tab ${k===CUR?'on':''}" onclick="switchTab('${k}')">${l}</div>`).join('');
+}
+async function switchTab(k){ CUR=k; buildTabs(); await load(); }
+
+async function load(){ try{ const r=await fetch('/data?class='+CUR); render(await r.json()); }catch(e){} }
+
+async function getData(){
+  const b=document.getElementById('get'); b.disabled=true; b.textContent='SCOUTING…';
+  try{ const r=await fetch('/refresh?class='+CUR); render(await r.json()); }
+  catch(e){ alert('Refresh failed: '+e); }
+  b.disabled=false; b.textContent='GET DATA';
+}
+function toggleAuto(){
+  const on=document.getElementById('autock').checked;
+  if(AUTO){ clearInterval(AUTO); AUTO=null; }
+  if(on){ AUTO=setInterval(()=>{ if(!document.getElementById('get').disabled) getData(); }, 600000); } // 10 min
+}
+
+function venueList(ops){ const s=new Set(); ops.forEach(o=>(o.coverage||[]).forEach(c=>s.add(c.name))); return [...s].sort(); }
+
+function render(payload){
+  if(!payload||!payload.opportunities) return;
+  LAST=payload;
+  const ops=payload.opportunities;
+  document.getElementById('upd').textContent='Updated '+(payload.generated||'');
+  document.getElementById('topttl').textContent=(payload.asset||'')+' — top opportunities';
+
+  // venue dropdown (populate once)
+  const sel=document.getElementById('venue');
+  if(sel.options.length<=1){ venueList(ops).forEach(v=>{ const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);}); }
+  const vf=sel.value;
+
+  // tape (doubled for seamless scroll)
+  const tk=ops.map(o=>{ const m=o.mom20||0; const cls=m>=0?'up':'dn';
+    return `<span class="tk"><b>${o.name}</b> ${fmt(o.price)} <span class="${cls}">${m>=0?'+':''}${m}%</span></span>`;}).join('');
+  document.getElementById('tape').innerHTML=tk+tk;
+
+  // cards (top 6)
+  const lbl={catalyst:'Catalyst',trend:'Trend',position:'Position',supply:'Supply',volfit:'Vol fit'};
+  const max={catalyst:25,trend:25,position:20,supply:20,volfit:10};
+  document.getElementById('cards').innerHTML=ops.slice(0,8).map((o,i)=>{
+    const br=Object.keys(lbl).map(k=>{const pct=Math.round((o.breakdown[k]/max[k])*100);
+      return `<div class="row"><span style="width:58px">${lbl[k]}</span><div class="bar"><i style="width:${pct}%;background:var(--gold)"></i></div></div>`;}).join('');
+    return `<div class="card" onclick="openCase(${i})"><span class="rank">#${i+1}</span>
+      <div class="nm">${o.name}</div>
+      <div class="sc" style="color:${sc(o.score)}">${o.score}</div>
+      <div style="color:var(--mut);font-size:12px">${o.category} · ${fmt(o.price)} · ${o.trend_desc||''}</div>
+      <div class="brk">${br}</div>
+      <div class="note">${o.note||''}</div>
+      <div style="margin-top:8px">${(o.coverage||[]).slice(0,4).map(c=>`<span class="pill">${c.name}</span>`).join('')}${(o.coverage||[]).length>4?`<span class="pill">+${o.coverage.length-4}</span>`:''}</div>
+      <div class="hint">▸ OPEN CASE FILE</div>
+    </div>`;}).join('');
+
+  // table
+  let h=`<tr><th>#</th><th>Score</th><th>Commodity</th><th>Cat</th><th>Price</th><th>Mom</th><th>ATR%</th><th>Venues</th><th>${vf||'Coverage'}</th></tr>`;
+  ops.forEach((o,i)=>{
+    const cov=o.coverage||[]; const has=vf? cov.some(c=>c.name===vf):true;
+    const m=o.mom20||0;
+    const cell= vf ? (cov.some(c=>c.name===vf)?'<span class="yes">✓ yes</span>':'<span class="no">— no</span>')
+                   : cov.map(c=>c.name).join(', ');
+    h+=`<tr class="${vf&&!has?'dim':''}" style="cursor:pointer" onclick="openCase(${i})"><td>${i+1}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><b style="color:${sc(o.score)}">${o.score}</b><div class="bar"><i style="width:${o.score}%;background:${sc(o.score)}"></i></div></div></td>
+      <td>${o.name}</td><td>${o.category}</td><td>${fmt(o.price)}</td>
+      <td class="${m>=0?'up':'dn'}">${m>=0?'+':''}${m}%</td><td>${fmt(o.atr_pct)}</td>
+      <td>${cov.length}</td><td style="font-size:12px;color:var(--mut)">${cell}</td></tr>`;});
+  document.getElementById('tbl').innerHTML=h;
+}
+
+function openCase(i){
+  const o=LAST.opportunities[i]; if(!o) return;
+  const a=o.analysis||{};
+  const vd=(a.verdict||'WATCH'); const cls=vd.startsWith('BUY')?'buy':vd==='SELL'?'sell':'watch';
+  const li=arr=>(arr||[]).map(x=>`<li>${x}</li>`).join('')||'<li>—</li>';
+  document.getElementById('modal').innerHTML=`
+    <span class="x" onclick="closeCase()">✕</span>
+    <h3>${o.name} <span style="color:var(--mut);font-size:14px">${o.category} · ${fmt(o.price)}</span></h3>
+    <div style="margin:10px 0"><span class="vd ${cls}">${vd}</span>
+      <span style="color:var(--mut);margin-left:10px">Conviction: ${a.conviction||'-'} · Score ${o.score}/100</span></div>
+    <p class="lead">${a.summary||''}</p>
+    <div class="sec"><h4>Price level — why here</h4><p>${a.price_reasoning||''}</p></div>
+    <div class="sec"><h4>Score — why this number</h4><p>${a.score_reasoning||''}</p></div>
+    <div class="sec"><h4>The case FOR (${vd.startsWith('BUY')?'long':vd==='SELL'?'cover/avoid':'watch'})</h4>
+      <ul class="case bull">${li(a.bull)}</ul></div>
+    <div class="sec"><h4>The case AGAINST — risks</h4><ul class="case bear">${li(a.bear)}</ul></div>
+    <div class="sec"><h4>Latest headlines <span id="newstilt" style="color:var(--mut)"></span></h4>
+      <div id="newsbox"><p style="color:var(--mut)">Pulling live headlines…</p></div></div>
+    <div class="sec"><h4>Where to trade it</h4>
+      <p>${(o.coverage||[]).map(c=>c.name+(c.type==='propfirm'?' (prop)':'')).join(' · ')||'No tracked venue'}</p></div>
+    <div class="disc">Mechanical read of the data — NOT financial advice. The "case against" is real; weigh both. Verify before risking capital.</div>`;
+  document.getElementById('ov').classList.add('on');
+  fetch('/news?class='+CUR+'&name='+encodeURIComponent(o.name)).then(r=>r.json()).then(d=>{
+    const box=document.getElementById('newsbox'); if(!box) return;
+    const t=document.getElementById('newstilt'); if(t) t.textContent=d.tilt?('· '+d.tilt):'';
+    box.innerHTML=(d.news&&d.news.length)
+      ?('<ul class="case">'+d.news.map(n=>`<li><a href="${n.link}" target="_blank" style="color:var(--gold);text-decoration:none">${n.title}</a> <span style="color:var(--mut);font-size:11px">— ${n.source||''} ${n.date||''}</span></li>`).join('')+'</ul>')
+      :'<p style="color:var(--mut)">No recent headlines.</p>';
+  }).catch(()=>{ const box=document.getElementById('newsbox'); if(box) box.innerHTML='<p style="color:var(--mut)">News unavailable.</p>'; });
+}
+function closeCase(){ document.getElementById('ov').classList.remove('on'); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeCase(); });
+buildTabs(); load();
+</script>
+</body>
+</html>

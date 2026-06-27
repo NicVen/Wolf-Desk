@@ -1,0 +1,1665 @@
+{
+  "generated": "2026-06-27 04:14 UTC",
+  "opportunities": [
+    {
+      "name": "Cocoa",
+      "score": 69.0,
+      "breakdown": {
+        "catalyst": 9.0,
+        "trend": 25,
+        "position": 13.0,
+        "supply": 16.0,
+        "volfit": 6.0
+      },
+      "trend_desc": "up, mom +22.3%",
+      "volfit_desc": "ATR 3.4%",
+      "note": "W.Africa deficit; structurally tight, extreme moves",
+      "price": 5014.0,
+      "mom20": 22.32,
+      "atr_pct": 3.43,
+      "ma20": 4154.45,
+      "ma50": 3932.62,
+      "above_ma20": true,
+      "above_ma50": true,
+      "ma_stack_up": true,
+      "category": "Ags",
+      "ticker": "CC=F",
+      "coverage": [
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Wide commodity CFDs incl some softs"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals, energy, softs (coffee/sugar/cocoa)"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "Broad commodity CFDs incl ags"
+        }
+      ],
+      "news": [
+        {
+          "title": "Bigger Global Supplies Weigh on Cocoa Prices - Barchart.com",
+          "source": "Barchart.com",
+          "date": "Fri, 26 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMikgFBVV95cUxNbDluY3o3RU9KdlFtOWloLVo0MEJ4aVliVGZUWm5ZUUZyTUhuOXpneklva2FuN3l3Qmx5bkd3dllHOFZzWkZacDRQLXBwOWRGQnZCUFpBcXRoUE9PY0c5enJvLVJuNlBZa284NHBGbndqTmx0cUNDT25yVXdpT1JTTkxsTEFWbUJQd1FXd3BycVNnQQ?oc=5"
+        },
+        {
+          "title": "As cocoa prices melt down, real chocolate is making a comeback - Reuters",
+          "source": "Reuters",
+          "date": "Sat, 23 May 2026",
+          "link": "https://news.google.com/rss/articles/CBMiowFBVV95cUxOc1lKeUhSWFIxOUxVem9lcWFXN1lCNURpVDRfcTRPLVdGeDFhMHlFMWY3ZkFzVHFhdXNNblB1T094ZUcwSXNFMEx6Qk50Y1ZMTmtyeWI0Wk04RlJfc3Z4UGJxUXp3cnBzcmh6Z3B4eHBhVS0wN2FJcmxxWXhIM08tVElHZFlpZjNMTTFFSnZpN1NkbDVISE1jTTJHMXdiZjFUOGxn?oc=5"
+        },
+        {
+          "title": "Freedom Broker downgrades Mondelez stock rating on cocoa price concerns - Investing.com UK",
+          "source": "Investing.com UK",
+          "date": "Fri, 26 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMi3AFBVV95cUxOYUdfVXUxT3ZVNmRfeEk4NzNvcVZsNkhMamVSQ3JXWkU5dHVkaGZyWHdZcUtpeGpkN1h2VTNrZDNabWd1djZaMWp3V19mNUtlMTRfTnVkdG5RbUprMEViRmtmTzMxQlRLQ1ZxWFFCZm1iX0I3ZGtRTWctUGhWTzNmY0Z4OGdRcU51bndrZUJYMUxwNDhrTFNHZm1FUE1aNmw5N1BYV2xHazVPaVVxaEg2ZHRxbE9MbS1KbHQzZDg5WXFmdGx1WFFaekNRaUF6TDhqWC1VcEpxTlNQbjVC?oc=5"
+        },
+        {
+          "title": "The Iran War\u2019s Persistent Threat to Farmers in Poor Countries - The New York Times",
+          "source": "The New York Times",
+          "date": "Tue, 23 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMifEFVX3lxTE5iMHRSVWd6Zl90SXJEZ0hxclAwSm5Ob2dJWG9ZcU40Mld3NHU4OERDODk0VmdyU0YzckVlVHYxMUNQWTlrNlBoV0JOZnFxWXpmMHVxUjFPNGp3dXNNbFlDNXRDcEQ4XzZHMW1mTTIzX3FfTXFPa3g0bWJ4dXY?oc=5"
+        },
+        {
+          "title": "Wells Fargo Says Tight Cocoa Supplies Could Support Prices, Prefers Mondelez (MDLZ) - Yahoo Finance",
+          "source": "Yahoo Finance",
+          "date": "Sat, 13 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMinwFBVV95cUxQM21kSFJ4aWRZY0JkTlQ3aVlrMGZzZ2FranpFM2s4ZWdDVHd1QS0zcEdWd1pjbUJMX3hNcDF5dWtzRV8zTi1ULW53SzdoMlNVNmw0YTBMZ1FCV3piSS1mZWZJQlNaM09ocnVwYXB5Qm1DOHhobng0WHdTZlJFMWh1Z1RVSWJwczY1Q3Q1c1BwNUZ4ZVJzYkMtMHRXZ0xiYVU?oc=5"
+        }
+      ],
+      "news_tilt": "mixed news flow",
+      "analysis": {
+        "verdict": "BUY",
+        "conviction": "High",
+        "summary": "BUY \u2014 conviction High. The data leans long: Trend up \u2014 price over rising 20/50-day averages.",
+        "price_reasoning": "Price 5014.0 sits above both its 20-day (4154.45) and 50-day (3932.62) averages, with the 20 above the 50 \u2014 a confirmed uptrend. 20-day momentum is +22.3%, strong directional push. Volatility (ATR 3.4% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 69.0/100 driven by trend (25/25), supply/demand (16/20); held back by catalyst (9/25), volatility fit (6/10). Coverage: 3 venues offer it.",
+        "bull": [
+          "Trend up \u2014 price over rising 20/50-day averages.",
+          "Momentum behind it (+22.3% in 20 days).",
+          "Supply/demand tight \u2014 structural backing: W.Africa deficit; structurally tight, extreme moves",
+          "Positioning/sentiment leaning the trade's way."
+        ],
+        "bear": [
+          "Move is extended \u2014 pullback risk after a vertical run.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "Coffee",
+      "score": 58.6,
+      "breakdown": {
+        "catalyst": 10.0,
+        "trend": 16.6,
+        "position": 12.0,
+        "supply": 14.0,
+        "volfit": 6.0
+      },
+      "trend_desc": "mixed, mom +4.6%",
+      "volfit_desc": "ATR 3.3%",
+      "note": "Brazil/Vietnam supply stress; persistent deficit",
+      "price": 286.75,
+      "mom20": 4.56,
+      "atr_pct": 3.32,
+      "ma20": 265.36,
+      "ma50": 281.14,
+      "above_ma20": true,
+      "above_ma50": true,
+      "ma_stack_up": false,
+      "category": "Ags",
+      "ticker": "KC=F",
+      "coverage": [
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Wide commodity CFDs incl some softs"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals, energy, softs (coffee/sugar/cocoa)"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "Broad commodity CFDs incl ags"
+        }
+      ],
+      "news": [
+        {
+          "title": "Coffee Prices Fall on Forecasts for Drier Weather in Brazil - Barchart.com",
+          "source": "Barchart.com",
+          "date": "Fri, 26 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxNUmpxeDlPbzk0TE1Ebnh6RDZBRE1sTFcyWVZiSU9sUEZMQmY4VWNkYnhSUTVGazlLU3FpSnVXMWp4R25vX19OSUkwS1BBVl92U1MwbVRvNXM0Mk4zQzcyVDhzYlBNS3lnd1JNbUw0NklfWjFwTUxVRXMxUjNxSFUxZkRscmd0V21qRTBDWmVJYlpiVkFzWDVhX0hZTzZfVWY4TGJKZjBn?oc=5"
+        },
+        {
+          "title": "Did Strong Earnings and Coffee Cost Deflation Just Shift J. M. Smucker\u2019s (SJM) Investment Narrative? - Yahoo Finance",
+          "source": "Yahoo Finance",
+          "date": "Fri, 26 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMinAFBVV95cUxQY1Q0VnpwLWVCdkdLUXRKN0VQbWlmYkY3THR4dHdHYkdUSHlRc3dFQUZ3a2VrX0FYZ0lVMGVuTGd3blBwTzVfazFacjhVT0ZkY3dnSFRzTDZNcmtzVkIwNEttQjRmQmk2Z2lrdFRSSTJaN1NtZ2luaGRLOTZqVTUzUkpNWnJVSFFnWkxEZDU4X0pCTHVSR1E0ck1JR0M?oc=5"
+        },
+        {
+          "title": "Coffee prices rise while eggs get cheaper, inflation data shows - Cape Cod Times",
+          "source": "Cape Cod Times",
+          "date": "Tue, 23 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMisgFBVV95cUxPbXVkRDFKcXdZcVYtVGdTb1p6RkdnMWFOR0FyaEx2cUZ3ZGx6TVJXbjZSSFF4ZF95ZENhWmlLZ0JDclEwLVNPMTc1Mk5udVlWeUREQWdFNklwazVWQmZSSk1hY1F6NDB5SnJTb1loU05jLUhUbEF4NHB5cGVDallfYXFSNlVQU2NObU95Vzd3aThpbHpyRTg4MDRHejc0dW0zeEdVSXQ5azAzQXhJR215OW53?oc=5"
+        },
+        {
+          "title": "Coffee Prices Are Heating Up. Is It a Rally or a Trap? - Barron's",
+          "source": "Barron's",
+          "date": "Thu, 18 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBWOFdjbks2ejcwUWdPN202N3NNOXdtQk1CN3hEaS1TeTZoZlRlLXJyQVg1TGoxZzF6VWp6T0oxQTNwVGFEUWM5RzkzdUZubDlDUmJEQndvZzkzcUtuT2tHUXo4NlhBenRtQU1oOV82SFpaYmdSa0lOaVJFT3ZSam8?oc=5"
+        },
+        {
+          "title": "J.M. Smucker Co. drops coffee prices? - Global Coffee Report",
+          "source": "Global Coffee Report",
+          "date": "Fri, 26 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTE1xTEVBbTNkci04OHAtZkwxbERjZnlnZEpoZThKbU9nempZa19sa0p3RUxjdjRDcV95WlMyalduVklsSmVwcHRjYUVOckJ0YnE5bmxuUXJPWmJMTHFISnlvN1BNZklWVHo5Znc?oc=5"
+        }
+      ],
+      "news_tilt": "mixed news flow",
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Moderate",
+        "summary": "WATCH \u2014 conviction Moderate. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price 286.75 is mixed against its 20-day (265.36) / 50-day (281.14) averages \u2014 no clean trend yet. 20-day momentum is +4.6%, moderate. Volatility (ATR 3.3% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 58.6/100 driven by supply/demand (14/20), trend (17/25); held back by catalyst (10/25), positioning (12/20). Coverage: 3 venues offer it.",
+        "bull": [
+          "Momentum behind it (+4.6% in 20 days).",
+          "Supply/demand tight \u2014 structural backing: Brazil/Vietnam supply stress; persistent deficit",
+          "Positioning/sentiment leaning the trade's way."
+        ],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout."
+        ]
+      }
+    },
+    {
+      "name": "Silver",
+      "score": 57.0,
+      "breakdown": {
+        "catalyst": 14.0,
+        "trend": 0.0,
+        "position": 15.0,
+        "supply": 18.0,
+        "volfit": 10.0
+      },
+      "trend_desc": "down, mom -21.7%",
+      "volfit_desc": "ATR 1.5%",
+      "note": "6th straight record deficit (~215Moz); UBS $58-60, BofA $65 targets",
+      "price": 59.22,
+      "mom20": -21.72,
+      "atr_pct": 1.49,
+      "ma20": 67.6,
+      "ma50": 73.58,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Metals",
+      "ticker": "SI=F",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Gold/silver/oil + crypto; few/no softs"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Wide commodity CFDs incl some softs"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals, energy, softs (coffee/sugar/cocoa)"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals + energy; crypto strong"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "Broad commodity CFDs incl ags"
+        },
+        {
+          "name": "FundedNext",
+          "type": "propfirm",
+          "leverage": "Stellar 2-step 8/5, d5, m10 static",
+          "notes": "Metals+oil yes; softs limited"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5, d5, m10 static",
+          "notes": "Metals+energy; no ags"
+        },
+        {
+          "name": "GoatFunded",
+          "type": "propfirm",
+          "leverage": "2-step 8/6, d4, m10 static",
+          "notes": "Metals+oil"
+        },
+        {
+          "name": "FundingPips",
+          "type": "propfirm",
+          "leverage": "2-step 8/5, d5, m10 static",
+          "notes": "Metals+energy"
+        },
+        {
+          "name": "The5ers",
+          "type": "propfirm",
+          "leverage": "High Stakes 10/5, d5, m10 static",
+          "notes": "Metals+energy"
+        },
+        {
+          "name": "E8 Markets",
+          "type": "propfirm",
+          "leverage": "Classic 8/4, d4, m8 TRAILING",
+          "notes": "Metals+energy"
+        }
+      ],
+      "news": [
+        {
+          "title": "Gold hovers around $4,000, silver holds below $60 \u2014 has the shimmer worn off the precious metal rally? - CNBC",
+          "source": "CNBC",
+          "date": "Thu, 25 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiigFBVV95cUxPY0ZsN0JtalpwaXZ3WjlYWHdSLXhMQ1JZeUVDQ0Z0bzhzYkNUQkFGM19YMFF5NGJNcG1GZ05NWnFsWmc1a0xVTTBYMFhLOTg1d2h1eDNNSGtKX3ZsZ1JQYzlDbk82RHY3ejJoZWFsVTNGYWxyZlZaVktYZkFXQ1NFTUZITEJod1NUb3fSAY8BQVVfeXFMTXFhc3VjRDNYbTd3WG93eldkUWVGR2ZyRlB1S2sxZFRLdkF5UFlhWGtiTWVMenJSTEJRTXhrQi1ZRzVmSGREZU9jUUlacmhuVldqajdBbWp0UGw5QmcyR2Y3eV94REFUYXVrd2Y1dXBKcVFYSHJMM2pLQnVlTDRMNFVTenZudHNiTkg4NDNYYTg?oc=5"
+        },
+        {
+          "title": "Gold And Silver Prices Fall To Seven-Month Lows - Forbes",
+          "source": "Forbes",
+          "date": "Wed, 24 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiogFBVV95cUxNTWpvcW5PQ2ZoWTk3SXlHRmJGTXd3Zlk4THg4eWNTSDBrY09CbzJUQWJiMl9MdFIxZEluOHJSWG40OXY1MTl0c1NQQXVLNkt1bGF1eEUzaEVOWTlFQVJRTE9XVk0tWGFoNnp3TkJEenlaOFlvOGNERlRoUXcwbS1uVUt3dG80eXZNek5yMkNjR0g0cWp6SnozVjBQZlEyRWgzUVE?oc=5"
+        },
+        {
+          "title": "Gold and Silver Sink to 7-Month Lows Even as Bond Yields Tumble - BullionVault",
+          "source": "BullionVault",
+          "date": "Wed, 24 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMikgFBVV95cUxNSzV4UG5pak1RQlVuVjJtWmR6SHlpSmJPaEIzemFYaEFiNnJJZXF5MUtiZ2EyOW1qSl9TM3RyMjllTlFQR09ZeVhzejhHU0stVTlWZWpfaDBNY05LQ0pkM1RRRy1TOXAwWnhhRVNFQzVucEtkQ0tTX0NGMUtvb0VCOWd0Nm9hSHJlVHdOMTN4c0g3QQ?oc=5"
+        },
+        {
+          "title": "Current price of silver as of Friday, June 26, 2026 - Fortune",
+          "source": "Fortune",
+          "date": "Fri, 26 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMib0FVX3lxTE8xU2Z2RWlHaXlBc21sLWxSME1XazY5RnNKeWlOMHJ3YVR2V0thNDhMbktmUXVWdWZERk1naVpxMG1KOUxzZWVzOTJQZ0NYcXQ4TjktMmVhaDd4OUJKbXg4Y1MyYThuN1I4TWhxY3otWQ?oc=5"
+        },
+        {
+          "title": "Silver price rebounds after in-line US PCE data eases Dollar support - FXStreet",
+          "source": "FXStreet",
+          "date": "Thu, 25 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMisAFBVV95cUxQXzVhZk9Yc1ZmSi1OWDdPc3QwdDNEc2piRkFPMEs1WVdXR1EtTERJQUpUOUxUYmMtZnJVYkd6RktZNDEtSUt1Y2llWGliX2xnaFBkczllNnNZbml5cm85bFVQNmt5dFBCam1nQ2lES1dzU25PSS15Zk42QUNxRVFka1FqekRzOXl6ZjA3cXZqY0o4eTBTQVVlcDkxbkF2LVM3QzNtajJhUDBLZExmTWpqUQ?oc=5"
+        }
+      ],
+      "news_tilt": "mixed news flow",
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Moderate",
+        "summary": "SELL \u2014 conviction Moderate. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 59.22 is below both its 20-day (67.6) and 50-day (73.58) averages \u2014 a confirmed downtrend. 20-day momentum is -21.7%, strong directional push. Volatility (ATR 1.5% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 57.0/100 driven by volatility fit (10/10), supply/demand (18/20); held back by trend (0/25), catalyst (14/25). Coverage: 11 venues offer it.",
+        "bull": [
+          "Supply/demand tight \u2014 structural backing: 6th straight record deficit (~215Moz); UBS $58-60, BofA $65 targets",
+          "Positioning/sentiment leaning the trade's way."
+        ],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-21.7%) \u2014 knife still falling."
+        ]
+      }
+    },
+    {
+      "name": "Natural Gas",
+      "score": 46.4,
+      "breakdown": {
+        "catalyst": 8.0,
+        "trend": 15.4,
+        "position": 9.0,
+        "supply": 8.0,
+        "volfit": 6.0
+      },
+      "trend_desc": "up, mom -1.6%",
+      "volfit_desc": "ATR 4.3%",
+      "note": "weather + storage driven; very volatile",
+      "price": 3.23,
+      "mom20": -1.64,
+      "atr_pct": 4.32,
+      "ma20": 3.2,
+      "ma50": 2.97,
+      "above_ma20": true,
+      "above_ma50": true,
+      "ma_stack_up": true,
+      "category": "Energy",
+      "ticker": "NG=F",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Gold/silver/oil + crypto; few/no softs"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Wide commodity CFDs incl some softs"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals, energy, softs (coffee/sugar/cocoa)"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals + energy; crypto strong"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "Broad commodity CFDs incl ags"
+        },
+        {
+          "name": "FundedNext",
+          "type": "propfirm",
+          "leverage": "Stellar 2-step 8/5, d5, m10 static",
+          "notes": "Metals+oil yes; softs limited"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5, d5, m10 static",
+          "notes": "Metals+energy; no ags"
+        },
+        {
+          "name": "GoatFunded",
+          "type": "propfirm",
+          "leverage": "2-step 8/6, d4, m10 static",
+          "notes": "Metals+oil"
+        },
+        {
+          "name": "FundingPips",
+          "type": "propfirm",
+          "leverage": "2-step 8/5, d5, m10 static",
+          "notes": "Metals+energy"
+        },
+        {
+          "name": "The5ers",
+          "type": "propfirm",
+          "leverage": "High Stakes 10/5, d5, m10 static",
+          "notes": "Metals+energy"
+        },
+        {
+          "name": "E8 Markets",
+          "type": "propfirm",
+          "leverage": "Classic 8/4, d4, m8 TRAILING",
+          "notes": "Metals+energy"
+        }
+      ],
+      "news": [
+        {
+          "title": "European Natural Gas Edges Higher as Traders Monitor Hormuz Risk - Bloomberg.com",
+          "source": "Bloomberg.com",
+          "date": "Fri, 26 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxNVEdaaWxPVS0zY3ZKMjAwUDZ1Qll0eHA4a2NvZ015bXRFa0dIMzBoMDBVLTBJMHlsd05US3JkdU1adDdIcGZoS0NRSHJWWnMzMEZPNmp0Y1ZvQW5aMUMyeU8ySENmZFM3VzdObWdVZVcxSElmZXJLNGwwV0Vpc3ZuVkptNlJqcnpUUUpNREcxek1mcmY0bk9jUG1TWlFqRU5LYXdacldhbmZvZnFDQXF5a1ZNaHNyZw?oc=5"
+        },
+        {
+          "title": "July Heat Ignites Natural Gas Debate Over What Comes Next - Natural Gas Intelligence",
+          "source": "Natural Gas Intelligence",
+          "date": "Wed, 24 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxNekdJaFUtZ0xsS2laUF9GWmZmQy1uYV9KeUx5ZlZMYmE1U0lIX3Mta3pCZVlTQmJtRkZrS3BNV3duRXhSYmlFemxxM1R3M3FYZGJhU2hleTBJVXVkMkIxdm5pUXdSVFlkNWpva2hvLU9zM1JBVU1XMGZTZm5WNXMxSGhsTG1vWmtRak5ZX1JxWW1ZZHBoQ2c?oc=5"
+        },
+        {
+          "title": "Natural Gas Price Forecast: Can Bulls Break $3.44 Ceiling? - FXEmpire",
+          "source": "FXEmpire",
+          "date": "Fri, 26 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxPTXV5RHlxcHVuWEt5MDM0czVheHdtYk9QczdYQkdKV0I1V2lYWjQzdTB0c0F2bVFwTkp3bGlvd1JKYkJVbGtVQUJkTXk3TTQ4QWQxbGNjZExSeVlBR2Zrblk1OFBVM0dobVJZSjhHcndaOEVQWUg0Y2RsTDlqZHNkRXhGd09jRXlaaUprSXh1YnlVR2UwNFdaSXN1dkVJQVdHSWNkWkN0VllJdw?oc=5"
+        },
+        {
+          "title": "Natural Gas Prices Set to Ease as Qatar Restores LNG Output - Crude Oil Prices Today | OilPrice.com",
+          "source": "Crude Oil Prices Today | OilPrice.com",
+          "date": "Thu, 25 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxNa0pTNlFyWE5UVldjTmV4RkhNNHBqY2R6TUloYlhiUlQzSVNRVHVEY0w2VVBQaG1jX081TV9sT3lvMmVIRmpWVFUwU0hPanU1VXJXM0U4NDhDenViQVVueUxUN2RlWmxZczRpTzd1M0dteXY1NGtnWkNGV3o1MlY5clpFQmEtTmNXWFBxY056b3lYQ01VOVcxLVVJZU1xTFVxTmFMOGdhTm5lMHZFRzJmUnY3NlJ6UdIBuwFBVV95cUxOTzdMVjQ4Vl9EY1Y1SUtXY3lxSWJGbXRRZHVPd1p1LXBoSExlMm1LcDhnOFdUWGJ2X29uM0RTeGNsY3YwdzdSaHdGNWpUVGJTQVpvaWZyNmdhTmJ5MGhaRUVDWUM5NXA3Q1FJQ2E4MlhTNkRZUlZjTFoxaDNTbzloZVhQWUQxSWZFelhxQlVOMF9Qb092ODlpbTgyMnRRWkh1YUNQWVZTY2RObUNpZGUxQkwxNzBRRTItSnZn?oc=5"
+        },
+        {
+          "title": "Subzero Natural Gas Prices Show Need for Energy Permit Reform, Shale CEO Says - Bloomberg.com",
+          "source": "Bloomberg.com",
+          "date": "Wed, 24 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMixAFBVV95cUxPd3FkdVY5ZU9fQU9nYktZNkhaTUdtdDlXaHlnRHJ0R1oyNzduUko1bFBTMk1uU0tEZVlsb29yblJIWVluQ29mWHVneVJXcFF4aFFxa2twWW9fZTFPamtvN2ZiTWNXdlNhVThBbkNIN0ZEbXM3S2NMMlBxSE5zMG9jUTV5TllveUl1dVZfcXozSXF4b1RHQ1ZMR3l3alZrMVdiOXBXOVVabW1KX3pEWGJKNTBEMmxreGctUGRkRDFSbjFCYmct?oc=5"
+        }
+      ],
+      "news_tilt": "mixed news flow",
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Low",
+        "summary": "WATCH \u2014 conviction Low. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price 3.23 sits above both its 20-day (3.2) and 50-day (2.97) averages, with the 20 above the 50 \u2014 a confirmed uptrend. 20-day momentum is -1.6%, flat. Volatility (ATR 4.3% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 46.4/100 driven by trend (15/25), volatility fit (6/10); held back by catalyst (8/25), supply/demand (8/20). Coverage: 11 venues offer it.",
+        "bull": [
+          "Trend up \u2014 price over rising 20/50-day averages."
+        ],
+        "bear": [
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "Gold",
+      "score": 46.0,
+      "breakdown": {
+        "catalyst": 18.0,
+        "trend": 0.0,
+        "position": 10.0,
+        "supply": 8.0,
+        "volfit": 10.0
+      },
+      "trend_desc": "down, mom -9.3%",
+      "volfit_desc": "ATR 1.9%",
+      "note": "NFP Fri catalyst; YE targets $4.9k-6k but near-term capped by hawkish Fed + real yields",
+      "price": 4078.7,
+      "mom20": -9.35,
+      "atr_pct": 1.91,
+      "ma20": 4271.85,
+      "ma50": 4488.1,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Metals",
+      "ticker": "GC=F",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Gold/silver/oil + crypto; few/no softs"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Wide commodity CFDs incl some softs"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals, energy, softs (coffee/sugar/cocoa)"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals + energy; crypto strong"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "Broad commodity CFDs incl ags"
+        },
+        {
+          "name": "FundedNext",
+          "type": "propfirm",
+          "leverage": "Stellar 2-step 8/5, d5, m10 static",
+          "notes": "Metals+oil yes; softs limited"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5, d5, m10 static",
+          "notes": "Metals+energy; no ags"
+        },
+        {
+          "name": "GoatFunded",
+          "type": "propfirm",
+          "leverage": "2-step 8/6, d4, m10 static",
+          "notes": "Metals+oil"
+        },
+        {
+          "name": "FundingPips",
+          "type": "propfirm",
+          "leverage": "2-step 8/5, d5, m10 static",
+          "notes": "Metals+energy"
+        },
+        {
+          "name": "The5ers",
+          "type": "propfirm",
+          "leverage": "High Stakes 10/5, d5, m10 static",
+          "notes": "Metals+energy"
+        },
+        {
+          "name": "E8 Markets",
+          "type": "propfirm",
+          "leverage": "Classic 8/4, d4, m8 TRAILING",
+          "notes": "Metals+energy"
+        }
+      ],
+      "news": [
+        {
+          "title": "Rhona O'Connell: Gold Price Drop \u2014 Why it Happened, What's Next - Investing News Network",
+          "source": "Investing News Network",
+          "date": "Thu, 25 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMid0FVX3lxTE1Bek9MS1oxZUxKZTllQUxWTllrb2ZzSUd2TlMwbVp5eHA4VElLZnozMGx1cnM1WnlMekliQW1DWW1xLWZEOXNoSkpfMENEcnBVWl8zeHBHNWpVMGx6TDdvN1lHYzBEZnVsbjhxT0lFV1JJRHhFQzhz?oc=5"
+        },
+        {
+          "title": "Gold price could struggle through 2026 as it loses safe-haven status to US bonds - BI\u2019s McGlone - KITCO",
+          "source": "KITCO",
+          "date": "Thu, 25 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMivAFBVV95cUxPdlN2VG95UlhyclI0MXpSSUZJWUg5X2tIWFNkcmtlYmdpR1dMMjk5WDJYMlJZYy1mWFJnVU9NRkFTZGNERjI5blc5ZUxkVnd5UWZvY1pRRWN0T0JXZlJuV3ZLV0lTVTlKNGI0UjdDQnpfRUI4SDhMRnVHX2JianlfM0luVVVtVWZreDFiNGVLZXhmcV9qRFM1cmdyMnRTYTJMb1kxZHBzQjE0SFJKUDJSeWpOQmRwcnNkN2MxSg?oc=5"
+        },
+        {
+          "title": "Analysts Reduce 2026 Gold Forecast as Price Tumbles to New Low - jckonline.com",
+          "source": "jckonline.com",
+          "date": "Wed, 24 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMid0FVX3lxTE1vbVU4em8xbUNpcTl2ZmxodmstUk9ocExsdTd6bXdhWkZ2c2VfWHlQSkZCTFdiWTJHaTExU2RkTVBBbEcyY3BXQzluQXQ2Z1VHa2Y3WDlNeklpZEh6MWNVWkVlSlZRWEJOamFaQjNGc3oxV3JDTzdJ?oc=5"
+        },
+        {
+          "title": "Gold (XAU/USD) Price Forecast for Today, Tomorrow, Next Week, and the Next 30 Days - LiteFinance",
+          "source": "LiteFinance",
+          "date": "Sat, 27 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxOZ1BXeVdPR08tTmQ4MHdZMkloUzlsNjRjSE5VVmxyeVRrdDZqbDI3Tm5VVUdfYTdZM0dOYjkzVFBuMGhJUzZEM3E0RDBkc0RTUXd2VFdMdm5uenpPXzJobUNvRklvRkt0S0pfYkZ0UWRXaWRDc09MR1pBUkVDRXN2Y2FINkVmUDBlRkZHNGhzZkNyNk5LUzZrM2VUV1pVOV9N?oc=5"
+        },
+        {
+          "title": "Gold prices today, Wednesday, June 24: Prices sliding below $4,100 this morning - Yahoo Finance",
+          "source": "Yahoo Finance",
+          "date": "Wed, 24 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMi5AFBVV95cUxNMlNOWmpJWWdta0RuQWZ6R3duTWU4cHdXMXV0b3kycnlZN2lnbV9QNy0zQUJBYm5tRWZ5QUxJRkpzS2taSEItTXZnWFM1eGVZNTF2MlNIZ0hVYTFnZFhKUUV2aEdJNzc5VUpqMUN2SzhUMkVlV0VQNTR4Z2Z6bjQ0ZU81YnlwR0N6YlBaTlI0ZVl3b1EyYkx6NUZpcTFkMHVXcldocnhrTHd3cC1jQjQ4T1YzQ2daNEFsTTlNRnBEb3R0V0QzczZTUUJPVUt1QllzVWpwSHZZOXJNdmlqSHlyZnNoRjU?oc=5"
+        }
+      ],
+      "news_tilt": "bearish news flow",
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Low",
+        "summary": "SELL \u2014 conviction Low. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 4078.7 is below both its 20-day (4271.85) and 50-day (4488.1) averages \u2014 a confirmed downtrend. 20-day momentum is -9.3%, strong directional push. Volatility (ATR 1.9% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 46.0/100 driven by volatility fit (10/10), catalyst (18/25); held back by trend (0/25), supply/demand (8/20). Coverage: 11 venues offer it.",
+        "bull": [
+          "Near-term catalyst in play."
+        ],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-9.3%) \u2014 knife still falling.",
+          "Live headlines lean bearish \u2014 news contradicts the chart."
+        ]
+      }
+    },
+    {
+      "name": "Copper",
+      "score": 44.0,
+      "breakdown": {
+        "catalyst": 9.0,
+        "trend": 1.0,
+        "position": 11.0,
+        "supply": 13.0,
+        "volfit": 10.0
+      },
+      "trend_desc": "down, mom -4.0%",
+      "volfit_desc": "ATR 0.7%",
+      "note": "AI/grid/electrification demand; tight concentrate supply",
+      "price": 6.14,
+      "mom20": -3.98,
+      "atr_pct": 0.66,
+      "ma20": 6.34,
+      "ma50": 6.24,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": true,
+      "category": "Metals",
+      "ticker": "HG=F",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Gold/silver/oil + crypto; few/no softs"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Wide commodity CFDs incl some softs"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals, energy, softs (coffee/sugar/cocoa)"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals + energy; crypto strong"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "Broad commodity CFDs incl ags"
+        },
+        {
+          "name": "FundedNext",
+          "type": "propfirm",
+          "leverage": "Stellar 2-step 8/5, d5, m10 static",
+          "notes": "Metals+oil yes; softs limited"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5, d5, m10 static",
+          "notes": "Metals+energy; no ags"
+        },
+        {
+          "name": "GoatFunded",
+          "type": "propfirm",
+          "leverage": "2-step 8/6, d4, m10 static",
+          "notes": "Metals+oil"
+        },
+        {
+          "name": "FundingPips",
+          "type": "propfirm",
+          "leverage": "2-step 8/5, d5, m10 static",
+          "notes": "Metals+energy"
+        },
+        {
+          "name": "The5ers",
+          "type": "propfirm",
+          "leverage": "High Stakes 10/5, d5, m10 static",
+          "notes": "Metals+energy"
+        },
+        {
+          "name": "E8 Markets",
+          "type": "propfirm",
+          "leverage": "Classic 8/4, d4, m8 TRAILING",
+          "notes": "Metals+energy"
+        }
+      ],
+      "news": [
+        {
+          "title": "No margin for error: How copper projects lost their price buffer - S&P Global",
+          "source": "S&P Global",
+          "date": "Thu, 18 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMi2gFBVV95cUxOcGhRaWVINGFFcHk1OUpZaXl4dkdWa01JQ2Y2cUpqZzJaX0R0bmpwXzFnQ3F4eDZvN0NZRE8tZnljNlA3d1drYmdBQTJYZkxXU3VacFM4WUdoekx3QXhuekx2OXJzSEtKSzF0QmxsSXQ1NDkwdkR4RGFMZUtrSkxFVlBCbWw1VmN4ZVI0R0wxcG45d3RnSkszN0FKUWEyZlNyaUc2akJSRV92clhlZGlSdzhMenQtS3ZscnlHcWNqeGdlZ2t1NXp5b0R5NDgxVU01Qi1FV2dJbTVLQQ?oc=5"
+        },
+        {
+          "title": "Copper price analysis: Levels to watch in the data-dependent week - TradingView",
+          "source": "TradingView",
+          "date": "Mon, 22 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMivAFBVV95cUxPUUZkcDNLaUZ4R05za3I2UnF0Y1BzSzlFeFVnTURRWTgzTlB0U0pYODllVUNiclRxbF9udkk2UVEzUGtjQzVXZmZzSnNrcmFMUmpPLUV2clhiQmN6UGNPSUREcFFjTWFYbDFQQzByT3B6UWd3ZDhrY1hEeHhpNTZfT1dLZUowMEJxMEttZVdaa1RXOENmZWUwZG1FWGx3NHVibzJaWlg0TC1uc1M2WHF6cGctbjFhT1ZHMnVrOQ?oc=5"
+        },
+        {
+          "title": "Copper soars but smelters can't bank on it to survive - Reuters",
+          "source": "Reuters",
+          "date": "Fri, 26 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMisAFBVV95cUxPbGg2dU52a1NwMzg3LUJjUzRxRDBCME9EX1RrbGRzOTI3cVg4QnlfQzAxNjZyQXAydzV6OHNER0lFcXdpdTEtWXdZZU1NZzFfOXpodnNQNndCUVhFVnhJRlRTWjV1cUxGb3NJQ3VCUDExOWFORktCRUZlTmZSYkdjRUlkQkNZYU9YTFI1bFp2Z2N6UUhCM0VSY2Z5YjlIdEVNX0E4ODJwbTFKNDNJV1BfdQ?oc=5"
+        },
+        {
+          "title": "From Industrial Metal to National Asset: The Case for Copper in a Geopolitical Age - Crux Investor",
+          "source": "Crux Investor",
+          "date": "Fri, 26 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMitwFBVV95cUxNMEs3emxKaGRrZl85emJFcFVPRWF1ZHpGV21DSXJyc0ZnMmVXOElIbnpRSjZhZjdINklueXFncF9ibnQ5MVE0MXBMeDZzVHg5RDRmbHVkeG0zcnRMQVdBa01FbTJRQlg4NTVsQmszRGg3ZC04a3lHTDNOVEdlejJkbENtUmRTU194bWg1WmRfd0Z6NEtOeEJEa04zYTBtelhIS1RubzNUSWpXOEgyT1FqeEg4aWs4WXc?oc=5"
+        },
+        {
+          "title": "Op-Ed: Acid is becoming copper\u2019s new price signal - Mining.com",
+          "source": "Mining.com",
+          "date": "Fri, 26 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMie0FVX3lxTE04ajZNSGFZY2hGX0hRZC1NSjBxUW9wTU5oTjBTenk0eFNfZHhmVFpHNnk0MzFuZWxMcENjeldCM3ZCeVZQM1k3TTdrZS03VHlDX0xQWmg1QzdMaEpwRWMxa1NiZ1NHLXJZVUFiRDNHS2JyWnVabXhsMXZ1Zw?oc=5"
+        }
+      ],
+      "news_tilt": "bullish news flow",
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Low",
+        "summary": "WATCH \u2014 conviction Low. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price 6.14 is mixed against its 20-day (6.34) / 50-day (6.24) averages \u2014 no clean trend yet. 20-day momentum is -4.0%, moderate. Volatility (ATR 0.7% of price) is low \u2014 quiet tape.",
+        "score_reasoning": "Score 44.0/100 driven by volatility fit (10/10), supply/demand (13/20); held back by trend (1/25), catalyst (9/25). Coverage: 11 venues offer it.",
+        "bull": [
+          "Supply/demand tight \u2014 structural backing: AI/grid/electrification demand; tight concentrate supply",
+          "Live headlines lean bullish."
+        ],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-4.0%) \u2014 knife still falling.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "Sugar",
+      "score": 39.4,
+      "breakdown": {
+        "catalyst": 7.0,
+        "trend": 6.4,
+        "position": 8.0,
+        "supply": 8.0,
+        "volfit": 10.0
+      },
+      "trend_desc": "mixed, mom +0.4%",
+      "volfit_desc": "ATR 2.3%",
+      "note": "Brazil/India output + ethanol pull",
+      "price": 13.98,
+      "mom20": 0.36,
+      "atr_pct": 2.27,
+      "ma20": 13.89,
+      "ma50": 14.23,
+      "above_ma20": true,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Ags",
+      "ticker": "SB=F",
+      "coverage": [
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Wide commodity CFDs incl some softs"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals, energy, softs (coffee/sugar/cocoa)"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "Broad commodity CFDs incl ags"
+        }
+      ],
+      "news": [
+        {
+          "title": "Sugar Prices Surge on Scant Monsoon Rains in India - Yahoo Finance",
+          "source": "Yahoo Finance",
+          "date": "Fri, 26 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMipAFBVV95cUxQNUs0eXVxS3ZYTXl3Q2hBOV9TcWhlYVJDcjl3MEdjVjNlQWVEQVpaNlllV3BvZmx3aWlsUnBsbU5GNHVDcjFKc1ZIdWl6UWpPX01KMU5ReTRMbExycThGdlhfNUVuRHNyU2ZDLVJIR2tIb1J4cXVZV2g1RVU2TjJSeHNXNEJyZG1jZEU3S0dRcTZKWmFaNWw4Q3ZFZFdaUTJKMHRlZg?oc=5"
+        },
+        {
+          "title": "Copersucar expects more cane and sugar price rebound this season - Valor International",
+          "source": "Valor International",
+          "date": "Wed, 24 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMi0gFBVV95cUxPSVhzZU9yV0tEQkNUWmtraFF4elk5cVNhTW5vMnlCbXF2XzRTMmlHY2dveHZoNXd1X082NE5HeTBCTDhTX3RRaGtkWkJfNHB6bGJTSFFtaXk1SjdWWGR6Q0pVZmp5amlQSzBHZzhjaFR6WGtuMWxOOEFCV2VjSy1VSE9sblJ4MUxrcW5WNUF1Z1pyRS1heFJCbUNxeDZmWjRWM2RHUEM3Y0QwRE1BT2FsNTZvelNTbVJuRUhfMmxFT2NSeEVUdFBZRGdMeWw2eXgxM2fSAeABQVVfeXFMUDdRZExoYXlldEVuQmdKZVVWbjV1M0tsb1BMMFNPWE5kMkN2Wm50MG1OWmN2RzdZT0Z0QXFuaUJxb3M5NnlJdFBkcXQ2WUNHLTY3YkFTaTNES0FoejhXUTJfeklHRk5pRVhWenUzRHFmMmxsWVQxTGVIakJrSFd6cW5qWXBEZGxxVDFWT0pLeUpRamE4VldUTXluZ3ByUlEzTkZyZmEyanRkRW14VXNOdGo2ZUJfQy1kbThjTWFtYXdZc0ZIYWxXbDcwV1hYUm96VUlMZ29OdVNUelEzNk5rWVc?oc=5"
+        },
+        {
+          "title": "US Sugar Prices Rise on Tariff Fears, Crop Risks - czapp.com",
+          "source": "czapp.com",
+          "date": "Wed, 03 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMikAFBVV95cUxOV3dVdWo5WGgyeGFwOEpuRDd6N24xa3pQaExwem41ZHh6Wm5SdUZjYnB0UUswRklQWkVIdVVSa1FFM2l6b1JFY2RFN0dDWUZxUnZlVy1LUTBnd1R6bjYzbGkxNVh2SHBlVE5pSjRhN0NDRVdBb1RuREZXV05fa0IxTkx2UU5GYUI4YldOdTdab2E?oc=5"
+        },
+        {
+          "title": "Rising Sugar Costs Leave Bitter Taste for Confectionery Lovers - News On Japan",
+          "source": "News On Japan",
+          "date": "Mon, 22 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiVEFVX3lxTFBYQ1JFTEZlMk9DMHltV1NYelB6X3dhUXlXN0RHdkV1ZHd2VEJ3ZUJsRVBSTks1QnF6YjZqZ0gyVC1VcG1DbnJOeVd3ZW56UEdZRGxOdQ?oc=5"
+        },
+        {
+          "title": "Sugar Prices Consolidate Above Monday\u2019s 2-Month Lows - Barchart.com",
+          "source": "Barchart.com",
+          "date": "Thu, 25 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMilwFBVV95cUxQNjYtWEhNUHVYTnFIQWUtMDBwYVRKYTNQMHBlQ0s2dktrWFhTd3d6UGt3X0Nfb2w2TFNXOVJBTTRkaU02SzVGX2NkamJOYkNScU9XRVFXM0tWOFJMOTVRdVkyYnpjRnAzRmpTc2tZYUx2MUJ2M1VvOF8wR3l3ZUlFal9nQ0ZRak1LQVgwdm5INGdyR0NZMDk0?oc=5"
+        }
+      ],
+      "news_tilt": "bullish news flow",
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Weak",
+        "summary": "WATCH \u2014 conviction Weak. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price 13.98 is mixed against its 20-day (13.89) / 50-day (14.23) averages \u2014 no clean trend yet. 20-day momentum is +0.4%, flat. Volatility (ATR 2.3% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 39.4/100 driven by volatility fit (10/10), positioning (8/20); held back by trend (6/25), catalyst (7/25). Coverage: 3 venues offer it.",
+        "bull": [
+          "Live headlines lean bullish."
+        ],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "Wheat",
+      "score": 32.0,
+      "breakdown": {
+        "catalyst": 7.0,
+        "trend": 0.0,
+        "position": 8.0,
+        "supply": 7.0,
+        "volfit": 10.0
+      },
+      "trend_desc": "down, mom -7.3%",
+      "volfit_desc": "ATR 2.7%",
+      "note": "harvest + weather; Black Sea headlines",
+      "price": 578.25,
+      "mom20": -7.33,
+      "atr_pct": 2.73,
+      "ma20": 592.1,
+      "ma50": 613.54,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Ags",
+      "ticker": "ZW=F",
+      "coverage": [
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Wide commodity CFDs incl some softs"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals, energy, softs (coffee/sugar/cocoa)"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "Broad commodity CFDs incl ags"
+        }
+      ],
+      "news": [
+        {
+          "title": "Winter Wheat Basis Conditions in the Golden Triangle - Montana State University",
+          "source": "Montana State University",
+          "date": "Thu, 25 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMimAFBVV95cUxOSUlqaF96b0JkV0ExQlhVVEo3N3J4dURKaWVfcWQta3lDYjJES2M1SW1HTHR1VW0zQVBqSGU4QW0zMXN2Qk1LWGQ4UTVPTm92T2wtYW5ZMlJid2FLQ01Ba3B3RmplWnYyQ2c0a2Rza0ZQTHE3LTNMVHNDUkNKRXpic29LZ0o0dTQwQ2tZOXBpaFFqeTF4bkJmVw?oc=5"
+        },
+        {
+          "title": "Is Wheat Poised for a Major Breakout, and What's Driving the Surge - Kavout | AI",
+          "source": "Kavout | AI",
+          "date": "Fri, 26 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiogFBVV95cUxPOG5UZ1RaXzUwY2lSTW5jb1F4dWlaQ3hSNVFZNFRrOHlEd1BMOWgxNjZyTVRFQTZnWm1qaU1RMVExalZ5Qk9LQ3Z5TkRpSTJLYk5DX1BMaUluT1dtLUluOHpkMHhScjIzOTN5VGpxOW5BTmZaYjBrMHp5SlFoNldUTmk0NTBFWUdIVWZVMDlHYU1iREFiUnJqZTF5Q09PR3BZWVE?oc=5"
+        },
+        {
+          "title": "Chicago SRW Wheat - CME Group",
+          "source": "CME Group",
+          "date": "Sat, 06 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1RV2pNcElyMDA2cWoteUpYX2ZsQko4N1R0TTljZmJGbV9YVnZXdW1TYlNZR3NBOUM2SmdSOXVsREJ3UXRDUHY1TzhQLWlySy1jSUZ0LWpCLTFMSUZFR0wyRjFTcXhQWUpa?oc=5"
+        },
+        {
+          "title": "Will Mother Nature let out the wheat bulls? - Farm Progress",
+          "source": "Farm Progress",
+          "date": "Tue, 23 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiigFBVV95cUxOYnFsQkV5eDhlYmlURlcxeXNRR1hOZ2tJRGVYcmJCeFJiQW02eTg1bUx0bllPbGpUMnM5T0FrYUJ3QUZqN3RUWW9rZ2xrRFdFYWk0V2txVTZIbm4wMXBOd29tNFVuLS15eWZVMGJZRXdpM2ZTR2tjb09DNXRnT0lEeUlNdmhlMXpiWHc?oc=5"
+        },
+        {
+          "title": "Wheat price commentary: US and European futures fall; global trade quiet - Fastmarkets",
+          "source": "Fastmarkets",
+          "date": "Mon, 01 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMirAFBVV95cUxOS0NEVHgzc19BMklERFVFeW04VjE2V0RhTU1yU1F1RmdOS3lmakt6YW5ydUNOOUJzeDhvaTFUTnBuSXU5aWotd1F5VFNTcnVCamc5UWNnVzYteUVoS18wVVM4TVRkUTk5aGdfMDQzNXozUzJGRnlhRmhoWG54MnZ2em1ZMmhRbW1pZ1dmbXNrSFZOYVlCOE9OVUg3c3hLNjY1WmM0Y0FtM29PaklD?oc=5"
+        }
+      ],
+      "news_tilt": "mixed news flow",
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 578.25 is below both its 20-day (592.1) and 50-day (613.54) averages \u2014 a confirmed downtrend. 20-day momentum is -7.3%, moderate. Volatility (ATR 2.7% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 32.0/100 driven by volatility fit (10/10), positioning (8/20); held back by trend (0/25), catalyst (7/25). Coverage: 3 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-7.3%) \u2014 knife still falling.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "Soybeans",
+      "score": 32.0,
+      "breakdown": {
+        "catalyst": 7.0,
+        "trend": 0.0,
+        "position": 8.0,
+        "supply": 7.0,
+        "volfit": 10.0
+      },
+      "trend_desc": "down, mom -5.7%",
+      "volfit_desc": "ATR 1.4%",
+      "note": "China demand + S.American supply",
+      "price": 1126.25,
+      "mom20": -5.71,
+      "atr_pct": 1.38,
+      "ma20": 1130.9,
+      "ma50": 1163.84,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Ags",
+      "ticker": "ZS=F",
+      "coverage": [
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Wide commodity CFDs incl some softs"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals, energy, softs (coffee/sugar/cocoa)"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "Broad commodity CFDs incl ags"
+        }
+      ],
+      "news": [
+        {
+          "title": "Soybean - CME Group",
+          "source": "CME Group",
+          "date": "Tue, 23 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMibkFVX3lxTE5qT2ItMUdkWkdMMGQ2UDlQMUpxbThPZERYdDh5Qy04bDVRV2dEOUhjY3BVZXRPTGRDcXJoN2xNTWpOeGtyQlZzeTlmbzFMSnQxUWE5TGlQcmFUOEd6dkthaXItalc5UzdfT1N3RlpR?oc=5"
+        },
+        {
+          "title": "FOB Santos Soybeans Financially Settled (Platts) - CME Group",
+          "source": "CME Group",
+          "date": "Wed, 24 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiogFBVV95cUxNY1Q2WjZ6dk53MERRcHo4anAxR29OU2Z4MGNjMDhkTzF6cWhraU5SSDdDd1NKU0NQcGpxT25pUGpRNG92MTZoU0gyaUlJOUMzUmdzb3ZPRWtVQmhFQlNmQTRhNDlFVWMwRlB2OVdHLVlabkRjbmNoRGphMzF2Q045UzJPNmtVQ1FIRHJYV0ZqN0JuY2dQMzNvYzBWeDM2Y01MX2c?oc=5"
+        },
+        {
+          "title": "The Iran Conflict: Potential Impacts on 2026 Corn and Soybean Returns - farmdoc daily",
+          "source": "farmdoc daily",
+          "date": "Tue, 17 Mar 2026",
+          "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxQdTg1eUl6eHc2aDdnN01TWnJ2MzJsLU9mQjBuN3U5LUJxck5wNF9vYWV4M2lvVUh6ZnJRRDZTZEhLTExNQ0R3eHd5c0laVDAwaXF0Mlg4Yy16WDllM3BpVmRyZmM0NUxvUU4xS0N1amJIc2JJNklkckJhTnVleFlxcEw2VnZLZ3ZhUzBpQ25HUlJnREZ6NnFMZXFYQl9Dbl9vZExSMFQ0dGJpY0xod1NIQlpYMy1uQQ?oc=5"
+        },
+        {
+          "title": "Soybean futures drop 85 cents as China buying disappoints market - Farm Progress",
+          "source": "Farm Progress",
+          "date": "Tue, 16 Dec 2025",
+          "link": "https://news.google.com/rss/articles/CBMikwFBVV95cUxPZ2RZX0J1UnZSY0hsRXZUdm1NcHc5M3puVXI1eEU5bjlOWnQ2Smx5c0NqcGpYMUVPUHhJZ2FIQldHc0hxTUZ6eG91anJUMy1BVm04TDI1dVNfTU5kQ08wYkgwRFZxSXpHb0l6TTlKM2dLbUZMOGZvaWlBckZON3daS3VYRGpEYTM5dVVsRmZ2c2phanM?oc=5"
+        },
+        {
+          "title": "Soybean futures price levels steady in early May - AgUpdate",
+          "source": "AgUpdate",
+          "date": "Mon, 11 May 2026",
+          "link": "https://news.google.com/rss/articles/CBMiowFBVV95cUxOdnBRU1RicUFqRzFmUmswbEx4N1V0QUhBZHdJMk5uX2dKSGRNSFFuTGpvdmlFejQ2d3BkR1BFSnBLOGxJTkJIUXRwT3dBT05xa282QWN2TURTbExvTjNqbkt4M0hxRUFLMngydHFqblNvbS1JRnRtTHFlTWlFbC1RSFFLT0hnSzRaUlJwRklmdnB0WEtval9HZ0tWX2xGNzlFc3Zz?oc=5"
+        }
+      ],
+      "news_tilt": "mixed news flow",
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 1126.25 is below both its 20-day (1130.9) and 50-day (1163.84) averages \u2014 a confirmed downtrend. 20-day momentum is -5.7%, moderate. Volatility (ATR 1.4% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 32.0/100 driven by volatility fit (10/10), positioning (8/20); held back by trend (0/25), catalyst (7/25). Coverage: 3 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-5.7%) \u2014 knife still falling.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "WTI Crude",
+      "score": 30.0,
+      "breakdown": {
+        "catalyst": 11.0,
+        "trend": 0.0,
+        "position": 8.0,
+        "supply": 9.0,
+        "volfit": 2.0
+      },
+      "trend_desc": "down, mom -22.1%",
+      "volfit_desc": "ATR 6.4%",
+      "note": "Iran/geopolitics premium vs demand worries",
+      "price": 69.23,
+      "mom20": -22.13,
+      "atr_pct": 6.36,
+      "ma20": 83.24,
+      "ma50": 91.99,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Energy",
+      "ticker": "CL=F",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Gold/silver/oil + crypto; few/no softs"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Wide commodity CFDs incl some softs"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals, energy, softs (coffee/sugar/cocoa)"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals + energy; crypto strong"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "Broad commodity CFDs incl ags"
+        },
+        {
+          "name": "FundedNext",
+          "type": "propfirm",
+          "leverage": "Stellar 2-step 8/5, d5, m10 static",
+          "notes": "Metals+oil yes; softs limited"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5, d5, m10 static",
+          "notes": "Metals+energy; no ags"
+        },
+        {
+          "name": "GoatFunded",
+          "type": "propfirm",
+          "leverage": "2-step 8/6, d4, m10 static",
+          "notes": "Metals+oil"
+        },
+        {
+          "name": "FundingPips",
+          "type": "propfirm",
+          "leverage": "2-step 8/5, d5, m10 static",
+          "notes": "Metals+energy"
+        },
+        {
+          "name": "The5ers",
+          "type": "propfirm",
+          "leverage": "High Stakes 10/5, d5, m10 static",
+          "notes": "Metals+energy"
+        },
+        {
+          "name": "E8 Markets",
+          "type": "propfirm",
+          "leverage": "Classic 8/4, d4, m8 TRAILING",
+          "notes": "Metals+energy"
+        }
+      ],
+      "news": [
+        {
+          "title": "Current price of oil as of June 25, 2026 - Fortune",
+          "source": "Fortune",
+          "date": "Thu, 25 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE1BVkEzb3pHY3dTUEMxWTMyRjE5NmNDTVZaMnFYUlhIZUZkVWRfMGN5X2hmVkhLUVdYTXRBY0dES1ppa0NRRjdfZ0dRSzdGM1ZROHZMM2pQVEJqNU8yMk9JYUpR?oc=5"
+        },
+        {
+          "title": "U.S. crude oil falls below $70, resuming losses after attack on cargo ship near Oman - CNBC",
+          "source": "CNBC",
+          "date": "Fri, 26 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxOby1fai0wNjh3YlU1MHRfRE1LeVVPRUlPQmZRVlU4V1Vqb3VtZzEzN2E3VmdoSFI2bVZ1Yy1pOUxXaUhNNnZLXy0xcjFNc2V1NzRyTjd4cHkwN21uWGFFLTNqdE16WF94amhIVjBWY29DbkQ3QVotb1pDcDd4emJMaDZoT3RFRnhXZ20xQWRtZzZ4MDRvMnZGOUlzZGVydFlEWXYxZ0d0RDl0T1HSAbABQVVfeXFMUHo4YlVrN05yMUc0bThKVml3YjJ4cHZFVnlFai05STdNNlFrZVNSZXl3Qmh5THRmVFc3OUtHRmwzaFlvc1VteTlmNWFuTmVpTjUxQmhGWllwclhBdTdJUGhUQW5iMEJBei1zcnFRcjBwNXNrcDhjUG1xWG5JZGxENXRxTHFTMUhEaDdOQTdweUJ3YmE3WGY2MHpsSHAyNzF2NkQ0TDBpUUNfQUphTmtybkE?oc=5"
+        },
+        {
+          "title": "Oil falls below $75 per barrel for first time since start of Iran war - Yahoo Finance",
+          "source": "Yahoo Finance",
+          "date": "Wed, 24 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxPODdUcTItdXlrbXYtXzBlNFZOMWVoRUNGSHN6VURuU21vNnZpSXZQNnJfT2RIajF1bjhEX0wtSFV6Sk1oTDk5ZFVMMGQ5MmtzaUZYQlhhOUNYU1dzVHZsOUp6NmlJSUt5a0FSeUdQZi01dENBVkdRcEtkeVlVbFNrSlJJbVI0N1VEM1U3bWJjbmdna0dNMUk2S19ZZmlPRnM4R0lsRWpuUnBxWXFkSkE3ekxDNjRsNUtYd2pRbk03bkQ4MzQ?oc=5"
+        },
+        {
+          "title": "Why are oil prices up today, and will Brent, US WTI crude futures continue to rise or fall again? Cargo sh - The Economic Times",
+          "source": "The Economic Times",
+          "date": "Thu, 25 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMivgJBVV95cUxQUEVDdzFLYjVhS1pNRm83dENjbmQ2cWdjUHdmQ2tMQWRPdW5UUGd2Rm0wampBM2dvTGszMkpudmtXMTYtdnp1c1h0WFhpd3BzV0QxcWRvaHhDT3MtVmM4STJ4ZTc3SFc2ZWtPVkpGVjZ5d2E1RFo5cjFNZE9SOUVlNUExc1pVbFpKdi0yTmdSaGpoTFdOb3VQcFMtSEs3WkhLSEROSm9vekRrY0VwU1ZWZF83OV95VVdlZVc0bHo2QU1LZ2c4VlNjbzVzV0ZFdGVLa0tVY0dlMXhLTVlGeVlkV2xpLUQ3Qm1mbWtkbFg3YTBuTUxrUW1oSHdYeV9JVXpKc0hrcmJiOElzSFN1X1lTQmhlbC1jeHZYY0Q4TVI1MVEyRVh5ODB5RjZqMHlJUHlkOW0xc0o5b1BOOHNLaFHSAcMCQVVfeXFMUEhsSnRRSGFBUlBKM2RxU29hdklpQV9ISHNibWhJN1hzZjZRWjJ6TDkwTnB3QkhJem9BaEg5a1RMeno0eDdOQUUza2ZjRFRQV2R4RE1Ndk5td1ZzeVBoWXR0a1FiY1Jqam1odVZpMklKc05OMnRaUURjSTBHUFduRFpFaDU1SUpSNjZKYzNOSnZTS0xzS21raERNLVVjU2JFMzF3ZDBqRzNYV2hvUGxJYkZVQnBORDgweWhmTTRDR08wdFJVN0FZYVhyU0swbjZMR0hJeUQzQjRYMXVFbmN2WTBlLVVmSUdHc1ZfVzF3SzdFdlExRFRneVFrc2JWSTcyRUJaQ2tzbTJ1Q1FyNmg3dnVoZ1dRRmVhbWNHZzBJX3ZncVl0eGhIRnZLOHl0VmphY0RCclpYNjJiVmxsRXpXR0wtUU0?oc=5"
+        },
+        {
+          "title": "U.S. crude oil briefly dips below $70 as tankers transit Strait of Hormuz - CNBC",
+          "source": "CNBC",
+          "date": "Wed, 24 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxOOHJWOEdWNjBvR0dIQXR3ZDRXZ2h4bU1aSExNTDNjRFJld0tsZml3enBXMFNVNFdNSHU3aHAtTC1VdkJoTS11Q1k3MlVWbkRUNjR6TEZlWEZadFpYdE0ybjRHWGVON05abDlhOHprVzh4VFA0VmhmazN1WER5U0xkSkVEUU0zai1UeFNpNjl3ek4wRTJRTmdtd0hxSDRZclRnUGVxQmpncFotQdIBrwFBVV95cUxOVlRVeWp1MkNiUURtOTVwTHpMeDZ5aTlCQ3dXYTRLcmZ3VU9DUHR3WXcxd3gtQndRVTlCcFRFNGtadnVvYXI1UUdXMEoweENjcHJ4eVdiV1VmYzRmYUNhbWFJUVFwRHdVeXRNYXptS3J1VkNDUDFmWDh1RHMzaVJJR2RiaW11UDJXNDF6YzFTcHZWVkY5UTlpU01WQmlfeGRob3Y0Z2VpRklpd0YyZlBN?oc=5"
+        }
+      ],
+      "news_tilt": "bearish news flow",
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 69.23 is below both its 20-day (83.24) and 50-day (91.99) averages \u2014 a confirmed downtrend. 20-day momentum is -22.1%, strong directional push. Volatility (ATR 6.4% of price) is very high \u2014 big swings, size down.",
+        "score_reasoning": "Score 30.0/100 driven by supply/demand (9/20), catalyst (11/25); held back by trend (0/25), volatility fit (2/10). Coverage: 11 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-22.1%) \u2014 knife still falling.",
+          "High volatility (ATR 6.4%) \u2014 wide stops, prop-DD risk.",
+          "Live headlines lean bearish \u2014 news contradicts the chart."
+        ]
+      }
+    },
+    {
+      "name": "Brent",
+      "score": 30.0,
+      "breakdown": {
+        "catalyst": 11.0,
+        "trend": 0.0,
+        "position": 8.0,
+        "supply": 9.0,
+        "volfit": 2.0
+      },
+      "trend_desc": "down, mom -23.2%",
+      "volfit_desc": "ATR 6.0%",
+      "note": "tracks WTI; geopolitical risk premium",
+      "price": 71.99,
+      "mom20": -23.18,
+      "atr_pct": 6.01,
+      "ma20": 86.15,
+      "ma50": 97.21,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Energy",
+      "ticker": "BZ=F",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Gold/silver/oil + crypto; few/no softs"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Wide commodity CFDs incl some softs"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals, energy, softs (coffee/sugar/cocoa)"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals + energy; crypto strong"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "Broad commodity CFDs incl ags"
+        },
+        {
+          "name": "FundedNext",
+          "type": "propfirm",
+          "leverage": "Stellar 2-step 8/5, d5, m10 static",
+          "notes": "Metals+oil yes; softs limited"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5, d5, m10 static",
+          "notes": "Metals+energy; no ags"
+        },
+        {
+          "name": "GoatFunded",
+          "type": "propfirm",
+          "leverage": "2-step 8/6, d4, m10 static",
+          "notes": "Metals+oil"
+        },
+        {
+          "name": "FundingPips",
+          "type": "propfirm",
+          "leverage": "2-step 8/5, d5, m10 static",
+          "notes": "Metals+energy"
+        },
+        {
+          "name": "The5ers",
+          "type": "propfirm",
+          "leverage": "High Stakes 10/5, d5, m10 static",
+          "notes": "Metals+energy"
+        },
+        {
+          "name": "E8 Markets",
+          "type": "propfirm",
+          "leverage": "Classic 8/4, d4, m8 TRAILING",
+          "notes": "Metals+energy"
+        }
+      ],
+      "news": [
+        {
+          "title": "Oil Prices Return to Prewar Levels, Four Months Later - The New York Times",
+          "source": "The New York Times",
+          "date": "Fri, 26 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMikAFBVV95cUxOZVFBVG0xbVNkUlBOWnAzbEZvMllFSUlpclhndUxRY1RZUGo0SlMtWDBqWTZlT1FzNDV2SDljWWdPYkJmdi1WUllJWHh1NmxjSGJYVDVNNi14VlBZRms2clVzSXdrYWdiZVJxaE1KeWJSd0lndUdsMkJmUFF6dGo2RE5vWDgxSzRQTjg0Ym8wa2E?oc=5"
+        },
+        {
+          "title": "Current price of oil as of June 26, 2026 - Fortune",
+          "source": "Fortune",
+          "date": "Fri, 26 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE5FQzFQVGtCaXFQNGRNNGN4SGNob0lWdEViRnV0SGZFX0xUNWNrOUlJUkplT2hLdV9kWnV3bnVTbnNHMWw2cHBham1SRkQtLTBxdFI5dXIxQ0RVZzNJM081UnFR?oc=5"
+        },
+        {
+          "title": "Core Differences Between West Texas Intermediate (WTI) and Brent Crude and the Affect of the Iran War - EnergyNow.com",
+          "source": "EnergyNow.com",
+          "date": "Fri, 26 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiogFBVV95cUxQN1ZOVFVuUnFFYUstVktuczhxdzBYN1lUbUlqbTIwZEVnX2lCclN2dDZyeVJxUnFPLXdLLWhHcTd1MUUyM0kxTFBUZWJZSVlfN2RCZkRlRXhqT3ZfdUJTQkFjSkR1dDFsQ2Rmc19VTERhc1hsV2Nka2RDVEFvZ0FUcFdJQ0dCR21lcm5mZU12UzJZZHlyOFh3WGEzVWpCVDlUeHc?oc=5"
+        },
+        {
+          "title": "July 2, 2026: Brent crude oil price on July 02, 2026 at 5:00 PM EDT Prediction Market - Robinhood",
+          "source": "Robinhood",
+          "date": "Sat, 27 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiywFBVV95cUxQejFmdE8zM2g3bmhTZUh1YWtLYWJqdTc5c0IxQlZsVmw3UjhaanBtLUd0eG83OGw3UzNweUNyTGgyU3Z3Z2pleTFHOU5QNGludl9LRWJpU1NremRuMEt3SzVETFBXUVpveGM0RWl3UjBUOUNOTWZBekc3QXpGUmR6QUwzMTR6VHFxRTVPUnhISDlHV0NPUC15VGNfMnVIbVh2VklRRnJmWldaQUFyV3E4dk52M3hHUkM4SVRCNjNKaENGelJIaFJ5U2RQWQ?oc=5"
+        },
+        {
+          "title": "Brent crude falls below $74 for first time since Iran war began - Euronews",
+          "source": "Euronews",
+          "date": "Wed, 24 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMitAFBVV95cUxPR0ViRzlLY1ZUUjhqTXlYSUVFdHc0Y0RTNTZZajg3MDM5cUFlSkZzVXRWX1hjREVQbm5ial9xaDZ4bFBpTkVyU3BTWFZjTDhLeXRwTE9wUXM0LUc4MGQ5ZDBaVUxNRWJaYmd6QUdNbGU4MS1FYjBjRzFFd1pJTjU2T1E4WExCZFFPck1KOTB6eURqemE4am5Cd1hHb19TaDNDWmRncWFZRW0tT0hpUnV6QXdjNms?oc=5"
+        }
+      ],
+      "news_tilt": "bearish news flow",
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 71.99 is below both its 20-day (86.15) and 50-day (97.21) averages \u2014 a confirmed downtrend. 20-day momentum is -23.2%, strong directional push. Volatility (ATR 6.0% of price) is very high \u2014 big swings, size down.",
+        "score_reasoning": "Score 30.0/100 driven by supply/demand (9/20), catalyst (11/25); held back by trend (0/25), volatility fit (2/10). Coverage: 11 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-23.2%) \u2014 knife still falling.",
+          "High volatility (ATR 6.0%) \u2014 wide stops, prop-DD risk.",
+          "Live headlines lean bearish \u2014 news contradicts the chart."
+        ]
+      }
+    },
+    {
+      "name": "Platinum",
+      "score": 29.0,
+      "breakdown": {
+        "catalyst": 6.0,
+        "trend": 0.0,
+        "position": 9.0,
+        "supply": 11.0,
+        "volfit": 3.0
+      },
+      "trend_desc": "down, mom -15.1%",
+      "volfit_desc": "ATR 0.1%",
+      "note": "auto + industrial deficit; thin liquidity",
+      "price": 1630.9,
+      "mom20": -15.13,
+      "atr_pct": 0.09,
+      "ma20": 1753.84,
+      "ma50": 1906.7,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Metals",
+      "ticker": "PL=F",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Gold/silver/oil + crypto; few/no softs"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Wide commodity CFDs incl some softs"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals, energy, softs (coffee/sugar/cocoa)"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals + energy; crypto strong"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "Broad commodity CFDs incl ags"
+        },
+        {
+          "name": "FundedNext",
+          "type": "propfirm",
+          "leverage": "Stellar 2-step 8/5, d5, m10 static",
+          "notes": "Metals+oil yes; softs limited"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5, d5, m10 static",
+          "notes": "Metals+energy; no ags"
+        },
+        {
+          "name": "GoatFunded",
+          "type": "propfirm",
+          "leverage": "2-step 8/6, d4, m10 static",
+          "notes": "Metals+oil"
+        },
+        {
+          "name": "FundingPips",
+          "type": "propfirm",
+          "leverage": "2-step 8/5, d5, m10 static",
+          "notes": "Metals+energy"
+        },
+        {
+          "name": "The5ers",
+          "type": "propfirm",
+          "leverage": "High Stakes 10/5, d5, m10 static",
+          "notes": "Metals+energy"
+        },
+        {
+          "name": "E8 Markets",
+          "type": "propfirm",
+          "leverage": "Classic 8/4, d4, m8 TRAILING",
+          "notes": "Metals+energy"
+        }
+      ],
+      "news": [
+        {
+          "title": "Platinum forecast and tracker: How will platinum perform in 2026? - Yahoo Finance",
+          "source": "Yahoo Finance",
+          "date": "Mon, 08 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiowFBVV95cUxOM0t6UVlFc2JzSXJwNHNwdTJzR0hIQjByenRobUJIcUJ1THZYQW54X1VxWjZuM0loTURsalNWZDB4OWlYc1ZaR3BuR29XOGo5aHBIZDVuUm9JeEZ1TC1QSHk5ZEhleEtYWG44TjA5U2pIYWVqR2hCWXAtNVdCQXpoRHROLTRQdHp4MW1McGR3Z1N5aWxtY2tqUEZLdlhNRzhRODNn?oc=5"
+        },
+        {
+          "title": "Platinum's Sell-Off Leaves Fourth Consecutive 297koz Supply Deficit Intact - Crux Investor",
+          "source": "Crux Investor",
+          "date": "Thu, 25 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMirAFBVV95cUxNY1FtZ3IwVHMzRnRyd0N6N2FuZ3pWb1NoR2dnN1l6ZjBscVoyNU5rR3Q1SWRrUnlrM3JYOE93S2ptcW1WVzlGTVczclQxRTRxMmxtNnpwNzNEM3liWDhIRU4tanJRbnctZS1UQWRId3NXU2dKUXQwcGN2ZlVkcXhyNGhkQjk4dzZGVkxPdXRBOFNldWMzU0RlZWhkS3NrZDJSemo0Y0dkQXdlU0Q3?oc=5"
+        },
+        {
+          "title": "Platinum Price Forecast \u2013 Dollar Breakout Signals Deeper Platinum Correction - FXEmpire",
+          "source": "FXEmpire",
+          "date": "Tue, 23 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMizgFBVV95cUxQay1nc1VEVWNLQ2xCZXZwR0JkUzh2SzdOaVZabmFVWVVVcWZuYl85VV9zNnJPdFNUZTB1NF82YmRaU3Yyc2VaLW5zcHQzSE1GMl9pRmp0WE51emxpVU01QldHRl9FQjVMakJaa2UyOW9vZFViMWFrbnlXek9XM2xxOFBqOU9mWW4tVjhYMUdPNk5NblhDLXU3YVh5S3ZzRS1SUi1jQnpQX1NWNnM2M2tfcE02NTcwdkRtdEwycWJObmNEeDRfVVRFSHpzVmp2dw?oc=5"
+        },
+        {
+          "title": "Platinum, palladium extend losses as Bank of America maintains bullish year-end price outlook - KITCO",
+          "source": "KITCO",
+          "date": "Tue, 09 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiugFBVV95cUxPSE1adnhWR0EzQUxzdkk0THUwQ0JHRXVud3ctSEVmNHdfXzFjUTRTNERNTGJxemlwM2EwdkNjNHNGOTB6UEN3MUJGcXJMZDlwdENxNGdiVjFGWHRkUjBpVFFORnpSclpVaTZIaFpzcGhudzNmeV9NTFpoc19uVUtVZEtvZEFNbWtZY2dEMTJCR1BZSVFjdHQ5aWg1UnQ1aUJYMWJ0VGZ1TGpfMmZGRk1qRmFNUjNyMVNnWHc?oc=5"
+        },
+        {
+          "title": "Platinum Price Tests $1,700 Support as Selling Pressure Deepens - Brave New Coin",
+          "source": "Brave New Coin",
+          "date": "Thu, 25 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMimwFBVV95cUxORVF0VWl3a1ZKMkE4Y0NzMlljdVc5WEVTTTc4aVNEVFdBOTliTGN1bXFKU1hDMlFINUY3OFBEU2FuckF3RDFwVlo5bW5sdG5ybWgtMUFhd01CcjIwZVhyVUl1US1YX3NpbHlyNGNRNHhBNm4wVUx3eVZVSFpKYkJmX01HcU02WW0tb0d2WUJiREVua1pFWHJvczZaSQ?oc=5"
+        }
+      ],
+      "news_tilt": "mixed news flow",
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 1630.9 is below both its 20-day (1753.84) and 50-day (1906.7) averages \u2014 a confirmed downtrend. 20-day momentum is -15.1%, strong directional push. Volatility (ATR 0.1% of price) is low \u2014 quiet tape.",
+        "score_reasoning": "Score 29.0/100 driven by supply/demand (11/20), positioning (9/20); held back by trend (0/25), catalyst (6/25). Coverage: 11 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-15.1%) \u2014 knife still falling.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "Corn",
+      "score": 29.0,
+      "breakdown": {
+        "catalyst": 6.0,
+        "trend": 0.0,
+        "position": 7.0,
+        "supply": 6.0,
+        "volfit": 10.0
+      },
+      "trend_desc": "down, mom -9.4%",
+      "volfit_desc": "ATR 2.0%",
+      "note": "US crop conditions",
+      "price": 412.75,
+      "mom20": -9.43,
+      "atr_pct": 2.02,
+      "ma20": 420.5,
+      "ma50": 444.31,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Ags",
+      "ticker": "ZC=F",
+      "coverage": [
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Wide commodity CFDs incl some softs"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals, energy, softs (coffee/sugar/cocoa)"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "Broad commodity CFDs incl ags"
+        }
+      ],
+      "news": [
+        {
+          "title": "Corn Futures - CME Group",
+          "source": "CME Group",
+          "date": "Sat, 06 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE91Y2dXRV9nTmt4dlJGV2U5SGpNNlVpMTUtaVJTUk1QWE1EU293MEJXRkhzeUVPOHBheUxxbXFpRTRKRjRvRDhzc2JNakNOLTNRNDlFd3pidjRRSldhSTV5eWttcWZBTmc?oc=5"
+        },
+        {
+          "title": "Why Lower Corn Prices May Not Last Through Summer - Successful Farming",
+          "source": "Successful Farming",
+          "date": "Wed, 24 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMijwFBVV95cUxORFdOVnI5Rmk3cmRlN3k4cWRpRGhQS1hzelVxUW1kUVItLVlnZ0Y0cWNiWjhfVnpsLVE2TFYyNUtKMGw4eE1MWUpxcDgwUUhrTEIyZENsaGEyTTA4Tmttei1NQjJtaVRjdzJESlIzU1JhdU5vckJZa3pHa25YME03eXREcXcweWdkcG90OXdhdw?oc=5"
+        },
+        {
+          "title": "What Did the June WASDE Report Tell the Corn Futures Market? - Barchart.com",
+          "source": "Barchart.com",
+          "date": "Thu, 25 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiogFBVV95cUxOcGVILW4yN1NXUmVxVFZscnZvMkplcFZFMXA4dWVQMVZHSjhIMFJLMExKcmhlaVpfVjB5WFlOVmt2eVRFM1ZUODc0bWxCQVFxS04tbXdmUWlfNHJwcU5LTS02XzBOdlZYSl9BS3BlMnNZUlZZckVXa2hEaTlBRVBmbWhkenVxbGRKZEF5V1djSzZxRzJfS0RoejZyMTlmM0Q4TkE?oc=5"
+        },
+        {
+          "title": "Corn futures extend losses as oil prices decline and dollar strengthens - Economies.com",
+          "source": "Economies.com",
+          "date": "Thu, 25 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxQU1VTNHh2ZURlSEhtc0xSUjR4UUhsc2NtcFR5RG81anY1TlUwZWlFWjRXZmFGbWp4b3VoV0w1SkZvWHhvVElZMWFhRmR3OGJwY2xqRTF0UXVLNmZBZGZkQTQyY1dKM1psbDMzUHBMSjdPVnFheUhVY1hYd1BMTWg3NXk5M1M0OU85R1RSbkdlV0h2ZmNIeEQzc2ZhTG9JMjNEVkZlemo5NWVaQ18wb2tMbG9yd0VEa0lTSnhDNWhWRUhFOFE?oc=5"
+        },
+        {
+          "title": "Corn Futures (CORN-F) Is up 2.17% on Jun 26: Why It Happened - TradingKey",
+          "source": "TradingKey",
+          "date": "Fri, 26 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMijgFBVV95cUxQRGlNdmpJVGtHcFVNeFhCREN5UFhuYzRFdGFWajlGQUphZ3FJaDlDTzRyVW5lWURiSXJmTlNRSkY3aVYycWhrYURGSGpwVlFhUHJPbG1sRmRPdU85U2RJR2ZoR0tGaUVNLUJweTM1aTJkV3dGMHJ5cW40WUpUUzl4ZDJMMU9ibTlDZUpFM3lB?oc=5"
+        }
+      ],
+      "news_tilt": "mixed news flow",
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 412.75 is below both its 20-day (420.5) and 50-day (444.31) averages \u2014 a confirmed downtrend. 20-day momentum is -9.4%, strong directional push. Volatility (ATR 2.0% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 29.0/100 driven by volatility fit (10/10), positioning (7/20); held back by trend (0/25), catalyst (6/25). Coverage: 3 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-9.4%) \u2014 knife still falling.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "Palladium",
+      "score": 22.0,
+      "breakdown": {
+        "catalyst": 5.0,
+        "trend": 0.0,
+        "position": 7.0,
+        "supply": 7.0,
+        "volfit": 3.0
+      },
+      "trend_desc": "down, mom -12.2%",
+      "volfit_desc": "ATR 0.2%",
+      "note": "auto demand softening on EV shift",
+      "price": 1209.0,
+      "mom20": -12.24,
+      "atr_pct": 0.18,
+      "ma20": 1274.91,
+      "ma50": 1394.81,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Metals",
+      "ticker": "PA=F",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Gold/silver/oil + crypto; few/no softs"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Wide commodity CFDs incl some softs"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals, energy, softs (coffee/sugar/cocoa)"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Metals + energy; crypto strong"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "Broad commodity CFDs incl ags"
+        },
+        {
+          "name": "FundedNext",
+          "type": "propfirm",
+          "leverage": "Stellar 2-step 8/5, d5, m10 static",
+          "notes": "Metals+oil yes; softs limited"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5, d5, m10 static",
+          "notes": "Metals+energy; no ags"
+        },
+        {
+          "name": "GoatFunded",
+          "type": "propfirm",
+          "leverage": "2-step 8/6, d4, m10 static",
+          "notes": "Metals+oil"
+        },
+        {
+          "name": "FundingPips",
+          "type": "propfirm",
+          "leverage": "2-step 8/5, d5, m10 static",
+          "notes": "Metals+energy"
+        },
+        {
+          "name": "The5ers",
+          "type": "propfirm",
+          "leverage": "High Stakes 10/5, d5, m10 static",
+          "notes": "Metals+energy"
+        },
+        {
+          "name": "E8 Markets",
+          "type": "propfirm",
+          "leverage": "Classic 8/4, d4, m8 TRAILING",
+          "notes": "Metals+energy"
+        }
+      ],
+      "news": [
+        {
+          "title": "IBA to Administer LBMA Platinum and Palladium Price Benchmarks from 1 July 2026 - LBMA",
+          "source": "LBMA",
+          "date": "Wed, 24 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMisgFBVV95cUxOWXRTVGZVZEZmRnI5cktxYUlRVXRXUG5rV2w0M0tWR2JMSEp5X3NDS3ZyOWw4R3lQemNwSnBaeWRsa0x6R3Y0Qll5OXBKWE1raFFsMWhHZl9ENVJid0ZNYTZHdk8zRHROeXJrN3RFY1B0SVJlenN4MjhxcE1FSm5kZms5SThrUEhZOU1Pc2lDVjU5WGw5N1dQVzdPUHlTVkowNUlad2RsRkNxcTlkZ2w4OTdR?oc=5"
+        },
+        {
+          "title": "Precious Metals News: Gold, Silver, PGMs Prices Slide as Investors Brace for Fed Meeting - Investing News Network",
+          "source": "Investing News Network",
+          "date": "Thu, 11 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMiZkFVX3lxTE1MaVc4ZjNDS0tkcHpwX1JQQXF2aFZUY2FSaDBXejA2bDVZdGhheFhpbTl0R1lfckhuTEt5OXJBX29Ob2E0VUtHWlNOMHhaZnlCcEsxMWpYblRJVmtwN3czNG4tZWtWUQ?oc=5"
+        },
+        {
+          "title": "Precious Metal Price Forecasts 2026: Gold, Silver Platinum and Palladium - BullionVault",
+          "source": "BullionVault",
+          "date": "Mon, 08 Jun 2026",
+          "link": "https://news.google.com/rss/articles/CBMilAFBVV95cUxQc0N1SjRWTnE4Z0FnZDBmZmFtYjVCV2ZYcW5Dd3hYQkQ0b19sTmJIVVVPbGxJbFNFM3ZEdUxjTEJhQldjZV9mb3ZWZGtZRVJGXzRSSVRNZjQ3NU1GU1VBd2h5WXFEMnI4aEJSNERlYktTdThYa3VlY1loMXF4LXYySmNpbWJFUGw5SFdEMml5QmV4SjBu?oc=5"
+        },
+        {
+          "title": "Montana\u2019s largest mine wins trade case, sees palladium prices rebound - Daily Montanan",
+          "source": "Daily Montanan",
+          "date": "Fri, 20 Feb 2026",
+          "link": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxQNWpCMkUzZUp3R2ZjNnpGOUcydGZDd2pJVlJ0c2d2aENjRHhKUEl1TWpVcUw4Yl9wOVE0djRfSGV1cVhnQVpGYlB2eThmbGN3ZVdrSGR5bWdOVHNlTWlaN3VIeEdHTERpQTB5WEhKUE9kQ0VvSGJTYkpuTGY0aVRxUXoyN280a0xZdkNKSmRSdUFWUklldExRTFFKMTNHb0JXbE9zcklQZUE?oc=5"
+        },
+        {
+          "title": "What\u2019s Driving Platinum and Palladium Prices? - CME Group",
+          "source": "CME Group",
+          "date": "Wed, 12 Nov 2025",
+          "link": "https://news.google.com/rss/articles/CBMiogFBVV95cUxOVXFaNnQwNjRwWXJGVGJNWExkdzlpeG0zZEdIWDRvN1llY0xNTHhZZTJPdEh4SnRhUEZCQ1RlOXRJQUYwZ1R2RnR5S3A5VTN2QzA4b2NrLWc5OElwd21uUnFmcnV3amRVYjRwcmNPYTBkd2Z3cV9ZWUxWTnhfVXFBd0dIQVFlTHFFaGtTZHBCUW9fMVFncG9hTk5Hb0o1eDJnZXc?oc=5"
+        }
+      ],
+      "news_tilt": "mixed news flow",
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 1209.0 is below both its 20-day (1274.91) and 50-day (1394.81) averages \u2014 a confirmed downtrend. 20-day momentum is -12.2%, strong directional push. Volatility (ATR 0.2% of price) is low \u2014 quiet tape.",
+        "score_reasoning": "Score 22.0/100 driven by positioning (7/20), supply/demand (7/20); held back by trend (0/25), catalyst (5/25). Coverage: 11 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-12.2%) \u2014 knife still falling.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    }
+  ]
+}

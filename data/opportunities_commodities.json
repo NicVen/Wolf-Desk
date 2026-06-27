@@ -1,0 +1,1213 @@
+{
+  "generated": "2026-06-27 05:00 UTC",
+  "asset": "Commodities",
+  "class": "commodities",
+  "opportunities": [
+    {
+      "name": "Cocoa",
+      "score": 69.0,
+      "breakdown": {
+        "catalyst": 9.0,
+        "trend": 25,
+        "position": 13.0,
+        "supply": 16.0,
+        "volfit": 6.0
+      },
+      "trend_desc": "up, mom +22.3%",
+      "volfit_desc": "ATR 3.4%",
+      "note": "W.Africa deficit; structurally tight, extreme moves",
+      "price": 5014.0,
+      "mom20": 22.32,
+      "atr_pct": 3.43,
+      "ma20": 4154.45,
+      "ma50": 3932.62,
+      "above_ma20": true,
+      "above_ma50": true,
+      "ma_stack_up": true,
+      "category": "Ags",
+      "ticker": "CC=F",
+      "covkey": "ags",
+      "coverage": [
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "FX, commodities, indices; limited shares"
+        }
+      ],
+      "analysis": {
+        "verdict": "BUY",
+        "conviction": "High",
+        "summary": "BUY \u2014 conviction High. The data leans long: Trend up \u2014 price over rising 20/50-day averages.",
+        "price_reasoning": "Price 5014.0 sits above both its 20-day (4154.45) and 50-day (3932.62) averages, with the 20 above the 50 \u2014 a confirmed uptrend. 20-day momentum is +22.3%, strong directional push. Volatility (ATR 3.4% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 69.0/100 driven by trend (25/25), supply/demand (16/20); held back by catalyst (9/25), volatility fit (6/10). Coverage: 3 venues offer it.",
+        "bull": [
+          "Trend up \u2014 price over rising 20/50-day averages.",
+          "Momentum behind it (+22.3% in 20 days).",
+          "Supply/demand tight \u2014 structural backing: W.Africa deficit; structurally tight, extreme moves",
+          "Positioning/sentiment leaning the trade's way."
+        ],
+        "bear": [
+          "Move is extended \u2014 pullback risk after a vertical run.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "Coffee",
+      "score": 58.6,
+      "breakdown": {
+        "catalyst": 10.0,
+        "trend": 16.6,
+        "position": 12.0,
+        "supply": 14.0,
+        "volfit": 6.0
+      },
+      "trend_desc": "mixed, mom +4.6%",
+      "volfit_desc": "ATR 3.3%",
+      "note": "Brazil/Vietnam supply stress; persistent deficit",
+      "price": 286.75,
+      "mom20": 4.56,
+      "atr_pct": 3.32,
+      "ma20": 265.36,
+      "ma50": 281.14,
+      "above_ma20": true,
+      "above_ma50": true,
+      "ma_stack_up": false,
+      "category": "Ags",
+      "ticker": "KC=F",
+      "covkey": "ags",
+      "coverage": [
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "FX, commodities, indices; limited shares"
+        }
+      ],
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Moderate",
+        "summary": "WATCH \u2014 conviction Moderate. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price 286.75 is mixed against its 20-day (265.36) / 50-day (281.14) averages \u2014 no clean trend yet. 20-day momentum is +4.6%, moderate. Volatility (ATR 3.3% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 58.6/100 driven by supply/demand (14/20), trend (17/25); held back by catalyst (10/25), positioning (12/20). Coverage: 3 venues offer it.",
+        "bull": [
+          "Momentum behind it (+4.6% in 20 days).",
+          "Supply/demand tight \u2014 structural backing: Brazil/Vietnam supply stress; persistent deficit",
+          "Positioning/sentiment leaning the trade's way."
+        ],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout."
+        ]
+      }
+    },
+    {
+      "name": "Silver",
+      "score": 57.0,
+      "breakdown": {
+        "catalyst": 14.0,
+        "trend": 0.0,
+        "position": 15.0,
+        "supply": 18.0,
+        "volfit": 10.0
+      },
+      "trend_desc": "down, mom -21.7%",
+      "volfit_desc": "ATR 1.5%",
+      "note": "6th straight record deficit (~215Moz); UBS $58-60, BofA $65 targets",
+      "price": 59.22,
+      "mom20": -21.72,
+      "atr_pct": 1.49,
+      "ma20": 67.6,
+      "ma50": 73.58,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Metals",
+      "ticker": "SI=F",
+      "covkey": "metals",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "FX, commodities, indices; limited shares"
+        },
+        {
+          "name": "FundedNext",
+          "type": "propfirm",
+          "leverage": "Stellar 2-step 8/5 d5 m10 static",
+          "notes": "FX/metals/oil/indices; no shares"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices + stock CFDs"
+        },
+        {
+          "name": "GoatFunded",
+          "type": "propfirm",
+          "leverage": "2-step 8/6 d4 m10 static",
+          "notes": "FX/metals/oil/indices"
+        },
+        {
+          "name": "FundingPips",
+          "type": "propfirm",
+          "leverage": "2-step 8/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices"
+        },
+        {
+          "name": "The5ers",
+          "type": "propfirm",
+          "leverage": "High Stakes 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices"
+        },
+        {
+          "name": "E8 Markets",
+          "type": "propfirm",
+          "leverage": "Classic 8/4 d4 m8 TRAILING",
+          "notes": "FX/metals/energy/indices"
+        }
+      ],
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Moderate",
+        "summary": "SELL \u2014 conviction Moderate. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 59.22 is below both its 20-day (67.6) and 50-day (73.58) averages \u2014 a confirmed downtrend. 20-day momentum is -21.7%, strong directional push. Volatility (ATR 1.5% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 57.0/100 driven by volatility fit (10/10), supply/demand (18/20); held back by trend (0/25), catalyst (14/25). Coverage: 11 venues offer it.",
+        "bull": [
+          "Supply/demand tight \u2014 structural backing: 6th straight record deficit (~215Moz); UBS $58-60, BofA $65 targets",
+          "Positioning/sentiment leaning the trade's way."
+        ],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-21.7%) \u2014 knife still falling."
+        ]
+      }
+    },
+    {
+      "name": "Natural Gas",
+      "score": 46.4,
+      "breakdown": {
+        "catalyst": 8.0,
+        "trend": 15.4,
+        "position": 9.0,
+        "supply": 8.0,
+        "volfit": 6.0
+      },
+      "trend_desc": "up, mom -1.6%",
+      "volfit_desc": "ATR 4.3%",
+      "note": "weather + storage driven; very volatile",
+      "price": 3.23,
+      "mom20": -1.64,
+      "atr_pct": 4.32,
+      "ma20": 3.2,
+      "ma50": 2.97,
+      "above_ma20": true,
+      "above_ma50": true,
+      "ma_stack_up": true,
+      "category": "Energy",
+      "ticker": "NG=F",
+      "covkey": "energy",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "FX, commodities, indices; limited shares"
+        },
+        {
+          "name": "FundedNext",
+          "type": "propfirm",
+          "leverage": "Stellar 2-step 8/5 d5 m10 static",
+          "notes": "FX/metals/oil/indices; no shares"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices + stock CFDs"
+        },
+        {
+          "name": "GoatFunded",
+          "type": "propfirm",
+          "leverage": "2-step 8/6 d4 m10 static",
+          "notes": "FX/metals/oil/indices"
+        },
+        {
+          "name": "FundingPips",
+          "type": "propfirm",
+          "leverage": "2-step 8/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices"
+        },
+        {
+          "name": "The5ers",
+          "type": "propfirm",
+          "leverage": "High Stakes 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices"
+        },
+        {
+          "name": "E8 Markets",
+          "type": "propfirm",
+          "leverage": "Classic 8/4 d4 m8 TRAILING",
+          "notes": "FX/metals/energy/indices"
+        }
+      ],
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Low",
+        "summary": "WATCH \u2014 conviction Low. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price 3.23 sits above both its 20-day (3.2) and 50-day (2.97) averages, with the 20 above the 50 \u2014 a confirmed uptrend. 20-day momentum is -1.6%, flat. Volatility (ATR 4.3% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 46.4/100 driven by trend (15/25), volatility fit (6/10); held back by catalyst (8/25), supply/demand (8/20). Coverage: 11 venues offer it.",
+        "bull": [
+          "Trend up \u2014 price over rising 20/50-day averages."
+        ],
+        "bear": [
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "Gold",
+      "score": 46.0,
+      "breakdown": {
+        "catalyst": 18.0,
+        "trend": 0.0,
+        "position": 10.0,
+        "supply": 8.0,
+        "volfit": 10.0
+      },
+      "trend_desc": "down, mom -9.3%",
+      "volfit_desc": "ATR 1.9%",
+      "note": "NFP Fri catalyst; YE targets $4.9k-6k but near-term capped by hawkish Fed + real yields",
+      "price": 4078.7,
+      "mom20": -9.35,
+      "atr_pct": 1.91,
+      "ma20": 4271.85,
+      "ma50": 4488.1,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Metals",
+      "ticker": "GC=F",
+      "covkey": "metals",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "FX, commodities, indices; limited shares"
+        },
+        {
+          "name": "FundedNext",
+          "type": "propfirm",
+          "leverage": "Stellar 2-step 8/5 d5 m10 static",
+          "notes": "FX/metals/oil/indices; no shares"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices + stock CFDs"
+        },
+        {
+          "name": "GoatFunded",
+          "type": "propfirm",
+          "leverage": "2-step 8/6 d4 m10 static",
+          "notes": "FX/metals/oil/indices"
+        },
+        {
+          "name": "FundingPips",
+          "type": "propfirm",
+          "leverage": "2-step 8/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices"
+        },
+        {
+          "name": "The5ers",
+          "type": "propfirm",
+          "leverage": "High Stakes 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices"
+        },
+        {
+          "name": "E8 Markets",
+          "type": "propfirm",
+          "leverage": "Classic 8/4 d4 m8 TRAILING",
+          "notes": "FX/metals/energy/indices"
+        }
+      ],
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Low",
+        "summary": "SELL \u2014 conviction Low. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 4078.7 is below both its 20-day (4271.85) and 50-day (4488.1) averages \u2014 a confirmed downtrend. 20-day momentum is -9.3%, strong directional push. Volatility (ATR 1.9% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 46.0/100 driven by volatility fit (10/10), catalyst (18/25); held back by trend (0/25), supply/demand (8/20). Coverage: 11 venues offer it.",
+        "bull": [
+          "Near-term catalyst in play."
+        ],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-9.3%) \u2014 knife still falling."
+        ]
+      }
+    },
+    {
+      "name": "Copper",
+      "score": 44.0,
+      "breakdown": {
+        "catalyst": 9.0,
+        "trend": 1.0,
+        "position": 11.0,
+        "supply": 13.0,
+        "volfit": 10.0
+      },
+      "trend_desc": "down, mom -4.0%",
+      "volfit_desc": "ATR 0.7%",
+      "note": "AI/grid/electrification demand; tight concentrate supply",
+      "price": 6.14,
+      "mom20": -3.98,
+      "atr_pct": 0.66,
+      "ma20": 6.34,
+      "ma50": 6.24,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": true,
+      "category": "Metals",
+      "ticker": "HG=F",
+      "covkey": "metals",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "FX, commodities, indices; limited shares"
+        },
+        {
+          "name": "FundedNext",
+          "type": "propfirm",
+          "leverage": "Stellar 2-step 8/5 d5 m10 static",
+          "notes": "FX/metals/oil/indices; no shares"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices + stock CFDs"
+        },
+        {
+          "name": "GoatFunded",
+          "type": "propfirm",
+          "leverage": "2-step 8/6 d4 m10 static",
+          "notes": "FX/metals/oil/indices"
+        },
+        {
+          "name": "FundingPips",
+          "type": "propfirm",
+          "leverage": "2-step 8/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices"
+        },
+        {
+          "name": "The5ers",
+          "type": "propfirm",
+          "leverage": "High Stakes 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices"
+        },
+        {
+          "name": "E8 Markets",
+          "type": "propfirm",
+          "leverage": "Classic 8/4 d4 m8 TRAILING",
+          "notes": "FX/metals/energy/indices"
+        }
+      ],
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Low",
+        "summary": "WATCH \u2014 conviction Low. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price 6.14 is mixed against its 20-day (6.34) / 50-day (6.24) averages \u2014 no clean trend yet. 20-day momentum is -4.0%, moderate. Volatility (ATR 0.7% of price) is low \u2014 quiet tape.",
+        "score_reasoning": "Score 44.0/100 driven by volatility fit (10/10), supply/demand (13/20); held back by trend (1/25), catalyst (9/25). Coverage: 11 venues offer it.",
+        "bull": [
+          "Supply/demand tight \u2014 structural backing: AI/grid/electrification demand; tight concentrate supply"
+        ],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-4.0%) \u2014 knife still falling.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "Sugar",
+      "score": 39.4,
+      "breakdown": {
+        "catalyst": 7.0,
+        "trend": 6.4,
+        "position": 8.0,
+        "supply": 8.0,
+        "volfit": 10.0
+      },
+      "trend_desc": "mixed, mom +0.4%",
+      "volfit_desc": "ATR 2.3%",
+      "note": "Brazil/India output + ethanol pull",
+      "price": 13.98,
+      "mom20": 0.36,
+      "atr_pct": 2.27,
+      "ma20": 13.89,
+      "ma50": 14.23,
+      "above_ma20": true,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Ags",
+      "ticker": "SB=F",
+      "covkey": "ags",
+      "coverage": [
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "FX, commodities, indices; limited shares"
+        }
+      ],
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Weak",
+        "summary": "WATCH \u2014 conviction Weak. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price 13.98 is mixed against its 20-day (13.89) / 50-day (14.23) averages \u2014 no clean trend yet. 20-day momentum is +0.4%, flat. Volatility (ATR 2.3% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 39.4/100 driven by volatility fit (10/10), positioning (8/20); held back by trend (6/25), catalyst (7/25). Coverage: 3 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "Wheat",
+      "score": 32.0,
+      "breakdown": {
+        "catalyst": 7.0,
+        "trend": 0.0,
+        "position": 8.0,
+        "supply": 7.0,
+        "volfit": 10.0
+      },
+      "trend_desc": "down, mom -7.3%",
+      "volfit_desc": "ATR 2.7%",
+      "note": "harvest + weather; Black Sea headlines",
+      "price": 578.25,
+      "mom20": -7.33,
+      "atr_pct": 2.73,
+      "ma20": 592.1,
+      "ma50": 613.54,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Ags",
+      "ticker": "ZW=F",
+      "covkey": "ags",
+      "coverage": [
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "FX, commodities, indices; limited shares"
+        }
+      ],
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 578.25 is below both its 20-day (592.1) and 50-day (613.54) averages \u2014 a confirmed downtrend. 20-day momentum is -7.3%, moderate. Volatility (ATR 2.7% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 32.0/100 driven by volatility fit (10/10), positioning (8/20); held back by trend (0/25), catalyst (7/25). Coverage: 3 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-7.3%) \u2014 knife still falling.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "Soybeans",
+      "score": 32.0,
+      "breakdown": {
+        "catalyst": 7.0,
+        "trend": 0.0,
+        "position": 8.0,
+        "supply": 7.0,
+        "volfit": 10.0
+      },
+      "trend_desc": "down, mom -5.7%",
+      "volfit_desc": "ATR 1.4%",
+      "note": "China demand + S.American supply",
+      "price": 1126.25,
+      "mom20": -5.71,
+      "atr_pct": 1.38,
+      "ma20": 1130.9,
+      "ma50": 1163.84,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Ags",
+      "ticker": "ZS=F",
+      "covkey": "ags",
+      "coverage": [
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "FX, commodities, indices; limited shares"
+        }
+      ],
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 1126.25 is below both its 20-day (1130.9) and 50-day (1163.84) averages \u2014 a confirmed downtrend. 20-day momentum is -5.7%, moderate. Volatility (ATR 1.4% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 32.0/100 driven by volatility fit (10/10), positioning (8/20); held back by trend (0/25), catalyst (7/25). Coverage: 3 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-5.7%) \u2014 knife still falling.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "WTI Crude",
+      "score": 30.0,
+      "breakdown": {
+        "catalyst": 11.0,
+        "trend": 0.0,
+        "position": 8.0,
+        "supply": 9.0,
+        "volfit": 2.0
+      },
+      "trend_desc": "down, mom -22.1%",
+      "volfit_desc": "ATR 6.4%",
+      "note": "Iran/geopolitics premium vs demand worries",
+      "price": 69.23,
+      "mom20": -22.13,
+      "atr_pct": 6.36,
+      "ma20": 83.24,
+      "ma50": 91.99,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Energy",
+      "ticker": "CL=F",
+      "covkey": "energy",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "FX, commodities, indices; limited shares"
+        },
+        {
+          "name": "FundedNext",
+          "type": "propfirm",
+          "leverage": "Stellar 2-step 8/5 d5 m10 static",
+          "notes": "FX/metals/oil/indices; no shares"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices + stock CFDs"
+        },
+        {
+          "name": "GoatFunded",
+          "type": "propfirm",
+          "leverage": "2-step 8/6 d4 m10 static",
+          "notes": "FX/metals/oil/indices"
+        },
+        {
+          "name": "FundingPips",
+          "type": "propfirm",
+          "leverage": "2-step 8/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices"
+        },
+        {
+          "name": "The5ers",
+          "type": "propfirm",
+          "leverage": "High Stakes 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices"
+        },
+        {
+          "name": "E8 Markets",
+          "type": "propfirm",
+          "leverage": "Classic 8/4 d4 m8 TRAILING",
+          "notes": "FX/metals/energy/indices"
+        }
+      ],
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 69.23 is below both its 20-day (83.24) and 50-day (91.99) averages \u2014 a confirmed downtrend. 20-day momentum is -22.1%, strong directional push. Volatility (ATR 6.4% of price) is very high \u2014 big swings, size down.",
+        "score_reasoning": "Score 30.0/100 driven by supply/demand (9/20), catalyst (11/25); held back by trend (0/25), volatility fit (2/10). Coverage: 11 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-22.1%) \u2014 knife still falling.",
+          "High volatility (ATR 6.4%) \u2014 wide stops, prop-DD risk."
+        ]
+      }
+    },
+    {
+      "name": "Brent",
+      "score": 30.0,
+      "breakdown": {
+        "catalyst": 11.0,
+        "trend": 0.0,
+        "position": 8.0,
+        "supply": 9.0,
+        "volfit": 2.0
+      },
+      "trend_desc": "down, mom -23.2%",
+      "volfit_desc": "ATR 6.0%",
+      "note": "tracks WTI; geopolitical risk premium",
+      "price": 71.99,
+      "mom20": -23.18,
+      "atr_pct": 6.01,
+      "ma20": 86.15,
+      "ma50": 97.21,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Energy",
+      "ticker": "BZ=F",
+      "covkey": "energy",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "FX, commodities, indices; limited shares"
+        },
+        {
+          "name": "FundedNext",
+          "type": "propfirm",
+          "leverage": "Stellar 2-step 8/5 d5 m10 static",
+          "notes": "FX/metals/oil/indices; no shares"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices + stock CFDs"
+        },
+        {
+          "name": "GoatFunded",
+          "type": "propfirm",
+          "leverage": "2-step 8/6 d4 m10 static",
+          "notes": "FX/metals/oil/indices"
+        },
+        {
+          "name": "FundingPips",
+          "type": "propfirm",
+          "leverage": "2-step 8/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices"
+        },
+        {
+          "name": "The5ers",
+          "type": "propfirm",
+          "leverage": "High Stakes 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices"
+        },
+        {
+          "name": "E8 Markets",
+          "type": "propfirm",
+          "leverage": "Classic 8/4 d4 m8 TRAILING",
+          "notes": "FX/metals/energy/indices"
+        }
+      ],
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 71.99 is below both its 20-day (86.15) and 50-day (97.21) averages \u2014 a confirmed downtrend. 20-day momentum is -23.2%, strong directional push. Volatility (ATR 6.0% of price) is very high \u2014 big swings, size down.",
+        "score_reasoning": "Score 30.0/100 driven by supply/demand (9/20), catalyst (11/25); held back by trend (0/25), volatility fit (2/10). Coverage: 11 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-23.2%) \u2014 knife still falling.",
+          "High volatility (ATR 6.0%) \u2014 wide stops, prop-DD risk."
+        ]
+      }
+    },
+    {
+      "name": "Platinum",
+      "score": 29.0,
+      "breakdown": {
+        "catalyst": 6.0,
+        "trend": 0.0,
+        "position": 9.0,
+        "supply": 11.0,
+        "volfit": 3.0
+      },
+      "trend_desc": "down, mom -15.1%",
+      "volfit_desc": "ATR 0.1%",
+      "note": "auto + industrial deficit; thin liquidity",
+      "price": 1630.9,
+      "mom20": -15.13,
+      "atr_pct": 0.09,
+      "ma20": 1753.84,
+      "ma50": 1906.7,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Metals",
+      "ticker": "PL=F",
+      "covkey": "metals",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "FX, commodities, indices; limited shares"
+        },
+        {
+          "name": "FundedNext",
+          "type": "propfirm",
+          "leverage": "Stellar 2-step 8/5 d5 m10 static",
+          "notes": "FX/metals/oil/indices; no shares"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices + stock CFDs"
+        },
+        {
+          "name": "GoatFunded",
+          "type": "propfirm",
+          "leverage": "2-step 8/6 d4 m10 static",
+          "notes": "FX/metals/oil/indices"
+        },
+        {
+          "name": "FundingPips",
+          "type": "propfirm",
+          "leverage": "2-step 8/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices"
+        },
+        {
+          "name": "The5ers",
+          "type": "propfirm",
+          "leverage": "High Stakes 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices"
+        },
+        {
+          "name": "E8 Markets",
+          "type": "propfirm",
+          "leverage": "Classic 8/4 d4 m8 TRAILING",
+          "notes": "FX/metals/energy/indices"
+        }
+      ],
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 1630.9 is below both its 20-day (1753.84) and 50-day (1906.7) averages \u2014 a confirmed downtrend. 20-day momentum is -15.1%, strong directional push. Volatility (ATR 0.1% of price) is low \u2014 quiet tape.",
+        "score_reasoning": "Score 29.0/100 driven by supply/demand (11/20), positioning (9/20); held back by trend (0/25), catalyst (6/25). Coverage: 11 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-15.1%) \u2014 knife still falling.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "Corn",
+      "score": 29.0,
+      "breakdown": {
+        "catalyst": 6.0,
+        "trend": 0.0,
+        "position": 7.0,
+        "supply": 6.0,
+        "volfit": 10.0
+      },
+      "trend_desc": "down, mom -9.4%",
+      "volfit_desc": "ATR 2.0%",
+      "note": "US crop conditions",
+      "price": 412.75,
+      "mom20": -9.43,
+      "atr_pct": 2.02,
+      "ma20": 420.5,
+      "ma50": 444.31,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Ags",
+      "ticker": "ZC=F",
+      "covkey": "ags",
+      "coverage": [
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "FX, commodities, indices; limited shares"
+        }
+      ],
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 412.75 is below both its 20-day (420.5) and 50-day (444.31) averages \u2014 a confirmed downtrend. 20-day momentum is -9.4%, strong directional push. Volatility (ATR 2.0% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 29.0/100 driven by volatility fit (10/10), positioning (7/20); held back by trend (0/25), catalyst (6/25). Coverage: 3 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-9.4%) \u2014 knife still falling.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "Palladium",
+      "score": 22.0,
+      "breakdown": {
+        "catalyst": 5.0,
+        "trend": 0.0,
+        "position": 7.0,
+        "supply": 7.0,
+        "volfit": 3.0
+      },
+      "trend_desc": "down, mom -12.2%",
+      "volfit_desc": "ATR 0.2%",
+      "note": "auto demand softening on EV shift",
+      "price": 1209.0,
+      "mom20": -12.24,
+      "atr_pct": 0.18,
+      "ma20": 1274.91,
+      "ma50": 1394.81,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Metals",
+      "ticker": "PA=F",
+      "covkey": "metals",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        },
+        {
+          "name": "OANDA",
+          "type": "broker",
+          "leverage": "varies",
+          "notes": "FX, commodities, indices; limited shares"
+        },
+        {
+          "name": "FundedNext",
+          "type": "propfirm",
+          "leverage": "Stellar 2-step 8/5 d5 m10 static",
+          "notes": "FX/metals/oil/indices; no shares"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices + stock CFDs"
+        },
+        {
+          "name": "GoatFunded",
+          "type": "propfirm",
+          "leverage": "2-step 8/6 d4 m10 static",
+          "notes": "FX/metals/oil/indices"
+        },
+        {
+          "name": "FundingPips",
+          "type": "propfirm",
+          "leverage": "2-step 8/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices"
+        },
+        {
+          "name": "The5ers",
+          "type": "propfirm",
+          "leverage": "High Stakes 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices"
+        },
+        {
+          "name": "E8 Markets",
+          "type": "propfirm",
+          "leverage": "Classic 8/4 d4 m8 TRAILING",
+          "notes": "FX/metals/energy/indices"
+        }
+      ],
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 1209.0 is below both its 20-day (1274.91) and 50-day (1394.81) averages \u2014 a confirmed downtrend. 20-day momentum is -12.2%, strong directional push. Volatility (ATR 0.2% of price) is low \u2014 quiet tape.",
+        "score_reasoning": "Score 22.0/100 driven by positioning (7/20), supply/demand (7/20); held back by trend (0/25), catalyst (5/25). Coverage: 11 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-12.2%) \u2014 knife still falling.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    }
+  ]
+}

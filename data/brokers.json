@@ -1,0 +1,18 @@
+{
+  "_doc": "Broker/propfirm coverage by asset key. Verify symbols/leverage before trading. Updated 2026-06-27.",
+  "brokers": [
+    {"name": "BlackBull Markets", "type": "broker", "metals": true, "energy": true,  "ags": false, "fx": true, "indices": true, "stocks": true,  "max_leverage": "500:1", "notes": "FX, metals, oil, indices, shares + crypto"},
+    {"name": "IC Markets",        "type": "broker", "metals": true, "energy": true,  "ags": true,  "fx": true, "indices": true, "stocks": true,  "max_leverage": "500:1", "notes": "Broad: FX, commodities incl softs, indices, shares"},
+    {"name": "Pepperstone",       "type": "broker", "metals": true, "energy": true,  "ags": true,  "fx": true, "indices": true, "stocks": true,  "max_leverage": "500:1", "notes": "FX, softs, indices, share CFDs"},
+    {"name": "Eightcap",          "type": "broker", "metals": true, "energy": true,  "ags": false, "fx": true, "indices": true, "stocks": true,  "max_leverage": "500:1", "notes": "FX, metals, energy, indices, shares, crypto"},
+    {"name": "OANDA",             "type": "broker", "metals": true, "energy": true,  "ags": true,  "fx": true, "indices": true, "stocks": false, "max_leverage": "varies","notes": "FX, commodities, indices; limited shares"}
+  ],
+  "propfirms": [
+    {"name": "FundedNext",  "type": "propfirm", "metals": true, "energy": true, "ags": false, "fx": true, "indices": true, "stocks": false, "rules": "Stellar 2-step 8/5 d5 m10 static", "notes": "FX/metals/oil/indices; no shares"},
+    {"name": "FTMO",        "type": "propfirm", "metals": true, "energy": true, "ags": false, "fx": true, "indices": true, "stocks": true,  "rules": "2-step 10/5 d5 m10 static",      "notes": "FX/metals/energy/indices + stock CFDs"},
+    {"name": "GoatFunded",  "type": "propfirm", "metals": true, "energy": true, "ags": false, "fx": true, "indices": true, "stocks": false, "rules": "2-step 8/6 d4 m10 static",        "notes": "FX/metals/oil/indices"},
+    {"name": "FundingPips", "type": "propfirm", "metals": true, "energy": true, "ags": false, "fx": true, "indices": true, "stocks": false, "rules": "2-step 8/5 d5 m10 static",        "notes": "FX/metals/energy/indices"},
+    {"name": "The5ers",     "type": "propfirm", "metals": true, "energy": true, "ags": false, "fx": true, "indices": true, "stocks": false, "rules": "High Stakes 10/5 d5 m10 static",  "notes": "FX/metals/energy/indices"},
+    {"name": "E8 Markets",  "type": "propfirm", "metals": true, "energy": true, "ags": false, "fx": true, "indices": true, "stocks": false, "rules": "Classic 8/4 d4 m8 TRAILING",     "notes": "FX/metals/energy/indices"}
+  ]
+}
