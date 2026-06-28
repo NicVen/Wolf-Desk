@@ -1,15 +1,18 @@
-"""THE WOLF — daily Telegram auto-post.
+"""THE WOLF — daily Telegram auto-post (tailored per channel).
 
-Builds fresh data, composes a branded teaser of the top picks across all asset
-classes, and posts it to your FREE Telegram channel (to funnel toward VIP).
+  STAALWAG channel  <-  Gold & Commodities desk
+  VELDRIN channel   <-  FX desk
+
+Builds fresh data, composes a branded post per desk, posts to each channel.
 
 Env:
-  TELEGRAM_BOT_TOKEN   bot token from @BotFather (bot must be admin of channel)
-  TELEGRAM_CHANNEL     @yourchannel  or  -100xxxxxxxxxx (channel id)
-  WOLF_VIP_LINK        invite/join link shown as the call-to-action (optional)
+  TELEGRAM_BOT_TOKEN   bot token (@BotFather); bot must be ADMIN of each channel
+  STAALWAG_CHANNEL     @handle or -100id   (gold/commodities)
+  VELDRIN_CHANNEL      @handle or -100id   (FX)
+  STAALWAG_VIP         join/CTA link (optional)
+  VELDRIN_VIP          join/CTA link (optional)
 
-No token set = DRY RUN: prints the post instead of sending (safe to test).
-
+No token = DRY RUN: prints both posts instead of sending.
 Run:  python wolf_post.py
 """
 import os, sys, json, datetime
@@ -23,72 +26,71 @@ except Exception:
     pass
 import requests
 
-TOKEN   = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-CHANNEL = os.environ.get("TELEGRAM_CHANNEL", "")
-VIP     = os.environ.get("WOLF_VIP_LINK", "")
+TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 
-EMO = {"commodities": "🛢️", "fx": "💱", "indices": "📈", "stocks": "📊"}
+# desk -> (env channel, env vip, asset-class key, brand header, lead name or None)
+DESKS = [
+    ("STAALWAG_CHANNEL", "STAALWAG_VIP", "commodities",
+     "🥇 <b>STAALWAG — Gold &amp; Commodities Desk</b>", "Gold"),
+    ("VELDRIN_CHANNEL",  "VELDRIN_VIP",  "fx",
+     "💱 <b>VELDRIN — FX Desk</b>", None),
+]
 
 
 def load(cls):
-    p = os.path.join(C.DATA_DIR, f"opportunities_{cls}.json")
-    with open(p, "r", encoding="utf-8") as f:
+    with open(os.path.join(C.DATA_DIR, f"opportunities_{cls}.json"), "r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def compose():
-    today = datetime.datetime.utcnow().strftime("%d %b %Y")
-    per_class, allrows = [], []
-    for key in C.ASSET_CLASSES:
-        data = load(key)
-        ops = data.get("opportunities", [])
-        if not ops:
-            continue
-        top = ops[0]
-        per_class.append((key, data.get("asset", key), top))
-        for o in ops:
-            o["_class"] = data.get("asset", key)
-            allrows.append(o)
-    allrows.sort(key=lambda r: r["score"], reverse=True)
+def line(o):
+    v = o.get("analysis", {}).get("verdict", "")
+    return f"• <b>{o['name']}</b> — {v} · score <b>{o['score']}</b>\n   <i>{o.get('trend_desc','')}</i>"
 
-    L = []
-    L.append("🐺 <b>THE WOLF — Daily Market Read</b>")
-    L.append(f"<i>{today} · scouted across Commodities · FX · Indices · Stocks</i>")
+
+def compose(clskey, brand, lead, vip):
+    today = datetime.datetime.utcnow().strftime("%d %b %Y")
+    ops = load(clskey).get("opportunities", [])
+    L = [brand, f"<i>{today} · WOLF intel read</i>", ""]
+    if lead:
+        led = next((o for o in ops if o["name"] == lead), None)
+        if led:
+            L.append("<b>Headline:</b>")
+            L.append(line(led)); L.append("")
+    L.append("<b>Top opportunities today:</b>")
+    for o in ops[:3]:
+        L.append(line(o))
     L.append("")
-    L.append("<b>🎯 Top 3 opportunities right now:</b>")
-    for o in allrows[:3]:
-        v = o.get("analysis", {}).get("verdict", "")
-        L.append(f"• <b>{o['name']}</b> ({o['_class']}) — {v} · score <b>{o['score']}</b>")
-        L.append(f"   <i>{o.get('trend_desc','')}</i>")
-    L.append("")
-    L.append("<b>By desk:</b>")
-    for key, label, top in per_class:
-        v = top.get("analysis", {}).get("verdict", "")
-        L.append(f"{EMO.get(key,'•')} {label}: <b>{top['name']}</b> ({v} {top['score']})")
-    L.append("")
-    L.append("Full case files, the live intel desk + trade signals → <b>VIP</b>.")
-    if VIP:
-        L.append(f"👉 <a href=\"{VIP}\">Join the pack</a>")
+    L.append("Full case files + trade signals → <b>VIP</b>.")
+    if vip:
+        L.append(f"👉 <a href=\"{vip}\">Join</a>")
     L.append("")
     L.append("<i>Research/education, not financial advice. Trade your own plan.</i>")
     return "\n".join(L)
 
 
-def main():
-    print("WOLF: refreshing data for daily post ...")
-    run.main()                      # rebuild all classes fresh
-    msg = compose()
-    if not TOKEN or not CHANNEL:
-        print("\n--- DRY RUN (no TELEGRAM_BOT_TOKEN/CHANNEL set) ---\n")
-        print(msg.replace("<b>", "").replace("</b>", "").replace("<i>", "")
-                 .replace("</i>", "").replace("&amp;", "&"))
-        print("\n--- set the env vars to actually post ---")
-        return
+def send(channel, msg):
     r = requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage",
-                      json={"chat_id": CHANNEL, "text": msg, "parse_mode": "HTML",
+                      json={"chat_id": channel, "text": msg, "parse_mode": "HTML",
                             "disable_web_page_preview": True}, timeout=20)
     ok = r.status_code == 200 and r.json().get("ok")
-    print("WOLF: posted to Telegram" if ok else f"WOLF: post failed {r.status_code} {r.text[:200]}")
+    return ok, (r.text[:200] if not ok else "")
+
+
+def main():
+    print("WOLF: refreshing data for daily posts ...")
+    run.main()
+    for ch_env, vip_env, clskey, brand, lead in DESKS:
+        channel = os.environ.get(ch_env, "")
+        vip = os.environ.get(vip_env, "")
+        msg = compose(clskey, brand, lead, vip)
+        if not TOKEN or not channel:
+            print(f"\n--- DRY RUN [{ch_env or clskey}] ---\n")
+            plain = (msg.replace("<b>", "").replace("</b>", "").replace("<i>", "")
+                        .replace("</i>", "").replace("&amp;", "&"))
+            print(plain)
+            continue
+        ok, err = send(channel, msg)
+        print(f"WOLF: {'posted' if ok else 'FAILED'} -> {ch_env} {err}")
 
 
 if __name__ == "__main__":
