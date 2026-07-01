@@ -282,6 +282,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
                       % (make_session(uid), SESSION_TTL))
             self._redirect("/", cookie); return
 
+        # Public FX tools (generic market data) — not gated, so they load even
+        # inside Telegram's in-app browser where the session cookie may not ride
+        # along on fetch. The VIP intel (/data, /news) stays gated below.
+        if path == "/calendar":
+            self._send(200, json.dumps({"events": get_calendar()})); return
+        if path == "/rates":
+            self._send(200, json.dumps({"rates": get_rates()})); return
+
         ok = self._authed(q)
 
         if path in ("/", "/index.html"):
@@ -317,10 +325,6 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send(200, json.dumps({"news": news, "tilt": tilt}))
             except Exception as e:
                 self._send(200, json.dumps({"news": [], "tilt": "no news", "error": str(e)}))
-        elif path == "/calendar":
-            self._send(200, json.dumps({"events": get_calendar()}))
-        elif path == "/rates":
-            self._send(200, json.dumps({"rates": get_rates()}))
         else:
             self._send(404, b'{"error":"not found"}')
 
