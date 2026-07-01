@@ -99,6 +99,28 @@ def make_session(uid: str) -> str:
     return base64.urlsafe_b64encode(("%s.%s" % (body, sig)).encode()).decode()
 
 
+def make_login_token(uid: str, ttl: int = 900) -> str:
+    """Short-lived (15 min) one-hop token the bot hands out; /go swaps it for a session."""
+    exp = str(int(time.time()) + ttl)
+    body = "L.%s.%s" % (uid, exp)
+    sig = hmac.new(SESSION_SECRET.encode(), body.encode(), hashlib.sha256).hexdigest()[:32]
+    return base64.urlsafe_b64encode(("%s.%s" % (body, sig)).encode()).decode()
+
+
+def verify_login_token(token: str):
+    try:
+        raw = base64.urlsafe_b64decode(token.encode()).decode()
+        tag, uid, exp, sig = raw.split(".")
+        body = "%s.%s.%s" % (tag, uid, exp)
+        good = hmac.new(SESSION_SECRET.encode(), body.encode(),
+                        hashlib.sha256).hexdigest()[:32]
+        if tag == "L" and hmac.compare_digest(good, sig) and int(exp) > time.time():
+            return uid
+    except Exception:
+        pass
+    return None
+
+
 def check_session(token: str) -> bool:
     try:
         raw = base64.urlsafe_b64decode(token.encode()).decode()
@@ -228,16 +250,16 @@ def refresh_loop():
 
 
 LOGIN = """<!doctype html><meta charset=utf-8><title>THE WOLF</title>
+<meta name=viewport content="width=device-width,initial-scale=1">
 <body style="background:#0c1016;color:#cdd6df;font-family:Segoe UI,Arial;display:flex;
-align-items:center;justify-content:center;height:100vh;margin:0">
+align-items:center;justify-content:center;min-height:100vh;margin:0">
 <div style="background:#141a22;border:1px solid #D4A017;border-radius:12px;padding:28px;width:320px;text-align:center">
 <div style="font-size:24px;font-weight:800;letter-spacing:2px"><span style="color:#6E767E">THE </span><span style="color:#D4A017">WOLF</span></div>
 <div style="color:#8a929b;font-size:12px;letter-spacing:2px;margin-bottom:18px">INTRADAY INTEL DESK</div>
-<div style="color:#8a929b;font-size:12px;margin-bottom:16px">VIP members only — verify with Telegram</div>
-<div style="display:flex;justify-content:center">
-<script async src="https://telegram.org/js/telegram-widget.js?22"
- data-telegram-login="__BOT__" data-size="large" data-auth-url="__AUTHURL__"
- data-request-access="write"></script></div>
+<div style="color:#8a929b;font-size:13px;margin-bottom:18px;line-height:1.5">VIP members only.<br>Tap below — the bot checks your membership and lets you in.</div>
+<a href="https://t.me/__BOT__?start=login"
+ style="display:block;padding:14px;border-radius:8px;background:#D4A017;color:#1a1404;font-weight:800;text-decoration:none;font-size:15px">🔓 Log in with Telegram</a>
+<div style="color:#6b727a;font-size:11px;margin-top:14px">Opens @__BOT__ — press START, then tap the link it sends you.</div>
 </div></body>"""
 
 DENIED = """<!doctype html><meta charset=utf-8><title>THE WOLF</title>
@@ -303,6 +325,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send(403, "Login verification failed.", "text/html; charset=utf-8"); return
             if not is_vip_member(uid):
                 self._send(200, DENIED, "text/html; charset=utf-8"); return
+            cookie = ("wolf_session=%s; Path=/; Max-Age=%d; HttpOnly; SameSite=Lax"
+                      % (make_session(uid), SESSION_TTL))
+            self._redirect("/", cookie); return
+
+        # Bot login: /go?t=<login token> -> swap for a session cookie, enter desk.
+        if path == "/go":
+            uid = verify_login_token(q.get("t", [""])[0])
+            if not uid:
+                self._send(200, "<body style='background:#0c1016;color:#cdd6df;font-family:Arial;text-align:center;padding-top:60px'>Login link expired — tap the bot again to get a fresh one.</body>",
+                           "text/html; charset=utf-8"); return
             cookie = ("wolf_session=%s; Path=/; Max-Age=%d; HttpOnly; SameSite=Lax"
                       % (make_session(uid), SESSION_TTL))
             self._redirect("/", cookie); return

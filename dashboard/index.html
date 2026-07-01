@@ -292,20 +292,26 @@ async function calcPip(){
   const pipSize= gold?0.10 : quote==='JPY'?0.01 : 0.0001;
   const contract= gold?100:100000;            // units per 1.00 lot
   const vQuote= lots*contract*pipSize;        // pip value in QUOTE currency (exact)
+  const notional = lots*contract;             // in base units / oz
   const out=document.getElementById('pipout');
-  out.innerHTML=`Pip value: <b style="color:#fff">${vQuote.toLocaleString(undefined,{maximumFractionDigits:2})} ${quote}</b><br><span style="color:var(--mut)">converting…</span>`;
-  let rate=1;
-  if(quote!==acct){
-    try{ const r=await fetch(`/fx?from=${quote}&to=${acct}`); rate=(await r.json()).rate; }catch(e){ rate=null; }
-  }
-  const vAcct = rate!==null ? vQuote*rate : null;
-  const notional = lots*contract; // in base units
-  out.innerHTML=`Pip value: <b style="color:#fff">${vQuote.toLocaleString(undefined,{maximumFractionDigits:2})} ${quote}</b><br>`+
+  out.innerHTML=`<span style="color:var(--mut)">fetching live market rate…</span>`;
+  const myReq = ++PIP_REQ;                     // guard against stale async results
+  const [rate, price] = await Promise.all([
+    quote!==acct ? fetch(`/fx?from=${quote}&to=${acct}`).then(r=>r.json()).then(d=>d.rate).catch(()=>null) : Promise.resolve(1),
+    fetch(`/fx?from=${base}&to=${quote}`).then(r=>r.json()).then(d=>d.rate).catch(()=>null)
+  ]);
+  if(myReq!==PIP_REQ) return;                  // a newer change superseded this one
+  const vAcct = (rate!==null) ? vQuote*rate : null;
+  out.innerHTML =
+    (price? `<div style="color:var(--mut);font-size:12px;margin-bottom:6px">${pair} @ <b style="color:#cdd6df">${price.toFixed(gold?2:(quote==='JPY'?3:5))}</b> · live</div>`:'')+
     (vAcct!==null
-      ? `In your account: <b style="color:var(--gold);font-size:20px">${vAcct.toLocaleString(undefined,{maximumFractionDigits:2})} ${acct}</b> / pip<br>`
-      : `<span style="color:var(--red)">Conversion rate unavailable — showing quote currency.</span><br>`)+
-    `<span style="color:var(--mut);font-size:12px">${lots.toFixed(lots<0.01?3:2)} lot = ${notional.toLocaleString()} ${gold?'oz':base}</span>`;
+      ? `<div style="font-size:13px;color:var(--mut)">Pip value for ${lots.toFixed(lots<0.01?3:2)} lot</div>
+         <div style="font-size:26px;font-weight:800;color:var(--gold)">${vAcct.toLocaleString(undefined,{maximumFractionDigits:2})} ${acct}<span style="font-size:14px;color:var(--mut)"> / pip</span></div>
+         <div style="font-size:12px;color:var(--mut);margin-top:4px">= ${vQuote.toLocaleString(undefined,{maximumFractionDigits:2})} ${quote} · position ${notional.toLocaleString()} ${gold?'oz':base}</div>`
+      : `<div style="font-size:22px;font-weight:800;color:#fff">${vQuote.toLocaleString(undefined,{maximumFractionDigits:2})} ${quote} / pip</div>
+         <div style="color:var(--red);font-size:12px">Live ${quote}->${acct} rate unavailable — showing quote currency.</div>`);
 }
+let PIP_REQ=0;
 
 // ---- Smart Forex Screen: market hours (client-side, live) ----
 // Session windows in UTC (standard forex convention; DST not modelled).
