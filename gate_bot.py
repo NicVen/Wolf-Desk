@@ -159,6 +159,19 @@ def handle(msg):
             ok += 1 if r.get("ok") else 0
         send(chat["id"], "Broadcast sent to %d/%d channels." % (ok, len(PUBLIC))); return
 
+    if low.startswith("/tweetdaily") and uid in ADMINS:
+        import promo_x
+        ok, info = promo_x.post(promo_x.compose_daily())
+        send(chat["id"], "X daily digest: %s (%s)" % ("posted" if ok else "FAILED", info)); return
+
+    if low.startswith("/tweet") and uid in ADMINS:
+        payload = text[len("/tweet"):].strip()
+        if not payload:
+            send(chat["id"], "Usage: /tweet your post text (or /tweetdaily for the auto digest)"); return
+        import promo_x
+        ok, info = promo_x.post(payload)
+        send(chat["id"], "X: %s (%s)" % ("posted" if ok else "FAILED", info)); return
+
     if low.startswith("/invite"):
         link = "https://t.me/%s?start=ref_%s" % (bot_username(), uid)
         send(chat["id"],
