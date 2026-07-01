@@ -95,6 +95,7 @@
     <div class="tab" onclick="openCalendar()">📅 Economic Calendar</div>
     <div class="tab" onclick="openRates()">🏛 Interest Rates</div>
     <div class="tab" onclick="openPip()">🧮 Pip Calculator</div>
+    <div class="tab" onclick="openHours()">🕐 Market Hours</div>
   </div>
 
   <h2 id="topttl">Top opportunities</h2>
@@ -290,7 +291,62 @@ function calcPip(){
   out.innerHTML = `Pip value: ${vQuote.toFixed(2)} ${quote}` + (usd!==null?`  ≈  $${usd.toFixed(2)} USD`:` <span style="color:var(--mut);font-size:13px">(in ${quote})</span>`);
 }
 
-function closeCase(){ document.getElementById('ov').classList.remove('on'); }
+// ---- Smart Forex Screen: market hours (client-side, live) ----
+// Session windows in UTC (standard forex convention; DST not modelled).
+const SESS=[{n:'Sydney',o:21,c:6},{n:'Tokyo',o:0,c:9},{n:'London',o:7,c:16},{n:'New York',o:12,c:21}];
+let HRS_TIMER=null;
+function _open(h,o,c){ return o<=c ? (h>=o&&h<c) : (h>=o||h<c); }
+function _localHM(utcHour){ const d=new Date(); d.setUTCHours(utcHour,0,0,0); return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+function _fmtDur(mins){ const h=Math.floor(mins/60), m=Math.round(mins%60); return (h>0?h+'h ':'')+m+'m'; }
+function openHours(){
+  showModal('<span class="x" onclick="closeCase()">✕</span><h3>🕐 Market Hours</h3><div id="hrsbody"></div>');
+  renderHours();
+  if(HRS_TIMER) clearInterval(HRS_TIMER);
+  HRS_TIMER=setInterval(renderHours,1000);
+}
+function renderHours(){
+  const body=document.getElementById('hrsbody'); if(!body){ if(HRS_TIMER)clearInterval(HRS_TIMER); return; }
+  const now=new Date();
+  const hf=now.getUTCHours()+now.getUTCMinutes()/60;
+  const day=now.getUTCDay(); // 0 Sun .. 6 Sat
+  // forex weekend: closed Sat all day, Sun before 21:00 UTC, Fri after 21:00 UTC
+  const weekend = day===6 || (day===0 && hf<21) || (day===5 && hf>=21);
+  let openCount=0;
+  let rows=SESS.map(s=>{
+    const op = !weekend && _open(hf,s.o,s.c);
+    if(op) openCount++;
+    // minutes to next transition (to close if open, to open if closed)
+    const target = op ? s.c : s.o;
+    let dh = (target - hf); if(dh<=0) dh+=24;
+    const label = op ? 'closes in' : 'opens in';
+    const col = op ? 'var(--green)' : 'var(--mut)';
+    return `<tr>
+      <td><b>${s.n}</b></td>
+      <td style="color:${col};font-weight:700">${op?'● OPEN':'○ closed'}</td>
+      <td style="font-size:12px;color:var(--mut)">${_localHM(s.o)}–${_localHM(s.c)} local</td>
+      <td style="font-size:12px">${label} <b>${_fmtDur(dh*60)}</b></td></tr>`;
+  }).join('');
+  // overlaps
+  const ov=[];
+  if(!weekend){
+    if(_open(hf,0,6)&&_open(hf,21,6)) ov.push('Sydney × Tokyo');
+    if(_open(hf,7,9)&&_open(hf,0,9)) ov.push('Tokyo × London');
+    if(_open(hf,12,16)&&_open(hf,7,16)) ov.push('London × New York (peak liquidity)');
+  }
+  const status = weekend ? '<span style="color:var(--red)">MARKET CLOSED (weekend)</span>'
+                         : (openCount? `<span style="color:var(--green)">MARKET OPEN — ${openCount} session${openCount>1?'s':''}</span>`
+                                     : '<span style="color:var(--amber)">Between sessions</span>');
+  body.innerHTML=`
+    <div style="font-size:18px;font-weight:800;margin:6px 0 2px">${status}</div>
+    <div style="color:var(--mut);font-size:12px;margin-bottom:10px">Your local time: <b>${now.toLocaleTimeString()}</b> · ${now.toLocaleDateString([], {weekday:'short'})}</div>
+    <table>${rows}</table>
+    <div style="margin-top:12px">${ov.length
+      ? '⚡ <b style="color:var(--gold)">Overlap now:</b> '+ov.join(' · ')+' — highest liquidity, best time to trade.'
+      : '<span style="color:var(--mut)">No session overlap right now.</span>'}</div>
+    <div class="disc">Session times shown in YOUR local time. Standard forex windows (DST not modelled — may shift ±1h seasonally).</div>`;
+}
+
+function closeCase(){ if(HRS_TIMER){clearInterval(HRS_TIMER);HRS_TIMER=null;} document.getElementById('ov').classList.remove('on'); }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeCase(); });
 buildTabs(); load();
 </script>
