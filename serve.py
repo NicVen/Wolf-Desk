@@ -50,7 +50,9 @@ BOT_USERNAME = os.environ.get("BOT_USERNAME", "Staalwag_wolf_Bot")
 VIP_CHANNELS = [c.strip() for c in os.environ.get(
     "VIP_CHANNELS", "-1003988735239,-1004401575622").split(",") if c.strip()]
 SESSION_SECRET = os.environ.get("SESSION_SECRET", "") or ("wolf-" + BOT_TOKEN)
-SESSION_TTL  = 7 * 24 * 3600     # 7 days; member re-taps login after that
+# Short session = near-instant revoke: a removed member's session dies within
+# SESSION_HOURS. Members just re-tap "Log in with Telegram" (one tap). Env override.
+SESSION_TTL  = int(float(os.environ.get("SESSION_HOURS", "6")) * 3600)
 
 
 # ---------------------------------------------------------------- auth helpers
