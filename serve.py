@@ -394,6 +394,15 @@ if __name__ == "__main__":
     print(f"WOLF dashboard -> port {PORT}  (gate: {gate}, auto-refresh: {REFRESH_MIN}m)")
     if REFRESH_MIN > 0:
         threading.Thread(target=refresh_loop, daemon=True).start()
+    # Run the VIP login bot in-process (no separate worker service needed).
+    # Set RUN_BOT=0 to disable on any duplicate instance so only ONE polls.
+    if BOT_TOKEN and os.environ.get("RUN_BOT", "1") != "0":
+        try:
+            import gate_bot
+            threading.Thread(target=gate_bot.main, daemon=True).start()
+            print("WOLF: login bot started in-process")
+        except Exception as e:
+            print("WOLF: could not start login bot:", e)
     class Server(socketserver.ThreadingTCPServer):
         allow_reuse_address = True
         daemon_threads = True
