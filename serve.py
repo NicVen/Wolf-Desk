@@ -41,7 +41,7 @@ LOGIN = """<!doctype html><meta charset=utf-8><title>THE WOLF</title>
 align-items:center;justify-content:center;height:100vh;margin:0">
 <form method=get action="/" style="background:#141a22;border:1px solid #D4A017;border-radius:12px;padding:28px;width:300px;text-align:center">
 <div style="font-size:24px;font-weight:800;letter-spacing:2px"><span style="color:#6E767E">THE </span><span style="color:#D4A017">WOLF</span></div>
-<div style="color:#8a929b;font-size:12px;letter-spacing:2px;margin-bottom:16px">MARKET INTEL DESK</div>
+<div style="color:#8a929b;font-size:12px;letter-spacing:2px;margin-bottom:16px">INTRADAY INTEL DESK</div>
 <input name=key type=password placeholder="Members password" autofocus
  style="width:100%;padding:10px;border-radius:6px;border:1px solid #222b36;background:#1a212b;color:#fff;margin-bottom:12px">
 <button style="width:100%;padding:10px;border:0;border-radius:6px;background:#D4A017;color:#1a1404;font-weight:800;cursor:pointer">ENTER</button>
