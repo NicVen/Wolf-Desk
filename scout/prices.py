@@ -14,7 +14,9 @@ except Exception:
 import requests
 
 _HDR = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-_URL = "https://query1.finance.yahoo.com/v8/finance/chart/{t}?range=6mo&interval=1d"
+# Intraday resolution: hourly bars so trend/momentum move through the day
+# (daily bars made FX look frozen). MA20/50 + momentum now read the intraday trend.
+_URL = "https://query1.finance.yahoo.com/v8/finance/chart/{t}?range=1mo&interval=60m"
 
 
 def _ma(vals, n):
