@@ -191,6 +191,31 @@ def get_rates() -> list:
     return out
 
 
+_FX = {}   # cache: "USDEUR" -> (rate, ts)
+
+def fx_rate(a: str, b: str):
+    """1 unit of currency a expressed in currency b (live Yahoo, cached 10 min)."""
+    if not a or not b or a == b:
+        return 1.0
+    key = a + b
+    now = time.time()
+    if key in _FX and now - _FX[key][1] < 600:
+        return _FX[key][0]
+    hdr = {"User-Agent": "Mozilla/5.0"}
+    url = "https://query1.finance.yahoo.com/v8/finance/chart/{s}?range=1d&interval=60m"
+    for sym, inv in ((a + b + "=X", False), (b + a + "=X", True)):
+        try:
+            r = requests.get(url.format(s=sym), headers=hdr, timeout=15)
+            cl = [c for c in r.json()["chart"]["result"][0]["indicators"]["quote"][0]["close"] if c]
+            if cl:
+                rate = (1.0 / cl[-1]) if inv else cl[-1]
+                _FX[key] = (rate, now)
+                return rate
+        except Exception:
+            continue
+    return None
+
+
 def refresh_loop():
     while True:
         try:
@@ -289,6 +314,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, json.dumps({"events": get_calendar()})); return
         if path == "/rates":
             self._send(200, json.dumps({"rates": get_rates()})); return
+        if path == "/fx":
+            fr = q.get("from", [""])[0].upper(); to = q.get("to", [""])[0].upper()
+            self._send(200, json.dumps({"rate": fx_rate(fr, to)})); return
 
         ok = self._authed(q)
 

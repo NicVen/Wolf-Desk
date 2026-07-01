@@ -262,33 +262,49 @@ async function openRates(){
   document.getElementById('modal').innerHTML=h;
 }
 
-// ---- Pip Calculator (client-side) ----
-const PAIRS=['EUR/USD','GBP/USD','AUD/USD','NZD/USD','USD/JPY','USD/CHF','USD/CAD','EUR/JPY','GBP/JPY','EUR/GBP','XAU/USD'];
+// ---- Pip Calculator (MT5 lots -> account currency) ----
+const PAIRS=['EUR/USD','GBP/USD','AUD/USD','NZD/USD','USD/JPY','USD/CHF','USD/CAD','EUR/JPY','GBP/JPY','EUR/GBP','AUD/JPY','XAU/USD'];
+const ACCTS=['USD','EUR','GBP','JPY','AUD','CAD','CHF','NZD','ZAR'];
+const LOTS=[0.001,0.003,0.01,0.05,0.10,0.50,1.00,2.00,5.00];
 function openPip(){
-  const opts=PAIRS.map(p=>`<option>${p}</option>`).join('');
-  showModal(`<span class="x" onclick="closeCase()">✕</span><h3>🧮 Pip Value Calculator</h3>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:460px;margin-top:8px">
-      <label>Pair<br><select id="ppair" onchange="calcPip()" style="width:100%;padding:8px;background:var(--panel);color:#fff;border:1px solid var(--line);border-radius:6px">${opts}</select></label>
-      <label>Units (lot size)<br><input id="punits" value="10000" oninput="calcPip()" style="width:100%;padding:8px;background:var(--panel);color:#fff;border:1px solid var(--line);border-radius:6px"></label>
-      <label>Current price<br><input id="pprice" value="1.10000" oninput="calcPip()" style="width:100%;padding:8px;background:var(--panel);color:#fff;border:1px solid var(--line);border-radius:6px"></label>
-      <label>Account ccy<br><input id="pacct" value="USD" disabled style="width:100%;padding:8px;background:var(--panel);color:var(--mut);border:1px solid var(--line);border-radius:6px"></label>
+  const po=PAIRS.map(p=>`<option>${p}</option>`).join('');
+  const ao=ACCTS.map(a=>`<option>${a}</option>`).join('');
+  const lb=LOTS.map(l=>`<span class="tab" style="padding:5px 10px;font-size:12px" onclick="setLot(${l})">${l.toFixed(l<0.01?3:2)}</span>`).join(' ');
+  showModal(`<span class="x" onclick="closeCase()">✕</span><h3>🧮 Pip Value Calculator <span style="color:var(--mut);font-size:13px">— MT5 lots</span></h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:480px;margin-top:8px">
+      <label>Pair<br><select id="ppair" onchange="calcPip()" style="width:100%;padding:8px;background:var(--panel);color:#fff;border:1px solid var(--line);border-radius:6px">${po}</select></label>
+      <label>Account currency<br><select id="pacct" onchange="calcPip()" style="width:100%;padding:8px;background:var(--panel);color:#fff;border:1px solid var(--line);border-radius:6px">${ao}</select></label>
     </div>
-    <div id="pipout" style="margin-top:16px;font-size:20px;font-weight:800;color:var(--gold)"></div>
-    <div class="disc">1 pip = 0.0001 (0.01 for JPY / 0.1 for XAU). Value shown per your unit size. Cross-pairs approximate in quote currency.</div>`);
+    <label style="display:block;margin-top:12px">Lot size (MT5)<br>
+      <input id="plot" value="0.10" inputmode="decimal" oninput="calcPip()" style="width:160px;padding:8px;background:var(--panel);color:#fff;border:1px solid var(--line);border-radius:6px;font-size:16px;font-weight:700"></label>
+    <div style="margin:8px 0 4px">${lb}</div>
+    <div id="pipout" style="margin-top:14px;font-size:15px;line-height:1.9"></div>
+    <div class="disc">Standard lot = 100,000 units (gold = 100 oz). 1 pip = 0.0001 (JPY 0.01, gold 0.10). Converted to your account currency at the live rate.</div>`);
   calcPip();
 }
-function calcPip(){
+function setLot(v){ document.getElementById('plot').value = v.toFixed(v<0.01?3:2); calcPip(); }
+async function calcPip(){
   const pair=document.getElementById('ppair').value;
-  const units=parseFloat(document.getElementById('punits').value)||0;
-  const price=parseFloat(document.getElementById('pprice').value)||0;
+  const acct=document.getElementById('pacct').value;
+  const lots=parseFloat(document.getElementById('plot').value)||0;
   const [base,quote]=pair.split('/');
-  const pipSize= pair.startsWith('XAU')?0.1: quote==='JPY'?0.01:0.0001;
-  const vQuote=units*pipSize;                 // pip value in quote currency
-  let usd=null, note=quote;
-  if(quote==='USD'){ usd=vQuote; note='USD'; }
-  else if(base==='USD' && price>0){ usd=vQuote/price; note='USD'; }
+  const gold=pair.startsWith('XAU');
+  const pipSize= gold?0.10 : quote==='JPY'?0.01 : 0.0001;
+  const contract= gold?100:100000;            // units per 1.00 lot
+  const vQuote= lots*contract*pipSize;        // pip value in QUOTE currency (exact)
   const out=document.getElementById('pipout');
-  out.innerHTML = `Pip value: ${vQuote.toFixed(2)} ${quote}` + (usd!==null?`  ≈  $${usd.toFixed(2)} USD`:` <span style="color:var(--mut);font-size:13px">(in ${quote})</span>`);
+  out.innerHTML=`Pip value: <b style="color:#fff">${vQuote.toLocaleString(undefined,{maximumFractionDigits:2})} ${quote}</b><br><span style="color:var(--mut)">converting…</span>`;
+  let rate=1;
+  if(quote!==acct){
+    try{ const r=await fetch(`/fx?from=${quote}&to=${acct}`); rate=(await r.json()).rate; }catch(e){ rate=null; }
+  }
+  const vAcct = rate!==null ? vQuote*rate : null;
+  const notional = lots*contract; // in base units
+  out.innerHTML=`Pip value: <b style="color:#fff">${vQuote.toLocaleString(undefined,{maximumFractionDigits:2})} ${quote}</b><br>`+
+    (vAcct!==null
+      ? `In your account: <b style="color:var(--gold);font-size:20px">${vAcct.toLocaleString(undefined,{maximumFractionDigits:2})} ${acct}</b> / pip<br>`
+      : `<span style="color:var(--red)">Conversion rate unavailable — showing quote currency.</span><br>`)+
+    `<span style="color:var(--mut);font-size:12px">${lots.toFixed(lots<0.01?3:2)} lot = ${notional.toLocaleString()} ${gold?'oz':base}</span>`;
 }
 
 // ---- Smart Forex Screen: market hours (client-side, live) ----
