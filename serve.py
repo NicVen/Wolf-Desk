@@ -52,7 +52,7 @@ VIP_CHANNELS = [c.strip() for c in os.environ.get(
 SESSION_SECRET = os.environ.get("SESSION_SECRET", "") or ("wolf-" + BOT_TOKEN)
 # Short session = near-instant revoke: a removed member's session dies within
 # SESSION_HOURS. Members just re-tap "Log in with Telegram" (one tap). Env override.
-SESSION_TTL  = int(float(os.environ.get("SESSION_HOURS", "6")) * 3600)
+SESSION_TTL  = int(float(os.environ.get("SESSION_HOURS", "12")) * 3600)
 
 
 # ---------------------------------------------------------------- auth helpers
