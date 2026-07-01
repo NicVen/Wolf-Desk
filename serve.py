@@ -138,32 +138,56 @@ def get_calendar() -> list:
     return _CAL["data"]
 
 
-# Central-bank policy rates. EDIT these as banks move — remaining days auto-computed
-# from next_meeting. Format: currency -> (rate %, last_change ISO, next_meeting ISO).
-RATES = {
-    "USD": (4.50, "2026-06-18", "2026-07-29"),
-    "EUR": (2.15, "2026-06-05", "2026-07-24"),
-    "GBP": (4.25, "2026-06-19", "2026-08-07"),
-    "JPY": (0.50, "2026-01-24", "2026-07-31"),
-    "AUD": (3.85, "2026-05-20", "2026-08-12"),
-    "CAD": (2.75, "2026-06-04", "2026-07-30"),
-    "CHF": (0.25, "2026-06-19", "2026-09-25"),
-    "NZD": (3.25, "2026-05-28", "2026-07-09"),
+# Central-bank policy rates — auto-scraped from global-rates.com, cached 12h.
+# Fallback values (from global-rates) used if the scrape fails. Format:
+# currency -> (rate %, last_change ISO).
+_RATE_FALLBACK = {
+    "USD": (3.75, "2025-11-12"), "EUR": (2.40, "2026-06-11"),
+    "GBP": (3.75, "2025-12-18"), "JPY": (1.00, "2026-06-16"),
+    "AUD": (4.35, "2026-05-06"), "CAD": (2.25, "2025-10-29"),
+    "CHF": (0.00, "2025-06-19"), "NZD": (2.25, "2025-11-26"),
 }
+# global-rates bank adjective -> currency
+_BANK_CCY = {"American": "USD", "European": "EUR", "British": "GBP",
+             "Japanese": "JPY", "Australian": "AUD", "Canadian": "CAD",
+             "Swiss": "CHF", "Zealand": "NZD"}
+_RATES = {"ts": 0.0, "data": {}}
+
+def _scrape_rates() -> dict:
+    import re
+    r = requests.get("https://www.global-rates.com/en/interest-rates/central-banks/",
+                     headers={"User-Agent": "Mozilla/5.0"}, timeout=25)
+    pat = re.compile(r"([A-Z][a-z]+) Central Bank.*?(\d+\.\d+)\s*%.*?(\d{2})-(\d{2})-(\d{4})", re.S)
+    out = {}
+    for adj, rate, mm, dd, yyyy in pat.findall(r.text):
+        ccy = _BANK_CCY.get(adj)
+        if ccy:
+            out[ccy] = (float(rate), "%s-%s-%s" % (yyyy, mm, dd))
+    return out
 
 def get_rates() -> list:
     import datetime as _dt
+    if time.time() - _RATES["ts"] > 43200 or not _RATES["data"]:   # 12h
+        try:
+            scraped = _scrape_rates()
+            _RATES["data"] = {**_RATE_FALLBACK, **scraped}   # scrape wins, fallback fills gaps
+            _RATES["ts"] = time.time()
+            print("WOLF: rates refreshed (%d live)" % len(scraped))
+        except Exception as e:
+            print("WOLF: rates scrape failed, using fallback:", e)
+            if not _RATES["data"]:
+                _RATES["data"] = dict(_RATE_FALLBACK)
     today = _dt.date.today()
     out = []
-    for ccy, (rate, last, nxt) in RATES.items():
+    for ccy, (rate, last) in _RATES["data"].items():
         try:
-            nd = _dt.date.fromisoformat(nxt)
-            rem = (nd - today).days
+            days_ago = (today - _dt.date.fromisoformat(last)).days
         except Exception:
-            rem = None
+            days_ago = None
         out.append({"currency": ccy, "rate": rate, "last_change": last,
-                    "next_release": nxt, "remaining_days": rem})
-    out.sort(key=lambda x: (x["remaining_days"] is None, x["remaining_days"]))
+                    "days_ago": days_ago})
+    order = ["USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "NZD"]
+    out.sort(key=lambda x: order.index(x["currency"]) if x["currency"] in order else 99)
     return out
 
 

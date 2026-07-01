@@ -253,12 +253,12 @@ async function openRates(){
   showModal('<span class="x" onclick="closeCase()">✕</span><h3>🏛 Central Bank Interest Rates</h3><p style="color:var(--mut)">Loading…</p>');
   let rates=[]; try{ const r=await fetch('/rates'); rates=(await r.json()).rates||[]; }catch(e){}
   let h=`<span class="x" onclick="closeCase()">✕</span><h3>🏛 Central Bank Interest Rates</h3>
-    <div style="overflow:auto"><table><tr><th>Currency</th><th>Rate</th><th>Last Change</th><th>Next Meeting</th><th>Days Left</th></tr>`;
-  rates.forEach(r=>{ const d=r.remaining_days; const c=d===null?'var(--mut)':d<=7?'var(--red)':d<=21?'var(--amber)':'var(--green)';
-    h+=`<tr><td><b>${r.currency}</b></td><td style="font-weight:700">${r.rate.toFixed(2)}%</td>
-      <td style="font-size:12px;color:var(--mut)">${r.last_change}</td><td style="font-size:12px">${r.next_release}</td>
-      <td style="color:${c};font-weight:700">${d===null?'—':d+'d'}</td></tr>`; });
-  h+='</table></div><div class="disc">Policy rates as configured on the desk — verify against the central bank before trading a decision.</div>';
+    <div style="overflow:auto"><table><tr><th>Currency</th><th>Rate</th><th>Last Change</th><th>Changed</th></tr>`;
+  rates.forEach(r=>{ const d=r.days_ago; const ago = d===null?'—':(d<30?d+'d ago':Math.round(d/30)+'mo ago');
+    h+=`<tr><td><b>${r.currency}</b></td><td style="font-weight:700;color:var(--gold)">${r.rate.toFixed(2)}%</td>
+      <td style="font-size:12px;color:var(--mut)">${r.last_change}</td>
+      <td style="font-size:12px;color:${d!==null&&d<30?'var(--amber)':'var(--mut)'}">${ago}</td></tr>`; });
+  h+='</table></div><div class="disc">Live from global-rates.com (refreshed every 12h). Verify against the central bank before trading a decision.</div>';
   document.getElementById('modal').innerHTML=h;
 }
 
