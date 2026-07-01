@@ -111,6 +111,62 @@ def check_session(token: str) -> bool:
         return False
 
 
+# ---------------------------------------------------------------- FX tools
+_CAL = {"ts": 0.0, "data": []}
+
+def get_calendar() -> list:
+    """This week's economic calendar (free faireconomy feed), cached 30 min."""
+    if time.time() - _CAL["ts"] < 1800 and _CAL["data"]:
+        return _CAL["data"]
+    try:
+        r = requests.get("https://nfs.faireconomy.media/ff_calendar_thisweek.json",
+                         headers={"User-Agent": "Mozilla/5.0"}, timeout=25)
+        rows = []
+        for e in r.json():
+            rows.append({
+                "date": (e.get("date") or "")[:10],
+                "time": (e.get("date") or "")[11:16],
+                "currency": e.get("country", ""),
+                "impact": e.get("impact", ""),
+                "title": e.get("title", ""),
+                "forecast": e.get("forecast", ""),
+                "previous": e.get("previous", ""),
+            })
+        _CAL["data"] = rows; _CAL["ts"] = time.time()
+    except Exception as e:
+        print("WOLF: calendar fetch error:", e)
+    return _CAL["data"]
+
+
+# Central-bank policy rates. EDIT these as banks move — remaining days auto-computed
+# from next_meeting. Format: currency -> (rate %, last_change ISO, next_meeting ISO).
+RATES = {
+    "USD": (4.50, "2026-06-18", "2026-07-29"),
+    "EUR": (2.15, "2026-06-05", "2026-07-24"),
+    "GBP": (4.25, "2026-06-19", "2026-08-07"),
+    "JPY": (0.50, "2026-01-24", "2026-07-31"),
+    "AUD": (3.85, "2026-05-20", "2026-08-12"),
+    "CAD": (2.75, "2026-06-04", "2026-07-30"),
+    "CHF": (0.25, "2026-06-19", "2026-09-25"),
+    "NZD": (3.25, "2026-05-28", "2026-07-09"),
+}
+
+def get_rates() -> list:
+    import datetime as _dt
+    today = _dt.date.today()
+    out = []
+    for ccy, (rate, last, nxt) in RATES.items():
+        try:
+            nd = _dt.date.fromisoformat(nxt)
+            rem = (nd - today).days
+        except Exception:
+            rem = None
+        out.append({"currency": ccy, "rate": rate, "last_change": last,
+                    "next_release": nxt, "remaining_days": rem})
+    out.sort(key=lambda x: (x["remaining_days"] is None, x["remaining_days"]))
+    return out
+
+
 def refresh_loop():
     while True:
         try:
@@ -237,6 +293,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send(200, json.dumps({"news": news, "tilt": tilt}))
             except Exception as e:
                 self._send(200, json.dumps({"news": [], "tilt": "no news", "error": str(e)}))
+        elif path == "/calendar":
+            self._send(200, json.dumps({"events": get_calendar()}))
+        elif path == "/rates":
+            self._send(200, json.dumps({"rates": get_rates()}))
         else:
             self._send(404, b'{"error":"not found"}')
 
