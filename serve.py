@@ -238,6 +238,59 @@ def fx_rate(a: str, b: str):
     return None
 
 
+TG_GOLD = os.environ.get("PUBLIC_HANDLE_GOLD", "@staalwagsignals")
+TG_FX   = os.environ.get("PUBLIC_HANDLE_FX", "@veldrinforex")
+TG_LINK = os.environ.get("TG_LINK", "https://t.me/staalwagsignals")
+
+def _xml_escape(s):
+    return (str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            .replace('"', "&quot;"))
+
+def build_rss() -> str:
+    """RSS feed of intraday reads. A free RSS->X service (dlvr.it) turns each
+    new item into a post on @thewolfdesk — no paid X API needed. GUIDs are
+    per-day+name+verdict so nothing double-posts within a day; a fresh day = new
+    posts as verdicts stand."""
+    import datetime, json as _j
+    day = datetime.datetime.utcnow().strftime("%Y%m%d")
+    now = datetime.datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S +0000")
+    items = []
+    tags = {"fx": "#forex", "commodities": "#gold #commodities",
+            "indices": "#indices", "stocks": "#stocks"}
+    for cls in ("fx", "commodities", "indices", "stocks"):
+        try:
+            d = _j.load(open(os.path.join("data", "opportunities_%s.json" % cls), encoding="utf-8"))
+        except Exception:
+            continue
+        for o in d.get("opportunities", [])[:3]:
+            v = o.get("analysis", {}).get("verdict", "")
+            if v not in ("BUY", "SELL"):
+                continue
+            handle = TG_GOLD if cls == "commodities" else TG_FX
+            title = "%s — %s (score %s)" % (o["name"], v, o["score"])
+            body = ("🐺 THE WOLF intraday read: %s %s, score %s. %s "
+                    "Full case file + signals on the desk. Free: %s %s"
+                    % (o["name"], v, o["score"], o.get("trend_desc", ""), handle, tags[cls]))
+            guid = "%s-%s-%s" % (day, o["name"].replace(" ", ""), v)
+            items.append((title, body, guid))
+    if not items:
+        items = [("THE WOLF — desk online",
+                  "🐺 THE WOLF intraday intel desk — gold, FX, indices & stocks. "
+                  "Free reads: %s %s" % (TG_GOLD, TG_FX), "%s-online" % day)]
+    xi = "".join(
+        "<item><title>%s</title><description>%s</description>"
+        "<link>%s</link><guid isPermaLink=\"false\">%s</guid>"
+        "<pubDate>%s</pubDate></item>"
+        % (_xml_escape(t), _xml_escape(b), TG_LINK, g, now)
+        for t, b, g in items[:12])
+    return ('<?xml version="1.0" encoding="UTF-8"?>'
+            '<rss version="2.0"><channel>'
+            '<title>THE WOLF — Intraday Intel</title>'
+            '<link>%s</link>'
+            '<description>Intraday reads on gold, FX, indices &amp; stocks.</description>'
+            '%s</channel></rss>' % (TG_LINK, xi))
+
+
 def refresh_loop():
     while True:
         try:
@@ -349,6 +402,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if path == "/fx":
             fr = q.get("from", [""])[0].upper(); to = q.get("to", [""])[0].upper()
             self._send(200, json.dumps({"rate": fx_rate(fr, to)})); return
+        if path in ("/rss", "/feed", "/rss.xml"):
+            self._send(200, build_rss(), "application/rss+xml; charset=utf-8"); return
 
         ok = self._authed(q)
 
