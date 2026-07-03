@@ -241,6 +241,7 @@ def fx_rate(a: str, b: str):
 TG_GOLD = os.environ.get("PUBLIC_HANDLE_GOLD", "@staalwagsignals")
 TG_FX   = os.environ.get("PUBLIC_HANDLE_FX", "@veldrinforex")
 TG_LINK = os.environ.get("TG_LINK", "https://t.me/staalwagsignals")
+WOLF_IMG = os.environ.get("WOLF_IMG", "https://wolf-desk-production.up.railway.app/wolf.png")
 
 def _xml_escape(s):
     return (str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -280,15 +281,18 @@ def build_rss() -> str:
     xi = "".join(
         "<item><title>%s</title><description>%s</description>"
         "<link>%s</link><guid isPermaLink=\"false\">%s</guid>"
+        "<enclosure url=\"%s\" type=\"image/png\" length=\"0\"/>"
+        "<media:content url=\"%s\" medium=\"image\" type=\"image/png\"/>"
         "<pubDate>%s</pubDate></item>"
-        % (_xml_escape(t), _xml_escape(b), TG_LINK, g, now)
+        % (_xml_escape(t), _xml_escape(b), TG_LINK, g, WOLF_IMG, WOLF_IMG, now)
         for t, b, g in items[:12])
     return ('<?xml version="1.0" encoding="UTF-8"?>'
-            '<rss version="2.0"><channel>'
+            '<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/"><channel>'
             '<title>THE WOLF — Intraday Intel</title>'
             '<link>%s</link>'
             '<description>Intraday reads on gold, FX, indices &amp; stocks.</description>'
-            '%s</channel></rss>' % (TG_LINK, xi))
+            '<image><url>%s</url><title>THE WOLF — Intraday Intel</title><link>%s</link></image>'
+            '%s</channel></rss>' % (TG_LINK, WOLF_IMG, TG_LINK, xi))
 
 
 def refresh_loop():
@@ -404,6 +408,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, json.dumps({"rate": fx_rate(fr, to)})); return
         if path in ("/rss", "/feed", "/rss.xml"):
             self._send(200, build_rss(), "application/rss+xml; charset=utf-8"); return
+        if path in ("/wolf.png", "/logo.png"):
+            self._send(200, _read("wolf.png", b""), "image/png"); return
 
         ok = self._authed(q)
 
