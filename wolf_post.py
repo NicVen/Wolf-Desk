@@ -97,6 +97,15 @@ def main():
         ok, err = send(channel, msg)
         print(f"WOLF: {'posted' if ok else 'FAILED'} -> {ch_env} {err}")
 
+    # X (Twitter) discovery post — cold-audience top of funnel.
+    # Dry-runs harmlessly if the 4 X_* keys aren't set yet.
+    try:
+        import promo_x
+        okx, infox = promo_x.post(promo_x.compose_daily())
+        print(f"WOLF: X {'posted' if okx else 'dry-run/FAILED'} {infox}")
+    except Exception as e:  # noqa: BLE001
+        print("WOLF: X error", e)
+
 
 if __name__ == "__main__":
     main()

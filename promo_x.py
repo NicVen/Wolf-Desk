@@ -69,7 +69,7 @@ def compose_daily() -> str:
                 picks.append("%s %s (%s)" % (o["name"], v, o["score"]))
     if picks:
         lines.append("Reads: " + " · ".join(picks[:4]))
-    lines.append("Free signals + intel: %s (gold) %s (fx)" % (H_GOLD, H_FX))
+    lines.append("Free daily reads + public track record: %s (gold) %s (fx)" % (H_GOLD, H_FX))
     lines.append("#forex #gold #trading #XAUUSD")
     return "\n".join(lines)[:280]
 
