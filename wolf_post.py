@@ -42,15 +42,42 @@ def load(cls):
         return json.load(f)
 
 
+_REG_ICON = {"BULL": "🟢", "BEAR": "🔴", "SIDE": "🟡"}
+
+
+def regfmt(o):
+    """Short Markov-regime tag for an opportunity line, or '' if unknown."""
+    r = o.get("regime") or {}
+    st = r.get("state")
+    if not st:
+        return ""
+    persist = r.get("persist")
+    tail = f", {int(persist*100)}% stay" if isinstance(persist, (int, float)) else ""
+    return f" {_REG_ICON.get(st,'')} {st}{tail}"
+
+
 def line(o):
     v = o.get("analysis", {}).get("verdict", "")
-    return f"• <b>{o['name']}</b> — {v} · score <b>{o['score']}</b>\n   <i>{o.get('trend_desc','')}</i>"
+    return (f"• <b>{o['name']}</b> — {v} · score <b>{o['score']}</b>{regfmt(o)}\n"
+            f"   <i>{o.get('trend_desc','')}</i>")
 
 
 def compose(clskey, brand, lead, vip):
     today = datetime.datetime.utcnow().strftime("%d %b %Y")
     ops = load(clskey).get("opportunities", [])
     L = [brand, f"<i>{today} · WOLF intel read</i>", ""]
+    # Markov market regime — majority vote across today's assets
+    try:
+        from scout.regime import market_read
+        mk = market_read([o.get("regime") or {} for o in ops])
+        if mk.get("state"):
+            v = mk["votes"]
+            L.append(f"📊 <b>Market regime: {_REG_ICON.get(mk['state'],'')} "
+                     f"{mk['state']}</b>  <i>(Bull {v['BULL']} / Bear {v['BEAR']} "
+                     f"/ Side {v['SIDE']})</i>")
+            L.append("")
+    except Exception:
+        pass
     if lead:
         led = next((o for o in ops if o["name"] == lead), None)
         if led:

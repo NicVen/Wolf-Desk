@@ -13,6 +13,8 @@ except Exception:
     pass
 import requests
 
+from .regime import regime as _regime
+
 _HDR = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 # Intraday resolution: hourly bars so trend/momentum move through the day
 # (daily bars made FX look frozen). MA20/50 + momentum now read the intraday trend.
@@ -59,4 +61,5 @@ def price_metrics(ticker):
         "above_ma20": last > ma20,
         "above_ma50": last > ma50,
         "ma_stack_up": ma20 > ma50,
+        "regime": _regime(closes),
     }
