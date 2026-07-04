@@ -60,9 +60,14 @@ def compose(clskey, brand, lead, vip):
     for o in ops[:3]:
         L.append(line(o))
     L.append("")
-    L.append("Full case files + trade signals → <b>VIP</b>.")
     if vip:
+        # VIP is live: full signals behind the paywall
+        L.append("Full case files + exact levels + trade management → <b>VIP</b>.")
         L.append(f"👉 <a href=\"{vip}\">Join</a>")
+    else:
+        # No VIP yet: draw with transparency, not a promise we can't back
+        L.append("We post our read every day and log every call publicly —")
+        L.append("<b>follow to watch the track record build in the open.</b>")
     L.append("")
     L.append("<i>Research/education, not financial advice. Trade your own plan.</i>")
     return "\n".join(L)
