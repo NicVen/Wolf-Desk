@@ -71,9 +71,57 @@
   ul.bull li{color:#bfe6cb} ul.bear li{color:#e6c4c1}
   .x{float:right;cursor:pointer;color:var(--mut);font-size:22px;line-height:1}
   .modal .disc{color:var(--mut);font-size:11px;margin-top:16px;border-top:1px solid var(--line);padding-top:8px}
+  /* rental catalog column */
+  body{padding-right:214px}
+  .catalog{position:fixed;right:0;top:0;width:214px;height:100vh;overflow-y:auto;background:var(--panel);
+    border-left:1px solid var(--line);padding:16px 12px;z-index:30}
+  .catalog h4{font-size:10px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;margin:15px 0 8px;
+    border-bottom:1px solid var(--line);padding-bottom:5px}
+  .catalog h4:first-of-type{margin-top:0}
+  .catbtn{display:flex;align-items:center;gap:7px;width:100%;text-align:left;background:var(--bg);
+    border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:9px 10px;margin-bottom:7px;
+    font-weight:600;font-size:12px;cursor:pointer}
+  .catbtn:hover{border-color:var(--gold)}
+  .catbtn .lk{margin-left:auto;color:var(--mut)}
+  .catttl{color:var(--gold);font-weight:800;letter-spacing:1px;font-size:12px;margin-bottom:4px}
+  .catsub{color:var(--mut);font-size:10px;margin-bottom:6px}
+  .lockmodal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:200}
+  .lockmodal.on{display:flex}
+  .lockbox{background:var(--panel);border:2px solid var(--gold);border-radius:14px;padding:30px 36px;text-align:center;max-width:360px}
+  .lockbox .big{font-size:22px;font-weight:800;color:var(--gold);letter-spacing:1px}
+  .lockbox .msg{color:var(--mut);font-size:13px;margin:14px 0 20px;line-height:1.55}
+  @media(max-width:700px){body{padding-right:0}.catalog{position:static;width:auto;height:auto}}
 </style>
 </head>
 <body>
+<aside class="catalog">
+  <div class="catttl">🐺 THE WOLF</div>
+  <div class="catsub">Rental desk — VIP monthly</div>
+  <h4>MT5 · Expert Advisors</h4>
+  <button class="catbtn" onclick="lock('STAALWAG Gold EA')">🥇 STAALWAG Gold<span class="lk">🔒</span></button>
+  <button class="catbtn" onclick="lock('STAALWAG FX EA')">💱 STAALWAG FX<span class="lk">🔒</span></button>
+  <button class="catbtn" onclick="lock('STAALWAG Crypto EA')">🪙 STAALWAG Crypto<span class="lk">🔒</span></button>
+  <button class="catbtn" onclick="lock('STAALWAG PROP EA')">🏦 STAALWAG PROP<span class="lk">🔒</span></button>
+  <button class="catbtn" onclick="lock('GOUDBREUK EA')">⚡ GOUDBREUK<span class="lk">🔒</span></button>
+  <h4>MT5 · Signals</h4>
+  <button class="catbtn" onclick="lock('STAALWAG Gold Desk')">🥇 Gold Desk<span class="lk">🔒</span></button>
+  <button class="catbtn" onclick="lock('VELDRIN FX Desk')">💱 VELDRIN FX Desk<span class="lk">🔒</span></button>
+  <button class="catbtn" onclick="lock('Markov 18-pair Signals')">📊 Markov 18-pair<span class="lk">🔒</span></button>
+  <h4>TradingView · Bots</h4>
+  <button class="catbtn" onclick="lock('Claude Trading Bot')">🤖 Claude Trading Bot<span class="lk">🔒</span></button>
+  <button class="catbtn" onclick="lock('Markov Signal Bot')">🐺 Markov Signal Bot<span class="lk">🔒</span></button>
+  <h4>TradingView · Indicators</h4>
+  <button class="catbtn" onclick="lock('Excalibur Edge V13')">⚔️ Excalibur Edge V13<span class="lk">🔒</span></button>
+  <button class="catbtn" onclick="lock('Markov Scalper')">📈 Markov Scalper<span class="lk">🔒</span></button>
+  <button class="catbtn" onclick="lock('Markov 2 Gate')">🚦 Markov 2 Gate<span class="lk">🔒</span></button>
+</aside>
+<div class="lockmodal" id="lockmodal" onclick="if(event.target.id==='lockmodal')this.classList.remove('on')">
+  <div class="lockbox">
+    <div class="big">🔒 NOT FOR PUBLIC USE</div>
+    <div class="msg" id="lockmsg"></div>
+    <button onclick="document.getElementById('lockmodal').classList.remove('on')" style="width:100%">Close</button>
+  </div>
+</div>
 <div class="wrap">
   <header>
     <div class="logo">
@@ -116,6 +164,12 @@
 </div>
 
 <script>
+function lock(name){
+  document.getElementById('lockmsg').innerHTML =
+    '<b>'+name+'</b><br><br>Private STAALWAG desk tool. Opens to <b>VIP members as a monthly rental</b> — '+
+    'we\'re building the verified track record in public first. Stay tuned.';
+  document.getElementById('lockmodal').classList.add('on');
+}
 let LAST=null;
 const sc=s=> s>=65?'var(--green)': s>=50?'var(--gold2)': s>=40?'var(--amber)':'var(--red)';
 const fmt=n=> (n===null||n===undefined)?'-':(typeof n==='number'?n.toLocaleString():n);
