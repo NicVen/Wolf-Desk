@@ -103,9 +103,48 @@ def send(chat_id, text, button=None):
     except Exception as e:
         print("gate_bot: send error:", e)
 
+def send_photo(chat_id, photo, caption, button=None):
+    body = {"chat_id": chat_id, "photo": photo, "caption": caption, "parse_mode": "HTML"}
+    if button:
+        body["reply_markup"] = {"inline_keyboard": [[{"text": button[0], "url": button[1]}]]}
+    try:
+        return requests.post(API + "sendPhoto", json=body, timeout=15).json().get("ok", False)
+    except Exception as e:
+        print("gate_bot: sendPhoto error:", e)
+        return False
+
 def ping_admins(text):
     for a in ADMINS:
         send(a, text)
+
+
+# ------------------------------------------------------------------ promo ads
+# Branded ad posts for buying promos / cross-promos in other channels.
+# /ad <code> [gold|fx|all] builds the post (logo + copy + tracked join link);
+# forward it to the channel admin. Every join through it lands in the growth
+# db as ref_by="promo-<code>" -> /promostats shows which channel converts.
+AD_COPY = {
+    "gold": ("🐺 <b>THE WOLF — Gold &amp; Commodities Intel</b>\n\n"
+             "Daily BUY/SELL reads with scores, Markov market regime and full "
+             "case files — and every call logged <b>publicly</b>. Watch the "
+             "track record build in the open.\n\n🥇 Free daily gold reads:"),
+    "fx":   ("🐺 <b>THE WOLF — FX Intel Desk</b>\n\n"
+             "Daily FX reads across majors &amp; JPY crosses — scores, regime, "
+             "case files. Every call logged <b>publicly</b>, no cherry-picking.\n\n"
+             "💱 Free daily FX reads:"),
+    "all":  ("🐺 <b>THE WOLF — Intraday Intel Desk</b>\n\n"
+             "Gold, FX, indices &amp; stocks — daily BUY/SELL reads with scores "
+             "and full case files. Track record posted <b>publicly</b>, in the "
+             "open.\n\n⚡ Get today's read free:"),
+}
+
+def promo_stats():
+    c = _db()
+    rows = c.execute("""SELECT ref_by, COUNT(*) n FROM members
+                        WHERE ref_by LIKE 'promo-%' GROUP BY ref_by
+                        ORDER BY n DESC""").fetchall()
+    c.close()
+    return rows
 
 
 # ------------------------------------------------------------------ handlers
@@ -132,8 +171,12 @@ def handle(msg):
         ref_by = text.split("ref_", 1)[1].split()[0]
     if register(uid, name, ref_by) and ref_by:
         rc = ref_count(ref_by)
-        ping_admins("🎯 Referral: %s (%s) joined via member %s — that member now has %d referral(s)."
-                    % (name, uid, ref_by, rc))
+        if ref_by.startswith("promo-"):
+            ping_admins("📣 Promo join: %s (%s) via %s — %d total from this promo."
+                        % (name, uid, ref_by, rc))
+        else:
+            ping_admins("🎯 Referral: %s (%s) joined via member %s — that member now has %d referral(s)."
+                        % (name, uid, ref_by, rc))
 
     low = text.lower()
 
@@ -171,6 +214,33 @@ def handle(msg):
         import promo_x
         ok, info = promo_x.post(payload)
         send(chat["id"], "X: %s (%s)" % ("posted" if ok else "FAILED", info)); return
+
+    if low.startswith("/promostats") and uid in ADMINS:
+        rows = promo_stats()
+        lines = ["📣 WOLF promo performance (joins per promo code):"]
+        lines += ["  %s — %d" % (code, n) for code, n in rows] or ["  none yet"]
+        send(chat["id"], "\n".join(lines)); return
+
+    if low.startswith("/ad") and uid in ADMINS:
+        import re as _re
+        parts = text.split()
+        if len(parts) < 2:
+            send(chat["id"], "Usage: /ad <code> [gold|fx|all]\n"
+                 "e.g. /ad goldhub24 gold — builds the branded ad post with a "
+                 "tracked join link. Forward it to the channel admin; every join "
+                 "shows up under that code in /promostats."); return
+        code = _re.sub(r"[^A-Za-z0-9-]", "-", parts[1])[:32].lower()
+        desk = parts[2].lower() if len(parts) > 2 and parts[2].lower() in AD_COPY else "all"
+        link = "https://t.me/%s?start=ref_promo-%s" % (bot_username(), code)
+        caption = "%s\n👉 %s" % (AD_COPY[desk], link)
+        ok = send_photo(chat["id"], WOLF_URL + "/wolf.png", caption,
+                        button=("🐺 Get today's read", link))
+        if ok:
+            send(chat["id"], "☝️ Ready-to-post ad [%s / %s]. Forward it (or copy "
+                 "image+text) to the channel. Track joins: /promostats" % (code, desk))
+        else:
+            send(chat["id"], "Ad build failed (photo send error) — check WOLF_URL/wolf.png is live.")
+        return
 
     if low.startswith("/invite"):
         link = "https://t.me/%s?start=ref_%s" % (bot_username(), uid)
