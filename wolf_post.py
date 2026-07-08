@@ -1,15 +1,15 @@
-"""THE WOLF — daily Telegram auto-post (tailored per channel).
+"""WOLF — daily Telegram auto-post (tailored per channel).
 
 BRAND MAP (canonical — keep public copy consistent):
   STAALWAG                = the firm / overall brand
   STAALWAG HQ             = admin-only command centre (NEVER in public copy)
-  THE WOLF Intraday Intel Desk = the PUBLIC product (free reads; VIP = rentals,
+  WOLF Intraday Intel Desk = the PUBLIC product (free reads; VIP = rentals,
                             full signals, market news). This poster speaks AS it.
   Telegram signals        = STAALWAG Gold · VELDRIN Forex · Markov 18-pair
 
   STAALWAG channel  <-  Gold + Indices    VELDRIN channel  <-  Forex
 
-Builds fresh data, composes a THE WOLF-branded post per desk, posts to each channel.
+Builds fresh data, composes a WOLF-branded post per desk, posts to each channel.
 
 Env:
   TELEGRAM_BOT_TOKEN   bot token (@BotFather); bot must be ADMIN of each channel
@@ -36,7 +36,7 @@ TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 
 # Public brand (unified across every channel). STAALWAG is the parent brand and
 # SHOULD appear publicly; only "HQ" (STAALWAG HQ, the admin cockpit) must not.
-FIRM    = "🐺 <b>THE WOLF</b> — <i>Intraday Intel Desk</i>"
+FIRM    = "🐺 <b>WOLF</b> — <i>Intraday Intel Desk</i>"
 BY      = "<i>A STAALWAG desk</i>"                 # parent-brand attribution
 TAGLINE = "<i>Read the market like a wolf.</i>"
 
@@ -126,7 +126,7 @@ def compose(brand, sections, vip, trackkey="site"):
     L.append(f'📈 <a href="{WOLF_URL}/l?c={trackkey}">Open the live board →</a>')
     L.append("")
     L.append("━━━━━━━━━━━━━━")
-    L.append("🐺 <b>THE WOLF</b> · a STAALWAG desk · Read the market like a wolf.")
+    L.append("🐺 <b>WOLF</b> · a STAALWAG desk · Read the market like a wolf.")
     L.append("<i>Research/education, not financial advice. Trade your own plan.</i>")
     return "\n".join(L)
 

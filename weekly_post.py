@@ -1,9 +1,9 @@
-"""THE WOLF — weekly Telegram posts (backed by Nico's Trading Desk analysis).
+"""WOLF — weekly Telegram posts (backed by Nico's Trading Desk analysis).
 
   Monday    -> WEEKLY OUTLOOK   : the week ahead (regime, per-desk watchlist, key events)
   Wednesday -> WEEKLY PROGRESS  : how the week is tracking (signals + pips so far)
 
-Brand map: STAALWAG (firm) / STAALWAG HQ (admin-only) / THE WOLF Intraday Intel
+Brand map: STAALWAG (firm) / STAALWAG HQ (admin-only) / WOLF Intraday Intel
 Desk (public, this poster) / signals = STAALWAG Gold, VELDRIN Forex, Markov 18-pair.
 
 Reuses wolf_post's brand + section engine, posts to the same channels.
@@ -178,7 +178,7 @@ def _finish(L, vip, trackkey):
     L.append(f'📈 <a href="{W.WOLF_URL}/l?c={trackkey}">Open the live board →</a>')
     L.append("")
     L.append("━━━━━━━━━━━━━━")
-    L.append("🐺 <b>THE WOLF</b> · a STAALWAG desk · Read the market like a wolf.")
+    L.append("🐺 <b>WOLF</b> · a STAALWAG desk · Read the market like a wolf.")
     L.append("<i>Research/education, not financial advice. Trade your own plan.</i>")
     return "\n".join(L)
 

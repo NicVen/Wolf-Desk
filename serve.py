@@ -1,4 +1,4 @@
-"""THE WOLF INTRADAY INTEL DESK — dashboard server (local + Railway-ready).
+"""WOLF INTRADAY INTEL DESK — dashboard server (local + Railway-ready).
 
 Access control (the real anti-share gate):
   Primary  = "Log in with Telegram" -> we verify the login is genuine, then
@@ -304,14 +304,14 @@ def build_rss() -> str:
                 continue
             handle = TG_GOLD if cls == "commodities" else TG_FX
             title = "%s — %s (score %s)" % (o["name"], v, o["score"])
-            body = ("🐺 THE WOLF intraday read: %s %s, score %s. %s "
+            body = ("🐺 WOLF intraday read: %s %s, score %s. %s "
                     "Full case file + signals on the desk. Free: %s %s"
                     % (o["name"], v, o["score"], o.get("trend_desc", ""), handle, tags[cls]))
             guid = "%s-%s-%s" % (day, o["name"].replace(" ", ""), v)
             items.append((title, body, guid))
     if not items:
-        items = [("THE WOLF — desk online",
-                  "🐺 THE WOLF intraday intel desk — gold, FX, indices & stocks. "
+        items = [("WOLF — desk online",
+                  "🐺 WOLF intraday intel desk — gold, FX, indices & stocks. "
                   "Free reads: %s %s" % (TG_GOLD, TG_FX), "%s-online" % day)]
     xi = "".join(
         "<item><title>%s</title><description>%s</description>"
@@ -323,10 +323,10 @@ def build_rss() -> str:
         for t, b, g in items[:12])
     return ('<?xml version="1.0" encoding="UTF-8"?>'
             '<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/"><channel>'
-            '<title>THE WOLF — Intraday Intel</title>'
+            '<title>WOLF — Intraday Intel</title>'
             '<link>%s</link>'
             '<description>Intraday reads on gold, FX, indices &amp; stocks.</description>'
-            '<image><url>%s</url><title>THE WOLF — Intraday Intel</title><link>%s</link></image>'
+            '<image><url>%s</url><title>WOLF — Intraday Intel</title><link>%s</link></image>'
             '%s</channel></rss>' % (TG_LINK, WOLF_IMG, TG_LINK, xi))
 
 
@@ -343,12 +343,12 @@ def refresh_loop():
         time.sleep(REFRESH_MIN * 60)
 
 
-LOGIN = """<!doctype html><meta charset=utf-8><title>THE WOLF</title>
+LOGIN = """<!doctype html><meta charset=utf-8><title>WOLF</title>
 <meta name=viewport content="width=device-width,initial-scale=1">
 <body style="background:#0c1016;color:#cdd6df;font-family:Segoe UI,Arial;display:flex;
 align-items:center;justify-content:center;min-height:100vh;margin:0">
 <div style="background:#141a22;border:1px solid #D4A017;border-radius:12px;padding:28px;width:320px;text-align:center">
-<div style="font-size:24px;font-weight:800;letter-spacing:2px"><span style="color:#6E767E">THE </span><span style="color:#D4A017">WOLF</span></div>
+<div style="font-size:24px;font-weight:800;letter-spacing:2px"><span style="color:#D4A017">WOLF</span></div>
 <div style="color:#8a929b;font-size:12px;letter-spacing:2px;margin-bottom:18px">INTRADAY INTEL DESK</div>
 <div style="color:#8a929b;font-size:13px;margin-bottom:18px;line-height:1.5">VIP members only.<br>Tap below — the bot checks your membership and lets you in.</div>
 <a href="https://t.me/__BOT__?start=login"
@@ -356,7 +356,7 @@ align-items:center;justify-content:center;min-height:100vh;margin:0">
 <div style="color:#6b727a;font-size:11px;margin-top:14px">Opens @__BOT__ — press START, then tap the link it sends you.</div>
 </div></body>"""
 
-DENIED = """<!doctype html><meta charset=utf-8><title>THE WOLF</title>
+DENIED = """<!doctype html><meta charset=utf-8><title>WOLF</title>
 <body style="background:#0c1016;color:#cdd6df;font-family:Segoe UI,Arial;display:flex;
 align-items:center;justify-content:center;height:100vh;margin:0;text-align:center">
 <div style="background:#141a22;border:1px solid #b3402f;border-radius:12px;padding:28px;width:340px">

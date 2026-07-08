@@ -1,4 +1,4 @@
-"""THE WOLF — X (Twitter) auto-poster. FREE tier friendly.
+"""WOLF — X (Twitter) auto-poster. FREE tier friendly.
 
 X API v2 free tier allows posting (~1,500 tweets/month) at no cost — you
 only need a free developer app for the 4 keys. This posts WOLF content to
@@ -60,7 +60,7 @@ def _top(cls, n=3):
 
 def compose_daily() -> str:
     """A punchy digest tweet from today's WOLF intel, funneling to Telegram."""
-    lines = ["🐺 THE WOLF — a STAALWAG desk · Read the market like a wolf."]
+    lines = ["🐺 WOLF — a STAALWAG desk · Read the market like a wolf."]
     picks = []
     for cls, tag in (("fx", ""), ("commodities", "")):
         for o in _top(cls, 2):
