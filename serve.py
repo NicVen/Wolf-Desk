@@ -38,6 +38,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 os.chdir(HERE)
 sys.path.insert(0, HERE)
 import run                      # noqa
+import watchdog
 from scout.news import headlines
 
 PORT        = int(os.environ.get("PORT", "8777"))
@@ -301,8 +302,10 @@ def refresh_loop():
             with contextlib.redirect_stdout(io.StringIO()):
                 run.main()
             print("WOLF: auto-refresh complete")
+            watchdog.beat("refresh")
         except Exception as e:
             print("WOLF: auto-refresh error:", e)
+            watchdog.beat("refresh", ok=False, err=e)
         time.sleep(REFRESH_MIN * 60)
 
 
@@ -410,6 +413,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, build_rss(), "application/rss+xml; charset=utf-8"); return
         if path in ("/wolf.png", "/logo.png"):
             self._send(200, _read("wolf.png", b""), "image/png"); return
+        if path == "/health":
+            # watchdog report — ungated so uptime pingers can watch the watcher.
+            # 200 all green / 503 anything down (component names only, no intel).
+            s = watchdog.status()
+            self._send(200 if s["ok"] else 503, json.dumps(s)); return
 
         ok = self._authed(q)
 
@@ -454,16 +462,18 @@ if __name__ == "__main__":
     gate = "Telegram-VIP" if BOT_TOKEN else ("WOLF_PASS" if WOLF_PASS else "OPEN")
     print(f"WOLF dashboard -> port {PORT}  (gate: {gate}, auto-refresh: {REFRESH_MIN}m)")
     if REFRESH_MIN > 0:
-        threading.Thread(target=refresh_loop, daemon=True).start()
+        watchdog.register_thread("refresh", refresh_loop)
     # Run the VIP login bot in-process (no separate worker service needed).
     # Set RUN_BOT=0 to disable on any duplicate instance so only ONE polls.
     if BOT_TOKEN and os.environ.get("RUN_BOT", "1") != "0":
         try:
             import gate_bot
-            threading.Thread(target=gate_bot.main, daemon=True).start()
+            watchdog.register_thread("gate_bot", gate_bot.main)
             print("WOLF: login bot started in-process")
         except Exception as e:
             print("WOLF: could not start login bot:", e)
+    # Watchdog: restarts dead threads, alerts ADMIN_IDS, feeds /health.
+    threading.Thread(target=watchdog.main, daemon=True).start()
     class Server(socketserver.ThreadingTCPServer):
         allow_reuse_address = True
         daemon_threads = True

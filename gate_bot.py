@@ -198,6 +198,7 @@ def handle(msg):
 def main():
     if not TOKEN:
         raise SystemExit("TELEGRAM_BOT_TOKEN missing")
+    import watchdog
     print("WOLF gate_bot up. VIP:", VIP, "admins:", ADMINS or "(none set)", "db:", DB)
     offset = None
     while True:
@@ -209,8 +210,10 @@ def main():
                 offset = u["update_id"] + 1
                 if "message" in u:
                     handle(u["message"])
+            watchdog.beat("gate_bot")
         except Exception as e:
             print("gate_bot: loop error:", e)
+            watchdog.beat("gate_bot", ok=False, err=e)
             time.sleep(5)
 
 
