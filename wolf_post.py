@@ -1,9 +1,15 @@
 """THE WOLF — daily Telegram auto-post (tailored per channel).
 
-  STAALWAG channel  <-  Gold & Commodities desk
-  VELDRIN channel   <-  FX desk
+BRAND MAP (canonical — keep public copy consistent):
+  STAALWAG                = the firm / overall brand
+  STAALWAG HQ             = admin-only command centre (NEVER in public copy)
+  THE WOLF Intraday Intel Desk = the PUBLIC product (free reads; VIP = rentals,
+                            full signals, market news). This poster speaks AS it.
+  Telegram signals        = STAALWAG Gold · VELDRIN Forex · Markov 18-pair
 
-Builds fresh data, composes a branded post per desk, posts to each channel.
+  STAALWAG channel  <-  Gold + Indices    VELDRIN channel  <-  Forex
+
+Builds fresh data, composes a THE WOLF-branded post per desk, posts to each channel.
 
 Env:
   TELEGRAM_BOT_TOKEN   bot token (@BotFather); bot must be ADMIN of each channel
