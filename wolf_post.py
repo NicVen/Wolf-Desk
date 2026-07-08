@@ -33,16 +33,18 @@ TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 FIRM    = "🐺 <b>THE WOLF</b> — <i>Intraday Intel Desk</i>"
 TAGLINE = "<i>Read the market like a wolf.</i>"
 
-# desk -> (env channel, env vip, sub-desk header, [sections])
+# Base URL of the WOLF server (for tracked CTA links -> /l?c=<key> counts clicks)
+WOLF_URL = os.environ.get("WOLF_URL", "https://wolf-desk-production.up.railway.app").rstrip("/")
+
+# desk -> (env channel, env vip, sub-desk header, [sections], track key)
 # section = (label, asset-class key, name filter tuple or None, top N)
-#   STAALWAG channel  ->  Gold + Indices
-#   VELDRIN channel   ->  Forex
+#   STAALWAG channel  ->  Gold + Indices    VELDRIN channel  ->  Forex
 DESKS = [
     ("STAALWAG_CHANNEL", "STAALWAG_VIP", "🥇 <b>STAALWAG · Gold &amp; Indices</b>",
      [("🥇 <b>GOLD</b>",    "commodities", ("Gold",), 1),
-      ("📈 <b>INDICES</b>", "indices",     None,      3)]),
+      ("📈 <b>INDICES</b>", "indices",     None,      3)], "gold"),
     ("VELDRIN_CHANNEL",  "VELDRIN_VIP",  "💱 <b>VELDRIN · FX Desk</b>",
-     [("💱 <b>FOREX</b>",   "fx",          None,      4)]),
+     [("💱 <b>FOREX</b>",   "fx",          None,      4)], "fx"),
 ]
 
 
@@ -78,7 +80,7 @@ def section_ops(clskey, namefilter, n):
     return ops[:n]
 
 
-def compose(brand, sections, vip):
+def compose(brand, sections, vip, trackkey="site"):
     today = datetime.datetime.utcnow().strftime("%d %b %Y")
     # build each asset section; collect all shown ops for the regime vote
     shown, body = [], []
@@ -113,6 +115,8 @@ def compose(brand, sections, vip):
         # No VIP yet: draw with transparency, not a promise we can't back
         L.append("We post our read every day and log every call publicly —")
         L.append("<b>follow to watch the track record build in the open.</b>")
+    # tracked CTA -> counts clicks via the WOLF server's /l endpoint
+    L.append(f'📈 <a href="{WOLF_URL}/l?c={trackkey}">Open the live board →</a>')
     L.append("")
     L.append("━━━━━━━━━━━━━━")
     L.append("🐺 <b>THE WOLF</b> · Read the market like a wolf.")
@@ -131,10 +135,10 @@ def send(channel, msg):
 def main():
     print("WOLF: refreshing data for daily posts ...")
     run.main()
-    for ch_env, vip_env, brand, sections in DESKS:
+    for ch_env, vip_env, brand, sections, trackkey in DESKS:
         channel = os.environ.get(ch_env, "")
         vip = os.environ.get(vip_env, "")
-        msg = compose(brand, sections, vip)
+        msg = compose(brand, sections, vip, trackkey)
         if not TOKEN or not channel:
             print(f"\n--- DRY RUN [{ch_env or clskey}] ---\n")
             plain = (msg.replace("<b>", "").replace("</b>", "").replace("<i>", "")

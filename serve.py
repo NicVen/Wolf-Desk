@@ -244,6 +244,40 @@ TG_FX   = os.environ.get("PUBLIC_HANDLE_FX", "@veldrinforex")
 TG_LINK = os.environ.get("TG_LINK", "https://t.me/staalwagsignals")
 WOLF_IMG = os.environ.get("WOLF_IMG", "https://wolf-desk-production.up.railway.app/wolf.png")
 
+# --- click tracking ------------------------------------------------------------
+# Posts link through /l?c=<key>; we count the click, then 302 to the real target.
+# Views are Telegram-native (the eye count on each channel post) -- no build.
+import sqlite3
+CLICK_DB = os.environ.get("GROWTH_DB", os.path.join(HERE, "growth.db"))
+_SITE = os.environ.get("WOLF_URL", "https://wolf-desk-production.up.railway.app").rstrip("/")
+LINK_DEST = {
+    "gold": _SITE,   # STAALWAG channel taps  -> live board (funnel to join)
+    "fx":   _SITE,   # VELDRIN channel taps   -> live board
+    "site": _SITE,
+    "vip":  os.environ.get("VIP_LINK", TG_LINK),
+}
+
+def _click_conn():
+    c = sqlite3.connect(CLICK_DB)
+    c.execute("CREATE TABLE IF NOT EXISTS link_clicks("
+              "key TEXT PRIMARY KEY, n INTEGER DEFAULT 0, last TEXT)")
+    return c
+
+def track_click(key):
+    c = _click_conn()
+    c.execute("INSERT INTO link_clicks(key,n,last) VALUES(?,1,datetime('now')) "
+              "ON CONFLICT(key) DO UPDATE SET n=n+1, last=datetime('now')", (key,))
+    c.commit(); c.close()
+
+def click_stats():
+    try:
+        c = _click_conn()
+        rows = c.execute("SELECT key,n,last FROM link_clicks ORDER BY n DESC").fetchall()
+        c.close()
+        return [{"key": k, "clicks": n, "last": t} for k, n, t in rows]
+    except Exception:
+        return []
+
 def _xml_escape(s):
     return (str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             .replace('"', "&quot;"))
@@ -413,6 +447,22 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, build_rss(), "application/rss+xml; charset=utf-8"); return
         if path in ("/wolf.png", "/logo.png"):
             self._send(200, _read("wolf.png", b""), "image/png"); return
+
+        # Tracked link: count the click, then redirect to the real destination.
+        if path == "/l":
+            key = q.get("c", ["site"])[0]
+            dest = LINK_DEST.get(key)
+            if dest:
+                try: track_click(key)
+                except Exception: pass
+                self._redirect(dest); return
+            self._send(404, "unknown link", "text/plain"); return
+
+        # Click totals (admin-gated). Views live in Telegram natively.
+        if path == "/clicks.json":
+            if not self._authed(q):
+                self._send(401, b'{"error":"auth required"}'); return
+            self._send(200, json.dumps({"clicks": click_stats()})); return
         if path == "/health":
             # watchdog report — ungated so uptime pingers can watch the watcher.
             # 200 all green / 503 anything down (component names only, no intel).
