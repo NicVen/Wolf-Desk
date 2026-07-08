@@ -33,12 +33,16 @@ TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 FIRM    = "🐺 <b>THE WOLF</b> — <i>Intraday Intel Desk</i>"
 TAGLINE = "<i>Read the market like a wolf.</i>"
 
-# desk -> (env channel, env vip, asset-class key, sub-desk header, lead name or None)
+# desk -> (env channel, env vip, sub-desk header, [sections])
+# section = (label, asset-class key, name filter tuple or None, top N)
+#   STAALWAG channel  ->  Gold + Indices
+#   VELDRIN channel   ->  Forex
 DESKS = [
-    ("STAALWAG_CHANNEL", "STAALWAG_VIP", "commodities",
-     "🥇 <b>STAALWAG · Gold &amp; Commodities</b>", "Gold"),
-    ("VELDRIN_CHANNEL",  "VELDRIN_VIP",  "fx",
-     "💱 <b>VELDRIN · FX Desk</b>", None),
+    ("STAALWAG_CHANNEL", "STAALWAG_VIP", "🥇 <b>STAALWAG · Gold &amp; Indices</b>",
+     [("🥇 <b>GOLD</b>",    "commodities", ("Gold",), 1),
+      ("📈 <b>INDICES</b>", "indices",     None,      3)]),
+    ("VELDRIN_CHANNEL",  "VELDRIN_VIP",  "💱 <b>VELDRIN · FX Desk</b>",
+     [("💱 <b>FOREX</b>",   "fx",          None,      4)]),
 ]
 
 
@@ -67,31 +71,39 @@ def line(o):
             f"   <i>{o.get('trend_desc','')}</i>")
 
 
-def compose(clskey, brand, lead, vip):
-    today = datetime.datetime.utcnow().strftime("%d %b %Y")
+def section_ops(clskey, namefilter, n):
     ops = load(clskey).get("opportunities", [])
+    if namefilter:
+        ops = [o for o in ops if o["name"] in namefilter]
+    return ops[:n]
+
+
+def compose(brand, sections, vip):
+    today = datetime.datetime.utcnow().strftime("%d %b %Y")
+    # build each asset section; collect all shown ops for the regime vote
+    shown, body = [], []
+    for label, clskey, nf, n in sections:
+        ops = section_ops(clskey, nf, n)
+        if not ops:
+            continue
+        shown += ops
+        body.append("")
+        body.append(label)
+        for o in ops:
+            body.append(line(o))
     L = [FIRM, brand, TAGLINE, "━━━━━━━━━━━━━━",
          f"<i>{today} · WOLF intel read</i>", ""]
-    # Markov market regime — majority vote across today's assets
+    # Markov market regime — majority vote across everything shown today
     try:
         from scout.regime import market_read
-        mk = market_read([o.get("regime") or {} for o in ops])
+        mk = market_read([o.get("regime") or {} for o in shown])
         if mk.get("state"):
             v = mk["votes"]
-            L.append(f"📊 <b>Market regime: {_REG_ICON.get(mk['state'],'')} "
-                     f"{mk['state']}</b>  <i>(Bull {v['BULL']} / Bear {v['BEAR']} "
-                     f"/ Side {v['SIDE']})</i>")
-            L.append("")
+            L.append(f"📊 <b>Regime: {_REG_ICON.get(mk['state'],'')} {mk['state']}</b>"
+                     f"  <i>(Bull {v['BULL']} / Bear {v['BEAR']} / Side {v['SIDE']})</i>")
     except Exception:
         pass
-    if lead:
-        led = next((o for o in ops if o["name"] == lead), None)
-        if led:
-            L.append("<b>Headline:</b>")
-            L.append(line(led)); L.append("")
-    L.append("<b>Top opportunities today:</b>")
-    for o in ops[:3]:
-        L.append(line(o))
+    L += body
     L.append("")
     if vip:
         # VIP is live: full signals behind the paywall
@@ -119,10 +131,10 @@ def send(channel, msg):
 def main():
     print("WOLF: refreshing data for daily posts ...")
     run.main()
-    for ch_env, vip_env, clskey, brand, lead in DESKS:
+    for ch_env, vip_env, brand, sections in DESKS:
         channel = os.environ.get(ch_env, "")
         vip = os.environ.get(vip_env, "")
-        msg = compose(clskey, brand, lead, vip)
+        msg = compose(brand, sections, vip)
         if not TOKEN or not channel:
             print(f"\n--- DRY RUN [{ch_env or clskey}] ---\n")
             plain = (msg.replace("<b>", "").replace("</b>", "").replace("<i>", "")
