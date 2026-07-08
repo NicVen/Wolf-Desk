@@ -34,9 +34,10 @@ import requests
 
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 
-# Public brand (unified across every channel). NEVER use "HQ" here -- HQ is the
-# admin-only command centre, internal monitoring only, never shown publicly.
+# Public brand (unified across every channel). STAALWAG is the parent brand and
+# SHOULD appear publicly; only "HQ" (STAALWAG HQ, the admin cockpit) must not.
 FIRM    = "🐺 <b>THE WOLF</b> — <i>Intraday Intel Desk</i>"
+BY      = "<i>A STAALWAG desk</i>"                 # parent-brand attribution
 TAGLINE = "<i>Read the market like a wolf.</i>"
 
 # Base URL of the WOLF server (for tracked CTA links -> /l?c=<key> counts clicks)
@@ -99,7 +100,7 @@ def compose(brand, sections, vip, trackkey="site"):
         body.append(label)
         for o in ops:
             body.append(line(o))
-    L = [FIRM, brand, TAGLINE, "━━━━━━━━━━━━━━",
+    L = [FIRM, BY, brand, TAGLINE, "━━━━━━━━━━━━━━",
          f"<i>{today} · WOLF intel read</i>", ""]
     # Markov market regime — majority vote across everything shown today
     try:
@@ -125,7 +126,7 @@ def compose(brand, sections, vip, trackkey="site"):
     L.append(f'📈 <a href="{WOLF_URL}/l?c={trackkey}">Open the live board →</a>')
     L.append("")
     L.append("━━━━━━━━━━━━━━")
-    L.append("🐺 <b>THE WOLF</b> · Read the market like a wolf.")
+    L.append("🐺 <b>THE WOLF</b> · a STAALWAG desk · Read the market like a wolf.")
     L.append("<i>Research/education, not financial advice. Trade your own plan.</i>")
     return "\n".join(L)
 

@@ -118,7 +118,7 @@ def compose_outlook(brand, sections):
         body.append(label)
         for o in ops:
             body.append(W.line(o))
-    L = [W.FIRM, brand, W.TAGLINE, "━━━━━━━━━━━━━━",
+    L = [W.FIRM, W.BY, brand, W.TAGLINE, "━━━━━━━━━━━━━━",
          f"🗓 <b>WEEKLY OUTLOOK</b> · week of {mon}", ""]
     try:
         from scout.regime import market_read
@@ -143,7 +143,7 @@ def compose_outlook(brand, sections):
 
 def compose_progress(brand, trackkey):
     today = datetime.datetime.utcnow().strftime("%d %b %Y")
-    L = [W.FIRM, brand, W.TAGLINE, "━━━━━━━━━━━━━━",
+    L = [W.FIRM, W.BY, brand, W.TAGLINE, "━━━━━━━━━━━━━━",
          f"📊 <b>WEEKLY PROGRESS</b> · {today}", "",
          "<i>How the week is tracking so far — every call logged in the open.</i>", ""]
     # firm-wide pips this week across the pip desks
@@ -178,7 +178,7 @@ def _finish(L, vip, trackkey):
     L.append(f'📈 <a href="{W.WOLF_URL}/l?c={trackkey}">Open the live board →</a>')
     L.append("")
     L.append("━━━━━━━━━━━━━━")
-    L.append("🐺 <b>THE WOLF</b> · Read the market like a wolf.")
+    L.append("🐺 <b>THE WOLF</b> · a STAALWAG desk · Read the market like a wolf.")
     L.append("<i>Research/education, not financial advice. Trade your own plan.</i>")
     return "\n".join(L)
 
