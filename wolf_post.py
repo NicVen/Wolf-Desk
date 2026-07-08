@@ -28,12 +28,16 @@ import requests
 
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 
-# desk -> (env channel, env vip, asset-class key, brand header, lead name or None)
+# Firm brand (unified across every channel)
+FIRM    = "🐺 <b>STAALWAG HQ</b>"
+TAGLINE = "<i>Read the market like a wolf.</i>"
+
+# desk -> (env channel, env vip, asset-class key, sub-desk header, lead name or None)
 DESKS = [
     ("STAALWAG_CHANNEL", "STAALWAG_VIP", "commodities",
-     "🥇 <b>STAALWAG — Gold &amp; Commodities Desk</b>", "Gold"),
+     "🥇 <b>Gold &amp; Commodities Desk</b>", "Gold"),
     ("VELDRIN_CHANNEL",  "VELDRIN_VIP",  "fx",
-     "💱 <b>VELDRIN — FX Desk</b>", None),
+     "💱 <b>FX Desk · VELDRIN</b>", None),
 ]
 
 
@@ -65,7 +69,8 @@ def line(o):
 def compose(clskey, brand, lead, vip):
     today = datetime.datetime.utcnow().strftime("%d %b %Y")
     ops = load(clskey).get("opportunities", [])
-    L = [brand, f"<i>{today} · WOLF intel read</i>", ""]
+    L = [FIRM, brand, TAGLINE, "━━━━━━━━━━━━━━",
+         f"<i>{today} · WOLF intel read</i>", ""]
     # Markov market regime — majority vote across today's assets
     try:
         from scout.regime import market_read
@@ -96,6 +101,8 @@ def compose(clskey, brand, lead, vip):
         L.append("We post our read every day and log every call publicly —")
         L.append("<b>follow to watch the track record build in the open.</b>")
     L.append("")
+    L.append("━━━━━━━━━━━━━━")
+    L.append(f"{FIRM} · Read the market like a wolf.")
     L.append("<i>Research/education, not financial advice. Trade your own plan.</i>")
     return "\n".join(L)
 
