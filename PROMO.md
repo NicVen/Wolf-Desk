@@ -3,6 +3,11 @@
 No Telegram Premium needed. Growth = buying/swapping posts in other trading
 channels, with every join tracked back to the channel that sent it.
 
+Marketing is managed from Telegram by the in-process marketing bot:
+`/mkt` shows the desk, `/addch` tracks target channels, `/chst` moves them
+through the pipeline, `/followup` chases quiet admins, `/report` (auto every
+Monday) shows what converts, `/copy` writes fresh ad copy.
+
 ## The loop
 1. Shortlist gold/FX channels (5k–50k members, active views). DM the admin,
    ask their promo-post price (typical: $10–100) — or offer a free cross-promo.

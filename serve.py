@@ -472,6 +472,13 @@ if __name__ == "__main__":
             print("WOLF: login bot started in-process")
         except Exception as e:
             print("WOLF: could not start login bot:", e)
+    # Marketing bot: campaign CRM + weekly report + optional daily-post timer.
+    try:
+        import marketer
+        watchdog.register_thread("marketer", marketer.main)
+        print("WOLF: marketing bot started in-process")
+    except Exception as e:
+        print("WOLF: could not start marketing bot:", e)
     # Watchdog: restarts dead threads, alerts ADMIN_IDS, feeds /health.
     threading.Thread(target=watchdog.main, daemon=True).start()
     class Server(socketserver.ThreadingTCPServer):

@@ -45,6 +45,7 @@ CLASSES      = ("commodities", "fx", "indices", "stocks")
 _STALL = {
     "refresh":  REFRESH_MIN * 3 * 60,   # 3 missed cycles = stalled
     "gate_bot": 5 * 60,                 # long-poll is 60s; 5 min silent = dead
+    "marketer": 10 * 60,                # ticks every 60s; 10 min silent = dead
 }
 
 _LOCK     = threading.Lock()

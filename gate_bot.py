@@ -215,6 +215,16 @@ def handle(msg):
         ok, info = promo_x.post(payload)
         send(chat["id"], "X: %s (%s)" % ("posted" if ok else "FAILED", info)); return
 
+    # marketing bot commands (/mkt /addch /chst /channels /followup /report /copy)
+    if uid in ADMINS and low.startswith(("/mkt", "/addch", "/chst", "/channels",
+                                         "/followup", "/report", "/copy")):
+        try:
+            import marketer
+            if marketer.handle(low, text, uid, chat["id"], send):
+                return
+        except Exception as e:
+            print("gate_bot: marketer error:", e)
+
     if low.startswith("/promostats") and uid in ADMINS:
         rows = promo_stats()
         lines = ["📣 WOLF promo performance (joins per promo code):"]
