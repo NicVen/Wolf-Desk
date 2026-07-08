@@ -458,11 +458,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._redirect(dest); return
             self._send(404, "unknown link", "text/plain"); return
 
-        # Click totals (admin-gated). Views live in Telegram natively.
+        # Click totals (open -- marketing metric, not sensitive). Views are
+        # Telegram-native (the eye count on each channel post).
         if path == "/clicks.json":
-            if not self._authed(q):
-                self._send(401, b'{"error":"auth required"}'); return
-            self._send(200, json.dumps({"clicks": click_stats()})); return
+            stats = click_stats()
+            total = sum(s["clicks"] for s in stats)
+            self._send(200, json.dumps({"total_clicks": total, "by_channel": stats})); return
         if path == "/health":
             # watchdog report — ungated so uptime pingers can watch the watcher.
             # 200 all green / 503 anything down (component names only, no intel).
