@@ -28,16 +28,17 @@ import requests
 
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 
-# Firm brand (unified across every channel)
-FIRM    = "🐺 <b>STAALWAG HQ</b>"
+# Public brand (unified across every channel). NEVER use "HQ" here -- HQ is the
+# admin-only command centre, internal monitoring only, never shown publicly.
+FIRM    = "🐺 <b>THE WOLF</b> — <i>Intraday Intel Desk</i>"
 TAGLINE = "<i>Read the market like a wolf.</i>"
 
 # desk -> (env channel, env vip, asset-class key, sub-desk header, lead name or None)
 DESKS = [
     ("STAALWAG_CHANNEL", "STAALWAG_VIP", "commodities",
-     "🥇 <b>Gold &amp; Commodities Desk</b>", "Gold"),
+     "🥇 <b>STAALWAG · Gold &amp; Commodities</b>", "Gold"),
     ("VELDRIN_CHANNEL",  "VELDRIN_VIP",  "fx",
-     "💱 <b>FX Desk · VELDRIN</b>", None),
+     "💱 <b>VELDRIN · FX Desk</b>", None),
 ]
 
 
@@ -102,7 +103,7 @@ def compose(clskey, brand, lead, vip):
         L.append("<b>follow to watch the track record build in the open.</b>")
     L.append("")
     L.append("━━━━━━━━━━━━━━")
-    L.append(f"{FIRM} · Read the market like a wolf.")
+    L.append("🐺 <b>THE WOLF</b> · Read the market like a wolf.")
     L.append("<i>Research/education, not financial advice. Trade your own plan.</i>")
     return "\n".join(L)
 
