@@ -60,7 +60,7 @@ def _top(cls, n=3):
 
 def compose_daily() -> str:
     """A punchy digest tweet from today's WOLF intel, funneling to Telegram."""
-    lines = ["🐺 WOLF — a STAALWAG desk · Read the market like a wolf."]
+    lines = ["STAALWAG · 🐺 WOLF Intel Desk · Read the market like a wolf."]
     picks = []
     for cls, tag in (("fx", ""), ("commodities", "")):
         for o in _top(cls, 2):

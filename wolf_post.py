@@ -34,10 +34,11 @@ import requests
 
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 
-# Public brand (unified across every channel). STAALWAG is the parent brand and
-# SHOULD appear publicly; only "HQ" (STAALWAG HQ, the admin cockpit) must not.
-FIRM    = "🐺 <b>WOLF</b> — <i>Intraday Intel Desk</i>"
-BY      = "<i>A STAALWAG desk</i>"                 # parent-brand attribution
+# Public brand roles: STAALWAG is the PUBLISHER (it posts everything);
+# WOLF is the VENUE — the free-subscriber community + VIP benefits inside.
+# Only "HQ" (STAALWAG HQ, the admin cockpit) must never appear publicly.
+FIRM    = "<b>STAALWAG</b>"                         # the poster / the firm
+BY      = "🐺 <i>WOLF — Intraday Intel Desk · free reads &amp; VIP</i>"  # the venue
 TAGLINE = "<i>Read the market like a wolf.</i>"
 
 # Base URL of the WOLF server (for tracked CTA links -> /l?c=<key> counts clicks)
@@ -47,7 +48,7 @@ WOLF_URL = os.environ.get("WOLF_URL", "https://wolf-desk-production.up.railway.a
 # section = (label, asset-class key, name filter tuple or None, top N)
 #   STAALWAG channel  ->  Gold + Indices    VELDRIN channel  ->  Forex
 DESKS = [
-    ("STAALWAG_CHANNEL", "STAALWAG_VIP", "🥇 <b>STAALWAG · Gold &amp; Indices</b>",
+    ("STAALWAG_CHANNEL", "STAALWAG_VIP", "🥇 <b>Gold &amp; Indices desk</b>",
      [("🥇 <b>GOLD</b>",    "commodities", ("Gold",), 1),
       ("📈 <b>INDICES</b>", "indices",     None,      3)], "gold"),
     ("VELDRIN_CHANNEL",  "VELDRIN_VIP",  "💱 <b>VELDRIN · FX Desk</b>",
@@ -100,8 +101,8 @@ def compose(brand, sections, vip, trackkey="site"):
         body.append(label)
         for o in ops:
             body.append(line(o))
-    L = [FIRM, BY, brand, TAGLINE, "━━━━━━━━━━━━━━",
-         f"<i>{today} · WOLF intel read</i>", ""]
+    L = [FIRM, brand, BY, TAGLINE, "━━━━━━━━━━━━━━",
+         f"<i>{today} · STAALWAG intel read</i>", ""]
     # Markov market regime — majority vote across everything shown today
     try:
         from scout.regime import market_read
@@ -126,7 +127,7 @@ def compose(brand, sections, vip, trackkey="site"):
     L.append(f'📈 <a href="{WOLF_URL}/l?c={trackkey}">Open the live board →</a>')
     L.append("")
     L.append("━━━━━━━━━━━━━━")
-    L.append("🐺 <b>WOLF</b> · a STAALWAG desk · Read the market like a wolf.")
+    L.append("<b>STAALWAG</b> · 🐺 WOLF Intel Desk · Read the market like a wolf.")
     L.append("<i>Research/education, not financial advice. Trade your own plan.</i>")
     return "\n".join(L)
 
