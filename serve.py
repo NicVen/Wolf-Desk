@@ -445,8 +445,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, json.dumps({"rate": fx_rate(fr, to)})); return
         if path in ("/rss", "/feed", "/rss.xml"):
             self._send(200, build_rss(), "application/rss+xml; charset=utf-8"); return
-        if path in ("/wolf.png", "/logo.png"):
+        if path == "/wolf.png":
             self._send(200, _read("wolf.png", b""), "image/png"); return
+        if path in ("/staalwag.png", "/logo.png"):
+            self._send(200, _read("staalwag.png", b""), "image/png"); return
 
         # Tracked link: count the click, then redirect to the real destination.
         if path == "/l":
