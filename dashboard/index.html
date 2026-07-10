@@ -5,9 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>THE WOLF PROJECT</title>
 <style>
-  :root{ --gold:#D4A017; --gold2:#E8B92E; --steel:#6E767E; --steeldk:#454C53;
-         --bg:#0c1016; --panel:#141a22; --panel2:#1a212b; --line:#222b36;
-         --txt:#cdd6df; --mut:#8a929b; --green:#3fcf6b; --red:#e0564f; --amber:#e0a23a; }
+  /* STAALWAG steel brand: chrome-silver accent on deep navy (matches the emblem).
+     --gold/--gold2 kept as names for back-compat but now hold the chrome tones. */
+  :root{ --gold:#c7d2dd; --gold2:#eaf0f5; --chrome:#c7d2dd; --chrome2:#eaf0f5;
+         --steel:#6E767E; --steeldk:#454C53; --ink:#0a0e15;
+         --bg:#0a0e15; --panel:#121820; --panel2:#1a212c; --line:#233042;
+         --txt:#cdd6df; --mut:#8791a0; --green:#3fcf6b; --red:#e0564f; --amber:#e0a23a; }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--txt);font-family:Segoe UI,Arial,sans-serif;font-size:14px}
   .wrap{max-width:1180px;margin:0 auto;padding:16px}
@@ -19,7 +22,7 @@
   .sub{color:var(--mut);font-size:12px;letter-spacing:3px}
   .spacer{flex:1}
   #upd{color:var(--mut);font-size:12px;margin-right:6px}
-  button{background:var(--gold);color:#1a1404;border:0;font-weight:800;letter-spacing:1px;
+  button{background:var(--gold);color:var(--ink);border:0;font-weight:800;letter-spacing:1px;
          padding:10px 18px;border-radius:6px;cursor:pointer;font-size:14px}
   button:disabled{opacity:.6;cursor:wait}
   h2{font-size:13px;letter-spacing:2px;color:var(--mut);font-weight:600;margin:22px 0 8px;text-transform:uppercase}
@@ -32,7 +35,7 @@
   .tabs{display:flex;gap:6px;margin:16px 0 2px;flex-wrap:wrap}
   .tab{padding:9px 18px;border:1px solid var(--line);border-radius:6px;cursor:pointer;color:var(--mut);background:var(--panel);font-weight:600;letter-spacing:1px}
   .tab:hover{border-color:var(--gold)}
-  .tab.on{background:var(--gold);color:#1a1404;border-color:var(--gold);font-weight:800}
+  .tab.on{background:var(--gold);color:var(--ink);border-color:var(--gold);font-weight:800}
   .auto{display:flex;align-items:center;gap:6px;color:var(--mut);font-size:12px;margin-right:10px}
   .auto input{accent-color:var(--gold)}
   table{width:100%;border-collapse:collapse}
@@ -128,7 +131,7 @@
       <img class="hex" src="/wolf.png" alt="WOLF">
       <div><div class="brand"><span class="w">WOLF</span></div>
       <div class="sub">INTRADAY INTEL DESK</div>
-      <div class="sub" style="color:#D4A017;letter-spacing:3px;font-size:10px">A STAALWAG DESK</div></div>
+      <div class="sub" style="color:var(--chrome);letter-spacing:3px;font-size:10px">A STAALWAG DESK</div></div>
     </div>
     <div class="spacer"></div>
     <span id="upd">—</span>
@@ -290,7 +293,7 @@ async function openCalendar(){
 }
 function renderCal(){
   const flt=['All','High','Medium','Low','Holiday'];
-  const bar=flt.map(f=>`<span class="tab" style="padding:5px 12px;font-size:12px;${f===CALF?'background:var(--gold);color:#1a1404':''}" onclick="CALF='${f}';renderCal()">${f}</span>`).join(' ');
+  const bar=flt.map(f=>`<span class="tab" style="padding:5px 12px;font-size:12px;${f===CALF?'background:var(--gold);color:var(--ink)':''}" onclick="CALF='${f}';renderCal()">${f}</span>`).join(' ');
   const rows=CAL.filter(e=>CALF==='All'||e.impact===CALF);
   let h=`<span class="x" onclick="closeCase()">✕</span><h3>📅 Economic Calendar <span style="color:var(--mut);font-size:13px">— this week</span></h3>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px">${bar}</div>

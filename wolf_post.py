@@ -43,6 +43,8 @@ TAGLINE = "<i>Read the market like a wolf.</i>"
 
 # Base URL of the WOLF server (for tracked CTA links -> /l?c=<key> counts clicks)
 WOLF_URL = os.environ.get("WOLF_URL", "https://wolf-desk-production.up.railway.app").rstrip("/")
+# STAALWAG is the publisher, so its steel emblem heads every post (the logo brand).
+STAALWAG_IMG = os.environ.get("STAALWAG_IMG", WOLF_URL + "/staalwag.png")
 
 # desk -> (env channel, env vip, sub-desk header, [sections], track key)
 # section = (label, asset-class key, name filter tuple or None, top N)
@@ -132,12 +134,34 @@ def compose(brand, sections, vip, trackkey="site"):
     return "\n".join(L)
 
 
-def send(channel, msg):
-    r = requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage",
-                      json={"chat_id": channel, "text": msg, "parse_mode": "HTML",
-                            "disable_web_page_preview": True}, timeout=20)
+def _api(method, payload):
+    r = requests.post(f"https://api.telegram.org/bot{TOKEN}/{method}",
+                      json=payload, timeout=25)
     ok = r.status_code == 200 and r.json().get("ok")
     return ok, (r.text[:200] if not ok else "")
+
+
+def send(channel, msg):
+    """Lead every post with the STAALWAG emblem so the logo brand rides on it.
+    Telegram captions cap at 1024 chars; longer reads send the emblem + branded
+    head as a photo, then the rest as a follow-up. Splitting on line boundaries
+    keeps each line's HTML tags balanced across the two messages."""
+    if len(msg) <= 1024:
+        return _api("sendPhoto", {"chat_id": channel, "photo": STAALWAG_IMG,
+                                  "caption": msg, "parse_mode": "HTML"})
+    lines = msg.split("\n"); head = []; n = 0
+    for ln in lines:
+        if head and n + len(ln) + 1 > 1000:
+            break
+        head.append(ln); n += len(ln) + 1
+    rest = "\n".join(lines[len(head):]).strip()
+    ok1, e1 = _api("sendPhoto", {"chat_id": channel, "photo": STAALWAG_IMG,
+                                 "caption": "\n".join(head), "parse_mode": "HTML"})
+    ok2, e2 = (True, "")
+    if rest:
+        ok2, e2 = _api("sendMessage", {"chat_id": channel, "text": rest,
+                                       "parse_mode": "HTML", "disable_web_page_preview": True})
+    return (ok1 and ok2), (e1 or e2)
 
 
 def main():

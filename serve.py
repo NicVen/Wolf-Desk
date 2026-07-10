@@ -345,24 +345,24 @@ def refresh_loop():
 
 LOGIN = """<!doctype html><meta charset=utf-8><title>WOLF</title>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<body style="background:#0c1016;color:#cdd6df;font-family:Segoe UI,Arial;display:flex;
+<body style="background:#0a0e15;color:#cdd6df;font-family:Segoe UI,Arial;display:flex;
 align-items:center;justify-content:center;min-height:100vh;margin:0">
-<div style="background:#141a22;border:1px solid #D4A017;border-radius:12px;padding:28px;width:320px;text-align:center">
-<div style="font-size:24px;font-weight:800;letter-spacing:2px"><span style="color:#D4A017">WOLF</span></div>
-<div style="color:#8a929b;font-size:12px;letter-spacing:2px;margin-bottom:18px">INTRADAY INTEL DESK</div>
-<div style="color:#8a929b;font-size:13px;margin-bottom:18px;line-height:1.5">VIP members only.<br>Tap below — the bot checks your membership and lets you in.</div>
+<div style="background:#121820;border:1px solid #c7d2dd;border-radius:12px;padding:28px;width:320px;text-align:center">
+<div style="font-size:24px;font-weight:800;letter-spacing:2px"><span style="color:#c7d2dd">WOLF</span></div>
+<div style="color:#8791a0;font-size:12px;letter-spacing:2px;margin-bottom:18px">INTRADAY INTEL DESK</div>
+<div style="color:#8791a0;font-size:13px;margin-bottom:18px;line-height:1.5">VIP members only.<br>Tap below — the bot checks your membership and lets you in.</div>
 <a href="https://t.me/__BOT__?start=login"
- style="display:block;padding:14px;border-radius:8px;background:#D4A017;color:#1a1404;font-weight:800;text-decoration:none;font-size:15px">🔓 Log in with Telegram</a>
+ style="display:block;padding:14px;border-radius:8px;background:linear-gradient(180deg,#eaf0f5,#b7c2ce);color:#0a0e15;font-weight:800;text-decoration:none;font-size:15px">🔓 Log in with Telegram</a>
 <div style="color:#6b727a;font-size:11px;margin-top:14px">Opens @__BOT__ — press START, then tap the link it sends you.</div>
 </div></body>"""
 
 DENIED = """<!doctype html><meta charset=utf-8><title>WOLF</title>
-<body style="background:#0c1016;color:#cdd6df;font-family:Segoe UI,Arial;display:flex;
+<body style="background:#0a0e15;color:#cdd6df;font-family:Segoe UI,Arial;display:flex;
 align-items:center;justify-content:center;height:100vh;margin:0;text-align:center">
-<div style="background:#141a22;border:1px solid #b3402f;border-radius:12px;padding:28px;width:340px">
-<div style="font-size:22px;font-weight:800;color:#D4A017;margin-bottom:8px">ACCESS DENIED</div>
+<div style="background:#121820;border:1px solid #b3402f;border-radius:12px;padding:28px;width:340px">
+<div style="font-size:22px;font-weight:800;color:#c7d2dd;margin-bottom:8px">ACCESS DENIED</div>
 <div style="color:#cdd6df;font-size:13px;margin-bottom:14px">This desk is for VIP members. Your Telegram isn't in a VIP channel.</div>
-<a href="/" style="color:#D4A017;font-size:12px">&larr; back</a></div></body>"""
+<a href="/" style="color:#c7d2dd;font-size:12px">&larr; back</a></div></body>"""
 
 
 def _read(path, default=b"{}"):
@@ -427,7 +427,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if path == "/go":
             uid = verify_login_token(q.get("t", [""])[0])
             if not uid:
-                self._send(200, "<body style='background:#0c1016;color:#cdd6df;font-family:Arial;text-align:center;padding-top:60px'>Login link expired — tap the bot again to get a fresh one.</body>",
+                self._send(200, "<body style='background:#0a0e15;color:#cdd6df;font-family:Arial;text-align:center;padding-top:60px'>Login link expired — tap the bot again to get a fresh one.</body>",
                            "text/html; charset=utf-8"); return
             cookie = ("wolf_session=%s; Path=/; Max-Age=%d; HttpOnly; SameSite=Lax"
                       % (make_session(uid), SESSION_TTL))
