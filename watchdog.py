@@ -40,6 +40,9 @@ COOLDOWN     = int(os.environ.get("ALERT_COOLDOWN_MIN", "30")) * 60
 TOKEN        = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 ADMINS       = [a.strip() for a in os.environ.get("ADMIN_IDS", "").split(",") if a.strip()]
 CLASSES      = ("commodities", "fx", "indices", "stocks")
+# On boot the committed data snapshot is old; the first refresh rebuilds it.
+# Tolerate stale data until one refresh cycle (+buffer) has had time to land.
+_GRACE_SEC   = (max(REFRESH_MIN, 20) + 5) * 60
 
 # heartbeat stall thresholds (seconds) per component
 _STALL = {
@@ -106,12 +109,16 @@ def _problems():
             out["stall:" + name] = f"{name} silent for {age/60:.0f} min (limit {limit/60:.0f})"
         elif not h["ok"]:
             out["err:" + name] = f"{name} last cycle FAILED: {h['err']}"
-    # stale data on disk
+    # stale data on disk. A fresh container ships the committed (old) snapshot
+    # and rebuilds it on the first refresh cycle, so ignore staleness during a
+    # startup grace window — otherwise every redeploy false-alarms. After the
+    # grace period, still-stale data is a genuine refresh failure worth an alert.
+    grace = (now - _STARTED) < _GRACE_SEC
     for cls in CLASSES:
         age = _data_age_min(cls)
         if age is None:
             out["data:" + cls] = f"data/opportunities_{cls}.json missing/unreadable"
-        elif age > STALE_MIN:
+        elif age > STALE_MIN and not grace:
             out["data:" + cls] = f"{cls} data stale: {age:.0f} min old (limit {STALE_MIN})"
     return out
 
