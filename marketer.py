@@ -41,18 +41,24 @@ POST_HOUR   = os.environ.get("DAILY_POST_HOUR", "")            # off unless set
 STATUSES = ("prospect", "contacted", "agreed", "posted", "dead")
 
 COPY = {
-  "gold": ["🐺 THE WOLF — daily gold & commodities reads, scored 0-100 with "
-           "full case files. Every call logged publicly. Free channel:",
-           "Gold traders: one desk, one daily read — trend, regime, catalyst, "
-           "verdict. Track record builds in the open. 🐺 Free:"],
-  "fx":   ["🐺 THE WOLF FX desk — majors & JPY crosses read daily: score, "
-           "regime, case file. No cherry-picking, every call logged. Free:",
-           "Your FX second opinion: daily BUY/SELL reads with the reasoning "
-           "shown. 🐺 Watch the record build live. Free:"],
-  "all":  ["🐺 THE WOLF — gold, FX, indices & stocks. Daily intel reads, "
+  "gold": ["🐺 STAALWAG — daily gold & indices intel. Scored BUY/SELL reads "
+           "with full case files, every call logged in the open. Free channel:",
+           "Gold traders: one desk, one clear daily read — trend, Markov "
+           "regime, catalyst, verdict. Track record builds publicly. 🐺 Free:",
+           "XAUUSD moving and you want a second opinion with the reasoning "
+           "shown? STAALWAG posts a scored gold read every day, logged live. 🐺 Free:"],
+  "fx":   ["🐺 STAALWAG · VELDRIN FX desk — majors & JPY crosses read daily: "
+           "score, regime, case file. Every call logged, no cherry-picking. Free:",
+           "Your FX second opinion: daily BUY/SELL reads with the full "
+           "reasoning, not just signals. 🐺 Watch the record build live. Free:",
+           "Tired of signal channels that hide their losses? STAALWAG logs "
+           "every FX call in the open — scored, explained, daily. 🐺 Free:"],
+  "all":  ["🐺 STAALWAG — gold, FX, indices & stocks. Daily intel reads, "
            "public track record, full case files. Free:",
            "One desk for the whole tape: daily scored reads on gold, FX, "
-           "indices & stocks. 🐺 Logged publicly. Free:"],
+           "indices & stocks — logged in the open. 🐺 Free:",
+           "Read the market like a wolf: STAALWAG scores every major market "
+           "0-100 daily with the case behind each call. 🐺 Free:"],
 }
 
 
