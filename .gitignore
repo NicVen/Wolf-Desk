@@ -10,3 +10,7 @@ Include/
 share/
 pyvenv.cfg
 *.original.md
+
+# runtime database (production uses the Railway volume /data/growth.db)
+*.db
+growth.db
