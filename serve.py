@@ -449,6 +449,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, _read("wolf.png", b""), "image/png"); return
         if path in ("/staalwag.png", "/logo.png"):
             self._send(200, _read("staalwag.png", b""), "image/png"); return
+        # Public brand landing page (ungated) — what STAALWAG is + Telegram CTAs.
+        if path in ("/staalwag", "/about", "/home"):
+            self._send(200, _read(os.path.join("dashboard", "landing.html")),
+                       "text/html; charset=utf-8"); return
 
         # Tracked link: count the click, then redirect to the real destination.
         if path == "/l":
