@@ -478,13 +478,20 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         ok = self._authed(q)
 
+        # Explicit member login gate (landing "member" button points here).
+        if path == "/login":
+            host = self.headers.get("Host", "")
+            scheme = "https"   # Railway terminates TLS
+            auth_url = "%s://%s/auth" % (scheme, host) if host else "/auth"
+            page = LOGIN.replace("__BOT__", BOT_USERNAME).replace("__AUTHURL__", auth_url)
+            self._send(200, page, "text/html; charset=utf-8"); return
+
         if path in ("/", "/index.html"):
             if not ok:
-                host = self.headers.get("Host", "")
-                scheme = "https"   # Railway terminates TLS
-                auth_url = "%s://%s/auth" % (scheme, host) if host else "/auth"
-                page = LOGIN.replace("__BOT__", BOT_USERNAME).replace("__AUTHURL__", auth_url)
-                self._send(200, page, "text/html; charset=utf-8")
+                # Public front door: the STAALWAG brand landing page (not the bare
+                # login gate). Members reach the desk via the page's login button.
+                self._send(200, _read(os.path.join("dashboard", "landing.html")),
+                           "text/html; charset=utf-8")
             else:
                 cookie = None
                 if WOLF_PASS and q.get("key", [""])[0] == WOLF_PASS:
