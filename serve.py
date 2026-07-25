@@ -449,6 +449,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, _read("wolf.png", b""), "image/png"); return
         if path in ("/staalwag.png", "/logo.png"):
             self._send(200, _read("staalwag.png", b""), "image/png"); return
+        # Link-preview card (1200x630). Ungated so chat apps can fetch it while
+        # scraping the shared URL. Long cache: the image only changes on deploy.
+        if path == "/og.png":
+            self._send(200, _read("og.png", b""), "image/png"); return
         # Public brand landing page (ungated) — what STAALWAG is + Telegram CTAs.
         if path in ("/staalwag", "/about", "/home"):
             self._send(200, _read(os.path.join("dashboard", "landing.html")),
