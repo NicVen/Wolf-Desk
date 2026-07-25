@@ -453,6 +453,19 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # scraping the shared URL. Long cache: the image only changes on deploy.
         if path == "/og.png":
             self._send(200, _read("og.png", b""), "image/png"); return
+        # STAALWAG favicon / home-screen icons + PWA manifest (all ungated so
+        # browsers and phones can fetch them without a session).
+        if path in ("/favicon-32.png", "/favicon.ico"):
+            self._send(200, _read("favicon-32.png", b""), "image/png"); return
+        if path in ("/apple-touch-icon.png", "/apple-touch-icon-precomposed.png"):
+            self._send(200, _read("apple-touch-icon.png", b""), "image/png"); return
+        if path == "/icon-192.png":
+            self._send(200, _read("icon-192.png", b""), "image/png"); return
+        if path == "/icon-512.png":
+            self._send(200, _read("icon-512.png", b""), "image/png"); return
+        if path == "/manifest.json":
+            self._send(200, _read("manifest.json", b"{}"),
+                       "application/manifest+json"); return
         # Public brand landing page (ungated) — what STAALWAG is + Telegram CTAs.
         if path in ("/staalwag", "/about", "/home"):
             self._send(200, _read(os.path.join("dashboard", "landing.html")),
