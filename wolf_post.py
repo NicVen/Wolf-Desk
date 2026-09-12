@@ -27,14 +27,13 @@ Noise control (only post a pair when its signal actually changed):
                        next to GROWTH_DB / the Railway volume, so it survives
                        restarts).
 
-Daily Desk Playbook (curated cross-market top-N for the free channel, with the
-reasoning + data behind each pick; honest framing — setups, not claimed trades):
+Daily Desk Playbook (our FLAGSHIP: Gold + top major FX — the markets we trade and
+plan in full; honest framing — setups + reasoning + data, not claimed trades.
+Weekday only, since Gold & FX are shut on weekends):
   PLAYBOOK_ENABLED     "1" (default) posts the playbook alongside the digest.
-  PLAYBOOK_COUNT       0 (default) = the best pick in EACH asset class live today
-                       (lean, one per market); a positive number caps the line-up
-                       to that many highest-conviction picks.
-  PLAYBOOK_CHANNEL     weekday channel env for it (default STAALWAG_CHANNEL);
-                       on weekends it follows the crypto desk automatically.
+  PLAYBOOK_FX_COUNT    how many major FX pairs to feature with Gold (default 2,
+                       i.e. Gold + 2 = 3 setups).
+  PLAYBOOK_CHANNEL     channel env it posts to (default STAALWAG_CHANNEL).
 
 No token = DRY RUN: prints both posts instead of sending.
 Run:  python wolf_post.py
@@ -116,8 +115,9 @@ def weekend_desks():
              [("🪙 <b>CRYPTO</b>", "crypto", None, 6)], "crypto")]
 
 
-WEEKEND_NOTE = ("🗓 <i>Weekend — FX, gold/metals &amp; indices are closed. "
-                "Crypto trades 24/7, so it's the only desk live today.</i>")
+WEEKEND_NOTE = ("🗓 <i>Weekend — Gold, FX &amp; indices are closed. Crypto trades "
+                "24/7 — data &amp; findings for those who trade it (not a market we "
+                "trade ourselves).</i>")
 
 
 def is_weekend(now=None):
@@ -180,18 +180,18 @@ _DB_DIR      = os.path.dirname(os.environ.get("GROWTH_DB", "")) or C.DATA_DIR
 SIGNAL_STATE_FILE = os.environ.get("SIGNAL_STATE_FILE",
                                    os.path.join(_DB_DIR, "last_signals.json"))
 
-# Daily "Desk Playbook" — a curated cross-market top-N read for the free channel,
-# with the reasoning + data behind each pick. Honest framing: we produce the
-# setup/analysis and log it in the open; taking the trade is the reader's call.
-# We never claim live trades. Posted alongside the per-desk digest, once a day
-# (deduped by the day + the chosen line-up, so a frequent run won't repeat it).
-PLAYBOOK_ENABLED = os.environ.get("PLAYBOOK_ENABLED", "1") != "0"
-# 0 (default) = one best pick per asset class live today (lean, reader decides).
-# Set a positive number to cap the line-up to that many highest-conviction picks.
-PLAYBOOK_COUNT   = int(os.environ.get("PLAYBOOK_COUNT", "0"))
-# Which channel env the playbook posts to on WEEKDAYS (weekends follow the
-# weekend/crypto desk automatically).
-PLAYBOOK_CHANNEL = os.environ.get("PLAYBOOK_CHANNEL", "STAALWAG_CHANNEL")
+# Daily "Desk Playbook" — our FLAGSHIP, comprehensive read for the free channel.
+# It covers our focus markets only: Gold + the top major FX pairs (that's what we
+# trade and give full trading plans on). Other markets (indices, stocks, crypto)
+# stay available on the Intel desk + Q&A, but the deep playbook stays focused so
+# the reader isn't overwhelmed. Honest framing: we produce the setup/analysis and
+# log it in the open; taking the trade is the reader's call — we never claim live
+# trades. Weekday only (Gold & FX are closed on weekends). Posted alongside the
+# per-desk digest, once a day (deduped by day + line-up).
+PLAYBOOK_ENABLED  = os.environ.get("PLAYBOOK_ENABLED", "1") != "0"
+# How many major FX pairs to feature alongside Gold (default 2 -> Gold + 2 = 3).
+PLAYBOOK_FX_COUNT = int(os.environ.get("PLAYBOOK_FX_COUNT", "2"))
+PLAYBOOK_CHANNEL  = os.environ.get("PLAYBOOK_CHANNEL", "STAALWAG_CHANNEL")
 
 
 def fingerprint(o):
@@ -299,34 +299,27 @@ def _verdict_icon(v):
     return "🟢" if v.startswith("BUY") else "🔴" if v == "SELL" else "🟡"
 
 
-def select_playbook(max_count=None):
-    """The best SINGLE setup in each asset class that's live today (weekday:
-    commodities/indices/fx; weekend: crypto). One pick per class keeps it lean —
-    the reader picks what to take, instead of drowning in 20 reports. Respects
-    each desk section's own universe (so the commodities pick stays Gold, etc.).
-    Returns [(clskey, opportunity)], strongest first."""
-    desks = weekend_desks() if is_weekend() else weekday_desks()
-    best, order = {}, []
-    for _ch, _vip, _hdr, sections, _tk in desks:
-        for _label, clskey, nf, _cnt in sections:
-            if clskey in best:
-                continue
-            top = section_ops(clskey, nf, 1)   # already ranked by score
-            if top:
-                best[clskey] = top[0]
-                order.append(clskey)
-    picks = [(k, best[k]) for k in order]
+def _play_rank(o):
+    v = o.get("analysis", {}).get("verdict", "")
+    decisive = 0 if v in ("BUY", "SELL") else 1 if v.startswith("BUY") else 2
+    return (decisive, -(o.get("score") or 0))
 
-    def _rank(kv):
-        o = kv[1]
-        v = o.get("analysis", {}).get("verdict", "")
-        decisive = 0 if v in ("BUY", "SELL") else 1 if v.startswith("BUY") else 2
-        return (decisive, -(o.get("score") or 0))
 
-    picks.sort(key=_rank)
-    cap = max_count if max_count is not None else PLAYBOOK_COUNT
-    if cap and cap > 0:
-        picks = picks[:cap]
+def select_playbook():
+    """The flagship playbook covers our FOCUS markets: Gold + the top major FX
+    pairs — that's what we trade and give full plans on. Weekday only (Gold & FX
+    are closed on weekends). Other markets stay available on the Intel desk + Q&A
+    but aren't in the deep playbook. Returns [(clskey, op)], Gold first."""
+    if is_weekend():
+        return []
+    picks = []
+    gold = section_ops("commodities", ("Gold",), 1)
+    if gold:
+        picks.append(("commodities", gold[0]))
+    majors = [o for o in load("fx").get("opportunities", [])
+              if o.get("category") == "Major"]
+    majors.sort(key=_play_rank)
+    picks += [("fx", o) for o in majors[:PLAYBOOK_FX_COUNT]]
     return picks
 
 
@@ -361,13 +354,13 @@ def compose_playbook(picks, vip):
     own decision."""
     today = datetime.datetime.utcnow().strftime("%d %b %Y")
     L = [FIRM,
-         "🎯 <b>Desk Playbook — the best setup in each market</b>",
+         "🎯 <b>Desk Playbook — Gold &amp; major FX</b>",
          BY, TAGLINE, "━━━━━━━━━━━━━━",
-         f"<i>{today} · one pick per asset class — the read, the reasoning, "
-         "the data</i>", "",
-         "<i>We produce the setup and the case for it and log it in the open — "
-         "whether to take the trade is your call. We don't take every setup "
-         "ourselves.</i>", ""]
+         f"<i>{today} · our focus markets — the read, the reasoning, the data, "
+         "the plan</i>", "",
+         "<i>Gold and the major FX pairs are what we trade and plan in full. We "
+         "produce the setup and the case for it and log it in the open — whether "
+         "to take the trade is your call. We don't take every setup ourselves.</i>", ""]
     for i, (clskey, o) in enumerate(picks, 1):
         L.append(_play_entry(i, clskey, o))
         L.append("")
@@ -427,12 +420,10 @@ def main():
     state = load_state() if CHANGED_ONLY else {}
     any_posted = False
 
-    # Daily Desk Playbook — curated cross-market top-N read for the free channel,
-    # posted alongside the per-desk digest. Once a day (deduped by day + line-up).
-    if PLAYBOOK_ENABLED:
-        pb_ch_env = weekend_desks()[0][0] if weekend else PLAYBOOK_CHANNEL
-        pb_vip_env = weekend_desks()[0][1] if weekend else "STAALWAG_VIP"
-        pb_channel = os.environ.get(pb_ch_env, "")
+    # Flagship Desk Playbook — Gold + major FX (our focus), posted alongside the
+    # per-desk digest. Weekday only; once a day (deduped by day + line-up).
+    if PLAYBOOK_ENABLED and not weekend:
+        pb_channel = os.environ.get(PLAYBOOK_CHANNEL, "")
         picks = select_playbook()
         pb_fp = playbook_fingerprint(picks) if picks else ""
         if not picks:
@@ -440,15 +431,15 @@ def main():
         elif CHANGED_ONLY and state.get("__playbook__") == pb_fp:
             print("WOLF: playbook already posted for this line-up — skipping")
         else:
-            pb_msg = compose_playbook(picks, os.environ.get(pb_vip_env, ""))
+            pb_msg = compose_playbook(picks, os.environ.get("STAALWAG_VIP", ""))
             if not TOKEN or not pb_channel:
-                print(f"\n--- DRY RUN [PLAYBOOK -> {pb_ch_env}] ---\n")
+                print(f"\n--- DRY RUN [PLAYBOOK -> {PLAYBOOK_CHANNEL}] ---\n")
                 print(pb_msg.replace("<b>", "").replace("</b>", "")
                             .replace("<i>", "").replace("</i>", "").replace("&amp;", "&"))
                 state["__playbook__"] = pb_fp; any_posted = True
             else:
                 ok, err = send(pb_channel, pb_msg)
-                print(f"WOLF: playbook {'posted' if ok else 'FAILED'} -> {pb_ch_env} {err}")
+                print(f"WOLF: playbook {'posted' if ok else 'FAILED'} -> {PLAYBOOK_CHANNEL} {err}")
                 if ok:
                     state["__playbook__"] = pb_fp; any_posted = True
 

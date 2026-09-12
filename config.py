@@ -75,4 +75,18 @@ ASSET_CLASSES = {
       "Hang Seng":  ("^HSI",     "Asia", "indices"),
       "ASX 200":    ("^AXJO",    "Asia", "indices"),
     }},
+  "stocks": {
+    "label": "Stocks", "signals": "signals_stocks.json",
+    "universe": {
+      "NVIDIA":    ("NVDA", "AI/Semi", "stocks"),
+      "AMD":       ("AMD",  "AI/Semi", "stocks"),
+      "Broadcom":  ("AVGO", "AI/Semi", "stocks"),
+      "Microsoft": ("MSFT", "Megacap", "stocks"),
+      "Apple":     ("AAPL", "Megacap", "stocks"),
+      "Meta":      ("META", "Megacap", "stocks"),
+      "Amazon":    ("AMZN", "Megacap", "stocks"),
+      "Alphabet":  ("GOOGL","Megacap", "stocks"),
+      "Tesla":     ("TSLA", "Growth", "stocks"),
+      "Palantir":  ("PLTR", "Growth", "stocks"),
+    }},
 }

@@ -1,0 +1,712 @@
+{
+  "generated": "2026-06-27 05:00 UTC",
+  "asset": "Stocks",
+  "class": "stocks",
+  "opportunities": [
+    {
+      "name": "AMD",
+      "score": 58.7,
+      "breakdown": {
+        "catalyst": 13.0,
+        "trend": 17.7,
+        "position": 12.0,
+        "supply": 14.0,
+        "volfit": 2.0
+      },
+      "trend_desc": "up, mom +0.7%",
+      "volfit_desc": "ATR 5.7%",
+      "note": "MI-series share gains in AI accelerators",
+      "price": 521.58,
+      "mom20": 0.67,
+      "atr_pct": 5.74,
+      "ma20": 512.39,
+      "ma50": 439.12,
+      "above_ma20": true,
+      "above_ma50": true,
+      "ma_stack_up": true,
+      "category": "AI/Semi",
+      "ticker": "AMD",
+      "covkey": "stocks",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices + stock CFDs"
+        }
+      ],
+      "analysis": {
+        "verdict": "BUY",
+        "conviction": "Moderate",
+        "summary": "BUY \u2014 conviction Moderate. The data leans long: Trend up \u2014 price over rising 20/50-day averages.",
+        "price_reasoning": "Price 521.58 sits above both its 20-day (512.39) and 50-day (439.12) averages, with the 20 above the 50 \u2014 a confirmed uptrend. 20-day momentum is +0.7%, flat. Volatility (ATR 5.7% of price) is very high \u2014 big swings, size down.",
+        "score_reasoning": "Score 58.7/100 driven by trend (18/25), supply/demand (14/20); held back by volatility fit (2/10), catalyst (13/25). Coverage: 5 venues offer it.",
+        "bull": [
+          "Trend up \u2014 price over rising 20/50-day averages.",
+          "Supply/demand tight \u2014 structural backing: MI-series share gains in AI accelerators",
+          "Positioning/sentiment leaning the trade's way."
+        ],
+        "bear": [
+          "High volatility (ATR 5.7%) \u2014 wide stops, prop-DD risk."
+        ]
+      }
+    },
+    {
+      "name": "NVIDIA",
+      "score": 50.0,
+      "breakdown": {
+        "catalyst": 15.0,
+        "trend": 0.0,
+        "position": 13.0,
+        "supply": 16.0,
+        "volfit": 6.0
+      },
+      "trend_desc": "down, mom -10.1%",
+      "volfit_desc": "ATR 3.0%",
+      "note": "AI GPU demand; hyperscaler capex; data-centre cycle",
+      "price": 192.53,
+      "mom20": -10.14,
+      "atr_pct": 3.02,
+      "ma20": 207.77,
+      "ma50": 210.09,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "AI/Semi",
+      "ticker": "NVDA",
+      "covkey": "stocks",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices + stock CFDs"
+        }
+      ],
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Moderate",
+        "summary": "SELL \u2014 conviction Moderate. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 192.53 is below both its 20-day (207.77) and 50-day (210.09) averages \u2014 a confirmed downtrend. 20-day momentum is -10.1%, strong directional push. Volatility (ATR 3.0% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 50.0/100 driven by supply/demand (16/20), positioning (13/20); held back by trend (0/25), catalyst (15/25). Coverage: 5 venues offer it.",
+        "bull": [
+          "Supply/demand tight \u2014 structural backing: AI GPU demand; hyperscaler capex; data-centre cycle",
+          "Near-term catalyst in play.",
+          "Positioning/sentiment leaning the trade's way."
+        ],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-10.1%) \u2014 knife still falling."
+        ]
+      }
+    },
+    {
+      "name": "Broadcom",
+      "score": 44.0,
+      "breakdown": {
+        "catalyst": 12.0,
+        "trend": 0.0,
+        "position": 12.0,
+        "supply": 14.0,
+        "volfit": 6.0
+      },
+      "trend_desc": "down, mom -14.4%",
+      "volfit_desc": "ATR 4.2%",
+      "note": "custom AI silicon + networking; AI backbone",
+      "price": 365.02,
+      "mom20": -14.43,
+      "atr_pct": 4.18,
+      "ma20": 403.69,
+      "ma50": 411.97,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "AI/Semi",
+      "ticker": "AVGO",
+      "covkey": "stocks",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices + stock CFDs"
+        }
+      ],
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Low",
+        "summary": "SELL \u2014 conviction Low. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 365.02 is below both its 20-day (403.69) and 50-day (411.97) averages \u2014 a confirmed downtrend. 20-day momentum is -14.4%, strong directional push. Volatility (ATR 4.2% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 44.0/100 driven by supply/demand (14/20), positioning (12/20); held back by trend (0/25), catalyst (12/25). Coverage: 5 venues offer it.",
+        "bull": [
+          "Supply/demand tight \u2014 structural backing: custom AI silicon + networking; AI backbone",
+          "Positioning/sentiment leaning the trade's way."
+        ],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-14.4%) \u2014 knife still falling."
+        ]
+      }
+    },
+    {
+      "name": "Microsoft",
+      "score": 40.0,
+      "breakdown": {
+        "catalyst": 11.0,
+        "trend": 0.0,
+        "position": 11.0,
+        "supply": 12.0,
+        "volfit": 6.0
+      },
+      "trend_desc": "down, mom -12.7%",
+      "volfit_desc": "ATR 3.1%",
+      "note": "Azure AI + Copilot monetisation",
+      "price": 372.97,
+      "mom20": -12.65,
+      "atr_pct": 3.06,
+      "ma20": 400.11,
+      "ma50": 410.97,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Megacap",
+      "ticker": "MSFT",
+      "covkey": "stocks",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices + stock CFDs"
+        }
+      ],
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Low",
+        "summary": "SELL \u2014 conviction Low. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 372.97 is below both its 20-day (400.11) and 50-day (410.97) averages \u2014 a confirmed downtrend. 20-day momentum is -12.7%, strong directional push. Volatility (ATR 3.1% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 40.0/100 driven by supply/demand (12/20), volatility fit (6/10); held back by trend (0/25), catalyst (11/25). Coverage: 5 venues offer it.",
+        "bull": [
+          "Supply/demand tight \u2014 structural backing: Azure AI + Copilot monetisation"
+        ],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-12.7%) \u2014 knife still falling."
+        ]
+      }
+    },
+    {
+      "name": "Meta",
+      "score": 39.0,
+      "breakdown": {
+        "catalyst": 11.0,
+        "trend": 0.0,
+        "position": 11.0,
+        "supply": 11.0,
+        "volfit": 6.0
+      },
+      "trend_desc": "down, mom -13.4%",
+      "volfit_desc": "ATR 3.0%",
+      "note": "ad strength + AI capex; efficiency",
+      "price": 550.25,
+      "mom20": -13.39,
+      "atr_pct": 3.04,
+      "ma20": 583.29,
+      "ma50": 612.9,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Megacap",
+      "ticker": "META",
+      "covkey": "stocks",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices + stock CFDs"
+        }
+      ],
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 550.25 is below both its 20-day (583.29) and 50-day (612.9) averages \u2014 a confirmed downtrend. 20-day momentum is -13.4%, strong directional push. Volatility (ATR 3.0% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 39.0/100 driven by volatility fit (6/10), positioning (11/20); held back by trend (0/25), catalyst (11/25). Coverage: 5 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-13.4%) \u2014 knife still falling."
+        ]
+      }
+    },
+    {
+      "name": "Amazon",
+      "score": 37.0,
+      "breakdown": {
+        "catalyst": 10.0,
+        "trend": 0.0,
+        "position": 10.0,
+        "supply": 11.0,
+        "volfit": 6.0
+      },
+      "trend_desc": "down, mom -15.1%",
+      "volfit_desc": "ATR 3.2%",
+      "note": "AWS AI demand + retail margins",
+      "price": 232.69,
+      "mom20": -15.08,
+      "atr_pct": 3.22,
+      "ma20": 244.03,
+      "ma50": 256.13,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Megacap",
+      "ticker": "AMZN",
+      "covkey": "stocks",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices + stock CFDs"
+        }
+      ],
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 232.69 is below both its 20-day (244.03) and 50-day (256.13) averages \u2014 a confirmed downtrend. 20-day momentum is -15.1%, strong directional push. Volatility (ATR 3.2% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 37.0/100 driven by volatility fit (6/10), supply/demand (11/20); held back by trend (0/25), catalyst (10/25). Coverage: 5 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-15.1%) \u2014 knife still falling."
+        ]
+      }
+    },
+    {
+      "name": "Alphabet",
+      "score": 37.0,
+      "breakdown": {
+        "catalyst": 10.0,
+        "trend": 0.0,
+        "position": 10.0,
+        "supply": 11.0,
+        "volfit": 6.0
+      },
+      "trend_desc": "down, mom -13.5%",
+      "volfit_desc": "ATR 3.4%",
+      "note": "Gemini + cloud; search-AI overhang",
+      "price": 337.39,
+      "mom20": -13.52,
+      "atr_pct": 3.35,
+      "ma20": 360.81,
+      "ma50": 369.28,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Megacap",
+      "ticker": "GOOGL",
+      "covkey": "stocks",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices + stock CFDs"
+        }
+      ],
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 337.39 is below both its 20-day (360.81) and 50-day (369.28) averages \u2014 a confirmed downtrend. 20-day momentum is -13.5%, strong directional push. Volatility (ATR 3.4% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 37.0/100 driven by volatility fit (6/10), supply/demand (11/20); held back by trend (0/25), catalyst (10/25). Coverage: 5 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-13.5%) \u2014 knife still falling."
+        ]
+      }
+    },
+    {
+      "name": "Apple",
+      "score": 32.0,
+      "breakdown": {
+        "catalyst": 8.0,
+        "trend": 0.0,
+        "position": 9.0,
+        "supply": 9.0,
+        "volfit": 6.0
+      },
+      "trend_desc": "down, mom -9.2%",
+      "volfit_desc": "ATR 3.1%",
+      "note": "AI rollout slower; services strong",
+      "price": 283.78,
+      "mom20": -9.19,
+      "atr_pct": 3.11,
+      "ma20": 298.29,
+      "ma50": 291.5,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": true,
+      "category": "Megacap",
+      "ticker": "AAPL",
+      "covkey": "stocks",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices + stock CFDs"
+        }
+      ],
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Weak",
+        "summary": "WATCH \u2014 conviction Weak. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price 283.78 is mixed against its 20-day (298.29) / 50-day (291.5) averages \u2014 no clean trend yet. 20-day momentum is -9.2%, strong directional push. Volatility (ATR 3.1% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 32.0/100 driven by volatility fit (6/10), positioning (9/20); held back by trend (0/25), catalyst (8/25). Coverage: 5 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-9.2%) \u2014 knife still falling.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "Tesla",
+      "score": 32.0,
+      "breakdown": {
+        "catalyst": 9.0,
+        "trend": 0.0,
+        "position": 9.0,
+        "supply": 8.0,
+        "volfit": 6.0
+      },
+      "trend_desc": "down, mom -14.1%",
+      "volfit_desc": "ATR 4.4%",
+      "note": "deliveries + robotaxi narrative; high beta",
+      "price": 379.71,
+      "mom20": -14.11,
+      "atr_pct": 4.36,
+      "ma20": 401.55,
+      "ma50": 404.76,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Growth",
+      "ticker": "TSLA",
+      "covkey": "stocks",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices + stock CFDs"
+        }
+      ],
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 379.71 is below both its 20-day (401.55) and 50-day (404.76) averages \u2014 a confirmed downtrend. 20-day momentum is -14.1%, strong directional push. Volatility (ATR 4.4% of price) is healthy and tradeable.",
+        "score_reasoning": "Score 32.0/100 driven by volatility fit (6/10), positioning (9/20); held back by trend (0/25), catalyst (9/25). Coverage: 5 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-14.1%) \u2014 knife still falling.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "Palantir",
+      "score": 32.0,
+      "breakdown": {
+        "catalyst": 11.0,
+        "trend": 0.0,
+        "position": 10.0,
+        "supply": 9.0,
+        "volfit": 2.0
+      },
+      "trend_desc": "down, mom -21.2%",
+      "volfit_desc": "ATR 5.0%",
+      "note": "AIP enterprise demand; rich valuation = volatile",
+      "price": 112.93,
+      "mom20": -21.22,
+      "atr_pct": 5.04,
+      "ma20": 132.18,
+      "ma50": 136.46,
+      "above_ma20": false,
+      "above_ma50": false,
+      "ma_stack_up": false,
+      "category": "Growth",
+      "ticker": "PLTR",
+      "covkey": "stocks",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "IC Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "Broad: FX, commodities incl softs, indices, shares"
+        },
+        {
+          "name": "Pepperstone",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, softs, indices, share CFDs"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        },
+        {
+          "name": "FTMO",
+          "type": "propfirm",
+          "leverage": "2-step 10/5 d5 m10 static",
+          "notes": "FX/metals/energy/indices + stock CFDs"
+        }
+      ],
+      "analysis": {
+        "verdict": "SELL",
+        "conviction": "Weak",
+        "summary": "SELL \u2014 conviction Weak. The data leans short: Trend not confirmed up \u2014 chasing risks a fakeout.",
+        "price_reasoning": "Price 112.93 is below both its 20-day (132.18) and 50-day (136.46) averages \u2014 a confirmed downtrend. 20-day momentum is -21.2%, strong directional push. Volatility (ATR 5.0% of price) is very high \u2014 big swings, size down.",
+        "score_reasoning": "Score 32.0/100 driven by positioning (10/20), supply/demand (9/20); held back by trend (0/25), volatility fit (2/10). Coverage: 5 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "Negative momentum (-21.2%) \u2014 knife still falling.",
+          "High volatility (ATR 5.0%) \u2014 wide stops, prop-DD risk."
+        ]
+      }
+    }
+  ]
+}

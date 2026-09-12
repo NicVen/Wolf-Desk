@@ -44,7 +44,7 @@ from scout.news import headlines
 PORT        = int(os.environ.get("PORT", "8777"))
 WOLF_PASS   = os.environ.get("WOLF_PASS", "")           # admin bypass only
 REFRESH_MIN = int(os.environ.get("REFRESH_MIN", "20"))
-CLASSES     = ("commodities", "fx", "indices", "crypto")
+CLASSES     = ("commodities", "fx", "indices", "stocks", "crypto")
 
 BOT_TOKEN    = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 BOT_USERNAME = os.environ.get("BOT_USERNAME", "Staalwag_wolf_Bot")
@@ -292,10 +292,10 @@ def build_rss() -> str:
     now = datetime.datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S +0000")
     items = []
     tags = {"fx": "#forex", "commodities": "#gold #commodities",
-            "indices": "#indices", "crypto": "#crypto #bitcoin"}
-    # Weekends: FX, gold/XAUUSD and indices are shut — crypto (24/7) only.
+            "indices": "#indices", "stocks": "#stocks", "crypto": "#crypto #bitcoin"}
+    # Weekends: FX, gold/XAUUSD, indices and stocks are shut — crypto (24/7) only.
     weekend = datetime.datetime.utcnow().weekday() >= 5
-    classes = ("crypto",) if weekend else ("fx", "commodities", "indices", "crypto")
+    classes = ("crypto",) if weekend else ("fx", "commodities", "indices", "stocks", "crypto")
     for cls in classes:
         try:
             d = _j.load(open(os.path.join("data", "opportunities_%s.json" % cls), encoding="utf-8"))
@@ -314,7 +314,7 @@ def build_rss() -> str:
             items.append((title, body, guid))
     if not items:
         items = [("WOLF — desk online",
-                  "🐺 WOLF intraday intel desk — gold, FX & indices. "
+                  "🐺 WOLF intraday intel desk — gold, FX, indices, stocks & crypto. "
                   "Free reads: %s %s" % (TG_GOLD, TG_FX), "%s-online" % day)]
     xi = "".join(
         "<item><title>%s</title><description>%s</description>"
@@ -328,7 +328,7 @@ def build_rss() -> str:
             '<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/"><channel>'
             '<title>WOLF — Intraday Intel</title>'
             '<link>%s</link>'
-            '<description>Intraday reads on gold, FX &amp; indices.</description>'
+            '<description>Intraday reads on gold, FX, indices, stocks &amp; crypto.</description>'
             '<image><url>%s</url><title>WOLF — Intraday Intel</title><link>%s</link></image>'
             '%s</channel></rss>' % (TG_LINK, WOLF_IMG, TG_LINK, xi))
 

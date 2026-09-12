@@ -1,0 +1,13 @@
+{
+  "_doc": "Manual stock scout inputs. Updated 2026-06-27.",
+  "NVIDIA":    {"catalyst": 15, "position": 13, "supply": 16, "note": "AI GPU demand; hyperscaler capex; data-centre cycle"},
+  "AMD":       {"catalyst": 13, "position": 12, "supply": 14, "note": "MI-series share gains in AI accelerators"},
+  "Broadcom":  {"catalyst": 12, "position": 12, "supply": 14, "note": "custom AI silicon + networking; AI backbone"},
+  "Microsoft": {"catalyst": 11, "position": 11, "supply": 12, "note": "Azure AI + Copilot monetisation"},
+  "Apple":     {"catalyst": 8,  "position": 9,  "supply": 9,  "note": "AI rollout slower; services strong"},
+  "Meta":      {"catalyst": 11, "position": 11, "supply": 11, "note": "ad strength + AI capex; efficiency"},
+  "Amazon":    {"catalyst": 10, "position": 10, "supply": 11, "note": "AWS AI demand + retail margins"},
+  "Alphabet":  {"catalyst": 10, "position": 10, "supply": 11, "note": "Gemini + cloud; search-AI overhang"},
+  "Tesla":     {"catalyst": 9,  "position": 9,  "supply": 8,  "note": "deliveries + robotaxi narrative; high beta"},
+  "Palantir":  {"catalyst": 11, "position": 10, "supply": 9,  "note": "AIP enterprise demand; rich valuation = volatile"}
+}

@@ -53,10 +53,10 @@ COPY = {
            "reasoning, not just signals. 🐺 Watch the record build live. Free:",
            "Tired of signal channels that hide their losses? STAALWAG logs "
            "every FX call in the open — scored, explained, daily. 🐺 Free:"],
-  "all":  ["🐺 STAALWAG — gold, FX & indices. Daily intel reads, "
+  "all":  ["🐺 STAALWAG — gold, FX, indices, stocks & crypto. Daily intel reads, "
            "public track record, full case files. Free:",
-           "One desk for the whole tape: daily scored reads on gold, FX "
-           "& indices — logged in the open. 🐺 Free:",
+           "One desk for the whole tape: daily scored reads on gold, FX, "
+           "indices, stocks & crypto — logged in the open. 🐺 Free:",
            "Read the market like a wolf: STAALWAG scores every major market "
            "0-100 daily with the case behind each call. 🐺 Free:"],
 }

@@ -58,16 +58,19 @@ or financial advice. Always verify before risking capital.
 Freestanding, on-brand process with two jobs:
 - **Post** — fires the daily WOLF read on a schedule (`POSTING_TIMES`, UTC),
   reusing `wolf_post` so it inherits weekend-crypto-only + per-pair change dedup.
-  Includes the **Desk Playbook**: the best single setup in EACH traded market
-  today (weekday: Gold + FX; weekend: Crypto — lean, one per market) for the free
-  channel, with the reasoning + data behind each pick (honest framing — we produce
-  the setup/analysis, execution is the reader's call), deduped to once a day.
-  Tunable via `PLAYBOOK_ENABLED` / `PLAYBOOK_COUNT` (0 = one per class) /
-  `PLAYBOOK_CHANNEL`.
+  Includes the **Desk Playbook** (flagship): our focus markets — **Gold + the top
+  major FX pairs** — with the full read, reasoning, data and plan behind each pick
+  (honest framing — we produce the setup/analysis, execution is the reader's call),
+  weekday only, deduped to once a day. Tunable via `PLAYBOOK_ENABLED` /
+  `PLAYBOOK_FX_COUNT` (majors alongside Gold, default 2) / `PLAYBOOK_CHANNEL`.
 
-  **Scope:** we TRADE/POST commodities (Gold) + FX, and Crypto on weekends.
-  Indices are scored and shown on the Intel desk (dashboard) for context but are
-  not posted unless a dedicated `INDICES_CHANNEL` is set. Stocks are not covered.
+  **Scope (two tiers):**
+  - *Available to all* — every market (commodities, FX, indices, stocks, crypto)
+    is scored with data & findings on the Intel desk (dashboard) and answerable in
+    the Q&A, 24/7, so people can trade whatever they choose.
+  - *Our focus / full trading plans* — Gold + major FX (the flagship Playbook).
+    Crypto still posts a weekend availability digest (Gold/FX/indices are shut);
+    indices/stocks live on the desk. Nothing is hidden; the depth is on Gold + FX.
 - **Answer** — a Telegram bot that answers questions about the posted signals in
   DMs and the channel's linked discussion group. Rule-based, from our own scored
   data + `compiler/analysis.py` (no external AI). Uses its own `MANAGER_BOT_TOKEN`

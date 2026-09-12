@@ -133,7 +133,7 @@ AD_COPY = {
              "case files. Every call logged <b>publicly</b>, no cherry-picking.\n\n"
              "💱 Free daily FX reads:"),
     "all":  ("🐺 <b>THE WOLF — Intraday Intel Desk</b>\n\n"
-             "Gold, FX &amp; indices — daily BUY/SELL reads with scores "
+             "Gold, FX, indices, stocks &amp; crypto — daily BUY/SELL reads with scores "
              "and full case files. Track record posted <b>publicly</b>, in the "
              "open.\n\n⚡ Get today's read free:"),
 }
