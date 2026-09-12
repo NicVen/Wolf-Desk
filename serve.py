@@ -293,7 +293,10 @@ def build_rss() -> str:
     items = []
     tags = {"fx": "#forex", "commodities": "#gold #commodities",
             "indices": "#indices", "stocks": "#stocks", "crypto": "#crypto #bitcoin"}
-    for cls in ("fx", "commodities", "indices", "stocks", "crypto"):
+    # Weekends: FX, gold/XAUUSD, indices and stocks are shut — crypto (24/7) only.
+    weekend = datetime.datetime.utcnow().weekday() >= 5
+    classes = ("crypto",) if weekend else ("fx", "commodities", "indices", "stocks", "crypto")
+    for cls in classes:
         try:
             d = _j.load(open(os.path.join("data", "opportunities_%s.json" % cls), encoding="utf-8"))
         except Exception:

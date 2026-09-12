@@ -57,16 +57,31 @@ DESKS = [
      [("💱 <b>FOREX</b>",   "fx",          None,      4)], "fx"),
 ]
 
-# Weekend desk. FX, gold, metals and indices are all shut on Sat/Sun; crypto is
-# the only market that trades 24/7. So on weekends we skip the closed desks and
-# post crypto to the VELDRIN channel (which would otherwise sit silent with the
-# FX desk dark). Same tuple shape as DESKS: (channel env, vip env, header,
-# [sections], track key).
-WEEKEND_DESKS = [
-    ("VELDRIN_CHANNEL", "VELDRIN_VIP", "🪙 <b>VELDRIN · Crypto Desk</b>",
-     [("🪙 <b>CRYPTO</b>", "crypto", None, 6)], "crypto"),
-]
-WEEKEND_NOTE = ("🗓 <i>Weekend — FX, metals &amp; indices are closed. "
+# Weekend desk. FX, gold/XAUUSD, metals and indices are all shut on Sat/Sun;
+# crypto is the only market that trades 24/7. So on weekends we skip the closed
+# desks and post ONLY crypto — no XAUUSD/FX/indices signals go out.
+#
+# TODO(channel): a DEDICATED crypto channel is planned. Until it exists, crypto
+# rides the VELDRIN channel (which would otherwise sit silent with FX dark).
+# When the new channel is ready this needs NO code change — just set the env
+# vars CRYPTO_CHANNEL / CRYPTO_VIP (and optionally CRYPTO_HEADER) and posts
+# route there automatically (see weekend_desks() below).
+def weekend_desks():
+    """Resolve the weekend (crypto) desk. Prefers a dedicated CRYPTO_CHANNEL /
+    CRYPTO_VIP if configured, else falls back to the VELDRIN channel/VIP.
+    Same tuple shape as DESKS: (channel env, vip env, header, [sections], key)."""
+    ch_env  = "CRYPTO_CHANNEL" if os.environ.get("CRYPTO_CHANNEL") else "VELDRIN_CHANNEL"
+    vip_env = "CRYPTO_VIP"     if os.environ.get("CRYPTO_VIP")     else "VELDRIN_VIP"
+    dedicated = ch_env == "CRYPTO_CHANNEL"
+    header = os.environ.get(
+        "CRYPTO_HEADER",
+        "🪙 <b>STAALWAG · Crypto Desk</b>" if dedicated
+        else "🪙 <b>VELDRIN · Crypto Desk</b>")
+    return [(ch_env, vip_env, header,
+             [("🪙 <b>CRYPTO</b>", "crypto", None, 6)], "crypto")]
+
+
+WEEKEND_NOTE = ("🗓 <i>Weekend — FX, gold/metals &amp; indices are closed. "
                 "Crypto trades 24/7, so it's the only desk live today.</i>")
 
 
@@ -195,7 +210,7 @@ def main():
     # Weekends: markets are shut except crypto (24/7), so post only the crypto
     # desk. Weekdays: the normal gold/indices + FX desks.
     weekend = is_weekend()
-    desks = WEEKEND_DESKS if weekend else DESKS
+    desks = weekend_desks() if weekend else DESKS
     note = WEEKEND_NOTE if weekend else None
     print(f"WOLF: {'weekend — crypto desk only' if weekend else 'weekday desks'}")
     for ch_env, vip_env, brand, sections, trackkey in desks:

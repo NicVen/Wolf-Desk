@@ -28,6 +28,9 @@ CK = os.getenv("X_API_KEY", ""); CS = os.getenv("X_API_SECRET", "")
 AT = os.getenv("X_ACCESS_TOKEN", ""); AS = os.getenv("X_ACCESS_SECRET", "")
 H_GOLD = os.getenv("PUBLIC_HANDLE_GOLD", "@staalwagsignals")
 H_FX   = os.getenv("PUBLIC_HANDLE_FX", "@veldrinforex")
+# Weekend crypto funnel. No dedicated crypto handle yet -> reuse the FX handle
+# until PUBLIC_HANDLE_CRYPTO is set (see the dedicated-channel TODO in wolf_post).
+H_CRYPTO = os.getenv("PUBLIC_HANDLE_CRYPTO", H_FX)
 
 
 def enabled() -> bool:
@@ -75,7 +78,7 @@ def compose_daily() -> str:
     if picks:
         lines.append("Reads: " + " · ".join(picks[:4]))
     if weekend:
-        lines.append("Weekend crypto reads (markets closed elsewhere): %s" % H_FX)
+        lines.append("Weekend crypto reads (markets closed elsewhere): %s" % H_CRYPTO)
         lines.append("#crypto #bitcoin #BTC #ETH #trading")
     else:
         lines.append("Free daily reads + public track record: %s (gold) %s (fx)"
