@@ -27,6 +27,13 @@ Noise control (only post a pair when its signal actually changed):
                        next to GROWTH_DB / the Railway volume, so it survives
                        restarts).
 
+Daily Desk Playbook (curated cross-market top-N for the free channel, with the
+reasoning + data behind each pick; honest framing — setups, not claimed trades):
+  PLAYBOOK_ENABLED     "1" (default) posts the playbook alongside the digest.
+  PLAYBOOK_COUNT       how many setups (default 3).
+  PLAYBOOK_CHANNEL     weekday channel env for it (default STAALWAG_CHANNEL);
+                       on weekends it follows the crypto desk automatically.
+
 No token = DRY RUN: prints both posts instead of sending.
 Run:  python wolf_post.py
 """
@@ -179,6 +186,17 @@ _DB_DIR      = os.path.dirname(os.environ.get("GROWTH_DB", "")) or C.DATA_DIR
 SIGNAL_STATE_FILE = os.environ.get("SIGNAL_STATE_FILE",
                                    os.path.join(_DB_DIR, "last_signals.json"))
 
+# Daily "Desk Playbook" — a curated cross-market top-N read for the free channel,
+# with the reasoning + data behind each pick. Honest framing: we produce the
+# setup/analysis and log it in the open; taking the trade is the reader's call.
+# We never claim live trades. Posted alongside the per-desk digest, once a day
+# (deduped by the day + the chosen line-up, so a frequent run won't repeat it).
+PLAYBOOK_ENABLED = os.environ.get("PLAYBOOK_ENABLED", "1") != "0"
+PLAYBOOK_COUNT   = int(os.environ.get("PLAYBOOK_COUNT", "3"))
+# Which channel env the playbook posts to on WEEKDAYS (weekends follow the
+# weekend/crypto desk automatically).
+PLAYBOOK_CHANNEL = os.environ.get("PLAYBOOK_CHANNEL", "STAALWAG_CHANNEL")
+
 
 def fingerprint(o):
     """Compact signature of a pair's actionable signal. Same fingerprint =
@@ -281,6 +299,83 @@ def compose(brand, sections, vip, trackkey="site", note=None,
     return "\n".join(L), posted_fps
 
 
+def select_playbook(n=None):
+    """Pick the day's top setups across the desks that are open today
+    (weekday: gold/indices/fx; weekend: crypto). Decisive calls (BUY/SELL)
+    rank first, then by score. De-duped across desks."""
+    n = n or PLAYBOOK_COUNT
+    desks = weekend_desks() if is_weekend() else weekday_desks()
+    seen, ops = set(), []
+    for _ch, _vip, _hdr, sections, _tk in desks:
+        for _label, clskey, nf, _cnt in sections:
+            for o in section_ops(clskey, nf, 12):
+                if o["name"] not in seen:
+                    seen.add(o["name"])
+                    ops.append(o)
+
+    def _rank(o):
+        v = o.get("analysis", {}).get("verdict", "")
+        decisive = 0 if v in ("BUY", "SELL") else 1 if v.startswith("BUY") else 2
+        return (decisive, -(o.get("score") or 0))
+
+    ops.sort(key=_rank)
+    return ops[:n]
+
+
+def playbook_fingerprint(ops):
+    """Day + the chosen line-up's signals. Changes each new day, or if the
+    selection / a pick's signal materially changes intraday."""
+    day = datetime.datetime.utcnow().strftime("%Y%m%d")
+    return day + "::" + "|".join(f"{o['name']}:{fingerprint(o)}" for o in ops)
+
+
+def _play_entry(i, o):
+    a = o.get("analysis", {})
+    v = a.get("verdict", "WATCH")
+    icon = _REG_ICON_VERDICT(v)
+    lean = "LONG" if v.startswith("BUY") else "SHORT" if v == "SELL" else "NEUTRAL"
+    bull = (a.get("bull") or ["—"])[0]
+    bear = (a.get("bear") or ["—"])[0]
+    return "\n".join([
+        f"<b>{i}. {icon} {o['name']}</b> — lean <b>{lean}</b> · conviction {a.get('conviction','')}"
+        f"{regfmt(o)}",
+        f"   <i>Read:</i> {a.get('price_reasoning','')}",
+        f"   <i>Edge:</i> {bull}",
+        f"   <i>Invalidation:</i> {bear}",
+        f"   <i>Data:</i> {a.get('score_reasoning','')}",
+    ])
+
+
+def _REG_ICON_VERDICT(v):
+    return "🟢" if v.startswith("BUY") else "🔴" if v == "SELL" else "🟡"
+
+
+def compose_playbook(ops, vip):
+    """The daily Desk Playbook post for the free channel. Honest framing —
+    setups + reasoning + data; execution is the reader's own decision."""
+    today = datetime.datetime.utcnow().strftime("%d %b %Y")
+    L = [FIRM,
+         f"🎯 <b>Desk Playbook — today's top {len(ops)} setups</b>",
+         BY, TAGLINE, "━━━━━━━━━━━━━━",
+         f"<i>{today} · what our data likes today and why</i>", "",
+         "<i>We produce the read, the reasoning and the data behind each setup "
+         "and log it in the open — whether to take the trade is your call. "
+         "We don't take every setup ourselves.</i>", ""]
+    for i, o in enumerate(ops, 1):
+        L.append(_play_entry(i, o))
+        L.append("")
+    if vip:
+        L.append("Full case files + exact levels + trade management → <b>VIP</b>.")
+        L.append(f"👉 <a href=\"{vip}\">Join</a>")
+    else:
+        L.append("Every call logged publicly — <b>follow the track record build in the open.</b>")
+    L.append(f'📈 <a href="{WOLF_URL}/l?c=playbook">Open the live board →</a>')
+    L += ["", "━━━━━━━━━━━━━━",
+          "<b>STAALWAG</b> · 🐺 WOLF Intraday Intel Desk · Read the market like a wolf.",
+          "<i>Research/education, not financial advice. Trade your own plan.</i>"]
+    return "\n".join(L)
+
+
 def _api(method, payload):
     r = requests.post(f"https://api.telegram.org/bot{TOKEN}/{method}",
                       json=payload, timeout=25)
@@ -324,6 +419,32 @@ def main():
 
     state = load_state() if CHANGED_ONLY else {}
     any_posted = False
+
+    # Daily Desk Playbook — curated cross-market top-N read for the free channel,
+    # posted alongside the per-desk digest. Once a day (deduped by day + line-up).
+    if PLAYBOOK_ENABLED:
+        pb_ch_env = weekend_desks()[0][0] if weekend else PLAYBOOK_CHANNEL
+        pb_vip_env = weekend_desks()[0][1] if weekend else "STAALWAG_VIP"
+        pb_channel = os.environ.get(pb_ch_env, "")
+        ops = select_playbook()
+        pb_fp = playbook_fingerprint(ops) if ops else ""
+        if not ops:
+            print("WOLF: playbook — no candidates, skipping")
+        elif CHANGED_ONLY and state.get("__playbook__") == pb_fp:
+            print("WOLF: playbook already posted for this line-up — skipping")
+        else:
+            pb_msg = compose_playbook(ops, os.environ.get(pb_vip_env, ""))
+            if not TOKEN or not pb_channel:
+                print(f"\n--- DRY RUN [PLAYBOOK -> {pb_ch_env}] ---\n")
+                print(pb_msg.replace("<b>", "").replace("</b>", "")
+                            .replace("<i>", "").replace("</i>", "").replace("&amp;", "&"))
+                state["__playbook__"] = pb_fp; any_posted = True
+            else:
+                ok, err = send(pb_channel, pb_msg)
+                print(f"WOLF: playbook {'posted' if ok else 'FAILED'} -> {pb_ch_env} {err}")
+                if ok:
+                    state["__playbook__"] = pb_fp; any_posted = True
+
     for ch_env, vip_env, brand, sections, trackkey in desks:
         channel = os.environ.get(ch_env, "")
         vip = os.environ.get(vip_env, "")
