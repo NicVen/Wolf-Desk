@@ -53,3 +53,15 @@ For each: does it offer the symbol? leverage, typical spread, prop rules.
 ## NOTE
 Research/intelligence tool. Outputs are leads to investigate, NOT trade signals
 or financial advice. Always verify before risking capital.
+
+## Daily posting manager (`posting_manager.py`)
+Freestanding, on-brand process with two jobs:
+- **Post** — fires the daily WOLF read on a schedule (`POSTING_TIMES`, UTC),
+  reusing `wolf_post` so it inherits weekend-crypto-only + per-pair change dedup.
+- **Answer** — a Telegram bot that answers questions about the posted signals in
+  DMs and the channel's linked discussion group. Rule-based, from our own scored
+  data + `compiler/analysis.py` (no external AI). Uses its own `MANAGER_BOT_TOKEN`
+  (Telegram allows one getUpdates consumer per token).
+
+Run: `python posting_manager.py` · test offline: `--ask "why is EUR/USD a sell?"`,
+`--post`. See the module docstring for all env vars.
