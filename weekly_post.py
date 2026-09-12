@@ -199,7 +199,7 @@ def main():
     except Exception as e:  # noqa: BLE001
         print("weekly_post: data refresh skipped (%s)" % e)
 
-    for ch_env, vip_env, brand, sections, trackkey in W.DESKS:
+    for ch_env, vip_env, brand, sections, trackkey in W.weekday_desks():
         channel = os.environ.get(ch_env, "")
         vip = os.environ.get(vip_env, "")
         L = compose_outlook(brand, sections) if kind == "outlook" \

@@ -57,14 +57,39 @@ STAALWAG_IMG = os.environ.get("STAALWAG_IMG", WOLF_URL + "/staalwag.png")
 
 # desk -> (env channel, env vip, sub-desk header, [sections], track key)
 # section = (label, asset-class key, name filter tuple or None, top N)
-#   STAALWAG channel  ->  Gold + Indices    VELDRIN channel  ->  Forex
-DESKS = [
-    ("STAALWAG_CHANNEL", "STAALWAG_VIP", "🥇 <b>Gold &amp; Indices desk</b>",
-     [("🥇 <b>GOLD</b>",    "commodities", ("Gold",), 1),
-      ("📈 <b>INDICES</b>", "indices",     None,      3)], "gold"),
-    ("VELDRIN_CHANNEL",  "VELDRIN_VIP",  "💱 <b>VELDRIN · FX Desk</b>",
-     [("💱 <b>FOREX</b>",   "fx",          None,      4)], "fx"),
-]
+#   STAALWAG channel  ->  Gold (+ Indices, until it splits off)   VELDRIN -> Forex
+_GOLD    = ("🥇 <b>GOLD</b>",    "commodities", ("Gold",), 1)
+_INDICES = ("📈 <b>INDICES</b>", "indices",     None,      3)
+_FOREX   = ("💱 <b>FOREX</b>",   "fx",          None,      4)
+
+
+# TODO(channel): a DEDICATED indices channel is planned (same pattern as the
+# crypto channel above). Until it exists, indices ride the STAALWAG channel
+# bundled with gold — exactly as before. When the new channel is ready this
+# needs NO code change: set the env vars INDICES_CHANNEL / INDICES_VIP (and
+# optionally INDICES_HEADER) and the indices section splits into its own
+# post/channel, leaving the STAALWAG channel gold-only.
+def weekday_desks():
+    """Resolve the weekday desks. Indices normally ride the STAALWAG (gold)
+    channel; if a dedicated INDICES_CHANNEL is configured they split off to it
+    (falling back to STAALWAG_VIP for the VIP link if INDICES_VIP is unset).
+    Tuple shape: (channel env, vip env, header, [sections], track key)."""
+    fx_desk = ("VELDRIN_CHANNEL", "VELDRIN_VIP", "💱 <b>VELDRIN · FX Desk</b>",
+               [_FOREX], "fx")
+    if os.environ.get("INDICES_CHANNEL"):
+        vip_env = "INDICES_VIP" if os.environ.get("INDICES_VIP") else "STAALWAG_VIP"
+        header  = os.environ.get("INDICES_HEADER", "📈 <b>STAALWAG · Indices Desk</b>")
+        return [
+            ("STAALWAG_CHANNEL", "STAALWAG_VIP", "🥇 <b>Gold desk</b>", [_GOLD], "gold"),
+            ("INDICES_CHANNEL",  vip_env,        header,               [_INDICES], "indices"),
+            fx_desk,
+        ]
+    # default (today): gold + indices bundled on the STAALWAG channel
+    return [
+        ("STAALWAG_CHANNEL", "STAALWAG_VIP", "🥇 <b>Gold &amp; Indices desk</b>",
+         [_GOLD, _INDICES], "gold"),
+        fx_desk,
+    ]
 
 # Weekend desk. FX, gold/XAUUSD, metals and indices are all shut on Sat/Sun;
 # crypto is the only market that trades 24/7. So on weekends we skip the closed
@@ -78,7 +103,7 @@ DESKS = [
 def weekend_desks():
     """Resolve the weekend (crypto) desk. Prefers a dedicated CRYPTO_CHANNEL /
     CRYPTO_VIP if configured, else falls back to the VELDRIN channel/VIP.
-    Same tuple shape as DESKS: (channel env, vip env, header, [sections], key)."""
+    Tuple shape: (channel env, vip env, header, [sections], track key)."""
     ch_env  = "CRYPTO_CHANNEL" if os.environ.get("CRYPTO_CHANNEL") else "VELDRIN_CHANNEL"
     vip_env = "CRYPTO_VIP"     if os.environ.get("CRYPTO_VIP")     else "VELDRIN_VIP"
     dedicated = ch_env == "CRYPTO_CHANNEL"
@@ -292,7 +317,7 @@ def main():
     # Weekends: markets are shut except crypto (24/7), so post only the crypto
     # desk. Weekdays: the normal gold/indices + FX desks.
     weekend = is_weekend()
-    desks = weekend_desks() if weekend else DESKS
+    desks = weekend_desks() if weekend else weekday_desks()
     note = WEEKEND_NOTE if weekend else None
     print(f"WOLF: {'weekend — crypto desk only' if weekend else 'weekday desks'}"
           f"{' · changed-signals-only' if CHANGED_ONLY else ''}")
