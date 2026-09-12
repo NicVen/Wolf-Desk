@@ -113,14 +113,6 @@ _EXTRA_ALIASES = {
     "doge": "DOGE/USD", "dogecoin": "DOGE/USD",
     "avax": "AVAX/USD", "link": "LINK/USD", "chainlink": "LINK/USD",
     "ltc": "LTC/USD", "litecoin": "LTC/USD",
-    # stocks
-    "nvidia": "NVIDIA", "nvda": "NVIDIA", "amd": "AMD",
-    "broadcom": "Broadcom", "avgo": "Broadcom",
-    "microsoft": "Microsoft", "msft": "Microsoft",
-    "apple": "Apple", "aapl": "Apple", "meta": "Meta", "facebook": "Meta",
-    "amazon": "Amazon", "amzn": "Amazon",
-    "alphabet": "Alphabet", "google": "Alphabet", "googl": "Alphabet",
-    "tesla": "Tesla", "tsla": "Tesla", "palantir": "Palantir", "pltr": "Palantir",
 }
 
 

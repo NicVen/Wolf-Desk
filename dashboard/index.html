@@ -178,7 +178,7 @@ let LAST=null;
 const sc=s=> s>=65?'var(--green)': s>=50?'var(--gold2)': s>=40?'var(--amber)':'var(--red)';
 const fmt=n=> (n===null||n===undefined)?'-':(typeof n==='number'?n.toLocaleString():n);
 
-const CLASSES=[['commodities','Commodities'],['fx','FX'],['indices','Indices'],['stocks','Stocks']];
+const CLASSES=[['commodities','Commodities'],['fx','FX'],['indices','Indices'],['crypto','Crypto']];
 let CUR='commodities', AUTO=null;
 
 function buildTabs(){
