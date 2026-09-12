@@ -30,7 +30,9 @@ Noise control (only post a pair when its signal actually changed):
 Daily Desk Playbook (curated cross-market top-N for the free channel, with the
 reasoning + data behind each pick; honest framing — setups, not claimed trades):
   PLAYBOOK_ENABLED     "1" (default) posts the playbook alongside the digest.
-  PLAYBOOK_COUNT       how many setups (default 3).
+  PLAYBOOK_COUNT       0 (default) = the best pick in EACH asset class live today
+                       (lean, one per market); a positive number caps the line-up
+                       to that many highest-conviction picks.
   PLAYBOOK_CHANNEL     weekday channel env for it (default STAALWAG_CHANNEL);
                        on weekends it follows the crypto desk automatically.
 
@@ -192,7 +194,9 @@ SIGNAL_STATE_FILE = os.environ.get("SIGNAL_STATE_FILE",
 # We never claim live trades. Posted alongside the per-desk digest, once a day
 # (deduped by the day + the chosen line-up, so a frequent run won't repeat it).
 PLAYBOOK_ENABLED = os.environ.get("PLAYBOOK_ENABLED", "1") != "0"
-PLAYBOOK_COUNT   = int(os.environ.get("PLAYBOOK_COUNT", "3"))
+# 0 (default) = one best pick per asset class live today (lean, reader decides).
+# Set a positive number to cap the line-up to that many highest-conviction picks.
+PLAYBOOK_COUNT   = int(os.environ.get("PLAYBOOK_COUNT", "0"))
 # Which channel env the playbook posts to on WEEKDAYS (weekends follow the
 # weekend/crypto desk automatically).
 PLAYBOOK_CHANNEL = os.environ.get("PLAYBOOK_CHANNEL", "STAALWAG_CHANNEL")
@@ -299,46 +303,59 @@ def compose(brand, sections, vip, trackkey="site", note=None,
     return "\n".join(L), posted_fps
 
 
-def select_playbook(n=None):
-    """Pick the day's top setups across the desks that are open today
-    (weekday: gold/indices/fx; weekend: crypto). Decisive calls (BUY/SELL)
-    rank first, then by score. De-duped across desks."""
-    n = n or PLAYBOOK_COUNT
+def _verdict_icon(v):
+    return "🟢" if v.startswith("BUY") else "🔴" if v == "SELL" else "🟡"
+
+
+def select_playbook(max_count=None):
+    """The best SINGLE setup in each asset class that's live today (weekday:
+    commodities/indices/fx; weekend: crypto). One pick per class keeps it lean —
+    the reader picks what to take, instead of drowning in 20 reports. Respects
+    each desk section's own universe (so the commodities pick stays Gold, etc.).
+    Returns [(clskey, opportunity)], strongest first."""
     desks = weekend_desks() if is_weekend() else weekday_desks()
-    seen, ops = set(), []
+    best, order = {}, []
     for _ch, _vip, _hdr, sections, _tk in desks:
         for _label, clskey, nf, _cnt in sections:
-            for o in section_ops(clskey, nf, 12):
-                if o["name"] not in seen:
-                    seen.add(o["name"])
-                    ops.append(o)
+            if clskey in best:
+                continue
+            top = section_ops(clskey, nf, 1)   # already ranked by score
+            if top:
+                best[clskey] = top[0]
+                order.append(clskey)
+    picks = [(k, best[k]) for k in order]
 
-    def _rank(o):
+    def _rank(kv):
+        o = kv[1]
         v = o.get("analysis", {}).get("verdict", "")
         decisive = 0 if v in ("BUY", "SELL") else 1 if v.startswith("BUY") else 2
         return (decisive, -(o.get("score") or 0))
 
-    ops.sort(key=_rank)
-    return ops[:n]
+    picks.sort(key=_rank)
+    cap = max_count if max_count is not None else PLAYBOOK_COUNT
+    if cap and cap > 0:
+        picks = picks[:cap]
+    return picks
 
 
-def playbook_fingerprint(ops):
+def playbook_fingerprint(picks):
     """Day + the chosen line-up's signals. Changes each new day, or if the
     selection / a pick's signal materially changes intraday."""
     day = datetime.datetime.utcnow().strftime("%Y%m%d")
-    return day + "::" + "|".join(f"{o['name']}:{fingerprint(o)}" for o in ops)
+    return day + "::" + "|".join(f"{o['name']}:{fingerprint(o)}" for _k, o in picks)
 
 
-def _play_entry(i, o):
+def _play_entry(i, clskey, o):
     a = o.get("analysis", {})
     v = a.get("verdict", "WATCH")
-    icon = _REG_ICON_VERDICT(v)
+    icon = _verdict_icon(v)
     lean = "LONG" if v.startswith("BUY") else "SHORT" if v == "SELL" else "NEUTRAL"
+    market = C.ASSET_CLASSES.get(clskey, {}).get("label", clskey.title())
     bull = (a.get("bull") or ["—"])[0]
     bear = (a.get("bear") or ["—"])[0]
     return "\n".join([
-        f"<b>{i}. {icon} {o['name']}</b> — lean <b>{lean}</b> · conviction {a.get('conviction','')}"
-        f"{regfmt(o)}",
+        f"<b>{i}. {icon} {o['name']}</b> <i>· {market}</i> — lean <b>{lean}</b> · "
+        f"conviction {a.get('conviction','')}{regfmt(o)}",
         f"   <i>Read:</i> {a.get('price_reasoning','')}",
         f"   <i>Edge:</i> {bull}",
         f"   <i>Invalidation:</i> {bear}",
@@ -346,23 +363,21 @@ def _play_entry(i, o):
     ])
 
 
-def _REG_ICON_VERDICT(v):
-    return "🟢" if v.startswith("BUY") else "🔴" if v == "SELL" else "🟡"
-
-
-def compose_playbook(ops, vip):
-    """The daily Desk Playbook post for the free channel. Honest framing —
-    setups + reasoning + data; execution is the reader's own decision."""
+def compose_playbook(picks, vip):
+    """The daily Desk Playbook post for the free channel — the best setup in each
+    market. Honest framing: setups + reasoning + data; execution is the reader's
+    own decision."""
     today = datetime.datetime.utcnow().strftime("%d %b %Y")
     L = [FIRM,
-         f"🎯 <b>Desk Playbook — today's top {len(ops)} setups</b>",
+         "🎯 <b>Desk Playbook — the best setup in each market</b>",
          BY, TAGLINE, "━━━━━━━━━━━━━━",
-         f"<i>{today} · what our data likes today and why</i>", "",
-         "<i>We produce the read, the reasoning and the data behind each setup "
-         "and log it in the open — whether to take the trade is your call. "
-         "We don't take every setup ourselves.</i>", ""]
-    for i, o in enumerate(ops, 1):
-        L.append(_play_entry(i, o))
+         f"<i>{today} · one pick per asset class — the read, the reasoning, "
+         "the data</i>", "",
+         "<i>We produce the setup and the case for it and log it in the open — "
+         "whether to take the trade is your call. We don't take every setup "
+         "ourselves.</i>", ""]
+    for i, (clskey, o) in enumerate(picks, 1):
+        L.append(_play_entry(i, clskey, o))
         L.append("")
     if vip:
         L.append("Full case files + exact levels + trade management → <b>VIP</b>.")
@@ -426,14 +441,14 @@ def main():
         pb_ch_env = weekend_desks()[0][0] if weekend else PLAYBOOK_CHANNEL
         pb_vip_env = weekend_desks()[0][1] if weekend else "STAALWAG_VIP"
         pb_channel = os.environ.get(pb_ch_env, "")
-        ops = select_playbook()
-        pb_fp = playbook_fingerprint(ops) if ops else ""
-        if not ops:
+        picks = select_playbook()
+        pb_fp = playbook_fingerprint(picks) if picks else ""
+        if not picks:
             print("WOLF: playbook — no candidates, skipping")
         elif CHANGED_ONLY and state.get("__playbook__") == pb_fp:
             print("WOLF: playbook already posted for this line-up — skipping")
         else:
-            pb_msg = compose_playbook(ops, os.environ.get(pb_vip_env, ""))
+            pb_msg = compose_playbook(picks, os.environ.get(pb_vip_env, ""))
             if not TOKEN or not pb_channel:
                 print(f"\n--- DRY RUN [PLAYBOOK -> {pb_ch_env}] ---\n")
                 print(pb_msg.replace("<b>", "").replace("</b>", "")

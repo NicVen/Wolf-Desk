@@ -58,10 +58,11 @@ or financial advice. Always verify before risking capital.
 Freestanding, on-brand process with two jobs:
 - **Post** — fires the daily WOLF read on a schedule (`POSTING_TIMES`, UTC),
   reusing `wolf_post` so it inherits weekend-crypto-only + per-pair change dedup.
-  Includes the **Desk Playbook**: a curated cross-market top-3 setup post for the
-  free channel with the reasoning + data behind each pick (honest framing — we
-  produce the setup/analysis, execution is the reader's call), deduped to once a
-  day. Tunable via `PLAYBOOK_ENABLED` / `PLAYBOOK_COUNT` / `PLAYBOOK_CHANNEL`.
+  Includes the **Desk Playbook**: the best single setup in EACH asset class live
+  today (one per market — lean, not 20 assets) for the free channel, with the
+  reasoning + data behind each pick (honest framing — we produce the
+  setup/analysis, execution is the reader's call), deduped to once a day. Tunable
+  via `PLAYBOOK_ENABLED` / `PLAYBOOK_COUNT` (0 = one per class) / `PLAYBOOK_CHANNEL`.
 - **Answer** — a Telegram bot that answers questions about the posted signals in
   DMs and the channel's linked discussion group. Rule-based, from our own scored
   data + `compiler/analysis.py` (no external AI). Uses its own `MANAGER_BOT_TOKEN`
