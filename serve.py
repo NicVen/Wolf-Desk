@@ -44,7 +44,7 @@ from scout.news import headlines
 PORT        = int(os.environ.get("PORT", "8777"))
 WOLF_PASS   = os.environ.get("WOLF_PASS", "")           # admin bypass only
 REFRESH_MIN = int(os.environ.get("REFRESH_MIN", "20"))
-CLASSES     = ("commodities", "fx", "indices", "stocks")
+CLASSES     = ("commodities", "fx", "indices", "stocks", "crypto")
 
 BOT_TOKEN    = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 BOT_USERNAME = os.environ.get("BOT_USERNAME", "Staalwag_wolf_Bot")
@@ -292,8 +292,8 @@ def build_rss() -> str:
     now = datetime.datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S +0000")
     items = []
     tags = {"fx": "#forex", "commodities": "#gold #commodities",
-            "indices": "#indices", "stocks": "#stocks"}
-    for cls in ("fx", "commodities", "indices", "stocks"):
+            "indices": "#indices", "stocks": "#stocks", "crypto": "#crypto #bitcoin"}
+    for cls in ("fx", "commodities", "indices", "stocks", "crypto"):
         try:
             d = _j.load(open(os.path.join("data", "opportunities_%s.json" % cls), encoding="utf-8"))
         except Exception:

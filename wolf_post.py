@@ -57,6 +57,28 @@ DESKS = [
      [("💱 <b>FOREX</b>",   "fx",          None,      4)], "fx"),
 ]
 
+# Weekend desk. FX, gold, metals and indices are all shut on Sat/Sun; crypto is
+# the only market that trades 24/7. So on weekends we skip the closed desks and
+# post crypto to the VELDRIN channel (which would otherwise sit silent with the
+# FX desk dark). Same tuple shape as DESKS: (channel env, vip env, header,
+# [sections], track key).
+WEEKEND_DESKS = [
+    ("VELDRIN_CHANNEL", "VELDRIN_VIP", "🪙 <b>VELDRIN · Crypto Desk</b>",
+     [("🪙 <b>CRYPTO</b>", "crypto", None, 6)], "crypto"),
+]
+WEEKEND_NOTE = ("🗓 <i>Weekend — FX, metals &amp; indices are closed. "
+                "Crypto trades 24/7, so it's the only desk live today.</i>")
+
+
+def is_weekend(now=None):
+    """True when the traditional markets are shut for the weekend (UTC Sat/Sun).
+
+    The daily post fires once per day, so calendar day is the right resolution:
+    FX reopens ~21:00 UTC Sunday but gold/indices stay closed into the Sunday
+    evening CME reopen, so we treat the whole of Sat & Sun as crypto-only."""
+    now = now or datetime.datetime.utcnow()
+    return now.weekday() >= 5  # Mon=0 ... Sat=5, Sun=6
+
 
 def load(cls):
     with open(os.path.join(C.DATA_DIR, f"opportunities_{cls}.json"), "r", encoding="utf-8") as f:
@@ -90,7 +112,7 @@ def section_ops(clskey, namefilter, n):
     return ops[:n]
 
 
-def compose(brand, sections, vip, trackkey="site"):
+def compose(brand, sections, vip, trackkey="site", note=None):
     today = datetime.datetime.utcnow().strftime("%d %b %Y")
     # build each asset section; collect all shown ops for the regime vote
     shown, body = [], []
@@ -105,6 +127,9 @@ def compose(brand, sections, vip, trackkey="site"):
             body.append(line(o))
     L = [FIRM, brand, BY, TAGLINE, "━━━━━━━━━━━━━━",
          f"<i>{today} · STAALWAG intel read</i>", ""]
+    if note:
+        L.append(note)
+        L.append("")
     # Markov market regime — majority vote across everything shown today
     try:
         from scout.regime import market_read
@@ -167,12 +192,18 @@ def send(channel, msg):
 def main():
     print("WOLF: refreshing data for daily posts ...")
     run.main()
-    for ch_env, vip_env, brand, sections, trackkey in DESKS:
+    # Weekends: markets are shut except crypto (24/7), so post only the crypto
+    # desk. Weekdays: the normal gold/indices + FX desks.
+    weekend = is_weekend()
+    desks = WEEKEND_DESKS if weekend else DESKS
+    note = WEEKEND_NOTE if weekend else None
+    print(f"WOLF: {'weekend — crypto desk only' if weekend else 'weekday desks'}")
+    for ch_env, vip_env, brand, sections, trackkey in desks:
         channel = os.environ.get(ch_env, "")
         vip = os.environ.get(vip_env, "")
-        msg = compose(brand, sections, vip, trackkey)
+        msg = compose(brand, sections, vip, trackkey, note)
         if not TOKEN or not channel:
-            print(f"\n--- DRY RUN [{ch_env or clskey}] ---\n")
+            print(f"\n--- DRY RUN [{ch_env}] ---\n")
             plain = (msg.replace("<b>", "").replace("</b>", "").replace("<i>", "")
                         .replace("</i>", "").replace("&amp;", "&"))
             print(plain)

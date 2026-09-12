@@ -15,7 +15,7 @@ Env (all free from developer.x.com):
   PUBLIC_HANDLE_FX   (default @veldrinforex)
 No keys set => dry run (prints the tweet instead of posting).
 """
-import os, json, glob
+import os, json, glob, datetime
 
 try:
     import truststore; truststore.inject_into_ssl()
@@ -59,18 +59,28 @@ def _top(cls, n=3):
 
 
 def compose_daily() -> str:
-    """A punchy digest tweet from today's WOLF intel, funneling to Telegram."""
+    """A punchy digest tweet from today's WOLF intel, funneling to Telegram.
+
+    Weekends: FX, gold and indices are shut, so the digest switches to the
+    crypto desk (24/7) and funnels to the VELDRIN channel where crypto posts."""
     lines = ["STAALWAG · 🐺 WOLF Intel Desk · Read the market like a wolf."]
+    weekend = datetime.datetime.utcnow().weekday() >= 5
+    sources = (("crypto", ""),) if weekend else (("fx", ""), ("commodities", ""))
     picks = []
-    for cls, tag in (("fx", ""), ("commodities", "")):
-        for o in _top(cls, 2):
+    for cls, tag in sources:
+        for o in _top(cls, 4 if weekend else 2):
             v = o.get("analysis", {}).get("verdict", "")
             if v in ("BUY", "SELL"):
                 picks.append("%s %s (%s)" % (o["name"], v, o["score"]))
     if picks:
         lines.append("Reads: " + " · ".join(picks[:4]))
-    lines.append("Free daily reads + public track record: %s (gold) %s (fx)" % (H_GOLD, H_FX))
-    lines.append("#forex #gold #trading #XAUUSD")
+    if weekend:
+        lines.append("Weekend crypto reads (markets closed elsewhere): %s" % H_FX)
+        lines.append("#crypto #bitcoin #BTC #ETH #trading")
+    else:
+        lines.append("Free daily reads + public track record: %s (gold) %s (fx)"
+                     % (H_GOLD, H_FX))
+        lines.append("#forex #gold #trading #XAUUSD")
     return "\n".join(lines)[:280]
 
 

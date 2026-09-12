@@ -1,0 +1,527 @@
+{
+  "generated": "2026-09-12 06:37 UTC",
+  "asset": "Crypto",
+  "class": "crypto",
+  "opportunities": [
+    {
+      "name": "BTC/USD",
+      "score": 38.0,
+      "breakdown": {
+        "catalyst": 14.0,
+        "trend": 0.0,
+        "position": 12.0,
+        "supply": 12.0,
+        "volfit": 0.0
+      },
+      "trend_desc": "no data",
+      "volfit_desc": "no data",
+      "note": "macro liquidity + spot ETF flows; halving-cycle supply squeeze",
+      "price": null,
+      "mom20": null,
+      "atr_pct": null,
+      "ma20": null,
+      "ma50": null,
+      "above_ma20": null,
+      "above_ma50": null,
+      "ma_stack_up": null,
+      "regime": null,
+      "category": "Major",
+      "ticker": "BTC-USD",
+      "covkey": "crypto",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        }
+      ],
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Weak",
+        "summary": "WATCH \u2014 conviction Weak. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price data unavailable.",
+        "score_reasoning": "Score 38.0/100 driven by positioning (12/20), supply/demand (12/20); held back by trend (0/25), volatility fit (0/10). Coverage: 2 venues offer it.",
+        "bull": [
+          "Supply/demand tight \u2014 structural backing: macro liquidity + spot ETF flows; halving-cycle supply squeeze",
+          "Positioning/sentiment leaning the trade's way."
+        ],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout."
+        ]
+      }
+    },
+    {
+      "name": "ETH/USD",
+      "score": 33.0,
+      "breakdown": {
+        "catalyst": 12.0,
+        "trend": 0.0,
+        "position": 11.0,
+        "supply": 10.0,
+        "volfit": 0.0
+      },
+      "trend_desc": "no data",
+      "volfit_desc": "no data",
+      "note": "ETF flows + staking yield; L2 activity as demand proxy",
+      "price": null,
+      "mom20": null,
+      "atr_pct": null,
+      "ma20": null,
+      "ma50": null,
+      "above_ma20": null,
+      "above_ma50": null,
+      "ma_stack_up": null,
+      "regime": null,
+      "category": "Major",
+      "ticker": "ETH-USD",
+      "covkey": "crypto",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        }
+      ],
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Weak",
+        "summary": "WATCH \u2014 conviction Weak. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price data unavailable.",
+        "score_reasoning": "Score 33.0/100 driven by positioning (11/20), supply/demand (10/20); held back by trend (0/25), volatility fit (0/10). Coverage: 2 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout."
+        ]
+      }
+    },
+    {
+      "name": "SOL/USD",
+      "score": 28.0,
+      "breakdown": {
+        "catalyst": 10.0,
+        "trend": 0.0,
+        "position": 10.0,
+        "supply": 8.0,
+        "volfit": 0.0
+      },
+      "trend_desc": "no data",
+      "volfit_desc": "no data",
+      "note": "high-beta to BTC; network activity + ETF speculation",
+      "price": null,
+      "mom20": null,
+      "atr_pct": null,
+      "ma20": null,
+      "ma50": null,
+      "above_ma20": null,
+      "above_ma50": null,
+      "ma_stack_up": null,
+      "regime": null,
+      "category": "Altcoin",
+      "ticker": "SOL-USD",
+      "covkey": "crypto",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        }
+      ],
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Weak",
+        "summary": "WATCH \u2014 conviction Weak. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price data unavailable.",
+        "score_reasoning": "Score 28.0/100 driven by positioning (10/20), catalyst (10/25); held back by trend (0/25), volatility fit (0/10). Coverage: 2 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout."
+        ]
+      }
+    },
+    {
+      "name": "XRP/USD",
+      "score": 25.0,
+      "breakdown": {
+        "catalyst": 9.0,
+        "trend": 0.0,
+        "position": 9.0,
+        "supply": 7.0,
+        "volfit": 0.0
+      },
+      "trend_desc": "no data",
+      "volfit_desc": "no data",
+      "note": "regulatory-headline driven; range until catalyst",
+      "price": null,
+      "mom20": null,
+      "atr_pct": null,
+      "ma20": null,
+      "ma50": null,
+      "above_ma20": null,
+      "above_ma50": null,
+      "ma_stack_up": null,
+      "regime": null,
+      "category": "Altcoin",
+      "ticker": "XRP-USD",
+      "covkey": "crypto",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        }
+      ],
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Weak",
+        "summary": "WATCH \u2014 conviction Weak. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price data unavailable.",
+        "score_reasoning": "Score 25.0/100 driven by positioning (9/20), catalyst (9/25); held back by trend (0/25), volatility fit (0/10). Coverage: 2 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "BNB/USD",
+      "score": 23.0,
+      "breakdown": {
+        "catalyst": 7.0,
+        "trend": 0.0,
+        "position": 8.0,
+        "supply": 8.0,
+        "volfit": 0.0
+      },
+      "trend_desc": "no data",
+      "volfit_desc": "no data",
+      "note": "exchange-flow linked; burns trim supply",
+      "price": null,
+      "mom20": null,
+      "atr_pct": null,
+      "ma20": null,
+      "ma50": null,
+      "above_ma20": null,
+      "above_ma50": null,
+      "ma_stack_up": null,
+      "regime": null,
+      "category": "Altcoin",
+      "ticker": "BNB-USD",
+      "covkey": "crypto",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        }
+      ],
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Weak",
+        "summary": "WATCH \u2014 conviction Weak. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price data unavailable.",
+        "score_reasoning": "Score 23.0/100 driven by positioning (8/20), supply/demand (8/20); held back by trend (0/25), volatility fit (0/10). Coverage: 2 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "LINK/USD",
+      "score": 22.0,
+      "breakdown": {
+        "catalyst": 7.0,
+        "trend": 0.0,
+        "position": 8.0,
+        "supply": 7.0,
+        "volfit": 0.0
+      },
+      "trend_desc": "no data",
+      "volfit_desc": "no data",
+      "note": "oracle demand + CCIP adoption; accumulation zones",
+      "price": null,
+      "mom20": null,
+      "atr_pct": null,
+      "ma20": null,
+      "ma50": null,
+      "above_ma20": null,
+      "above_ma50": null,
+      "ma_stack_up": null,
+      "regime": null,
+      "category": "Altcoin",
+      "ticker": "LINK-USD",
+      "covkey": "crypto",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        }
+      ],
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Weak",
+        "summary": "WATCH \u2014 conviction Weak. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price data unavailable.",
+        "score_reasoning": "Score 22.0/100 driven by positioning (8/20), supply/demand (7/20); held back by trend (0/25), volatility fit (0/10). Coverage: 2 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "DOGE/USD",
+      "score": 20.0,
+      "breakdown": {
+        "catalyst": 7.0,
+        "trend": 0.0,
+        "position": 8.0,
+        "supply": 5.0,
+        "volfit": 0.0
+      },
+      "trend_desc": "no data",
+      "volfit_desc": "no data",
+      "note": "sentiment/retail driven; volatile, size small",
+      "price": null,
+      "mom20": null,
+      "atr_pct": null,
+      "ma20": null,
+      "ma50": null,
+      "above_ma20": null,
+      "above_ma50": null,
+      "ma_stack_up": null,
+      "regime": null,
+      "category": "Altcoin",
+      "ticker": "DOGE-USD",
+      "covkey": "crypto",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        }
+      ],
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Weak",
+        "summary": "WATCH \u2014 conviction Weak. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price data unavailable.",
+        "score_reasoning": "Score 20.0/100 driven by positioning (8/20), catalyst (7/25); held back by trend (0/25), volatility fit (0/10). Coverage: 2 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "ADA/USD",
+      "score": 19.0,
+      "breakdown": {
+        "catalyst": 6.0,
+        "trend": 0.0,
+        "position": 7.0,
+        "supply": 6.0,
+        "volfit": 0.0
+      },
+      "trend_desc": "no data",
+      "volfit_desc": "no data",
+      "note": "beta play; needs BTC tailwind",
+      "price": null,
+      "mom20": null,
+      "atr_pct": null,
+      "ma20": null,
+      "ma50": null,
+      "above_ma20": null,
+      "above_ma50": null,
+      "ma_stack_up": null,
+      "regime": null,
+      "category": "Altcoin",
+      "ticker": "ADA-USD",
+      "covkey": "crypto",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        }
+      ],
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Weak",
+        "summary": "WATCH \u2014 conviction Weak. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price data unavailable.",
+        "score_reasoning": "Score 19.0/100 driven by positioning (7/20), supply/demand (6/20); held back by trend (0/25), volatility fit (0/10). Coverage: 2 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "AVAX/USD",
+      "score": 19.0,
+      "breakdown": {
+        "catalyst": 6.0,
+        "trend": 0.0,
+        "position": 7.0,
+        "supply": 6.0,
+        "volfit": 0.0
+      },
+      "trend_desc": "no data",
+      "volfit_desc": "no data",
+      "note": "risk-on beta; subnet/activity narrative",
+      "price": null,
+      "mom20": null,
+      "atr_pct": null,
+      "ma20": null,
+      "ma50": null,
+      "above_ma20": null,
+      "above_ma50": null,
+      "ma_stack_up": null,
+      "regime": null,
+      "category": "Altcoin",
+      "ticker": "AVAX-USD",
+      "covkey": "crypto",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        }
+      ],
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Weak",
+        "summary": "WATCH \u2014 conviction Weak. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price data unavailable.",
+        "score_reasoning": "Score 19.0/100 driven by positioning (7/20), supply/demand (6/20); held back by trend (0/25), volatility fit (0/10). Coverage: 2 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    },
+    {
+      "name": "LTC/USD",
+      "score": 17.0,
+      "breakdown": {
+        "catalyst": 5.0,
+        "trend": 0.0,
+        "position": 6.0,
+        "supply": 6.0,
+        "volfit": 0.0
+      },
+      "trend_desc": "no data",
+      "volfit_desc": "no data",
+      "note": "low-catalyst; tracks BTC with lag",
+      "price": null,
+      "mom20": null,
+      "atr_pct": null,
+      "ma20": null,
+      "ma50": null,
+      "above_ma20": null,
+      "above_ma50": null,
+      "ma_stack_up": null,
+      "regime": null,
+      "category": "Altcoin",
+      "ticker": "LTC-USD",
+      "covkey": "crypto",
+      "coverage": [
+        {
+          "name": "BlackBull Markets",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, oil, indices, shares + crypto"
+        },
+        {
+          "name": "Eightcap",
+          "type": "broker",
+          "leverage": "500:1",
+          "notes": "FX, metals, energy, indices, shares, crypto"
+        }
+      ],
+      "analysis": {
+        "verdict": "WATCH",
+        "conviction": "Weak",
+        "summary": "WATCH \u2014 conviction Weak. No clean edge yet: trend unconfirmed, wait for structure.",
+        "price_reasoning": "Price data unavailable.",
+        "score_reasoning": "Score 17.0/100 driven by positioning (6/20), supply/demand (6/20); held back by trend (0/25), volatility fit (0/10). Coverage: 2 venues offer it.",
+        "bull": [],
+        "bear": [
+          "Trend not confirmed up \u2014 chasing risks a fakeout.",
+          "No strong near-term catalyst \u2014 may drift."
+        ]
+      }
+    }
+  ]
+}

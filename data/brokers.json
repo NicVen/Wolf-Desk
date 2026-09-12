@@ -1,10 +1,10 @@
 {
   "_doc": "Broker/propfirm coverage by asset key. Verify symbols/leverage before trading. Updated 2026-06-27.",
   "brokers": [
-    {"name": "BlackBull Markets", "type": "broker", "metals": true, "energy": true,  "ags": false, "fx": true, "indices": true, "stocks": true,  "max_leverage": "500:1", "notes": "FX, metals, oil, indices, shares + crypto"},
+    {"name": "BlackBull Markets", "type": "broker", "metals": true, "energy": true,  "ags": false, "fx": true, "indices": true, "stocks": true,  "crypto": true,  "max_leverage": "500:1", "notes": "FX, metals, oil, indices, shares + crypto"},
     {"name": "IC Markets",        "type": "broker", "metals": true, "energy": true,  "ags": true,  "fx": true, "indices": true, "stocks": true,  "max_leverage": "500:1", "notes": "Broad: FX, commodities incl softs, indices, shares"},
     {"name": "Pepperstone",       "type": "broker", "metals": true, "energy": true,  "ags": true,  "fx": true, "indices": true, "stocks": true,  "max_leverage": "500:1", "notes": "FX, softs, indices, share CFDs"},
-    {"name": "Eightcap",          "type": "broker", "metals": true, "energy": true,  "ags": false, "fx": true, "indices": true, "stocks": true,  "max_leverage": "500:1", "notes": "FX, metals, energy, indices, shares, crypto"},
+    {"name": "Eightcap",          "type": "broker", "metals": true, "energy": true,  "ags": false, "fx": true, "indices": true, "stocks": true,  "crypto": true,  "max_leverage": "500:1", "notes": "FX, metals, energy, indices, shares, crypto"},
     {"name": "OANDA",             "type": "broker", "metals": true, "energy": true,  "ags": true,  "fx": true, "indices": true, "stocks": false, "max_leverage": "varies","notes": "FX, commodities, indices; limited shares"}
   ],
   "propfirms": [

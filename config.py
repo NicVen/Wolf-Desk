@@ -46,6 +46,21 @@ ASSET_CLASSES = {
       "GBP/JPY": ("GBPJPY=X", "JPY cross", "fx"),
       "EUR/GBP": ("EURGBP=X", "Cross", "fx"),
     }},
+  "crypto": {
+    # 24/7 market — the only desk that trades on weekends (see wolf_post.py).
+    "label": "Crypto", "signals": "signals_crypto.json",
+    "universe": {
+      "BTC/USD":  ("BTC-USD",  "Major",   "crypto"),
+      "ETH/USD":  ("ETH-USD",  "Major",   "crypto"),
+      "SOL/USD":  ("SOL-USD",  "Altcoin", "crypto"),
+      "XRP/USD":  ("XRP-USD",  "Altcoin", "crypto"),
+      "BNB/USD":  ("BNB-USD",  "Altcoin", "crypto"),
+      "ADA/USD":  ("ADA-USD",  "Altcoin", "crypto"),
+      "DOGE/USD": ("DOGE-USD", "Altcoin", "crypto"),
+      "AVAX/USD": ("AVAX-USD", "Altcoin", "crypto"),
+      "LINK/USD": ("LINK-USD", "Altcoin", "crypto"),
+      "LTC/USD":  ("LTC-USD",  "Altcoin", "crypto"),
+    }},
   "indices": {
     "label": "Indices", "signals": "signals_indices.json",
     "universe": {
