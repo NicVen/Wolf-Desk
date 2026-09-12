@@ -14,3 +14,7 @@ pyvenv.cfg
 # runtime database (production uses the Railway volume /data/growth.db)
 *.db
 growth.db
+
+# runtime signal-dedup state (production keeps it on the Railway volume)
+last_signals.json
+data/last_signals.json

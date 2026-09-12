@@ -18,6 +18,15 @@ Env:
   STAALWAG_VIP         join/CTA link (optional)
   VELDRIN_VIP          join/CTA link (optional)
 
+Noise control (only post a pair when its signal actually changed):
+  SIGNAL_CHANGED_ONLY  "1" (default) posts a pair only when the market gives a
+                       different opportunity; "0" = old always-post behaviour.
+  SIGNAL_SCORE_BAND    points; a score move smaller than this isn't "a change"
+                       (default 5).
+  SIGNAL_STATE_FILE    where the last-posted signals are remembered (default:
+                       next to GROWTH_DB / the Railway volume, so it survives
+                       restarts).
+
 No token = DRY RUN: prints both posts instead of sending.
 Run:  python wolf_post.py
 """
@@ -127,19 +136,92 @@ def section_ops(clskey, namefilter, n):
     return ops[:n]
 
 
-def compose(brand, sections, vip, trackkey="site", note=None):
+# --------------------------------------------------------------- signal dedup
+# Only post a pair when the MARKET gives a different opportunity. We remember
+# the last signal posted for each pair and skip any pair whose signal hasn't
+# materially changed since — otherwise a poster fired every N minutes floods
+# the channel with the same read (pure noise). This also makes the poster
+# idempotent: two runs in the same market state post nothing the second time,
+# so a redundant cron can't double-post.
+#
+# CHANGED_ONLY = "0" restores the old always-post behaviour.
+# SCORE_BAND    = points; a score move smaller than the band isn't "a change".
+# State lives next to the growth DB (the Railway volume) so it survives
+# restarts; override with SIGNAL_STATE_FILE.
+CHANGED_ONLY = os.environ.get("SIGNAL_CHANGED_ONLY", "1") != "0"
+SCORE_BAND   = float(os.environ.get("SIGNAL_SCORE_BAND", "5"))
+_DB_DIR      = os.path.dirname(os.environ.get("GROWTH_DB", "")) or C.DATA_DIR
+SIGNAL_STATE_FILE = os.environ.get("SIGNAL_STATE_FILE",
+                                   os.path.join(_DB_DIR, "last_signals.json"))
+
+
+def fingerprint(o):
+    """Compact signature of a pair's actionable signal. Same fingerprint =
+    'no material change' => don't repost. Captures verdict, a coarse score
+    band (so score jitter isn't a 'change'), and Markov regime state."""
+    v = o.get("analysis", {}).get("verdict", "")
+    try:
+        band = round(float(o.get("score") or 0) / SCORE_BAND) if SCORE_BAND > 0 else o.get("score")
+    except (TypeError, ValueError):
+        band = o.get("score")
+    reg = (o.get("regime") or {}).get("state") or ""
+    return f"{v}|{band}|{reg}"
+
+
+def load_state():
+    try:
+        with open(SIGNAL_STATE_FILE, "r", encoding="utf-8") as f:
+            d = json.load(f)
+            return d if isinstance(d, dict) else {}
+    except Exception:
+        return {}
+
+
+def save_state(state):
+    try:
+        d = os.path.dirname(SIGNAL_STATE_FILE)
+        if d:
+            os.makedirs(d, exist_ok=True)
+        with open(SIGNAL_STATE_FILE, "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=2)
+    except Exception as e:  # noqa: BLE001
+        print("WOLF: could not save signal state:", e)
+
+
+def compose(brand, sections, vip, trackkey="site", note=None,
+            state=None, changed_only=CHANGED_ONLY):
+    """Build the desk post. Returns (msg, posted_fps).
+
+    When `changed_only`, each pair is compared against `state` (its last posted
+    fingerprint) and only pairs whose signal changed are included; if nothing
+    changed the whole desk is skipped and msg is None (no noise post).
+    `posted_fps` maps the included pairs' names to their new fingerprint so the
+    caller can persist them after a successful send."""
     today = datetime.datetime.utcnow().strftime("%d %b %Y")
-    # build each asset section; collect all shown ops for the regime vote
-    shown, body = [], []
+    state = state or {}
+    # build each asset section; collect shown ops for the regime vote and the
+    # fingerprints of the pairs we actually include (post)
+    shown, body, posted_fps = [], [], {}
     for label, clskey, nf, n in sections:
         ops = section_ops(clskey, nf, n)
         if not ops:
             continue
-        shown += ops
+        rows = []
+        for o in ops:
+            fp = fingerprint(o)
+            if changed_only and state.get(o["name"]) == fp:
+                continue  # same signal as last post -> not a new opportunity
+            rows.append(o)
+            posted_fps[o["name"]] = fp
+        if not rows:
+            continue
+        shown += rows
         body.append("")
         body.append(label)
-        for o in ops:
+        for o in rows:
             body.append(line(o))
+    if changed_only and not posted_fps:
+        return None, posted_fps  # nothing changed since last post -> skip desk
     L = [FIRM, brand, BY, TAGLINE, "━━━━━━━━━━━━━━",
          f"<i>{today} · STAALWAG intel read</i>", ""]
     if note:
@@ -171,7 +253,7 @@ def compose(brand, sections, vip, trackkey="site", note=None):
     L.append("━━━━━━━━━━━━━━")
     L.append("<b>STAALWAG</b> · 🐺 WOLF Intel Desk · Read the market like a wolf.")
     L.append("<i>Research/education, not financial advice. Trade your own plan.</i>")
-    return "\n".join(L)
+    return "\n".join(L), posted_fps
 
 
 def _api(method, payload):
@@ -212,28 +294,46 @@ def main():
     weekend = is_weekend()
     desks = weekend_desks() if weekend else DESKS
     note = WEEKEND_NOTE if weekend else None
-    print(f"WOLF: {'weekend — crypto desk only' if weekend else 'weekday desks'}")
+    print(f"WOLF: {'weekend — crypto desk only' if weekend else 'weekday desks'}"
+          f"{' · changed-signals-only' if CHANGED_ONLY else ''}")
+
+    state = load_state() if CHANGED_ONLY else {}
+    any_posted = False
     for ch_env, vip_env, brand, sections, trackkey in desks:
         channel = os.environ.get(ch_env, "")
         vip = os.environ.get(vip_env, "")
-        msg = compose(brand, sections, vip, trackkey, note)
+        msg, posted_fps = compose(brand, sections, vip, trackkey, note, state)
+        if msg is None:
+            print(f"WOLF: no new signals for {ch_env} — skipping (nothing changed)")
+            continue
         if not TOKEN or not channel:
             print(f"\n--- DRY RUN [{ch_env}] ---\n")
             plain = (msg.replace("<b>", "").replace("</b>", "").replace("<i>", "")
                         .replace("</i>", "").replace("&amp;", "&"))
             print(plain)
+            state.update(posted_fps); any_posted = True
             continue
         ok, err = send(channel, msg)
         print(f"WOLF: {'posted' if ok else 'FAILED'} -> {ch_env} {err}")
+        if ok:
+            # only remember what actually went out, so a failed send retries next run
+            state.update(posted_fps); any_posted = True
 
-    # X (Twitter) discovery post — cold-audience top of funnel.
+    if CHANGED_ONLY and any_posted:
+        save_state(state)
+
+    # X (Twitter) discovery post — cold-audience top of funnel. Only fire it when
+    # a channel signal actually changed, so a frequent cron doesn't flood X either.
     # Dry-runs harmlessly if the 4 X_* keys aren't set yet.
-    try:
-        import promo_x
-        okx, infox = promo_x.post(promo_x.compose_daily())
-        print(f"WOLF: X {'posted' if okx else 'dry-run/FAILED'} {infox}")
-    except Exception as e:  # noqa: BLE001
-        print("WOLF: X error", e)
+    if any_posted or not CHANGED_ONLY:
+        try:
+            import promo_x
+            okx, infox = promo_x.post(promo_x.compose_daily())
+            print(f"WOLF: X {'posted' if okx else 'dry-run/FAILED'} {infox}")
+        except Exception as e:  # noqa: BLE001
+            print("WOLF: X error", e)
+    else:
+        print("WOLF: X skipped — no signal change")
 
 
 if __name__ == "__main__":
