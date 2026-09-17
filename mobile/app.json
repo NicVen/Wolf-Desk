@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "WOLF Desk",
+    "slug": "wolf-desk-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "wolfdesk",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0a0e15",
+    "splash": {
+      "backgroundColor": "#0a0e15",
+      "resizeMode": "contain"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.staalwag.wolfdesk"
+    },
+    "android": {
+      "package": "com.staalwag.wolfdesk"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
