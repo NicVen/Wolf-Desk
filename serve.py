@@ -466,6 +466,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if path == "/manifest.json":
             self._send(200, _read("manifest.json", b"{}"),
                        "application/manifest+json"); return
+        # Installable PWA companion (ungated shell; the page itself sends the
+        # WOLF_PASS as ?key= on its own data calls, so no secret lives here).
+        if path == "/app":
+            self._send(200, _read(os.path.join("dashboard", "app.html")),
+                       "text/html; charset=utf-8"); return
+        if path == "/app.webmanifest":
+            self._send(200, _read(os.path.join("dashboard", "app.webmanifest"), b"{}"),
+                       "application/manifest+json"); return
+        if path == "/sw.js":
+            self._send(200, _read(os.path.join("dashboard", "sw.js"), b""),
+                       "application/javascript; charset=utf-8"); return
         # Public brand landing page (ungated) — what STAALWAG is + Telegram CTAs.
         if path in ("/staalwag", "/about", "/home"):
             self._send(200, _read(os.path.join("dashboard", "landing.html")),
