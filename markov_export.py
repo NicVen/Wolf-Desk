@@ -30,6 +30,8 @@ Files written per run:
 """
 import os, json, datetime, re
 
+import atomicio
+
 try:
     from scout.regime import MIN_N_VOTE
 except Exception:
@@ -95,8 +97,7 @@ def _compose(state, meta):
 
 
 def _write(path, text):
-    with open(path, "w", encoding="ascii", errors="ignore", newline="\n") as f:
-        f.write(text)
+    atomicio.write_text(path, text)   # atomic: an EA never reads a half-written gate
 
 
 def export(rows):

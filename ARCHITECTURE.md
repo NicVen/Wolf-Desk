@@ -352,6 +352,12 @@ what prop rules*.
 
 News is deliberately excluded here (fetched live via `/news`).
 
+**Writes are atomic** (`atomicio.py`): the opportunity JSON and the Markov gate
+files are written to a temp file in the same directory, fsynced, then
+`os.replace`d onto the target. A reader (the server serving `/data`, an EA
+reading a gate) or a crash/restart mid-write therefore never sees a truncated
+file — only the whole old or whole new one.
+
 ---
 
 ## 12. The HTTP API (`serve.py`)

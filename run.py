@@ -10,6 +10,7 @@ import json, os, sys, datetime
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import config as C
+import atomicio
 from scout.prices import price_metrics
 from compiler.score import score_one, rank
 from compiler.analysis import analyze
@@ -52,8 +53,7 @@ def write_class(clskey, cls, rows):
     payload = {"generated": datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
                "asset": cls["label"], "class": clskey, "opportunities": rows}
     out = os.path.join(C.DATA_DIR, f"opportunities_{clskey}.json")
-    with open(out, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2)
+    atomicio.write_json(out, payload)   # atomic: a crash mid-write can't corrupt it
     print(f"  wrote {out}")
 
 
