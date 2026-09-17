@@ -59,11 +59,19 @@ def write_class(clskey, cls, rows):
 
 def main(only=None):
     brokers = load("brokers.json")
+    built = []
     for key, cls in C.ASSET_CLASSES.items():
         if only and key != only:
             continue
         rows = build_class(key, cls, brokers)
         write_class(key, cls, rows)
+        built.extend(rows)
+    # Bridge: write per-symbol Markov regime files for EA Forge EAs to gate on.
+    try:
+        import markov_export
+        markov_export.export(built)
+    except Exception as e:
+        print(f"  [markov] export skipped: {e}")
 
 
 if __name__ == "__main__":

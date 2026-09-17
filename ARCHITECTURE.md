@@ -489,7 +489,46 @@ else is stdlib. Deploy target is Railway (TLS terminated upstream; `Procfile`).
 
 ---
 
-## 18. Next step
+## 18. MT5 bridge — Markov regime gate (`markov_export.py`)
+
+Excalibur's regime is written out for **EA Forge**-generated MT5 EAs, which can
+read a regime file and gate entries to it (bull → longs, bear → shorts, sideways
+→ block). This turns the desk's read into the live filter on automated trades.
+
+**Reader contract** (the EA's `MarkovBias()`): it reads the whole file,
+uppercases it, and returns `+1` if it contains `BULL`/`LONG`, `-1` if `BEAR`/
+`SHORT`, else `0` (block both); a **missing file is fail-open** (no gate). So
+each file holds exactly one state token plus keyword-free metadata, and the
+writer hard-verifies no conflicting keyword can leak (a symbol containing
+`LONG`, say, gets its metadata stripped rather than mislead the EA).
+
+**Gate policy** (same sample-size discipline as §5): a confident directional
+regime (`BULL`/`BEAR` **and** it clears the `n ≥ 8` vote gate) gates to that
+direction; `SIDE`, a thin/non-voting regime, or no data all write `SIDE` →
+the EA blocks both. Excalibur never emits a direction it doesn't trust, and
+never leaves a stale directional file implying a trend that isn't there.
+
+**Written each pipeline run** (from `run.main`, so on every `/refresh` and every
+auto-refresh cycle):
+
+| File | Contents |
+|---|---|
+| `markov_<SYMBOL>.txt` | one per instrument — the gate token the EA reads |
+| `markov_regime.txt` | alias = Gold/XAUUSD, so the proven-edge EA works with its default `InpMarkovFile` |
+| `markov_regime.json` | full human/debug summary (gate, real state, persist, n, confidence, vote) |
+
+Display names map to MT5 symbols (`Gold→XAUUSD`, FX by stripping `/`, stocks by
+ticker; indices/stocks are broker-dependent defaults — rename the file or point
+the EA's `InpMarkovFile` at your broker's symbol if it differs).
+
+**Output directory / config:** `$MARKOV_OUT_DIR`, else MT5 `Common\Files` under
+`%APPDATA%` (Windows), else a local `./markov_out`. Set `MARKOV_EXPORT=0` to
+disable. **Limitation:** the EA gates on the *last written* file, and cannot see
+its age — if the desk stops running the files go stale, so run the writer on the
+same cadence as the desk (it already does, via the refresh loop) and delete the
+files if you take the desk offline.
+
+## 19. Next step
 
 With the mechanics fixed, the next step is the **mobile companion app**: a thin
 PWA / React-Native client over `/data` that renders the market-weather banner,

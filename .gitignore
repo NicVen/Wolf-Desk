@@ -14,3 +14,6 @@ pyvenv.cfg
 # runtime database (production uses the Railway volume /data/growth.db)
 *.db
 growth.db
+
+# runtime Markov regime files (written for MT5 EAs; local fallback dir)
+markov_out/
