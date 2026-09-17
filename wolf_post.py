@@ -67,14 +67,27 @@ _REG_ICON = {"BULL": "🟢", "BEAR": "🔴", "SIDE": "🟡"}
 
 
 def regfmt(o):
-    """Short Markov-regime tag for an opportunity line, or '' if unknown."""
+    """Short Markov-regime tag for an opportunity line, or '' if unknown.
+
+    Thin reads (below the sample-size vote gate) are shown but marked so a
+    low-sample regime never reads as solid as a well-sampled one; medium-
+    confidence reads get a ⚠ flag next to their persistence.
+    """
     r = o.get("regime") or {}
     st = r.get("state")
     if not st:
         return ""
+    icon = _REG_ICON.get(st, "")
+    n = r.get("n") or 0
+    vote = r.get("vote")
+    if vote is None:                       # older payload: derive from n
+        vote = n >= 8
+    if not vote:                           # too thinly sampled to trust
+        return f" {icon} {st} (thin, n={n})"
     persist = r.get("persist")
     tail = f", {int(persist*100)}% stay" if isinstance(persist, (int, float)) else ""
-    return f" {_REG_ICON.get(st,'')} {st}{tail}"
+    flag = " ⚠" if r.get("confidence") == "medium" else ""
+    return f" {icon} {st}{tail}{flag}"
 
 
 def line(o):
@@ -110,9 +123,10 @@ def compose(brand, sections, vip, trackkey="site"):
         from scout.regime import market_read
         mk = market_read([o.get("regime") or {} for o in shown])
         if mk.get("state"):
-            v = mk["votes"]
+            v = mk["votes"]; c = mk.get("counted", 0)
             L.append(f"📊 <b>Regime: {_REG_ICON.get(mk['state'],'')} {mk['state']}</b>"
-                     f"  <i>(Bull {v['BULL']} / Bear {v['BEAR']} / Side {v['SIDE']})</i>")
+                     f"  <i>(Bull {v['BULL']} / Bear {v['BEAR']} / Side {v['SIDE']}"
+                     f" · {c} voted)</i>")
     except Exception:
         pass
     L += body

@@ -149,24 +149,46 @@ threshold are explicit.
      `trans[current][current] / row_total`, rounded to 2 dp
    - `next` — the most likely next state = `argmax` of the current row
    - `n` — number of sampled points the matrix was built from
+   - `confidence` — derived from `n` (see gate below): `"high"` / `"medium"` / `"low"`
+   - `vote` — boolean: is this regime allowed to count in the market read?
+
+**Sample-size gate (enforced, not advisory).** The matrix is only as
+trustworthy as `n`. Two thresholds make that explicit:
+
+| Constant | Value | Effect |
+|---|---|---|
+| `MIN_N_VOTE` | **8** | below this: `vote = false`, `confidence = "low"` — **excluded from the market-wide vote**, and shown with a "thin, n=k" marker in posts |
+| `MIN_N_TRUST` | **15** | at/above this: `confidence = "high"` (persistence treated as solid); between the two → `confidence = "medium"`, still votes but flagged ⚠ |
+
+So: **below 8 → suppressed from the vote + marked; 8–14 → votes but downgraded
+and flagged; ≥15 → full confidence.** A handful of thinly-sampled reads can no
+longer swing the market call. (With 1-month hourly bars, `n` typically lands
+around ~6 for short-session equities and ~20–29 for 24h FX, so the gate bites in
+practice.)
 
 **Guards.** Needs at least `window + stride×2` closes; if too short it returns
-`{state:null, persist:null, next:null, n:0}` (or the last label with `persist:null`
-when there aren't enough sampled transitions). **Small `n` = low statistical
-confidence** — treat `persist` cautiously when `n` is tiny.
+`{state:null, …, n:0, confidence:"low", vote:false}` (or the last label with
+`persist:null` when there aren't enough sampled transitions — also non-voting at
+`n:0`).
 
 **Output shape:**
 
 ```json
-"regime": { "state": "BULL", "persist": 0.71, "next": "BULL", "n": 12 }
+"regime": { "state": "BULL", "persist": 0.71, "next": "BULL",
+            "n": 20, "confidence": "high", "vote": true }
 ```
 
 **Market-wide read** (`market_read`): majority vote of every shown instrument's
-`state` → one overall market regime plus the vote split:
+`state`, **counting only regimes that clear the gate** (`vote = true`; older
+payloads without the flag fall back to the `n ≥ 8` test). Returns the winning
+state, the vote split, and `counted` (how many regimes actually voted):
 
 ```json
-{ "state": "BULL", "votes": { "BULL": 7, "BEAR": 2, "SIDE": 3 } }
+{ "state": "BULL", "votes": { "BULL": 7, "BEAR": 2, "SIDE": 1 }, "counted": 10 }
 ```
+
+If nothing clears the gate, `state` is `null` and `counted` is `0` (no market
+read that day rather than a read built on noise).
 
 Display icons used throughout the desk: 🟢 BULL · 🔴 BEAR · 🟡 SIDE.
 
@@ -274,8 +296,25 @@ the top 5 headlines, and derives a crude tilt from keyword counts:
 - ≥ 2 more bearish than bullish → **"bearish news flow"**
 - else **"mixed news flow"** (or "no recent news")
 
-Returns `[{title, source, date, link}]` plus the `tilt`, which also feeds a
-bull/bear line in the case file when present.
+Returns `[{title, source, date, link}]` plus the `tilt`.
+
+**Design decision — news tilt is context, never a score input.** By deliberate
+choice the tilt does **not** enter the 0–100 score and **cannot** flip a verdict:
+
+- `score_one` takes no news argument — the score is price + the three manual
+  fundamentals only.
+- `_verdict` is a pure function of price structure + score; it never reads news.
+- The tilt only ever *appends* a context line to the `bull` / `bear` arrays
+  (and the "news contradicts the chart" flag), and even that is fetched live via
+  `/news` — it isn't present at score-build time.
+
+Rationale: the tilt is a crude directional headline count, not sentiment
+analysis. Letting a keyword tally silently move the one number the whole ranking
+depends on — or turn a BUY into a WATCH — would inject noise into the signal and
+hide *why* the call changed. Kept separate, it stays a visible cross-check the
+human applies (see §16, step 5), consistent with the engine's honest-by-
+construction stance. **Clients should render news as its own context block, not
+fold it into the score or verdict.**
 
 ---
 
@@ -360,7 +399,7 @@ This is the exact object a client renders. Build UI against this shape:
   "price": 161.68, "mom20": 1.46, "atr_pct": 0.23,
   "ma20": 160.67, "ma50": 159.39,
   "above_ma20": true, "above_ma50": true, "ma_stack_up": true,
-  "regime": { "state": "BULL", "persist": 0.71, "next": "BULL", "n": 12 },
+  "regime": { "state": "BULL", "persist": 0.71, "next": "BULL", "n": 20, "confidence": "high", "vote": true },
   "category": "Major", "ticker": "USDJPY=X", "covkey": "fx",
   "coverage": [ { "name": "IC Markets", "type": "broker", "leverage": "500:1", "notes": "..." } ],
   "analysis": {
@@ -437,10 +476,13 @@ else is stdlib. Deploy target is Railway (TLS terminated upstream; `Procfile`).
 - **Half the score is manual and can go stale.** `catalyst / position / supply`
   are hand-dated in `signals_*.json`; always show the `generated` timestamp and
   the signal date.
-- **Regime confidence scales with `n`.** Small samples → treat `persist` and
-  `next` with caution.
-- **News tilt is keyword-crude.** A directional headline count, not sentiment
-  analysis.
+- **Regime confidence scales with `n` — and is now enforced.** Below
+  `MIN_N_VOTE` (8) a regime is excluded from the market vote and marked "thin";
+  8–14 votes but is flagged medium-confidence; ≥15 (`MIN_N_TRUST`) is high. The
+  `confidence` / `vote` fields carry this to every client.
+- **News tilt is keyword-crude — and deliberately kept out of the score.** A
+  directional headline count, surfaced as context only; it never moves the score
+  or flips a verdict (see §9).
 - **Third-party data.** Prices/calendar/rates come from free public feeds (Yahoo,
   faireconomy, global-rates) and can fail or lag; the engine degrades gracefully
   (`None` rows, cached fallbacks) rather than inventing data.
