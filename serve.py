@@ -42,6 +42,10 @@ import watchdog
 from scout.news import headlines
 
 PORT        = int(os.environ.get("PORT", "8777"))
+# Bind address. Default 0.0.0.0 (LAN/direct). Behind a reverse proxy (Caddy on
+# the VPS) set BIND_ADDR=127.0.0.1 so only the proxy — not the whole internet —
+# can reach the app port.
+BIND_ADDR   = os.environ.get("BIND_ADDR", "0.0.0.0")
 WOLF_PASS   = os.environ.get("WOLF_PASS", "")           # admin bypass only
 REFRESH_MIN = int(os.environ.get("REFRESH_MIN", "20"))
 CLASSES     = ("commodities", "fx", "indices", "stocks")
@@ -546,13 +550,21 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send(200, json.dumps({"news": news, "tilt": tilt}))
             except Exception as e:
                 self._send(200, json.dumps({"news": [], "tilt": "no news", "error": str(e)}))
+        elif path == "/markov.json":
+            # Latest Markov regime summary, for the PC-side MT5 bridge (pc_bridge.py).
+            try:
+                import markov_export
+                mkpath = os.path.join(markov_export.out_dir(), "markov_regime.json")
+                self._send(200, _read(mkpath, b'{"instruments":[]}'))
+            except Exception as e:
+                self._send(200, json.dumps({"instruments": [], "error": str(e)}))
         else:
             self._send(404, b'{"error":"not found"}')
 
 
 if __name__ == "__main__":
     gate = "Telegram-VIP" if BOT_TOKEN else ("WOLF_PASS" if WOLF_PASS else "OPEN")
-    print(f"WOLF dashboard -> port {PORT}  (gate: {gate}, auto-refresh: {REFRESH_MIN}m)")
+    print(f"WOLF dashboard -> {BIND_ADDR}:{PORT}  (gate: {gate}, auto-refresh: {REFRESH_MIN}m)")
     if REFRESH_MIN > 0:
         watchdog.register_thread("refresh", refresh_loop)
     # Run the VIP login bot in-process (no separate worker service needed).
@@ -576,7 +588,7 @@ if __name__ == "__main__":
     class Server(socketserver.ThreadingTCPServer):
         allow_reuse_address = True
         daemon_threads = True
-    with Server(("0.0.0.0", PORT), Handler) as httpd:
+    with Server((BIND_ADDR, PORT), Handler) as httpd:
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:

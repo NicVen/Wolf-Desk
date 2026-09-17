@@ -17,3 +17,7 @@ growth.db
 
 # runtime Markov regime files (written for MT5 EAs; local fallback dir)
 markov_out/
+
+# real server env file holds the secret WOLF_PASS — never commit it
+wolf-desk.env
+deploy/wolf-desk.env

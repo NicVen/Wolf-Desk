@@ -1,0 +1,21 @@
+[Unit]
+Description=WOLF Desk (Excalibur) signal server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=wolf
+WorkingDirectory=/opt/wolf-desk
+EnvironmentFile=/etc/wolf-desk.env
+ExecStart=/opt/wolf-desk/.venv/bin/python serve.py
+Restart=always
+RestartSec=3
+
+# modest hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target
