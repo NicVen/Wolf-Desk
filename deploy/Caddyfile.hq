@@ -44,8 +44,17 @@ staalwag.178.104.88.38.sslip.io {
 	}
 }
 
-# --- VELDRIN Desk: track JSON from the worker ---
+# --- VELDRIN Desk: landing page + track JSON from the worker ---
 veldrin.178.104.88.38.sslip.io {
 	encode zstd gzip
-	reverse_proxy 127.0.0.1:8782
+	handle /track_record.json* {
+		reverse_proxy 127.0.0.1:8782
+	}
+	handle /latest_signal.json* {
+		reverse_proxy 127.0.0.1:8782
+	}
+	handle {
+		root * /opt/wolf-desk/deploy/veldrin-landing
+		file_server
+	}
 }
