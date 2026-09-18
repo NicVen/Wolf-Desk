@@ -1,6 +1,6 @@
 # WOLF Desk — VPS deployment runbook
 
-Puts the Excalibur engine on your Hetzner VPS behind Caddy (automatic HTTPS),
+Puts the STAALCALIBUR engine on your Hetzner VPS behind Caddy (automatic HTTPS),
 so the phone PWA works anywhere. No domain required — we use a free `sslip.io`
 name that maps to your IP; swap in a real domain later by editing one line.
 

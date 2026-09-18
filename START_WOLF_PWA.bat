@@ -14,7 +14,7 @@ if not defined PY (
   exit /b
 )
 
-REM ---- update to the Excalibur branch (skipped if git isn't installed) ----
+REM ---- update to the STAALCALIBUR branch (skipped if git isn't installed) ----
 set "BRANCH=claude/excalibur-v13-markov-omnibus-mm85xk"
 where git >nul 2>&1
 if errorlevel 1 (

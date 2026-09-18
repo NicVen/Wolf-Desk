@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#0a0e15" />
+<title>STAALWAG HQ</title>
+<style>
+  :root{--bg:#0a0e15;--card:#131a26;--cardHi:#18212f;--border:#1e2a3a;--text:#cdd6df;
+    --muted:#7d8a9c;--faint:#4d5a6c;--steel:#8aa0b4;--accent:#6ea8fe;--bull:#2ecc71;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:920px;margin:0 auto;padding:40px 20px 60px}
+  header{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  h1{font-size:30px;font-weight:900;letter-spacing:2px;margin:0}
+  h1 .hq{color:var(--steel)}
+  .sub{color:var(--muted);font-size:13px;font-style:italic}
+  .tag{color:var(--faint);font-size:12px;margin:6px 0 26px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+  a.card{display:block;text-decoration:none;color:inherit;background:var(--card);
+    border:1px solid var(--border);border-radius:16px;padding:20px;transition:.15s}
+  a.card:hover{background:var(--cardHi);border-color:var(--accent);transform:translateY(-2px)}
+  .ico{font-size:26px}
+  .name{font-size:18px;font-weight:800;margin:8px 0 4px}
+  .desc{color:var(--muted);font-size:13px;line-height:1.5}
+  .pill{display:inline-block;margin-top:12px;font-size:11px;font-weight:700;color:var(--accent);
+    border:1px solid var(--accent);border-radius:6px;padding:3px 8px}
+  .pill.bg{color:var(--faint);border-color:var(--border)}
+  footer{color:var(--faint);font-size:11px;line-height:1.6;margin-top:34px;
+    border-top:1px solid var(--border);padding-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>STAALWAG <span class="hq">HQ</span></h1>
+    <span class="sub">Read the market like a wolf.</span>
+  </header>
+  <div class="tag">Command centre — every desk, one place. <span id="host"></span></div>
+
+  <div class="grid" id="grid"></div>
+
+  <footer>
+    Decision-support only — every read is a mechanical view of the data, not financial advice.
+    Verify before risking capital. &nbsp;·&nbsp; STAALCALIBUR V13.
+  </footer>
+</div>
+
+<script>
+// Links are derived from the current host, so this page keeps working if you
+// move from the sslip.io name to a real domain later — no edits needed.
+var base = location.hostname;
+if(!base || base === "localhost" || base === "127.0.0.1") base = "178.104.88.38.sslip.io";
+function sub(s){ return location.protocol + "//" + s + "." + base; }
+
+var SERVICES = [
+  {ico:"🐺", name:"WOLF Intraday Desk", href: sub("wolf") + "/app", tag:"install as app",
+   desc:"Live BUY/SELL reads with 0–100 scores, Markov regime, DSR real-vs-noise validation, case files and a pre-trade checklist. Install to your phone."},
+  {ico:"⚔️", name:"EA Forge", href: sub("forge") + "/", tag:"builder",
+   desc:"Build & prove Expert Advisors — genetic search, walk-forward, Deflated Sharpe, Monte-Carlo. Exports MT5 + Pine."},
+  {ico:"🥇", name:"STAALWAG Desk", href: sub("staalwag") + "/", tag:"telegram + track", bg:true,
+   desc:"Gold & indices signal desk and the MT5 EAs. Signals delivered via Telegram; live track record here."},
+  {ico:"💱", name:"VELDRIN Desk", href: sub("veldrin") + "/latest_signal.json", tag:"telegram + track", bg:true,
+   desc:"FX signal desk. Signals delivered via Telegram; latest signal and track record here."}
+];
+
+document.getElementById("host").textContent = "(" + base + ")";
+document.getElementById("grid").innerHTML = SERVICES.map(function(s){
+  return '<a class="card" href="'+s.href+'">'+
+    '<div class="ico">'+s.ico+'</div>'+
+    '<div class="name">'+s.name+'</div>'+
+    '<div class="desc">'+s.desc+'</div>'+
+    '<span class="pill'+(s.bg?" bg":"")+'">'+s.tag+'</span></a>';
+}).join("");
+</script>
+</body>
+</html>

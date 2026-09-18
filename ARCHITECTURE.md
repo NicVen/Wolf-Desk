@@ -1,4 +1,4 @@
-# Excalibur v13 — Markov Omnibus: System & Mechanics
+# STAALCALIBUR V13 — Markov Omnibus: System & Mechanics
 
 > **What this document is.** The complete, build-ready description of how this
 > trading-intelligence desk works end to end — every data source, every formula,
@@ -11,7 +11,7 @@
 > is a *mechanical read of data* — a lead to investigate, not a trade
 > instruction. Always verify before risking capital.
 
-Internally the codebase is branded **THE WOLF PROJECT / STAALWAG**. "Excalibur
+Internally the codebase is branded **THE WOLF PROJECT / STAALWAG**. "STAALCALIBUR
 v13 — Markov Omnibus" is the name of this iteration: an *omnibus* (all four
 asset classes scored by one engine) whose signature layer is an *observable
 Markov regime* read on top of the score.
@@ -529,7 +529,7 @@ else is stdlib. Deploy target is Railway (TLS terminated upstream; `Procfile`).
 
 ## 18. MT5 bridge — Markov regime gate (`markov_export.py`)
 
-Excalibur's regime is written out for **EA Forge**-generated MT5 EAs, which can
+STAALCALIBUR's regime is written out for **EA Forge**-generated MT5 EAs, which can
 read a regime file and gate entries to it (bull → longs, bear → shorts, sideways
 → block). This turns the desk's read into the live filter on automated trades.
 
@@ -543,7 +543,7 @@ writer hard-verifies no conflicting keyword can leak (a symbol containing
 **Gate policy** (same sample-size discipline as §5): a confident directional
 regime (`BULL`/`BEAR` **and** it clears the `n ≥ 8` vote gate) gates to that
 direction; `SIDE`, a thin/non-voting regime, or no data all write `SIDE` →
-the EA blocks both. Excalibur never emits a direction it doesn't trust, and
+the EA blocks both. STAALCALIBUR never emits a direction it doesn't trust, and
 never leaves a stale directional file implying a trend that isn't there.
 
 **Written each pipeline run** (from `run.main`, so on every `/refresh` and every

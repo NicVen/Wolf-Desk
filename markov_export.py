@@ -1,4 +1,4 @@
-"""Excalibur → MT5 bridge: write per-symbol Markov regime files that EA Forge
+"""STAALCALIBUR → MT5 bridge: write per-symbol Markov regime files that EA Forge
 EAs read to gate trades to the current regime (bull → longs, bear → shorts,
 sideways → block both).
 
@@ -12,7 +12,7 @@ The reader contract (EA Forge's generated MarkovBias() in MT5):
     those four keywords. We keep the state on line 1 and only keyword-free
     metadata after it, and hard-verify that before writing.
 
-Gate policy (matches Excalibur's sample-size discipline):
+Gate policy (matches STAALCALIBUR's sample-size discipline):
   a confident directional regime (state BULL/BEAR AND it clears the n≥8 vote
   gate) → gate to that direction; SIDE, a thin/non-voting regime, or no data →
   "SIDE" → the EA blocks both. We never emit a direction we don't trust, and

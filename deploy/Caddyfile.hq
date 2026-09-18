@@ -1,0 +1,51 @@
+# STAALWAG HQ — one VPS, every desk, automatic HTTPS.
+#
+# All hostnames are free sslip.io names that resolve to the VPS IP
+# (<label>.178.104.88.38.sslip.io -> 178.104.88.38), so Caddy issues a real cert
+# for each with no domain purchase. Swap to real domains later by replacing the
+# site addresses and reloading Caddy — the hub page auto-derives its links from
+# whatever host it is served on, so it keeps working.
+#
+# Ports (all bound behind Caddy; only 80/443 are open in ufw):
+#   wolf 8777 · staalwag 8781 · veldrin 8782 · ea-forge = static files
+
+# --- HQ hub (apex) ---
+178.104.88.38.sslip.io {
+	encode zstd gzip
+	root * /opt/wolf-desk/deploy/hub
+	file_server
+}
+
+# --- WOLF Intraday Desk (PWA + STAALCALIBUR engine) ---
+wolf.178.104.88.38.sslip.io {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8777
+}
+
+# --- EA Forge (static single-page app) ---
+forge.178.104.88.38.sslip.io {
+	encode zstd gzip
+	root * /opt/ea-forge
+	file_server
+}
+
+# --- STAALWAG Desk: landing page + track JSON from the worker ---
+staalwag.178.104.88.38.sslip.io {
+	encode zstd gzip
+	handle /track_record.json* {
+		reverse_proxy 127.0.0.1:8781
+	}
+	handle /latest_signal.json* {
+		reverse_proxy 127.0.0.1:8781
+	}
+	handle {
+		root * /opt/staalwag-desk/landing
+		file_server
+	}
+}
+
+# --- VELDRIN Desk: track JSON from the worker ---
+veldrin.178.104.88.38.sslip.io {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8782
+}
