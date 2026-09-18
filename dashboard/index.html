@@ -2,8 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>THE WOLF PROJECT</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e15">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WOLF Desk">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<title>WOLF Intraday Desk</title>
 <style>
   /* STAALWAG steel brand: chrome-silver accent on deep navy (matches the emblem).
      --gold/--gold2 kept as names for back-compat but now hold the chrome tones. */
@@ -429,6 +435,9 @@ function renderHours(){
 function closeCase(){ if(HRS_TIMER){clearInterval(HRS_TIMER);HRS_TIMER=null;} document.getElementById('ov').classList.remove('on'); }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeCase(); });
 buildTabs(); load();
+</script>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}
 </script>
 </body>
 </html>

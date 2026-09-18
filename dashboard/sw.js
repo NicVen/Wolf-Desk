@@ -1,8 +1,8 @@
 /* WOLF Desk PWA service worker — caches the app shell so the page opens
    offline / instantly; data calls (/data, /news, /refresh) always hit the
    network and are never cached. */
-var SHELL = "wolf-shell-v1";
-var SHELL_URLS = ["/app", "/app.webmanifest", "/icon-192.png", "/icon-512.png"];
+var SHELL = "wolf-shell-v2";
+var SHELL_URLS = ["/", "/manifest.json", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", function (e) {
   e.waitUntil(
@@ -34,6 +34,6 @@ self.addEventListener("fetch", function (e) {
         caches.open(SHELL).then(function (c) { c.put(e.request, copy).catch(function(){}); });
       }
       return res;
-    }).catch(function () { return caches.match(e.request).then(function (m) { return m || caches.match("/app"); }); })
+    }).catch(function () { return caches.match(e.request).then(function (m) { return m || caches.match("/"); }); })
   );
 });

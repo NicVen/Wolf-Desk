@@ -55,8 +55,8 @@ if(!base || base === "localhost" || base === "127.0.0.1") base = "178.104.88.38.
 function sub(s){ return location.protocol + "//" + s + "." + base; }
 
 var SERVICES = [
-  {ico:"🐺", name:"WOLF Intraday Desk", href: sub("wolf") + "/app", tag:"install as app",
-   desc:"Live BUY/SELL reads with 0–100 scores, Markov regime, DSR real-vs-noise validation, case files and a pre-trade checklist. Install to your phone."},
+  {ico:"🐺", name:"WOLF Intraday Desk", href: sub("wolf") + "/", tag:"open desk",
+   desc:"The full intel desk — live tape, ranked BUY/SELL cards with score breakdowns, case files, Markov regime, DSR validation, and the EA / signals rail. Log in once with your key, then install to your phone."},
   {ico:"⚔️", name:"EA Forge", href: sub("forge") + "/", tag:"builder",
    desc:"Build & prove Expert Advisors — genetic search, walk-forward, Deflated Sharpe, Monte-Carlo. Exports MT5 + Pine."},
   {ico:"🥇", name:"STAALWAG Desk", href: sub("staalwag") + "/", tag:"telegram + track", bg:true,
