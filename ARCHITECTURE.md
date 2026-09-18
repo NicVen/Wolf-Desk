@@ -286,6 +286,37 @@ acting. All rule-based and deterministic (offline).
 
 ---
 
+## 8b. Signal validation — Deflated Sharpe (`compiler/validation.py`)
+
+Each opportunity carries a **DSR label** answering "is this move real, or noise?"
+Ported from EA Forge's **Deflated Sharpe Ratio** (Bailey & López de Prado):
+
+- Compute the Sharpe of the instrument's per-bar returns **in the verdict's
+  direction** (long → `+r`, short → `−r`), with the skew/kurtosis correction.
+- Deflate it by a benchmark Sharpe that grows with the number of **effective
+  trials** — the markets the desk scans (`TOTAL_UNIVERSE`, ~44), discounted for
+  correlation — so the best-of-44 can't masquerade as a proven edge.
+- `dsr` = P(the true Sharpe beats that benchmark) → a 4-tier `label`:
+
+| `dsr` | label |
+|---|---|
+| ≥ 0.95 | very likely real |
+| ≥ 0.90 | likely real |
+| ≥ 0.75 | unproven |
+| < 0.75 | indistinguishable from noise |
+
+Non-directional verdicts (WATCH) → `no directional edge`; < 20 bars → `too
+little data`.
+
+**Output:** `"validation": { "dsr": 0.93, "label": "likely real", "sr": 0.12, "n": 300, "trials": 44 }`
+
+**Honest scope + rules:** it labels the *asset's own risk-adjusted drift*, not a
+strategy backtest, and intraday bars are autocorrelated — so it's a confidence
+tint, not proof. Like news tilt, it is a **label only**: it never enters the
+0–100 score or flips a verdict (it does feed the app's pre-trade checklist as a
+DSR ≥ 90% row). The raw return series is computed transiently in `price_metrics`
+and never persisted.
+
 ## 9. News tilt (`scout/news.py`)
 
 Pulled **on demand** (by the server's `/news` route, not the batch run, to keep
@@ -406,6 +437,7 @@ This is the exact object a client renders. Build UI against this shape:
   "ma20": 160.67, "ma50": 159.39,
   "above_ma20": true, "above_ma50": true, "ma_stack_up": true,
   "regime": { "state": "BULL", "persist": 0.71, "next": "BULL", "n": 20, "confidence": "high", "vote": true },
+  "validation": { "dsr": 0.93, "label": "likely real", "sr": 0.12, "n": 300, "trials": 44 },
   "category": "Major", "ticker": "USDJPY=X", "covkey": "fx",
   "coverage": [ { "name": "IC Markets", "type": "broker", "leverage": "500:1", "notes": "..." } ],
   "analysis": {

@@ -4,7 +4,7 @@ import {
   ActivityIndicator, Linking,
 } from 'react-native';
 import { C } from '../theme';
-import { VerdictChip, RegimeChip, Breakdown, SectionLabel } from './ui';
+import { VerdictChip, RegimeChip, ValidationChip, Breakdown, SectionLabel } from './ui';
 import { preTradeChecks } from '../api';
 
 function Row({ children, style }) {
@@ -64,6 +64,7 @@ export default function CaseFile({ opp, market, client, onClose }) {
           <Row style={{ flexWrap: 'wrap', gap: 8 }}>
             <VerdictChip verdict={a.verdict} />
             <RegimeChip regime={opp.regime} />
+            <ValidationChip validation={opp.validation} />
             {!!a.conviction && (
               <Text style={{ color: C.muted, fontSize: 13, alignSelf: 'center' }}>
                 conviction {a.conviction}
@@ -72,6 +73,27 @@ export default function CaseFile({ opp, market, client, onClose }) {
           </Row>
 
           {!!a.summary && <Text style={styles.summary}>{a.summary}</Text>}
+
+          {/* DSR — is the move real, or noise? (label only, never scored) */}
+          {!!(opp.validation && opp.validation.label) && (
+            <View style={styles.card}>
+              <SectionLabel>Validation — is the move real?</SectionLabel>
+              <Row style={{ flexWrap: 'wrap', gap: 8 }}>
+                <ValidationChip validation={opp.validation} full />
+                {opp.validation.sr != null && (
+                  <Text style={{ color: C.muted, fontSize: 12, alignSelf: 'center' }}>
+                    Sharpe/bar {opp.validation.sr} · n={opp.validation.n} · trials {opp.validation.trials || '—'}
+                  </Text>
+                )}
+              </Row>
+              <Text style={styles.body}>
+                Deflated Sharpe: probability the move's risk-adjusted drift (in the verdict's
+                direction) is real rather than noise, after deflating for the {opp.validation.trials || '—'}{' '}
+                markets scanned. A label on the move, not a strategy backtest — it never changes the
+                score or the verdict.
+              </Text>
+            </View>
+          )}
 
           {/* pre-trade checklist */}
           <View style={styles.card}>

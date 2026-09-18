@@ -111,7 +111,17 @@ export function preTradeChecks(o, market, newsTilt) {
     note: `score ${o.score} · ${a.conviction || '—'}`,
   });
 
-  // 5. news does not contradict the chart (only once news is loaded)
+  // 5. DSR — is the move statistically real?
+  const v = o.validation || {};
+  if (v.dsr != null) {
+    rows.push({
+      label: 'Move statistically real (DSR ≥ 90%)',
+      ok: v.dsr >= 0.9,
+      note: `DSR ${Math.round(v.dsr * 100)}% · ${v.label}`,
+    });
+  }
+
+  // 6. news does not contradict the chart (only once news is loaded)
   if (newsTilt) {
     const contradict =
       (newsTilt === 'bullish news flow' && verdict === 'SELL') ||

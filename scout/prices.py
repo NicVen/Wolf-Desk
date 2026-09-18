@@ -52,6 +52,11 @@ def price_metrics(ticker):
     tr = sum(highs[-n:][i] - lows[-n:][i] for i in range(n)) / n if n else 0.0
     atr_pct = tr / last * 100
 
+    # per-bar returns for statistical validation (DSR). Transient: the caller
+    # uses it to compute the validation label and does NOT persist it.
+    returns = [closes[i] / closes[i - 1] - 1.0
+               for i in range(1, len(closes)) if closes[i - 1]]
+
     return {
         "last": round(last, 2),
         "ma20": round(ma20, 2),
@@ -62,4 +67,5 @@ def price_metrics(ticker):
         "above_ma50": last > ma50,
         "ma_stack_up": ma20 > ma50,
         "regime": _regime(closes),
+        "returns": returns,
     }

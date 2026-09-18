@@ -14,6 +14,21 @@ import atomicio
 from scout.prices import price_metrics
 from compiler.score import score_one, rank
 from compiler.analysis import analyze
+from compiler.validation import validate
+
+# Multiple-testing universe: how many markets the desk scans in total. Used to
+# deflate each DSR (best-of-N shouldn't look like a proven edge).
+TOTAL_UNIVERSE = sum(len(c["universe"]) for c in C.ASSET_CLASSES.values())
+
+
+def _side(verdict):
+    if not verdict:
+        return 0
+    if verdict.startswith("BUY"):
+        return 1
+    if verdict == "SELL":
+        return -1
+    return 0
 
 
 def load(path):
@@ -44,6 +59,11 @@ def build_class(clskey, cls, brokers):
         row["covkey"]   = covkey
         row["coverage"] = coverage_for(covkey, brokers)
         row["analysis"] = analyze(row)
+        # DSR real-vs-noise label, in the verdict's direction (label only —
+        # never folded into the score or verdict).
+        row["validation"] = validate((pm or {}).get("returns"),
+                                     _side(row["analysis"].get("verdict")),
+                                     TOTAL_UNIVERSE)
         rows.append(row)
         print(f"  {row['score']:5.1f}  {name:14} {row['trend_desc']}")
     return rank(rows)

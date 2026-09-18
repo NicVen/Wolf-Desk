@@ -34,6 +34,34 @@ export function RegimeChip({ regime }) {
   return <Pill text={`${icon} ${st} · ${persist}${warn}`} color={color} bg={color + '1e'} />;
 }
 
+const VAL_SHORT = {
+  'very likely real': 'real',
+  'likely real': 'likely',
+  unproven: 'unproven',
+  'indistinguishable from noise': 'noise',
+  'no directional edge': '',
+  'too little data': 'low data',
+};
+function valColor(lab) {
+  if (lab === 'very likely real') return C.bull;
+  if (lab === 'likely real') return '#9bd6a0';
+  if (lab === 'unproven') return C.side;
+  if (lab === 'indistinguishable from noise') return C.bear;
+  return C.faint;
+}
+// DSR "is the move real or noise?" chip. full=true → % + full label.
+export function ValidationChip({ validation, full }) {
+  const v = validation || {};
+  const lab = v.label;
+  if (!lab) return null;
+  const short = VAL_SHORT[lab];
+  if (short === '') return null; // hide "no directional edge" in compact rows
+  const color = valColor(lab);
+  const pct = v.dsr != null ? `${Math.round(v.dsr * 100)}% ` : '';
+  const text = `DSR ${pct}· ${full ? lab : short || lab}`;
+  return <Pill text={text} color={color} bg={color + '1e'} />;
+}
+
 export function ScoreBar({ score = 0, max = 100 }) {
   const pct = Math.max(0, Math.min(100, (score / max) * 100));
   const color = score >= 65 ? C.bull : score >= 50 ? '#9bd6a0' : score >= 40 ? C.side : C.muted;

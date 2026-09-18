@@ -7,7 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import { C, REGIME_ICON, regimeColor } from './src/theme';
 import { CLASSES, makeClient, marketRead } from './src/api';
 import { loadSettings, saveSettings, DEFAULT_URL } from './src/storage';
-import { VerdictChip, RegimeChip, ScoreBar } from './src/components/ui';
+import { VerdictChip, RegimeChip, ScoreBar, ValidationChip } from './src/components/ui';
 import CaseFile from './src/components/CaseFile';
 
 export default function App() {
@@ -201,6 +201,7 @@ function OppCard({ opp, onPress }) {
       <ScoreBar score={opp.score} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
         <RegimeChip regime={opp.regime} />
+        <ValidationChip validation={opp.validation} />
         <Text style={styles.trend}>{opp.trend_desc}</Text>
       </View>
     </Pressable>
