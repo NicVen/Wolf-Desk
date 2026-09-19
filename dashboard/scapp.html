@@ -75,6 +75,13 @@
   .chart svg{display:block;width:100%;height:120px}
   .chart .lg{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:8px;font-size:11px;color:var(--mut)}
   .chart .lg i{display:inline-block;width:14px;height:0;border-top:2px solid;margin-right:5px;vertical-align:middle}
+  /* today's outlook card */
+  .olcard{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:14px;padding:13px 14px;margin:2px 0 4px;cursor:pointer}
+  .olcard:active{border-color:var(--steel)}
+  .oltop{color:var(--steel);font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:800}
+  .olhead{font-size:15px;font-weight:800;margin:5px 0 3px}
+  .olcta{color:var(--accent);font-size:12px;font-weight:700}
   /* timeframe switch */
   .tfsw{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
   .tfb{background:var(--card);color:var(--steel);border:0;padding:5px 12px;font-size:12px;font-weight:800;
@@ -304,6 +311,20 @@ function openSheet(title,sub,val,body){
   document.body.appendChild(m);
 }
 function closeSheet(){ var m=el("sheet"); if(m&&m.parentNode) m.parentNode.removeChild(m); }
+function showOutlook(){
+  var o=CO; if(!o||!o.outlook) return;
+  var ol=o.outlook;
+  var infl=(ol.influences||[]).map(function(s){ return '<li>'+esc(s)+'</li>'; }).join("");
+  var body=
+    '<p><b>'+esc(ol.headline||"")+'</b></p>'+
+    (infl?('<div class="sec">What’s influencing it today</div><ul class="upd">'+infl+'</ul>'):'')+
+    '<div class="sec">Potential outcomes</div>'+
+    '<p style="color:var(--buy)">▲ '+esc(ol.bull_case||"")+'</p>'+
+    '<p style="color:var(--sell)">▼ '+esc(ol.bear_case||"")+'</p>'+
+    (ol.bottom_line?('<div class="sec">Bottom line</div><p>'+esc(ol.bottom_line)+'</p>'):'')+
+    '<p class="muted" style="font-size:11px;margin-top:14px">A mechanical read of the tape plus any fundamental backdrop, as of '+esc(ol.as_of||"")+'. Not live news headlines and not financial advice.</p>';
+  openSheet("Daily outlook", o.name||"", ol.verdict||"", body);
+}
 function setTF(tf){
   if(tf===TF) return;
   if(tf==="daily" && !(CO&&CO.daily)) return;   // no daily data → ignore
@@ -434,11 +455,22 @@ function consult(i){
       '<div class="muted">No trade yet — the read is <b>'+v+'</b> (wait for a directional setup). Entry, stop and target appear when a BUY or SELL lines up.</div>';
   }
 
+  // today's outlook teaser card (opens the full brief)
+  var ol=o.outlook, olCard="";
+  if(ol){
+    olCard='<div class="olcard" onclick="showOutlook()">'+
+      '<div class="oltop">📰 Today’s outlook'+(ol.as_of?(' · '+esc(ol.as_of)):'')+'</div>'+
+      '<div class="olhead">'+esc(ol.headline||"")+'</div>'+
+      '<div class="olcta">Tap to read what’s influencing it &amp; the potential outcomes →</div>'+
+    '</div>';
+  }
+
   el("main").innerHTML =
     '<div class="verdict" style="background:'+vc+'1a;border:1px solid '+vc+'55">'+
       '<div class="big" style="color:'+vc+'">'+esc(o.name)+' · '+v+'</div>'+
       '<div class="conv">'+esc(a.conviction? (a.conviction+" conviction") : "")+'  ·  '+passed+'/'+checks.length+' checks</div>'+
     '</div>'+
+    olCard+
     '<div class="sec" style="display:flex;align-items:center;justify-content:space-between">'+
       '<span>Direction &amp; levels</span>'+tfSwitch+'</div>'+
     (sparkSVG(CM, plan)||'<p class="muted">Chart data not available for this timeframe.</p>')+

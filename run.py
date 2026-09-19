@@ -15,6 +15,7 @@ from scout.prices import price_metrics
 from compiler.score import score_one, rank
 from compiler.analysis import analyze
 from compiler.validation import validate
+from compiler.outlook import outlook
 
 # Multiple-testing universe: how many markets the desk scans in total. Used to
 # deflate each DSR (best-of-N shouldn't look like a proven edge).
@@ -73,6 +74,7 @@ def build_class(clskey, cls, brokers):
         row["validation"] = validate((pm or {}).get("returns"),
                                      _side(row["analysis"].get("verdict")),
                                      TOTAL_UNIVERSE)
+        row["outlook"] = outlook(row)   # daily plain-language brief per instrument
         rows.append(row)
         print(f"  {row['score']:5.1f}  {name:14} {row['trend_desc']}")
     return rank(rows)

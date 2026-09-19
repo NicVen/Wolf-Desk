@@ -1,13 +1,13 @@
 {
-  "version": "1.3.0",
+  "version": "2.0.0",
   "date": "2026-09-19",
-  "title": "Charts, timeframes & trade levels",
+  "title": "Daily outlook on every market",
   "type": "feature",
   "notes": [
-    "New direction chart on every consult, with entry, stop and target drawn on it.",
-    "1H / Daily switch — see the setup and its levels on either timeframe.",
-    "Structure-based stops placed just beyond the recent swing, with the reasoning.",
-    "Tap any tile (Score, Regime, Validation, or a level) for a plain-English explanation.",
-    "Fixed Regime and Validation showing [object Object]."
+    "NEW: Today's Outlook on every instrument — tap to read what's influencing that pair today and the potential outcomes.",
+    "Covers all asset classes: commodities, FX, indices, stocks and crypto.",
+    "Each outlook breaks down trend, momentum, volatility, the Markov regime, the fundamental backdrop and the edge-quality read.",
+    "Bull case and bear case laid out side by side so you see both potential outcomes.",
+    "Plus the charts, 1H/Daily switch and structure-based trade levels from the last update."
   ]
 }
