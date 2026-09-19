@@ -592,6 +592,12 @@ button{background:#111a2b;color:#fff;border:0;cursor:pointer}small{color:#667}</
 message the moment payment confirms.</p>
 <label>Your Telegram chat id or email (so we can send your key + renewal reminders)</label>
 <input id=contact placeholder="e.g. 123456789 or you@email.com">
+<details style="margin:2px 0 8px"><summary style="cursor:pointer;color:#26558c;font-size:13px">How do I get my Telegram chat id?</summary>
+<div style="font-size:13px;color:#556;line-height:1.5;margin-top:6px">
+1. In Telegram, open <b>@userinfobot</b> and tap <b>Start</b> — it replies with your numeric id (that's your chat id).<br>
+2. Then open our notices bot <b>%(bot)s</b> and tap <b>Start</b> so we're allowed to message you.<br>
+3. Paste the numeric id above. (An email also works, but Telegram gets your key instantly.)
+</div></details>
 <div id=refnote style="display:none;background:#eef4ff;border:1px solid #cfe0ff;border-radius:8px;padding:10px;font-size:13px;color:#26406b">Referred by a friend — subscribe below and they'll earn free time too.</div>
 <button onclick="go('crypto')">Pay with crypto</button>
 %(card_btn)s
@@ -609,7 +615,8 @@ function go(method){
 </script>""" % {"name": p["name"], "price": p.get("price_solo", 0), "days": p["period_days"],
                "code": product_code.upper(), "grace": config.GRACE_HOURS,
                "card_btn": ('<button onclick="go(\'card\')">Pay with card</button>'
-                            if config.card_enabled() else "")}
+                            if config.card_enabled() else ""),
+               "bot": config.LICENSE_BOT_USERNAME or "our Telegram bot"}
         self._send(200, html, "text/html")
 
 

@@ -54,6 +54,7 @@ ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
 # --- notifications (optional) ---
 LICENSE_BOT_TOKEN = os.environ.get("LICENSE_BOT_TOKEN", "")  # Telegram bot for client notices
 LICENSE_ADMIN_CHAT = os.environ.get("LICENSE_ADMIN_CHAT", "")  # your own chat id for copies
+LICENSE_BOT_USERNAME = os.environ.get("LICENSE_BOT_USERNAME", "")  # e.g. @StaalwagBot (shown on the buy page)
 
 # ---------------------------------------------------------------------------
 # Product catalog — the EAs and indicators you rent. Prices in USD; period in
