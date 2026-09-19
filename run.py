@@ -58,6 +58,7 @@ def build_class(clskey, cls, brokers):
         pm = price_metrics(ticker)
         row = score_one(name, pm, signals.get(name, {}))
         row["regime"]   = pm.get("regime") if pm else None
+        row["spark"]    = pm.get("spark") if pm else None
         row["category"] = cat
         row["ticker"]   = ticker
         row["covkey"]   = covkey

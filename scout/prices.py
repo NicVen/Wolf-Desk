@@ -57,6 +57,14 @@ def price_metrics(ticker):
     returns = [closes[i] / closes[i - 1] - 1.0
                for i in range(1, len(closes)) if closes[i - 1]]
 
+    # compact recent-price series for the app's direction chart. Last ~60 bars,
+    # capped to ~48 points so the JSON stays small.
+    tail = closes[-60:]
+    if len(tail) > 48:
+        step = len(tail) / 48.0
+        tail = [tail[int(i * step)] for i in range(48)]
+    spark = [round(c, 4) for c in tail]
+
     return {
         "last": round(last, 2),
         "ma20": round(ma20, 2),
@@ -68,4 +76,5 @@ def price_metrics(ticker):
         "ma_stack_up": ma20 > ma50,
         "regime": _regime(closes),
         "returns": returns,
+        "spark": spark,
     }

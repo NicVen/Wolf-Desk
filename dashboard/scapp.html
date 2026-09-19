@@ -70,6 +70,25 @@
   .why{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:13px;
     line-height:1.55;color:var(--chrome)}
   .foot{color:var(--mut);font-size:10px;line-height:1.5;margin-top:22px;border-top:1px solid var(--line);padding-top:12px}
+  /* direction chart */
+  .chart{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 10px 8px;margin:4px 0}
+  .chart svg{display:block;width:100%;height:120px}
+  .chart .lg{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:8px;font-size:11px;color:var(--mut)}
+  .chart .lg i{display:inline-block;width:14px;height:0;border-top:2px solid;margin-right:5px;vertical-align:middle}
+  /* tappable tiles */
+  .kpi.tap{cursor:pointer}
+  .kpi.tap .i{display:block;float:right;color:var(--mut);font-size:11px;line-height:1;margin:-2px -2px 0 0}
+  .kpi.tap:active{background:var(--card2)}
+  /* info sheet */
+  .modal{position:fixed;inset:0;z-index:50;background:rgba(4,8,14,.72);display:flex;align-items:flex-end;justify-content:center}
+  .sheet{background:var(--card2);border:1px solid var(--line);border-top-left-radius:18px;border-top-right-radius:18px;
+    width:100%;max-width:520px;max-height:82vh;overflow:auto;padding:18px 18px calc(26px + env(safe-area-inset-bottom))}
+  .sheet .sub{color:var(--steel);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+  .sheet h3{margin:0 0 4px;font-size:19px}
+  .sheet .val{font-size:22px;font-weight:900;margin:2px 0 6px;color:var(--chrome)}
+  .sheet p{font-size:14px;line-height:1.6;color:var(--chrome);margin:10px 0}
+  .sheet .x{float:right;background:var(--card);border:1px solid var(--line);color:var(--chrome);
+    border-radius:10px;padding:6px 12px;font-weight:800;cursor:pointer}
   .hidden{display:none}
 </style>
 </head>
@@ -99,6 +118,90 @@ function esc(s){ return (s==null?"":String(s)).replace(/[&<>]/g,function(c){retu
 function verdictOf(o){ return (o.analysis && o.analysis.verdict) ? o.analysis.verdict.toUpperCase() : (o.score>=60?"BUY":o.score>=45?"WATCH":"SELL"); }
 function vColor(v){ return v==="BUY"?"var(--buy)":v==="SELL"?"var(--sell)":"var(--watch)"; }
 function scColor(s){ return s>=65?"var(--buy)":s>=50?"var(--watch)":"var(--sell)"; }
+function regState(o){ return (o.regime && o.regime.state) ? String(o.regime.state).toUpperCase() : ""; }
+function valText(o){ return (o.validation && o.validation.label) ? String(o.validation.label) : ""; }
+var CO = null;   // opportunity currently on the consult screen (for info popups)
+
+// ---------- direction chart (inline SVG sparkline) ----------
+function sparkSVG(o){
+  var s=(o.spark||[]).filter(function(x){return typeof x==="number" && isFinite(x);});
+  if(s.length<2) return "";
+  var refs=[]; if(o.ma20!=null) refs.push(o.ma20); if(o.ma50!=null) refs.push(o.ma50);
+  var all=s.concat(refs);
+  var lo=Math.min.apply(null,all), hi=Math.max.apply(null,all);
+  if(hi<=lo){ hi=lo+1; }
+  var W=300,H=110,PL=4,PR=4,PT=8,PB=8;
+  function x(i){ return PL + i/(s.length-1)*(W-PL-PR); }
+  function y(v){ return PT + (1-(v-lo)/(hi-lo))*(H-PT-PB); }
+  var up = s[s.length-1] >= s[0];
+  var col = up? "var(--buy)":"var(--sell)";
+  var d="M"+x(0).toFixed(1)+" "+y(s[0]).toFixed(1);
+  for(var i=1;i<s.length;i++){ d+=" L"+x(i).toFixed(1)+" "+y(s[i]).toFixed(1); }
+  var area=d+" L"+x(s.length-1).toFixed(1)+" "+(H-PB)+" L"+x(0).toFixed(1)+" "+(H-PB)+" Z";
+  function refLine(vv,c,dash){ if(vv==null) return ""; var yy=y(vv).toFixed(1);
+    return '<line x1="'+PL+'" y1="'+yy+'" x2="'+(W-PR)+'" y2="'+yy+'" stroke="'+c+'" stroke-width="1" stroke-dasharray="'+dash+'" opacity=".7"/>'; }
+  var gid="g"+Math.random().toString(36).slice(2,7);
+  return '<div class="chart"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+
+    '<defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1">'+
+      '<stop offset="0" stop-color="'+col+'" stop-opacity=".28"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs>'+
+    '<path d="'+area+'" fill="url(#'+gid+')" stroke="none"/>'+
+    refLine(o.ma50,"var(--mut)","2 3")+refLine(o.ma20,"var(--steel)","4 2")+
+    '<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+
+    '<circle cx="'+x(s.length-1).toFixed(1)+'" cy="'+y(s[s.length-1]).toFixed(1)+'" r="3" fill="'+col+'"/>'+
+    '</svg>'+
+    '<div class="lg"><span><i style="border-color:'+col+'"></i>Price ('+(up?"↑ up":"↓ down")+' ~3mo)</span>'+
+      (o.ma20!=null?'<span><i style="border-color:var(--steel);border-top-style:dashed"></i>20-day avg</span>':'')+
+      (o.ma50!=null?'<span><i style="border-color:var(--mut);border-top-style:dotted"></i>50-day avg</span>':'')+
+    '</div></div>';
+}
+
+// ---------- tap-to-explain popups ----------
+function info(kind){
+  var o=CO; if(!o) return;
+  var a=o.analysis||{}, title, sub, val, body;
+  if(kind==="score"){
+    title="Score"; sub="0–100 opportunity read"; val=Math.round(o.score)+"/100";
+    var why=a.score_reasoning||"";
+    body="<p>What it is: a single 0–100 read that blends five factors — "+
+      "<b>catalyst</b> (news/fundamentals, /25), <b>trend</b> (price vs its moving averages, /25), "+
+      "<b>position</b> (where price sits in its range, /20), <b>supply</b> (supply/demand backdrop, /20) and "+
+      "<b>volatility fit</b> (is it moving enough to trade, /10). More of these lining up = a higher score.</p>"+
+      (why?("<p><b>Why "+esc(val)+":</b> "+esc(why)+"</p>"):"")+
+      "<p>Rule of thumb: 65+ is a strong setup, 50–64 worth watching, under 50 weak.</p>";
+  } else if(kind==="regime"){
+    var rg=o.regime||{};
+    title="Regime"; sub="Markov trend state"; val=regState(o)||"—";
+    body="<p>What it is: the <b>Markov regime</b> — a mechanical read of whether recent price action is trending up "+
+      "(<b>BULL</b>), down (<b>BEAR</b>) or going sideways (<b>SIDE</b>), plus how <i>sticky</i> that state has been.</p>";
+    var bits=[];
+    if(rg.confidence) bits.push("confidence <b>"+esc(rg.confidence)+"</b>");
+    if(rg.n!=null) bits.push("<b>"+esc(rg.n)+"</b> sampled points");
+    if(rg.persist!=null) bits.push("it held this state <b>"+Math.round(rg.persist*100)+"%</b> of the time");
+    if(rg.next) bits.push("most likely next state <b>"+esc(String(rg.next).toUpperCase())+"</b>");
+    if(bits.length) body+="<p><b>Why "+esc(val)+":</b> "+bits.join(", ")+".</p>";
+    if(rg.vote===false) body+="<p>Note: too few samples to count toward the market-wide vote — treat this as a hint, not a confirmation.</p>";
+  } else {
+    var vv=o.validation||{};
+    title="Validation"; sub="Real edge or noise?"; val=valText(o)||"—";
+    body="<p>What it is: a <b>Deflated Sharpe</b> check — does this instrument's edge, in the direction we're calling, look "+
+      "statistically <b>real</b> or likely just <b>noise</b>? It's deflated for how many instruments we test, so a lucky-looking chart doesn't fool it.</p>";
+    var vb=[];
+    if(vv.dsr!=null) vb.push("DSR <b>"+(Math.round(vv.dsr*100)/100)+"</b> (higher = more likely real)");
+    if(vv.n!=null) vb.push("<b>"+esc(vv.n)+"</b> bars tested");
+    if(vb.length) body+="<p><b>Why “"+esc(val)+"”:</b> "+vb.join(", ")+".</p>";
+    body+="<p>This is a quality label only — it never changes the score or the verdict.</p>";
+  }
+  openSheet(title,sub,val,body);
+}
+function openSheet(title,sub,val,body){
+  closeSheet();
+  var m=document.createElement("div"); m.className="modal"; m.id="sheet";
+  m.onclick=function(e){ if(e.target===m) closeSheet(); };
+  m.innerHTML='<div class="sheet"><button class="x" onclick="closeSheet()">Close</button>'+
+    '<div class="sub">'+esc(sub)+'</div><h3>'+esc(title)+'</h3><div class="val">'+esc(val)+'</div>'+body+'</div>';
+  document.body.appendChild(m);
+}
+function closeSheet(){ var m=el("sheet"); if(m&&m.parentNode) m.parentNode.removeChild(m); }
 
 // ---------- gate ----------
 function showGate(msg){
@@ -167,6 +270,7 @@ function renderHome(){
 // ---------- consult ----------
 function consult(i){
   var o=(DATA.opportunities||[])[i]; if(!o) return;
+  CO=o; closeSheet();
   el("refreshBtn").style.display="none"; el("homeBtn").style.display="";
   var v=verdictOf(o), vc=vColor(v);
   var a=o.analysis||{};
@@ -176,10 +280,7 @@ function consult(i){
     var pct=Math.max(0,Math.min(100,Math.round((bd[k]||0)/maxes[k]*100)));
     return '<div class="bar"><span class="bl">'+k+'</span><div class="bt"><i style="width:'+pct+'%"></i></div></div>';
   }).join("");
-  // chips: regime + validation if present
-  var chips="";
-  if(o.regime){ var rg=String(o.regime).toUpperCase(); chips+='<div class="kpi"><div class="l">Regime</div><div class="v">'+esc(rg)+'</div></div>'; }
-  if(o.validation){ chips+='<div class="kpi"><div class="l">Validation</div><div class="v">'+esc(o.validation)+'</div></div>'; }
+  var rg=regState(o), vl=valText(o);
   // checklist
   var isBuy=v==="BUY";
   var checks=[
@@ -189,27 +290,36 @@ function consult(i){
     ["Volatility sane", (o.atr_pct!=null && o.atr_pct<5)],
     ["Conviction not Low", (a.conviction||"").toLowerCase()!=="low"]
   ];
-  if(o.regime){ var rgu=String(o.regime).toUpperCase(); checks.push(["Regime backs it", isBuy?rgu.indexOf("BULL")>=0:rgu.indexOf("BEAR")>=0]); }
+  if(rg){ checks.push(["Regime backs it", isBuy?rg.indexOf("BULL")>=0:rg.indexOf("BEAR")>=0]); }
   var passed=checks.filter(function(c){return c[1];}).length;
   var chkHtml=checks.map(function(c){
     return '<div class="chk"><span class="m">'+(c[1]?"✅":"⬜")+'</span><span>'+c[0]+'</span></div>';
   }).join("");
+
+  // primary tiles — tappable for an explanation
+  var tiles='<div class="kpis">'+
+    '<div class="kpi tap" onclick="info(\'score\')"><span class="i">ⓘ</span><div class="l">Score</div><div class="v" style="color:'+scColor(o.score)+'">'+Math.round(o.score)+'/100</div></div>';
+  if(rg){ tiles+='<div class="kpi tap" onclick="info(\'regime\')"><span class="i">ⓘ</span><div class="l">Regime</div><div class="v">'+esc(rg)+'</div></div>'; }
+  if(vl){ tiles+='<div class="kpi tap" onclick="info(\'validation\')"><span class="i">ⓘ</span><div class="l">Validation</div><div class="v" style="font-size:12px">'+esc(vl)+'</div></div>'; }
+  tiles+='</div>';
 
   el("main").innerHTML =
     '<div class="verdict" style="background:'+vc+'1a;border:1px solid '+vc+'55">'+
       '<div class="big" style="color:'+vc+'">'+esc(o.name)+' · '+v+'</div>'+
       '<div class="conv">'+esc(a.conviction? (a.conviction+" conviction") : "")+'  ·  '+passed+'/'+checks.length+' checks</div>'+
     '</div>'+
+    '<div class="sec">Direction — recent price</div>'+
+    (sparkSVG(o)||'<p class="muted">Chart data not available for this instrument.</p>')+
+    tiles+
     '<div class="kpis">'+
-      '<div class="kpi"><div class="l">Score</div><div class="v" style="color:'+scColor(o.score)+'">'+Math.round(o.score)+'/100</div></div>'+
       '<div class="kpi"><div class="l">Price</div><div class="v">'+esc(o.price)+'</div></div>'+
       '<div class="kpi"><div class="l">Mom20</div><div class="v" style="color:'+(o.mom20>=0?"var(--buy)":"var(--sell)")+'">'+(o.mom20>=0?"+":"")+esc(o.mom20)+'%</div></div>'+
+      '<div class="kpi"><div class="l">ATR%</div><div class="v">'+esc(o.atr_pct)+'%</div></div>'+
     '</div>'+
-    (chips?('<div class="kpis">'+chips+'</div>'):'')+
     '<div class="sec">Pre-trade checklist</div>'+chkHtml+
     '<div class="sec">Score breakdown</div>'+bars+
     '<div class="sec">Why</div><div class="why">'+esc(a.summary||o.note||"—")+(a.price_reasoning?('<br><br>'+esc(a.price_reasoning)):'')+'</div>'+
-    '<div class="foot">STAALCALIBUR is decision-support &amp; education only — a mechanical read of the data, not financial advice and not a signal to trade. You alone decide; trade a demo first and never risk more than you can lose.</div>';
+    '<div class="foot">STAALCALIBUR is decision-support &amp; education only — a mechanical read of the data, not financial advice and not a signal to trade. Tap any tile marked ⓘ for what it means. You alone decide; trade a demo first and never risk more than you can lose.</div>';
   window.scrollTo(0,0);
 }
 
