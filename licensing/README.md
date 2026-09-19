@@ -49,7 +49,7 @@ cp deploy/licensing.env.example /etc/staalwag-licensing.env
 python3 -c "import secrets;print('SIGNING',secrets.token_urlsafe(32));print('ADMIN',secrets.token_urlsafe(32))"
 nano /etc/staalwag-licensing.env      # paste NOWPayments keys + the two secrets
 chmod 600 /etc/staalwag-licensing.env
-cp deploy/licensing.service /etc/systemd/system/
+cp deploy/staalwag-licensing.service /etc/systemd/system/
 systemctl daemon-reload && systemctl enable --now staalwag-licensing
 cp deploy/Caddyfile.hq /etc/caddy/Caddyfile.new \
   && caddy validate --config /etc/caddy/Caddyfile.new --adapter caddyfile \
