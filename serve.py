@@ -547,6 +547,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, _read(os.path.join("dashboard", "appversion.json"),
                                   b'{"version":"1.0.0","notes":[]}'),
                        "application/json"); return
+        if path == "/.well-known/assetlinks.json":
+            # Digital Asset Links — lets the installed Android app (TWA) open the
+            # app full-screen with no browser bar. Paste the APK's fingerprint
+            # into dashboard/assetlinks.json (PWABuilder/Bubblewrap gives it).
+            self._send(200, _read(os.path.join("dashboard", "assetlinks.json"), b"[]"),
+                       "application/json"); return
         if path == "/appdata":
             key = q.get("key", [""])[0]; dev = q.get("dev", ["app"])[0]
             if not _app_license_ok(key, dev):

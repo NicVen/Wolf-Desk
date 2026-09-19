@@ -25,6 +25,11 @@
   .sp{flex:1}
   .ico{background:var(--card);border:1px solid var(--line);color:var(--chrome);border-radius:10px;
     padding:8px 10px;font-size:13px;font-weight:700;cursor:pointer}
+  .ico.hasupd{background:var(--accent);color:#04122b;border-color:var(--accent);animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(110,168,254,.5)}50%{box-shadow:0 0 0 6px rgba(110,168,254,0)}}
+  .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);
+    background:var(--card2);border:1px solid var(--line);color:var(--fg);padding:10px 16px;border-radius:12px;
+    font-size:13px;z-index:60;opacity:0;transition:opacity .25s;max-width:90%;text-align:center;pointer-events:none}
   main{flex:1;padding:14px 16px 40px}
   /* gate */
   .gate{min-height:80vh;display:flex;flex-direction:column;justify-content:center;gap:14px;text-align:center;padding:0 6px}
@@ -112,6 +117,7 @@
   <header>
     <div class="logo">STAALCALIBUR <span class="v">V13</span></div>
     <div class="sp"></div>
+    <button class="ico" id="verBtn" onclick="manualCheck()" title="Check for updates">v·</button>
     <button class="ico" id="refreshBtn" onclick="loadClass()" style="display:none">↻</button>
     <button class="ico" id="homeBtn" onclick="showHome()" style="display:none">Home</button>
   </header>
@@ -489,23 +495,41 @@ function consult(i){
 }
 
 // ---------- auto-update: notify the renter, one-tap install ----------
-var updSnoozed = false;
+var updSnoozed = false, UPD_AVAILABLE = false;
 function installedVer(){ try{ return localStorage.getItem("sc_ver")||""; }catch(e){ return ""; } }
-function setInstalledVer(v){ try{ localStorage.setItem("sc_ver", v); }catch(e){} }
+function setInstalledVer(v){ try{ localStorage.setItem("sc_ver", v); }catch(e){} setVerLabel(); }
 function verCmp(a,b){
   var pa=String(a).split("."), pb=String(b).split("."), n=Math.max(pa.length,pb.length);
   for(var i=0;i<n;i++){ var x=parseInt(pa[i]||"0",10)||0, y=parseInt(pb[i]||"0",10)||0;
     if(x>y) return 1; if(x<y) return -1; }
   return 0;
 }
+function setVerLabel(){ var b=el("verBtn"); if(b) b.textContent = "v"+(installedVer()||"·"); }
+function markUpd(on){ UPD_AVAILABLE=on; var b=el("verBtn"); if(b) b.className = "ico"+(on?" hasupd":""); }
+function toast(msg){
+  var t=el("toast"); if(!t){ t=document.createElement("div"); t.id="toast"; t.className="toast"; document.body.appendChild(t); }
+  t.textContent=msg; t.style.opacity="1"; clearTimeout(t._h); t._h=setTimeout(function(){ t.style.opacity="0"; }, 2800);
+}
+// silent check on open/resume — glows the version button if something's newer.
 function checkUpdate(){
-  if(updSnoozed) return;
-  fetch("/appversion",{cache:"no-store"}).then(function(r){ return r.json(); }).then(function(d){
+  fetch("/appversion?_="+Date.now(),{cache:"no-store"}).then(function(r){ return r.json(); }).then(function(d){
     if(!d||!d.version) return;
     var cur=installedVer();
     if(!cur){ setInstalledVer(d.version); return; }   // first run: adopt current silently
-    if(verCmp(d.version,cur)>0) showUpdate(d);
+    if(verCmp(d.version,cur)>0){ markUpd(true); if(!updSnoozed) showUpdate(d); }
+    else { markUpd(false); }
   }).catch(function(){});
+}
+// user tapped the version button — always give feedback.
+function manualCheck(){
+  toast("Checking for updates…");
+  fetch("/appversion?_="+Date.now(),{cache:"no-store"}).then(function(r){ return r.json(); }).then(function(d){
+    if(!d||!d.version){ toast("Couldn't check — try again."); return; }
+    var cur=installedVer();
+    if(!cur){ setInstalledVer(d.version); toast("You're on the latest (v"+d.version+")."); markUpd(false); return; }
+    if(verCmp(d.version,cur)>0){ updSnoozed=false; markUpd(true); showUpdate(d); }
+    else { toast("You're on the latest (v"+d.version+")."); markUpd(false); }
+  }).catch(function(){ toast("Network error — try again."); });
 }
 function showUpdate(d){
   if(el("upd")) return;
@@ -546,8 +570,10 @@ function doUpdate(){
 
 // ---------- boot + PWA ----------
 try{ var _tf=localStorage.getItem("sc_tf"); if(_tf==="daily"||_tf==="1h") TF=_tf; }catch(e){}
+setVerLabel();
 if(K()){ CUR="commodities"; showHome(); } else { showGate(); }
-if("serviceWorker" in navigator){ navigator.serviceWorker.register("/scsw.js").catch(function(){}); }
+// updateViaCache:none stops the browser HTTP-cache from pinning an old worker.
+if("serviceWorker" in navigator){ navigator.serviceWorker.register("/scsw.js", {updateViaCache:"none"}).catch(function(){}); }
 checkUpdate();
 document.addEventListener("visibilitychange", function(){ if(!document.hidden) checkUpdate(); });
 </script>

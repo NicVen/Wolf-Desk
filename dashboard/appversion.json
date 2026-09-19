@@ -1,13 +1,13 @@
 {
-  "version": "2.0.0",
+  "version": "2.0.1",
   "date": "2026-09-19",
-  "title": "Daily outlook on every market",
+  "title": "Daily outlook + easier updates",
   "type": "feature",
   "notes": [
-    "NEW: Today's Outlook on every instrument — tap to read what's influencing that pair today and the potential outcomes.",
-    "Covers all asset classes: commodities, FX, indices, stocks and crypto.",
-    "Each outlook breaks down trend, momentum, volatility, the Markov regime, the fundamental backdrop and the edge-quality read.",
-    "Bull case and bear case laid out side by side so you see both potential outcomes.",
-    "Plus the charts, 1H/Daily switch and structure-based trade levels from the last update."
+    "NEW: Today's Outlook on every instrument — tap to read what's influencing that pair today and the potential outcomes (commodities, FX, indices, stocks, crypto).",
+    "Each outlook covers trend, momentum, volatility, the Markov regime, the fundamental backdrop and the edge-quality read, with a bull and bear case.",
+    "NEW: a version button in the top bar — it glows when an update is ready, and you can tap it any time to check for updates yourself.",
+    "More reliable updating so new versions are picked up cleanly.",
+    "Plus the charts, 1H/Daily switch and structure-based trade levels from before."
   ]
 }
