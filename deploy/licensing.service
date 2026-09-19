@@ -1,0 +1,21 @@
+[Unit]
+Description=STAALWAG licensing (NOWPayments payments + rolling activation codes)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=wolf
+WorkingDirectory=/opt/wolf-desk
+EnvironmentFile=/etc/staalwag-licensing.env
+Environment=PYTHONUNBUFFERED=1
+# systemd creates/owns /var/lib/staalwag-licensing for the SQLite db
+StateDirectory=staalwag-licensing
+ExecStart=/opt/wolf-desk/.venv/bin/python -m licensing.server
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
