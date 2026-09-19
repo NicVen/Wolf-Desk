@@ -369,7 +369,7 @@ function buildTabs(){
 async function switchTab(k){ CUR=k; buildTabs(); await load();
   if(!LAST||!LAST.opportunities||!LAST.opportunities.length){ await getData(); } }
 
-async function load(){ try{ const r=await fetch('/data?class='+CUR); render(await r.json()); }catch(e){} }
+async function load(){ try{ const r=await fetch('/data?class='+CUR); const t=await r.text(); render(t?JSON.parse(t):{}); }catch(e){ render({}); } }
 
 async function getData(){
   const b=document.getElementById('get'); b.disabled=true; b.textContent='SCOUTING…';
