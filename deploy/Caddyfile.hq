@@ -65,6 +65,9 @@ veldrin.178.104.88.38.sslip.io {
 desk.178.104.88.38.sslip.io {
 	encode zstd gzip
 	import /etc/caddy/desk-auth.conf
+	# Bare "/" -> straight onto the desktop (auto-connect, scale to screen).
+	@root path /
+	redir @root /vnc.html?autoconnect=true&resize=remote
 	# noVNC needs websockets; Caddy upgrades them automatically.
 	reverse_proxy 127.0.0.1:6080
 }
