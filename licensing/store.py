@@ -53,7 +53,8 @@ def _init(c):
                      ("last_account", "TEXT"),
                      ("ref_code", "TEXT"),
                      ("referred_by", "TEXT"),
-                     ("ref_rewarded", "INTEGER DEFAULT 0")):
+                     ("ref_rewarded", "INTEGER DEFAULT 0"),
+                     ("ref_reward_until", "INTEGER")):
         try:
             c.execute("ALTER TABLE licenses ADD COLUMN %s %s" % (col, ddl))
         except sqlite3.OperationalError:
@@ -134,14 +135,16 @@ def get_by_ref_code(code):
 
 
 def count_referrals(code):
-    """How many paying customers this referral code has brought in."""
+    """(total_paid_referrals, free_months_granted) for this referral code."""
     if not code:
-        return 0
+        return 0, 0
     with _LOCK:
-        r = _conn().execute(
-            "SELECT COUNT(*) c FROM licenses WHERE referred_by=? AND ref_rewarded=1",
-            (code,)).fetchone()
-        return r["c"] if r else 0
+        c = _conn()
+        total = c.execute("SELECT COUNT(*) n FROM licenses WHERE referred_by=? AND ref_rewarded IN (1,2)",
+                          (code,)).fetchone()["n"]
+        granted = c.execute("SELECT COUNT(*) n FROM licenses WHERE referred_by=? AND ref_rewarded=1",
+                            (code,)).fetchone()["n"]
+        return total, granted
 
 
 def active_contacts(product):

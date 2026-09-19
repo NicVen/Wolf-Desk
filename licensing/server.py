@@ -119,23 +119,43 @@ def apply_payment(order_id, payment_id):
 
 
 def _reward_referrer(lic):
-    """First paid activation of a referred license credits the referrer with
-    free days. Runs once per referred license."""
+    """First paid activation of a referred license may credit the referrer with
+    a free month. Rules: only ONE referral free month active at a time — no
+    stacking, no banking. If the referrer is already inside a free-month window,
+    this referral is acknowledged but grants nothing; they can earn again only
+    after the current free month ends. Runs once per referred license."""
     code = lic.get("referred_by")
     if not code or lic.get("ref_rewarded"):
         return
     ref = store.get_by_ref_code(code)
     if not ref or ref["license_key"] == lic["license_key"]:
         return
+    now = store.now()
     days = config.REFERRAL_REWARD_DAYS
-    base = max(store.now(), ref.get("paid_until") or 0)
+    active_until = ref.get("ref_reward_until") or 0
+
+    if now < active_until:
+        # already in a free-month window — acknowledge, don't stack.
+        store.update(lic["license_key"], ref_rewarded=2)
+        when = time.strftime("%Y-%m-%d", time.gmtime(active_until))
+        notify.client(ref.get("contact"),
+                      "A referral of yours just subscribed 🙌 — but you already have a free "
+                      "month running (until %s UTC). Free months don't stack; refer again "
+                      "after that date to earn the next one." % when)
+        notify.admin("referral (no-stack): %s already covered to %s" % (ref["license_key"], when))
+        return
+
+    # grant a fresh free month
+    base = max(now, ref.get("paid_until") or 0)
+    reward_until = now + days * DAY
     store.update(ref["license_key"], status="active", paid_until=base + days * DAY,
-                 revoke_at=None, notified=0)
+                 revoke_at=None, notified=0, ref_reward_until=reward_until)
     store.update(lic["license_key"], ref_rewarded=1)
     until = time.strftime("%Y-%m-%d", time.gmtime(base + days * DAY))
     notify.client(ref.get("contact"),
                   "🎉 A referral of yours just subscribed — you've earned %d free days! "
-                  "Your access now runs to %s (UTC). Keep sharing your link." % (days, until))
+                  "Your access now runs to %s (UTC). (One free month at a time — refer "
+                  "again once this one ends to earn another.)" % (days, until))
     notify.admin("referral reward: %s credited %dd (referred %s)"
                  % (ref["license_key"], days, lic["license_key"]))
 
@@ -381,9 +401,14 @@ class H(BaseHTTPRequestHandler):
         if lic["status"] == "revoked":
             return self._send(200, {"ok": False, "reason": "inactive"})
         code = ensure_ref_code(lic)
+        total, granted = store.count_referrals(code)
+        active_until = lic.get("ref_reward_until") or 0
+        reward_active = store.now() < active_until
         self._send(200, {"ok": True, "code": code, "link": ref_link(code),
-                         "referrals": store.count_referrals(code),
-                         "reward_days": config.REFERRAL_REWARD_DAYS})
+                         "referrals": total, "free_months": granted,
+                         "reward_days": config.REFERRAL_REWARD_DAYS,
+                         "reward_active": reward_active,
+                         "reward_until": active_until if reward_active else 0})
 
     def _admin_issue(self):
         if not self._admin_ok():

@@ -80,6 +80,20 @@
   .chart svg{display:block;width:100%;height:120px}
   .chart .lg{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:8px;font-size:11px;color:var(--mut)}
   .chart .lg i{display:inline-block;width:14px;height:0;border-top:2px solid;margin-right:5px;vertical-align:middle}
+  /* refer & earn card */
+  .refcard{background:linear-gradient(135deg,rgba(110,168,254,.16),rgba(46,204,113,.10));
+    border:1px solid var(--accent);border-radius:16px;padding:16px 16px 15px;margin:2px 0 14px}
+  .reftop{color:var(--accent);font-size:11px;letter-spacing:2px;font-weight:800}
+  .refbig{font-size:17px;font-weight:800;margin:6px 0 12px}
+  .refbig b{color:var(--buy)}
+  .refstats{display:flex;gap:10px;margin-bottom:12px}
+  .refstats>div{flex:1;background:rgba(10,14,21,.35);border:1px solid var(--line);border-radius:12px;
+    padding:9px;text-align:center}
+  .refstats b{display:block;font-size:22px;font-weight:900}
+  .refstats span{font-size:10.5px;color:var(--mut);letter-spacing:.5px}
+  .refnote{font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px}
+  .refnote.ok{color:var(--buy)}
+  .refbtn{padding:13px;font-size:15px}
   /* today's outlook card */
   .olcard{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
     border-radius:14px;padding:13px 14px;margin:2px 0 4px;cursor:pointer}
@@ -393,7 +407,7 @@ function loadClass(cb){
 // ---------- home ----------
 function showHome(){
   el("refreshBtn").style.display=""; el("homeBtn").style.display="none";
-  el("main").innerHTML = '<div class="chips" id="chips"></div><div id="list"></div><div id="refbox"></div>';
+  el("main").innerHTML = '<div id="refbox"></div><div class="chips" id="chips"></div><div id="list"></div>';
   el("chips").innerHTML = CLASSES.map(function(c){
     return '<div class="chip'+(c[0]===CUR?' on':'')+'" onclick="pick(\''+c[0]+'\')">'+c[1]+'</div>';
   }).join("");
@@ -407,12 +421,23 @@ function loadRef(){
   fetch(PAY+"/reflink?key="+encodeURIComponent(K())).then(function(r){ return r.json(); }).then(function(d){
     if(!d||!d.ok){ box.innerHTML=""; return; }
     REFLINK=d.link;
-    var cnt=d.referrals? (d.referrals+" referral"+(d.referrals==1?"":"s")+" so far · ") : "";
-    box.innerHTML='<div class="olcard" style="cursor:default;margin-top:14px">'+
-      '<div class="oltop">🎁 Refer &amp; earn</div>'+
-      '<div class="olhead">Give a friend the app — get '+d.reward_days+' free days</div>'+
-      '<div class="muted" style="margin:4px 0 12px;font-size:12px">'+cnt+'When someone subscribes through your link, '+d.reward_days+' days are added to your access. No limit.</div>'+
-      '<button class="btn" style="padding:11px" onclick="shareRef()">Share my link</button>'+
+    var friends=d.referrals||0, months=d.free_months||0;
+    var stat='<div class="refstats">'+
+      '<div><b>'+friends+'</b><span>friend'+(friends==1?"":"s")+' joined</span></div>'+
+      '<div><b>'+months+'</b><span>free month'+(months==1?"":"s")+' earned</span></div>'+
+      '</div>';
+    var state="";
+    if(d.reward_active && d.reward_until){
+      var dt=new Date(d.reward_until*1000).toLocaleDateString();
+      state='<div class="refnote ok">✓ Free month active until '+esc(dt)+' — refer again after it ends to earn the next one.</div>';
+    } else {
+      state='<div class="refnote">One free month at a time — no stacking. When your referral subscribes, your next free month starts.</div>';
+    }
+    box.innerHTML='<div class="refcard">'+
+      '<div class="reftop">🎁 REFER &amp; EARN</div>'+
+      '<div class="refbig">Give a friend the app — get a <b>FREE month</b></div>'+
+      stat+state+
+      '<button class="btn refbtn" onclick="shareRef()">Share my link &amp; earn</button>'+
     '</div>';
   }).catch(function(){ box.innerHTML=""; });
 }
@@ -513,6 +538,7 @@ function consult(i){
       '<div class="big" style="color:'+vc+'">'+esc(o.name)+' · '+v+'</div>'+
       '<div class="conv">'+esc(a.conviction? (a.conviction+" conviction") : "")+'  ·  '+passed+'/'+checks.length+' checks</div>'+
     '</div>'+
+    '<button class="btn ghost" style="margin:0 0 4px" onclick="shareCard()">📤 Share this read</button>'+
     olCard+
     '<div class="sec" style="display:flex;align-items:center;justify-content:space-between">'+
       '<span>Direction &amp; levels</span>'+tfSwitch+'</div>'+
@@ -584,6 +610,50 @@ function showUpdate(d){
   document.body.appendChild(m);
 }
 function snoozeUpdate(){ updSnoozed=true; var m=el("upd"); if(m&&m.parentNode) m.parentNode.removeChild(m); }
+
+// ---------- shareable branded card (canvas -> native share / download) ----------
+function _wrap(ctx,text,x0,y0,maxW,lh,maxLines){
+  var words=(text||"").split(" "), line="", y=y0, n=0;
+  for(var i=0;i<words.length;i++){
+    var t=line+words[i]+" ";
+    if(ctx.measureText(t).width>maxW && line){
+      ctx.fillText(line.trim(),x0,y); line=words[i]+" "; y+=lh; n++;
+      if(n>=maxLines-1){ break; }
+    } else line=t;
+  }
+  ctx.fillText(line.trim(),x0,y);
+}
+function shareCard(){
+  var o=CO; if(!o) return;
+  var v=verdictOf(o), a=o.analysis||{};
+  var vc = v==="BUY"?"#2ecc71":v==="SELL"?"#ff5b5b":"#f2c14e";
+  var W=1080,H=1080, c=document.createElement("canvas"); c.width=W; c.height=H;
+  var x=c.getContext("2d");
+  var g=x.createLinearGradient(0,0,0,H); g.addColorStop(0,"#131a26"); g.addColorStop(1,"#0a0e15");
+  x.fillStyle=g; x.fillRect(0,0,W,H);
+  x.fillStyle=vc; x.fillRect(0,0,18,H);
+  x.textBaseline="alphabetic";
+  x.fillStyle="#8aa0b4"; x.font="700 34px Arial"; x.fillText("STAALCALIBUR · V13", 72, 118);
+  x.fillStyle="#e7edf3"; x.font="900 88px Arial"; x.fillText(String(o.name).slice(0,17), 68, 250);
+  x.fillStyle=vc; x.font="900 150px Arial"; x.fillText(v, 68, 420);
+  x.fillStyle="#c7d2dd"; x.font="700 48px Arial"; x.fillText("Score "+Math.round(o.score)+"/100", 72, 500);
+  x.fillStyle="#c7d2dd"; x.font="400 42px Arial";
+  _wrap(x, (o.outlook&&o.outlook.headline)||a.summary||"", 72, 610, W-150, 56, 5);
+  x.fillStyle="#6ea8fe"; x.font="800 46px Arial"; x.fillText("Get the app · staalwag.com", 72, H-96);
+  x.fillStyle="#4d5a6c"; x.font="400 27px Arial"; x.fillText("Educational only — not financial advice.", 72, H-48);
+  c.toBlob(function(blob){
+    if(!blob){ toast("Couldn't build card."); return; }
+    var file=new File([blob],"staalcalibur.png",{type:"image/png"});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({files:[file], text:o.name+" — "+v+" · STAALCALIBUR", url:"https://staalwag.com"}).catch(function(){});
+    } else {
+      var url=URL.createObjectURL(blob), a2=document.createElement("a");
+      a2.href=url; a2.download="staalcalibur.png"; document.body.appendChild(a2); a2.click(); a2.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+      toast("Card saved — share it anywhere.");
+    }
+  },"image/png");
+}
 function doUpdate(){
   var b=el("updBtn"); if(b){ b.textContent="Updating…"; b.disabled=true; }
   function finish(){

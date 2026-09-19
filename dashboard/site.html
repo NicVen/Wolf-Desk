@@ -27,11 +27,13 @@
   html{scroll-behavior:smooth;background:#0a0e15}
   body{margin:0;background:var(--bg);color:var(--fg);min-height:100vh;position:relative;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
-  /* faint brand wordmark watermark behind everything */
-  body::before{content:"STAALWAG";position:fixed;inset:0;z-index:0;pointer-events:none;
-    display:flex;align-items:center;justify-content:center;
-    font-weight:900;letter-spacing:14px;font-size:15vw;color:#ffffff;opacity:.022;
-    white-space:nowrap;transform:rotate(-8deg)}
+  /* faint brand watermark behind everything: logo + wordmark */
+  body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:url('/icon-512.png') no-repeat center 16vh;background-size:min(340px,52vw);
+    opacity:.06}
+  body::after{content:"STAALWAG";position:fixed;left:0;right:0;bottom:14vh;z-index:0;pointer-events:none;
+    text-align:center;font-weight:900;letter-spacing:12px;font-size:13vw;color:#8aa0b4;opacity:.07;
+    white-space:nowrap}
   nav,header,section,footer{position:relative;z-index:1}
   a{color:var(--accent);text-decoration:none}
   .wrap{max-width:1000px;margin:0 auto;padding:0 20px}
