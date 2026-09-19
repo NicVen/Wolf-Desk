@@ -101,6 +101,10 @@
   #buybody h4{margin:12px 0 4px;color:var(--gold);font-size:12px;letter-spacing:1px}
   #buybody .consentbox{border:1px solid var(--line);padding:10px;max-height:170px;overflow:auto;font-size:12px;line-height:1.5;color:var(--steel);border-radius:8px;margin:10px 0}
   #buybody input[type=text],#buybody input:not([type]){width:100%;padding:9px;margin:6px 0;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--gold2)}
+  #subbody .consentbox{border:1px solid var(--line);padding:10px;max-height:160px;overflow:auto;font-size:12px;line-height:1.5;color:var(--steel);border-radius:8px;margin:10px 0}
+  #subbody input[type=text],#subbody input:not([type]){width:100%;padding:9px;margin:6px 0;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--gold2)}
+  .paybtn2{background:var(--green);color:#04120a}
+  body.gated .wrap{filter:grayscale(.9);opacity:.4;pointer-events:none;user-select:none}
   .lockbox{background:var(--panel);border:2px solid var(--gold);border-radius:14px;padding:30px 36px;text-align:center;max-width:360px}
   .lockbox .big{font-size:22px;font-weight:800;color:var(--gold);letter-spacing:1px}
   .lockbox .msg{color:var(--mut);font-size:13px;margin:14px 0 20px;line-height:1.55}
@@ -137,6 +141,14 @@
   </div>
 </div>
 
+<div class="lockmodal" id="submodal" onclick="if(event.target.id==='submodal' && !document.body.classList.contains('gated'))this.classList.remove('on')">
+  <div class="lockbox" style="max-width:460px;text-align:left;max-height:88vh;overflow:auto">
+    <div class="big" id="subtitle" style="text-align:center"></div>
+    <div id="subbody"></div>
+    <button id="subclose" onclick="document.getElementById('submodal').classList.remove('on')" style="width:100%;margin-top:10px;background:transparent;color:var(--steel);border:1px solid var(--line)">Close</button>
+  </div>
+</div>
+
 <div class="lockmodal" id="buymodal" onclick="if(event.target.id==='buymodal')this.classList.remove('on')">
   <div class="lockbox" style="max-width:540px;text-align:left;max-height:88vh;overflow:auto">
     <div class="big" id="buytitle" style="text-align:center"></div>
@@ -152,6 +164,7 @@
       <div class="sub">INTRADAY INTEL DESK</div>
       <div class="sub" style="color:var(--chrome);letter-spacing:3px;font-size:10px">A STAALWAG DESK</div></div>
     </div>
+    <button class="navbtn" id="subBtn" onclick="openSub(false)" style="background:var(--green);color:#04120a">🐺 Subscribe · Free</button>
     <div class="spacer"></div>
     <button class="navbtn" onclick="openVip()">⭐ VIP Membership</button>
     <button class="navbtn" onclick="openRentals()">🔑 Rentals</button>
@@ -198,8 +211,8 @@ function lock(name){
 
 // ---- Subscribe / Rent (crypto via the licensing server) ----
 const PAY = "https://pay.178.104.88.38.sslip.io";
-const CONSENT =
-  '<div class="consentbox"><b>Please read and accept before continuing.</b><br><br>'+
+const CONSENT_TEXT =
+  '<b>Please read and accept before continuing.</b><br><br>'+
   'All signals, EAs, indicators and content are for <b>educational and informational purposes only</b> — '+
   'not financial, investment or trading advice. STAALWAG is a private individual, <b>not a financial '+
   'institution</b>, registered financial adviser or licensed broker in New Zealand or any jurisdiction, and '+
@@ -209,11 +222,17 @@ const CONSENT =
   'capital. <b>Use a demo account first</b> before risking your own hard-earned money. Past performance does '+
   'not guarantee future results. Content is provided "as is" without warranty. To the maximum extent permitted '+
   'by law you release the operator from all claims, damages and losses arising from your use of or reliance on '+
-  'the content. Governing law: New Zealand.</div>'+
+  'the content. Governing law: New Zealand.';
+const CONSENT =
+  '<div class="consentbox">'+CONSENT_TEXT+'</div>'+
   '<label style="display:block;font-size:13px;margin:8px 0"><input type="checkbox" id="consent" '+
   'onchange="document.querySelectorAll(\'.paybtn\').forEach(function(b){b.disabled=!document.getElementById(\'consent\').checked})"> '+
   'I have read, understood and accept the above.</label>'+
   '<input type="text" id="buycontact" placeholder="Telegram chat id or email (for your key + renewal reminders)">';
+const CONSENT_SUB =
+  '<div class="consentbox">'+CONSENT_TEXT+'</div>'+
+  '<label style="display:block;font-size:13px;margin:8px 0"><input type="checkbox" id="consent2"> '+
+  'I have read, understood and accept the above.</label>';
 
 function showBuy(){
   document.getElementById('buymodal').classList.add('on');
@@ -269,6 +288,72 @@ function checkout(code){
     .then(function(d){ if(d.invoice_url){ location=d.invoice_url; } else { alert(d.error||'Could not start checkout'); } })
     .catch(function(e){ alert('Network error: '+e); });
 }
+
+// ---- Free subscribe + 5-click gate for non-subscribers ----
+const FREE_LIMIT = 5;
+function subscribed(){ try{ return !!localStorage.getItem('wolf_sub'); }catch(e){ return true; } }
+function clicks(){ try{ return +(localStorage.getItem('wolf_clicks')||0); }catch(e){ return 0; } }
+function setClicks(n){ try{ localStorage.setItem('wolf_clicks',n); }catch(e){} }
+
+function openSub(gated){
+  document.getElementById('subtitle').textContent='🐺 Subscribe — Free';
+  document.getElementById('subbody').innerHTML =
+    '<p style="font-size:13px;color:var(--steel)">Free access to the WOLF intraday intel desk — includes '+
+    '<b>Markov 18-pair signals</b> and a free indicator. Sign the consent once; we remember your Telegram ID, '+
+    'so you never sign again and the desk stays open on any device.</p>'+
+    '<input type="text" id="subtg" placeholder="Your Telegram ID (numbers) or email">'+
+    '<div id="subconsent"></div>'+
+    '<button class="paybtn2" id="subgo" onclick="subCheck()" style="width:100%;margin-top:6px">Continue</button>'+
+    '<div id="submsg" style="font-size:12px;color:var(--amber);margin-top:6px"></div>';
+  document.getElementById('submodal').classList.add('on');
+  document.getElementById('subclose').style.display = gated ? 'none' : 'block';
+}
+function subCheck(){
+  var id=(document.getElementById('subtg').value||'').trim();
+  var msg=document.getElementById('submsg');
+  if(!id){ msg.textContent='Enter your Telegram ID or email.'; return; }
+  fetch(PAY+'/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({telegram_id:id,consent:false})})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.subscribed){ subDone(id); }                        // already known -> no consent
+      else if(d.status==='need_consent'){
+        document.getElementById('subconsent').innerHTML=CONSENT_SUB;
+        var go=document.getElementById('subgo');
+        go.textContent='Agree & Subscribe'; go.setAttribute('onclick','subConfirm()');
+      } else { msg.textContent=d.error||'Please try again.'; }
+    }).catch(function(e){ msg.textContent='Network error: '+e; });
+}
+function subConfirm(){
+  var id=(document.getElementById('subtg').value||'').trim();
+  var c=document.getElementById('consent2');
+  var msg=document.getElementById('submsg');
+  if(!c||!c.checked){ msg.textContent='Tick the consent box to continue.'; return; }
+  fetch(PAY+'/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({telegram_id:id,consent:true})})
+    .then(function(r){return r.json();})
+    .then(function(d){ if(d.subscribed){ subDone(id); } else { msg.textContent=d.error||'Please try again.'; } })
+    .catch(function(e){ msg.textContent='Network error: '+e; });
+}
+function subDone(id){
+  try{ localStorage.setItem('wolf_sub',id); }catch(e){}
+  setClicks(0);
+  document.body.classList.remove('gated');
+  document.getElementById('submodal').classList.remove('on');
+}
+function enforceGate(){ document.body.classList.add('gated'); openSub(true); }
+
+// count meaningful clicks by non-subscribers; after the limit, grey out and force subscribe
+document.addEventListener('click', function(e){
+  if(subscribed()) return;
+  var t=e.target.closest('button,[onclick],.tab,.catbtn,.card');
+  if(!t) return;
+  if(t.closest('#submodal')||t.closest('#buymodal')||t.id==='subBtn') return; // never count these
+  var n=clicks()+1; setClicks(n);
+  if(n>FREE_LIMIT){ e.preventDefault(); e.stopPropagation(); enforceGate(); }
+}, true);
+// reflect state on load
+if(subscribed()){ var sb=document.getElementById('subBtn'); if(sb){ sb.textContent='🐺 Subscribed ✓'; } }
 let LAST=null;
 const sc=s=> s>=65?'var(--green)': s>=50?'var(--gold2)': s>=40?'var(--amber)':'var(--red)';
 const fmt=n=> (n===null||n===undefined)?'-':(typeof n==='number'?n.toLocaleString():n);

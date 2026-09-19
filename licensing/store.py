@@ -51,6 +51,11 @@ def _init(c):
             payment_id   TEXT PRIMARY KEY,
             processed_at INTEGER
         )""")
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS subscribers (
+            telegram_id  TEXT PRIMARY KEY,
+            consented_at INTEGER
+        )""")
     c.commit()
 
 
@@ -98,6 +103,20 @@ def all_active_or_pastdue():
         rows = _conn().execute(
             "SELECT * FROM licenses WHERE status IN ('active','past_due')").fetchall()
         return [dict(r) for r in rows]
+
+
+def subscriber_exists(telegram_id):
+    with _LOCK:
+        r = _conn().execute("SELECT 1 FROM subscribers WHERE telegram_id=?", (telegram_id,)).fetchone()
+        return bool(r)
+
+
+def add_subscriber(telegram_id):
+    with _LOCK:
+        c = _conn()
+        c.execute("INSERT OR IGNORE INTO subscribers (telegram_id, consented_at) VALUES (?,?)",
+                  (telegram_id, now()))
+        c.commit()
 
 
 def payment_seen(payment_id):

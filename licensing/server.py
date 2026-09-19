@@ -172,6 +172,8 @@ class H(BaseHTTPRequestHandler):
             self._checkout()
         elif u.path == "/admin/issue":
             self._admin_issue()
+        elif u.path == "/subscribe":
+            self._subscribe()
         else:
             self._send(404, {"error": "not found"})
 
@@ -258,6 +260,22 @@ class H(BaseHTTPRequestHandler):
                      revoke_at=None, notified=0)
         self._send(200, {"license_key": key, "status": "active",
                          "paid_until": store.get(key)["paid_until"]})
+
+    def _subscribe(self):
+        """Free intel-desk subscription. Consent is signed once; after that the
+        Telegram id is remembered and no consent is asked again."""
+        data = json.loads(self._body() or b"{}")
+        tg = str(data.get("telegram_id", "")).strip()
+        consent = bool(data.get("consent"))
+        if not tg:
+            return self._send(400, {"error": "telegram id or email required"})
+        if store.subscriber_exists(tg):
+            return self._send(200, {"status": "known", "subscribed": True})
+        if consent:
+            store.add_subscriber(tg)
+            notify.admin("new free subscriber: %s" % tg)
+            return self._send(200, {"status": "new", "subscribed": True})
+        return self._send(200, {"status": "need_consent", "subscribed": False})
 
     def _buy_page(self, product_code):
         p = config.product(product_code)
