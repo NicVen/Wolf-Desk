@@ -30,6 +30,30 @@ def new_license_key(product):
     return "%s-%s" % (product.upper(), secrets.token_hex(4).upper())
 
 
+def _new_ref_code():
+    # short, unambiguous, unique referral code
+    import string
+    alpha = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    for _ in range(20):
+        code = "".join(secrets.choice(alpha) for _ in range(6))
+        if not store.get_by_ref_code(code):
+            return code
+    return secrets.token_hex(4).upper()
+
+
+def ensure_ref_code(lic):
+    """Return this license's share code, creating one if needed."""
+    if lic.get("ref_code"):
+        return lic["ref_code"]
+    code = _new_ref_code()
+    store.update(lic["license_key"], ref_code=code)
+    return code
+
+
+def ref_link(code):
+    return "%s/buy?product=APP&ref=%s" % (config.PUBLIC_BASE_URL, code)
+
+
 def price_for(code, contact):
     """Returns (price, note). price<=0 means don't charge; note explains why."""
     p = config.product(code)
@@ -48,7 +72,7 @@ def price_for(code, contact):
     return p.get("price_solo", 0), None          # non-VIP solo price
 
 
-def start_checkout(product_code, contact, method="crypto"):
+def start_checkout(product_code, contact, method="crypto", ref=""):
     p = config.product(product_code)
     if not p:
         return None, "unknown product"
@@ -57,6 +81,13 @@ def start_checkout(product_code, contact, method="crypto"):
         return None, note or "nothing to charge for this item"
     key = new_license_key(product_code)
     store.create(key, product_code.upper(), contact, order_id=key, status="pending")
+    # attribute the referral if a valid code was passed (can't refer yourself —
+    # not the same license and not the same contact)
+    if ref:
+        r = store.get_by_ref_code(ref)
+        if (r and r["license_key"] != key
+                and (not contact or (r.get("contact") or "") != contact)):
+            store.update(key, referred_by=ref)
     desc = "%s — %d days" % (p["name"], p["period_days"])
     if method == "card":
         url, ref = cardpay.create_checkout(price, order_id=key, description=desc)
@@ -84,6 +115,29 @@ def apply_payment(order_id, payment_id):
                   "Activation key: %s\nEnter this key in the product to unlock it."
                   % (lic["product"], when, lic["license_key"]))
     notify.admin("payment ok: %s -> active until %s" % (lic["license_key"], when))
+    _reward_referrer(lic)
+
+
+def _reward_referrer(lic):
+    """First paid activation of a referred license credits the referrer with
+    free days. Runs once per referred license."""
+    code = lic.get("referred_by")
+    if not code or lic.get("ref_rewarded"):
+        return
+    ref = store.get_by_ref_code(code)
+    if not ref or ref["license_key"] == lic["license_key"]:
+        return
+    days = config.REFERRAL_REWARD_DAYS
+    base = max(store.now(), ref.get("paid_until") or 0)
+    store.update(ref["license_key"], status="active", paid_until=base + days * DAY,
+                 revoke_at=None, notified=0)
+    store.update(lic["license_key"], ref_rewarded=1)
+    until = time.strftime("%Y-%m-%d", time.gmtime(base + days * DAY))
+    notify.client(ref.get("contact"),
+                  "🎉 A referral of yours just subscribed — you've earned %d free days! "
+                  "Your access now runs to %s (UTC). Keep sharing your link." % (days, until))
+    notify.admin("referral reward: %s credited %dd (referred %s)"
+                 % (ref["license_key"], days, lic["license_key"]))
 
 
 def check_access(lic):
@@ -175,6 +229,8 @@ class H(BaseHTTPRequestHandler):
 
         if u.path == "/verify":
             self._verify(one("key"), one("account"), one("machine"), one("product"))
+        elif u.path == "/reflink":
+            self._reflink(one("key"))
         elif u.path == "/admin/list":
             self._admin_list()
         elif u.path == "/buy":
@@ -310,10 +366,24 @@ class H(BaseHTTPRequestHandler):
         else:
             data = {k: v[0] for k, v in urllib.parse.parse_qs(raw.decode()).items()}
         res, err = start_checkout(data.get("product", ""), data.get("contact", ""),
-                                  method=(data.get("method") or "crypto"))
+                                  method=(data.get("method") or "crypto"),
+                                  ref=(data.get("ref") or ""))
         if err:
             return self._send(400, {"error": err})
         self._send(200, res)
+
+    def _reflink(self, key):
+        """Return the caller's personal referral link + stats. Any known,
+        non-revoked key can share (admin keys too)."""
+        lic = store.get(key)
+        if not lic:
+            return self._send(200, {"ok": False, "reason": "unknown key"})
+        if lic["status"] == "revoked":
+            return self._send(200, {"ok": False, "reason": "inactive"})
+        code = ensure_ref_code(lic)
+        self._send(200, {"ok": True, "code": code, "link": ref_link(code),
+                         "referrals": store.count_referrals(code),
+                         "reward_days": config.REFERRAL_REWARD_DAYS})
 
     def _admin_issue(self):
         if not self._admin_ok():
@@ -450,14 +520,17 @@ button{background:#111a2b;color:#fff;border:0;cursor:pointer}small{color:#667}</
 message the moment payment confirms.</p>
 <label>Your Telegram chat id or email (so we can send your key + renewal reminders)</label>
 <input id=contact placeholder="e.g. 123456789 or you@email.com">
+<div id=refnote style="display:none;background:#eef4ff;border:1px solid #cfe0ff;border-radius:8px;padding:10px;font-size:13px;color:#26406b">Referred by a friend — subscribe below and they'll earn free time too.</div>
 <button onclick="go('crypto')">Pay with crypto</button>
 %(card_btn)s
 <small>Access renews automatically on payment; lapses are removed %(grace)dh
 after a reminder.</small>
 <script>
+var REF = new URLSearchParams(location.search).get('ref') || '';
+if(REF){ document.getElementById('refnote').style.display='block'; }
 function go(method){
  fetch('/checkout',{method:'POST',headers:{'Content-Type':'application/json'},
-  body:JSON.stringify({product:'%(code)s',method:method,contact:document.getElementById('contact').value})})
+  body:JSON.stringify({product:'%(code)s',method:method,ref:REF,contact:document.getElementById('contact').value})})
  .then(r=>r.json()).then(d=>{if(d.invoice_url)location=d.invoice_url;else alert(d.error||'error')})
  .catch(e=>alert(e));
 }

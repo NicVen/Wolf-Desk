@@ -1,12 +1,11 @@
 {
-  "version": "2.1.0",
+  "version": "2.2.0",
   "date": "2026-09-19",
-  "title": "Live headlines on every pair",
+  "title": "Refer a friend, earn free time",
   "type": "feature",
   "notes": [
-    "NEW: real market headlines inside each instrument's outlook — tap Today's Outlook to see the latest news moving that pair, with the source and a bull/bear news read.",
-    "Headlines cover every asset class: commodities, FX, indices, stocks and crypto.",
-    "The news flow now also feeds the bull/bear case, so the outlook reflects what's actually in the headlines.",
-    "Plus the daily outlook, charts, 1H/Daily switch and structure-based trade levels."
+    "NEW: Refer & earn — share your personal link from the home screen; when a friend subscribes through it, 30 free days are added to your access. No limit.",
+    "Live headlines on every pair inside Today's Outlook (commodities, FX, indices, stocks, crypto).",
+    "The daily outlook, direction chart, 1H/Daily switch and structure-based trade levels."
   ]
 }

@@ -50,7 +50,10 @@ def _init(c):
     for col, ddl in (("no_bind", "INTEGER DEFAULT 0"),
                      ("admin", "INTEGER DEFAULT 0"),
                      ("last_seen", "INTEGER"),
-                     ("last_account", "TEXT")):
+                     ("last_account", "TEXT"),
+                     ("ref_code", "TEXT"),
+                     ("referred_by", "TEXT"),
+                     ("ref_rewarded", "INTEGER DEFAULT 0")):
         try:
             c.execute("ALTER TABLE licenses ADD COLUMN %s %s" % (col, ddl))
         except sqlite3.OperationalError:
@@ -119,6 +122,26 @@ def all_licenses():
     with _LOCK:
         rows = _conn().execute("SELECT * FROM licenses ORDER BY updated DESC").fetchall()
         return [dict(r) for r in rows]
+
+
+def get_by_ref_code(code):
+    """The license that owns this referral code, or None."""
+    if not code:
+        return None
+    with _LOCK:
+        r = _conn().execute("SELECT * FROM licenses WHERE ref_code=? LIMIT 1", (code,)).fetchone()
+        return dict(r) if r else None
+
+
+def count_referrals(code):
+    """How many paying customers this referral code has brought in."""
+    if not code:
+        return 0
+    with _LOCK:
+        r = _conn().execute(
+            "SELECT COUNT(*) c FROM licenses WHERE referred_by=? AND ref_rewarded=1",
+            (code,)).fetchone()
+        return r["c"] if r else 0
 
 
 def active_contacts(product):

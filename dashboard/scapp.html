@@ -393,11 +393,37 @@ function loadClass(cb){
 // ---------- home ----------
 function showHome(){
   el("refreshBtn").style.display=""; el("homeBtn").style.display="none";
-  el("main").innerHTML = '<div class="chips" id="chips"></div><div id="list"></div>';
+  el("main").innerHTML = '<div class="chips" id="chips"></div><div id="list"></div><div id="refbox"></div>';
   el("chips").innerHTML = CLASSES.map(function(c){
     return '<div class="chip'+(c[0]===CUR?' on':'')+'" onclick="pick(\''+c[0]+'\')">'+c[1]+'</div>';
   }).join("");
   if(DATA) renderHome(); else loadClass();
+  loadRef();
+}
+// ---------- refer & earn ----------
+var REFLINK="";
+function loadRef(){
+  var box=el("refbox"); if(!box) return;
+  fetch(PAY+"/reflink?key="+encodeURIComponent(K())).then(function(r){ return r.json(); }).then(function(d){
+    if(!d||!d.ok){ box.innerHTML=""; return; }
+    REFLINK=d.link;
+    var cnt=d.referrals? (d.referrals+" referral"+(d.referrals==1?"":"s")+" so far · ") : "";
+    box.innerHTML='<div class="olcard" style="cursor:default;margin-top:14px">'+
+      '<div class="oltop">🎁 Refer &amp; earn</div>'+
+      '<div class="olhead">Give a friend the app — get '+d.reward_days+' free days</div>'+
+      '<div class="muted" style="margin:4px 0 12px;font-size:12px">'+cnt+'When someone subscribes through your link, '+d.reward_days+' days are added to your access. No limit.</div>'+
+      '<button class="btn" style="padding:11px" onclick="shareRef()">Share my link</button>'+
+    '</div>';
+  }).catch(function(){ box.innerHTML=""; });
+}
+function shareRef(){
+  if(!REFLINK) return;
+  if(navigator.share){
+    navigator.share({title:"STAALCALIBUR Mobile App", text:"Pre-trade intel for every market — check before you trade.", url:REFLINK}).catch(function(){});
+  } else {
+    try{ navigator.clipboard.writeText(REFLINK); toast("Referral link copied!"); }
+    catch(e){ toast(REFLINK); }
+  }
 }
 function pick(k){ CUR=k; showHome(); loadClass(); }
 function renderHome(){
