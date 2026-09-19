@@ -534,6 +534,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
             s = watchdog.status()
             self._send(200 if s["ok"] else 503, json.dumps(s)); return
 
+        # ---- Public marketing site (staalwag.com apex + www) ----
+        host = self.headers.get("Host", "").lower().split(":")[0]
+        if host in ("staalwag.com", "www.staalwag.com") and path in ("/", "/index.html"):
+            self._send(200, _read(os.path.join("dashboard", "site.html")),
+                       "text/html; charset=utf-8"); return
+        if path == "/site":   # reachable on any host for previewing the site
+            self._send(200, _read(os.path.join("dashboard", "site.html")),
+                       "text/html; charset=utf-8"); return
+        if path == "/og-staalwag.png":
+            self._send(200, _read(os.path.join("dashboard", "og-staalwag.png"), b""),
+                       "image/png"); return
+
         # ---- STAALCALIBUR app (app.* subdomain, license-gated — not WOLF_PASS) ----
         host = self.headers.get("Host", "")
         if path == "/scapp.webmanifest":

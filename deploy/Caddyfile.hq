@@ -9,7 +9,26 @@
 # Ports (all bound behind Caddy; only 80/443 are open in ufw):
 #   wolf 8777 · staalwag 8781 · veldrin 8782 · ea-forge = static files
 
-# --- HQ hub (apex) ---
+# =====================================================================
+# Real domain: staalwag.com (via Cloudflare). For Caddy to obtain the
+# Let's Encrypt certs, set the Cloudflare DNS records to "DNS only" (grey
+# cloud) first; once issued you may re-enable the proxy with SSL mode
+# "Full (strict)". Apex + www + app + pay all terminate here.
+# =====================================================================
+staalwag.com, www.staalwag.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8777
+}
+app.staalwag.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8777
+}
+pay.staalwag.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8790
+}
+
+# --- HQ hub (apex, sslip fallback) ---
 178.104.88.38.sslip.io {
 	encode zstd gzip
 	root * /opt/wolf-desk/deploy/hub
