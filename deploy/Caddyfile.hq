@@ -67,6 +67,12 @@ pay.178.104.88.38.sslip.io {
 	reverse_proxy 127.0.0.1:8790
 }
 
+# --- STAALCALIBUR app (installable PWA, license-gated; served by the wolf desk) ---
+app.178.104.88.38.sslip.io {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8777
+}
+
 # --- Cloud desktop (XFCE via noVNC) — the "like my PC" workspace ---
 # Password gate lives in /etc/caddy/desk-auth.conf, written by desktop-setup.sh
 # (kept out of git). VNC itself is bound to localhost; Caddy is the only way in.

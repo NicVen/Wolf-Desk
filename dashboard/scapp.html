@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0e15" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="manifest" href="/scapp.webmanifest" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<title>STAALCALIBUR</title>
+<style>
+  :root{--bg:#0a0e15;--card:#131a26;--card2:#18212f;--line:#1e2a3a;--fg:#e7edf3;
+    --mut:#7d8a9c;--steel:#8aa0b4;--chrome:#c7d2dd;--accent:#6ea8fe;
+    --buy:#2ecc71;--sell:#ff5b5b;--watch:#f2c14e;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding-bottom:env(safe-area-inset-bottom)}
+  .wrap{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+  header{position:sticky;top:0;z-index:10;background:rgba(10,14,21,.92);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);padding:14px 16px;display:flex;align-items:center;gap:10px}
+  .logo{font-weight:900;letter-spacing:2px;font-size:16px}
+  .logo .v{color:var(--steel);font-weight:700}
+  .sp{flex:1}
+  .ico{background:var(--card);border:1px solid var(--line);color:var(--chrome);border-radius:10px;
+    padding:8px 10px;font-size:13px;font-weight:700;cursor:pointer}
+  main{flex:1;padding:14px 16px 40px}
+  /* gate */
+  .gate{min-height:80vh;display:flex;flex-direction:column;justify-content:center;gap:14px;text-align:center;padding:0 6px}
+  .gate h1{font-size:26px;letter-spacing:3px;font-weight:900;margin:0}
+  .gate .tag{color:var(--mut);font-size:13px;margin:-6px 0 8px}
+  input{width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--card);
+    color:var(--fg);font-size:16px;text-align:center;letter-spacing:1px}
+  .btn{width:100%;padding:14px;border:0;border-radius:12px;background:var(--accent);color:#04122b;
+    font-size:16px;font-weight:800;cursor:pointer}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--steel);font-weight:700}
+  .err{color:var(--sell);font-size:13px;min-height:18px}
+  .muted{color:var(--mut);font-size:12px;line-height:1.5}
+  /* class chips */
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;-webkit-overflow-scrolling:touch}
+  .chip{white-space:nowrap;padding:8px 14px;border:1px solid var(--line);border-radius:999px;
+    background:var(--card);color:var(--steel);font-size:13px;font-weight:700;cursor:pointer}
+  .chip.on{background:var(--chrome);color:#0a0e15;border-color:var(--chrome)}
+  /* list rows */
+  .row{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:12px 14px;margin:8px 0;cursor:pointer}
+  .row:active{background:var(--card2)}
+  .rk{width:26px;color:var(--mut);font-size:12px;font-weight:800;text-align:center}
+  .rname{flex:1;min-width:0}
+  .rname b{display:block;font-size:15px}
+  .rname span{color:var(--mut);font-size:11px}
+  .badge{font-size:11px;font-weight:800;padding:4px 8px;border-radius:8px}
+  .sc{font-size:20px;font-weight:900;min-width:44px;text-align:right}
+  /* verdict banner */
+  .verdict{border-radius:16px;padding:18px;text-align:center;margin:6px 0 14px}
+  .verdict .big{font-size:30px;font-weight:900;letter-spacing:1px}
+  .verdict .conv{font-size:13px;opacity:.9;margin-top:2px}
+  .kpis{display:flex;gap:8px;margin:12px 0}
+  .kpi{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+  .kpi .l{color:var(--mut);font-size:10px;letter-spacing:1px;text-transform:uppercase}
+  .kpi .v{font-size:15px;font-weight:800;margin-top:3px}
+  .sec{margin:16px 0 8px;color:var(--steel);font-size:12px;letter-spacing:2px;text-transform:uppercase}
+  .bar{display:flex;align-items:center;gap:8px;margin:6px 0}
+  .bar .bl{width:70px;color:var(--mut);font-size:12px}
+  .bt{flex:1;height:8px;background:var(--line);border-radius:6px;overflow:hidden}
+  .bt i{display:block;height:100%;background:var(--chrome)}
+  .chk{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .chk .m{width:22px;text-align:center}
+  .why{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:13px;
+    line-height:1.55;color:var(--chrome)}
+  .foot{color:var(--mut);font-size:10px;line-height:1.5;margin-top:22px;border-top:1px solid var(--line);padding-top:12px}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">STAALCALIBUR <span class="v">V13</span></div>
+    <div class="sp"></div>
+    <button class="ico" id="refreshBtn" onclick="loadClass()" style="display:none">↻</button>
+    <button class="ico" id="homeBtn" onclick="showHome()" style="display:none">Home</button>
+  </header>
+  <main id="main"></main>
+</div>
+
+<script>
+var PAY = "https://pay.178.104.88.38.sslip.io";
+var CLASSES = [["commodities","Commodities"],["fx","FX"],["indices","Indices"],["stocks","Stocks"],["crypto","Crypto"]];
+var CUR = "commodities";
+var DATA = null;
+
+function K(){ try{return localStorage.getItem("sc_key")||"";}catch(e){return "";} }
+function DEV(){ try{ var d=localStorage.getItem("sc_dev"); if(!d){ d=(Date.now().toString(36)+Math.random().toString(36).slice(2,8)); localStorage.setItem("sc_dev",d);} return d; }catch(e){return "web";} }
+function el(id){ return document.getElementById(id); }
+function esc(s){ return (s==null?"":String(s)).replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+
+// ---------- verdict helpers ----------
+function verdictOf(o){ return (o.analysis && o.analysis.verdict) ? o.analysis.verdict.toUpperCase() : (o.score>=60?"BUY":o.score>=45?"WATCH":"SELL"); }
+function vColor(v){ return v==="BUY"?"var(--buy)":v==="SELL"?"var(--sell)":"var(--watch)"; }
+function scColor(s){ return s>=65?"var(--buy)":s>=50?"var(--watch)":"var(--sell)"; }
+
+// ---------- gate ----------
+function showGate(msg){
+  el("refreshBtn").style.display="none"; el("homeBtn").style.display="none";
+  el("main").innerHTML =
+    '<div class="gate">'+
+    '<h1>STAALCALIBUR</h1>'+
+    '<div class="tag">Pre-trade intel — check before you pull the trigger.</div>'+
+    '<input id="keyIn" placeholder="Enter your activation key" value="'+esc(K())+'" autocapitalize="characters" autocomplete="off">'+
+    '<div class="err" id="gErr">'+(msg?esc(msg):"")+'</div>'+
+    '<button class="btn" onclick="unlock()">Unlock</button>'+
+    '<a class="btn ghost" href="'+PAY+'/buy?product=APP" target="_blank" rel="noopener">Get the app — $25/mo</a>'+
+    '<div class="muted">Rental only. Your key is remembered on this device. Decision-support &amp; education only — not financial advice.</div>'+
+    '</div>';
+}
+function unlock(){
+  var k=(el("keyIn").value||"").trim();
+  if(!k){ el("gErr").textContent="Enter your activation key."; return; }
+  el("gErr").textContent="Checking…";
+  try{ localStorage.setItem("sc_key",k); }catch(e){}
+  loadClass(function(ok,reason){
+    if(ok){ showHome(); }
+    else { el("gErr") && (el("gErr").textContent = reason || "Key not valid or expired."); }
+  });
+}
+
+// ---------- data ----------
+function loadClass(cb){
+  var url = "/appdata?class="+CUR+"&key="+encodeURIComponent(K())+"&dev="+encodeURIComponent(DEV());
+  fetch(url).then(function(r){
+    if(r.status===403){ throw {code:403}; }
+    return r.text();
+  }).then(function(t){
+    DATA = t? JSON.parse(t) : {opportunities:[]};
+    if(cb) cb(true);
+    else renderHome();
+  }).catch(function(e){
+    if(e && e.code===403){ showGate("Key not valid or expired. Renew to continue."); if(cb) cb(false,"Key not valid or expired."); }
+    else { if(cb) cb(false,"Network error — try again."); else el("main").innerHTML='<p class="muted">Network error. Pull to retry.</p>'; }
+  });
+}
+
+// ---------- home ----------
+function showHome(){
+  el("refreshBtn").style.display=""; el("homeBtn").style.display="none";
+  el("main").innerHTML = '<div class="chips" id="chips"></div><div id="list"></div>';
+  el("chips").innerHTML = CLASSES.map(function(c){
+    return '<div class="chip'+(c[0]===CUR?' on':'')+'" onclick="pick(\''+c[0]+'\')">'+c[1]+'</div>';
+  }).join("");
+  if(DATA) renderHome(); else loadClass();
+}
+function pick(k){ CUR=k; showHome(); loadClass(); }
+function renderHome(){
+  var ops=(DATA&&DATA.opportunities)||[];
+  if(!ops.length){ el("list").innerHTML='<p class="muted">No data for this class yet.</p>'; return; }
+  el("list").innerHTML = ops.slice(0,20).map(function(o,i){
+    var v=verdictOf(o);
+    return '<div class="row" onclick="consult('+i+')">'+
+      '<div class="rk">#'+(i+1)+'</div>'+
+      '<div class="rname"><b>'+esc(o.name)+'</b><span>'+esc(o.category||"")+' · '+esc(o.trend_desc||"")+'</span></div>'+
+      '<div class="badge" style="background:'+vColor(v)+'22;color:'+vColor(v)+'">'+v+'</div>'+
+      '<div class="sc" style="color:'+scColor(o.score)+'">'+Math.round(o.score)+'</div></div>';
+  }).join("");
+}
+
+// ---------- consult ----------
+function consult(i){
+  var o=(DATA.opportunities||[])[i]; if(!o) return;
+  el("refreshBtn").style.display="none"; el("homeBtn").style.display="";
+  var v=verdictOf(o), vc=vColor(v);
+  var a=o.analysis||{};
+  var bd=o.breakdown||{};
+  var maxes={catalyst:25,trend:25,position:20,supply:20,volfit:10};
+  var bars=Object.keys(maxes).map(function(k){
+    var pct=Math.max(0,Math.min(100,Math.round((bd[k]||0)/maxes[k]*100)));
+    return '<div class="bar"><span class="bl">'+k+'</span><div class="bt"><i style="width:'+pct+'%"></i></div></div>';
+  }).join("");
+  // chips: regime + validation if present
+  var chips="";
+  if(o.regime){ var rg=String(o.regime).toUpperCase(); chips+='<div class="kpi"><div class="l">Regime</div><div class="v">'+esc(rg)+'</div></div>'; }
+  if(o.validation){ chips+='<div class="kpi"><div class="l">Validation</div><div class="v">'+esc(o.validation)+'</div></div>'; }
+  // checklist
+  var isBuy=v==="BUY";
+  var checks=[
+    ["Score ≥ 60", o.score>=60],
+    ["Trend aligned", isBuy ? (o.above_ma20&&o.above_ma50) : (!o.above_ma20&&!o.above_ma50)],
+    ["Momentum "+(isBuy?"up":"down"), isBuy ? (o.mom20>0) : (o.mom20<0)],
+    ["Volatility sane", (o.atr_pct!=null && o.atr_pct<5)],
+    ["Conviction not Low", (a.conviction||"").toLowerCase()!=="low"]
+  ];
+  if(o.regime){ var rgu=String(o.regime).toUpperCase(); checks.push(["Regime backs it", isBuy?rgu.indexOf("BULL")>=0:rgu.indexOf("BEAR")>=0]); }
+  var passed=checks.filter(function(c){return c[1];}).length;
+  var chkHtml=checks.map(function(c){
+    return '<div class="chk"><span class="m">'+(c[1]?"✅":"⬜")+'</span><span>'+c[0]+'</span></div>';
+  }).join("");
+
+  el("main").innerHTML =
+    '<div class="verdict" style="background:'+vc+'1a;border:1px solid '+vc+'55">'+
+      '<div class="big" style="color:'+vc+'">'+esc(o.name)+' · '+v+'</div>'+
+      '<div class="conv">'+esc(a.conviction? (a.conviction+" conviction") : "")+'  ·  '+passed+'/'+checks.length+' checks</div>'+
+    '</div>'+
+    '<div class="kpis">'+
+      '<div class="kpi"><div class="l">Score</div><div class="v" style="color:'+scColor(o.score)+'">'+Math.round(o.score)+'/100</div></div>'+
+      '<div class="kpi"><div class="l">Price</div><div class="v">'+esc(o.price)+'</div></div>'+
+      '<div class="kpi"><div class="l">Mom20</div><div class="v" style="color:'+(o.mom20>=0?"var(--buy)":"var(--sell)")+'">'+(o.mom20>=0?"+":"")+esc(o.mom20)+'%</div></div>'+
+    '</div>'+
+    (chips?('<div class="kpis">'+chips+'</div>'):'')+
+    '<div class="sec">Pre-trade checklist</div>'+chkHtml+
+    '<div class="sec">Score breakdown</div>'+bars+
+    '<div class="sec">Why</div><div class="why">'+esc(a.summary||o.note||"—")+(a.price_reasoning?('<br><br>'+esc(a.price_reasoning)):'')+'</div>'+
+    '<div class="foot">STAALCALIBUR is decision-support &amp; education only — a mechanical read of the data, not financial advice and not a signal to trade. You alone decide; trade a demo first and never risk more than you can lose.</div>';
+  window.scrollTo(0,0);
+}
+
+// ---------- boot + PWA ----------
+if(K()){ CUR="commodities"; showHome(); } else { showGate(); }
+if("serviceWorker" in navigator){ navigator.serviceWorker.register("/scsw.js").catch(function(){}); }
+</script>
+</body>
+</html>

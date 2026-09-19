@@ -25,7 +25,7 @@ Routes:
   /news?name=Gold   live headlines on demand
 """
 import http.server, socketserver, json, os, sys, io, contextlib, threading, time
-import hashlib, hmac, base64
+import hashlib, hmac, base64, urllib.parse, urllib.request
 from urllib.parse import urlparse, parse_qs, urlencode
 
 try:
@@ -377,6 +377,32 @@ def _read(path, default=b"{}"):
         return default
 
 
+# --- STAALCALIBUR app: license check against the licensing service (localhost) ---
+_APP_LIC_CACHE = {}
+def _app_license_ok(key, dev):
+    """True if `key` is a live STAALCALIBUR App license. Verifies via the
+    licensing service on the same box; caches the answer for 5 min."""
+    if not key:
+        return False
+    now = time.time()
+    ck = key + "|" + (dev or "")
+    c = _APP_LIC_CACHE.get(ck)
+    if c and c[1] > now:
+        return c[0]
+    ok = False
+    try:
+        base = os.environ.get("LICENSING_URL", "http://127.0.0.1:8790")
+        url = (base + "/verify?product=APP&key=" + urllib.parse.quote(key) +
+               "&account=" + urllib.parse.quote(dev or "app") +
+               "&machine=" + urllib.parse.quote(dev or "app"))
+        with urllib.request.urlopen(url, timeout=6) as r:
+            ok = bool(json.loads(r.read().decode()).get("valid"))
+    except Exception:
+        ok = False
+    _APP_LIC_CACHE[ck] = (ok, now + 300)
+    return ok
+
+
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *a): pass
 
@@ -507,6 +533,23 @@ class Handler(http.server.BaseHTTPRequestHandler):
             # 200 all green / 503 anything down (component names only, no intel).
             s = watchdog.status()
             self._send(200 if s["ok"] else 503, json.dumps(s)); return
+
+        # ---- STAALCALIBUR app (app.* subdomain, license-gated — not WOLF_PASS) ----
+        host = self.headers.get("Host", "")
+        if path == "/scapp.webmanifest":
+            self._send(200, _read(os.path.join("dashboard", "scapp.webmanifest"), b"{}"),
+                       "application/manifest+json"); return
+        if path == "/scsw.js":
+            self._send(200, _read(os.path.join("dashboard", "scsw.js"), b""),
+                       "application/javascript"); return
+        if path == "/appdata":
+            key = q.get("key", [""])[0]; dev = q.get("dev", ["app"])[0]
+            if not _app_license_ok(key, dev):
+                self._send(403, b'{"error":"license"}'); return
+            self._send(200, _read(os.path.join("data", "opportunities_%s.json" % cls))); return
+        if host.startswith("app.") and path in ("/", "/index.html"):
+            self._send(200, _read(os.path.join("dashboard", "scapp.html")),
+                       "text/html; charset=utf-8"); return
 
         ok = self._authed(q)
 

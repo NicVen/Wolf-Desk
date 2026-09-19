@@ -72,6 +72,8 @@ PRODUCTS = {
     "TV_SCALP":     {"name": "Markov Scalper",        "price_solo": 0, "price_vip": 0, "period_days": 30, "type": "tradingview", "vip": False, "tbd": True},
     # Markov 2 Gate — a chart add-on (supplementary info, any pair/timeframe), FREE with the free subscription
     "TV_2GATE":     {"name": "Markov 2 Gate — chart add-on", "price_solo": 0, "price_vip": 0, "period_days": 30, "type": "addon", "vip": False, "free": True},
+    # --- STAALCALIBUR mobile app: rental only, $25/mo (not bundled in VIP) ---
+    "APP":       {"name": "STAALCALIBUR App", "price_solo": 25, "price_vip": 25, "period_days": 30, "type": "app", "vip": False},
     # --- VIP membership: $40/mo. Unlocks every vip=True product ---
     "VIP":       {"name": "VIP Membership", "price_solo": 40, "price_vip": 40, "period_days": 30, "type": "bundle", "vip": False},
 }
