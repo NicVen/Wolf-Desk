@@ -1,0 +1,1274 @@
+//@version=6
+indicator("Excalibur Edge V13 — Markov Omnibus", shorttitle="EE V13", overlay=true,
+          max_boxes_count=200, max_lines_count=500, max_labels_count=500)
+
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//  EXCALIBUR EDGE V13 — MARKOV OMNIBUS
+//  V12 base + Markov regime gate + REAL outcome tracking
+//  Changes vs V12:
+//   1. Markov 3-state regime engine (ported from server.js / Markov skill)
+//      - Blocks signals against persistent counter-regime (>80%)
+//      - Regime alignment feeds decision score
+//   2. Weekly tracker now tracks REAL signal outcomes (TP/SL walked
+//      forward bar by bar) — no more assumed-win P&L
+//   3. Daily protection counts only tradeable signals (score >= 6)
+//   4. Big-candle confirm requires body > 0.4 ATR (kills doji confirms)
+//   5. Minimum SL distance floor of 0.8 ATR (no spread-zone stops)
+// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+
+// ═══════════════════════════════════════════════════════
+// TIMEFRAME DETECTION
+// ═══════════════════════════════════════════════════════
+tfMins   = timeframe.in_seconds() / 60
+isHighTF = tfMins >= 240
+_atrLen  = tfMins <= 5 ? 20 : tfMins <= 60 ? 14 : 10
+_chanLen = tfMins <= 5 ? 30 : tfMins <= 60 ? 50 : tfMins <= 240 ? 80 : 100
+
+// ═══════════════════════════════════════════════════════
+// INSTRUMENT AUTO-DETECTION
+// ═══════════════════════════════════════════════════════
+isGold   = str.contains(syminfo.ticker, "XAU") or str.contains(syminfo.ticker, "GOLD")
+isOil    = str.contains(syminfo.ticker, "WTI") or str.contains(syminfo.ticker, "OIL") or str.contains(syminfo.ticker, "XTI")
+isJPY    = str.contains(syminfo.ticker, "JPY")
+isCrypto = syminfo.type == "crypto"
+isIndex  = syminfo.type == "index" or str.contains(syminfo.ticker, "SPX") or str.contains(syminfo.ticker, "NAS") or str.contains(syminfo.ticker, "NQ")  or str.contains(syminfo.ticker, "US30") or str.contains(syminfo.ticker, "DAX") or str.contains(syminfo.ticker, "UK100")
+isForex  = syminfo.type == "forex" and not isGold
+isStock  = syminfo.type == "stock"
+
+instrType = isGold   ? "GOLD"     : isOil    ? "OIL"     : isCrypto ? "CRYPTO"   : isIndex  ? "INDEX"    : isJPY    ? "JPY PAIR": isForex  ? "FOREX"    : isStock  ? "STOCK"    : "GENERAL"
+
+// ═══════════════════════════════════════════════════════
+// 🤖  AUTO CONFIGURE
+// ═══════════════════════════════════════════════════════
+autoMode = input.bool(true, "🤖 Auto-Configure Per Instrument", group="🤖  Auto Configure",
+     tooltip="ON = indicator sets optimal proximity, SL, RR, pip values, sessions automatically.\nOFF = use your manual settings below.")
+
+atr14    = ta.atr(14)
+volPct   = atr14 / close * 100
+volCtx   = volPct > 2.0 ? "HIGH VOL ⚡" : volPct > 0.5 ? "NORMAL" : "LOW VOL"
+volColor = volPct > 2.0 ? color.red     : volPct > 0.5 ? color.lime : color.yellow
+
+autoLevelProx = isCrypto ? 1.5  : isGold ? 0.8  : isOil ? 0.9 : isIndex ? 0.7  : isJPY ? 0.6 : 0.5
+autoAsiaProx  = isCrypto ? 1.5  : isGold ? 0.8  : isOil ? 0.9 : isIndex ? 0.8  : 0.6
+autoWeekProx  = isCrypto ? 2.0  : isGold ? 1.0  : isOil ? 1.0 : isIndex ? 0.9  : 0.6
+autoSLBuffer  = isCrypto ? 0.8  : isGold ? 0.5  : isOil ? 0.5 : isIndex ? 0.4  : 0.3
+autoWickRatio = isCrypto ? 1.5  : isGold ? 1.5  : isOil ? 1.8 : 2.0
+autoRR        = isCrypto ? 3.0  : isGold ? 2.5  : isOil ? 2.5 : isIndex ? 1.5  : 2.0
+autoPipSize   = isGold   ? 1.0  : isJPY  ? 0.01 : isCrypto ? 1.0 : isIndex ? 0.01 : 0.0001
+autoPipVal    = isGold   ? 100.0: isJPY  ? 1000.0: isCrypto ? 1.0 : isIndex ? 1.0  : 10.0
+autoSweepLB   = isCrypto ? 2    : 3
+autoUseNY     = isIndex  or isStock
+autoHTF1rec   = tfMins <= 5  ? "60"  : tfMins <= 15 ? "60"  : tfMins <= 60 ? "240" : "D"
+autoHTF2rec   = tfMins <= 5  ? "240" : tfMins <= 15 ? "240" : tfMins <= 60 ? "D"   : "W"
+
+// ═══════════════════════════════════════════════════════
+// ⚙️  ACCOUNT & RISK
+// ═══════════════════════════════════════════════════════
+accountBalance = input.float(50000, "Account Balance ($)",  group="⚙️  Account & Risk", minval=1000, step=1000)
+riskPercent    = input.float(0.5,   "Risk Per Trade (%)",   group="⚙️  Account & Risk", minval=0.1, maxval=2.0, step=0.1)
+riskAmount     = accountBalance * riskPercent / 100.0
+
+// ═══════════════════════════════════════════════════════
+// 🛡️  PROP FIRM PROTECTION
+// ═══════════════════════════════════════════════════════
+dailyLimitD = input.float(500.0, "Daily Loss Limit ($)", group="🛡️  Prop Firm Protection", minval=50, step=50)
+showProt    = input.bool(true,   "Show Protection Status",group="🛡️  Prop Firm Protection")
+
+var float dailyRisk = 0.0
+isNewDay = ta.change(time("D")) != 0
+if isNewDay
+    dailyRisk := 0.0
+
+locked      = dailyRisk >= dailyLimitD
+nearLimit   = dailyRisk >= dailyLimitD * 0.75 and not locked
+cautionZone = dailyRisk >= dailyLimitD * 0.50 and not nearLimit and not locked
+protPct     = math.min(dailyRisk / dailyLimitD * 100, 100)
+protRemain  = math.max(dailyLimitD - dailyRisk, 0)
+
+// ═══════════════════════════════════════════════════════
+// 🎲  MARKOV REGIME ENGINE  (NEW V13)
+//  3-state observable Markov chain: 0=Side, 1=Bull, 2=Bear
+//  Gate: persistent counter-regime (>80% self-transition) blocks
+//  trades against it. Alignment adds +1 to decision score.
+// ═══════════════════════════════════════════════════════
+useMarkov   = input.bool(true,  "Enable Markov Regime Gate", group="🎲  Markov Regime",
+     tooltip="Blocks signals fighting a persistent regime; rewards regime-aligned signals in the score.")
+mkPersThr   = input.float(0.80, "Persistence Block (0-1)",   group="🎲  Markov Regime", minval=0.5, maxval=0.99, step=0.05,
+     tooltip="If current regime self-transition probability exceeds this AND signal fights the regime → blocked.")
+mkMinHold   = input.int(3,      "Regime Min Hold (bars)",    group="🎲  Markov Regime", minval=1, maxval=10)
+
+// Auto lookback + threshold per TF and instrument
+mkLB     = tfMins <= 60 ? 5 : tfMins <= 240 ? 10 : 20
+mkThrBase = isCrypto ? 3.0 : isGold ? 1.5 : isOil ? 1.5 : isIndex ? 1.0 : 0.8
+mkThr     = mkThrBase * (tfMins <= 60 ? 0.4 : tfMins <= 240 ? 0.55 : 1.0)
+
+mkLogRet = math.log(close / close[mkLB])
+mkRegime = na(mkLogRet)             ? int(na) :
+           mkLogRet >  mkThr / 100  ? 1       :
+           mkLogRet < -mkThr / 100  ? 2       : 0
+
+// Transition counting
+var matrix<float> mkCnt = matrix.new<float>(3, 3, 0.0)
+if barstate.isconfirmed and not na(mkRegime[1]) and not na(mkRegime)
+    matrix.set(mkCnt, mkRegime[1], mkRegime, matrix.get(mkCnt, mkRegime[1], mkRegime) + 1.0)
+
+// Normalised transition matrix
+mkP = matrix.new<float>(3, 3, 1.0 / 3.0)
+for r = 0 to 2
+    rowSum = matrix.get(mkCnt, r, 0) + matrix.get(mkCnt, r, 1) + matrix.get(mkCnt, r, 2)
+    if rowSum > 0.0
+        for c = 0 to 2
+            matrix.set(mkP, r, c, matrix.get(mkCnt, r, c) / rowSum)
+
+// Debounced confirmed regime
+var int mkConfirmed = na
+mkHeld = not na(mkRegime)
+for k = 0 to mkMinHold - 1
+    mkHeld := mkHeld and not na(mkRegime[k]) and mkRegime[k] == mkRegime
+if barstate.isconfirmed and mkHeld
+    mkConfirmed := mkRegime
+
+mkCur         = nz(mkConfirmed, 0)
+mkPersistence = matrix.get(mkP, mkCur, mkCur)
+mkConviction  = matrix.get(mkP, mkCur, 1) - matrix.get(mkP, mkCur, 2)   // P(Bull) - P(Bear)
+mkBull        = mkCur == 1
+mkBear        = mkCur == 2
+
+// Gate logic
+mkBlockLong  = useMarkov and mkBear and mkPersistence > mkPersThr
+mkBlockShort = useMarkov and mkBull and mkPersistence > mkPersThr
+
+mkName  = mkBull ? "BULL" : mkBear ? "BEAR" : "SIDE"
+mkColor = mkBull ? color.lime : mkBear ? color.red : color.gray
+// (ribbon removed in V13.1 — plot-slot limit; regime visible in dashboard MARKOV row)
+
+// ═══════════════════════════════════════════════════════
+// 📊  HTF BIAS
+// ═══════════════════════════════════════════════════════
+useBiasFilter = input.bool(true,    "Enable HTF Bias Filter", group="📊  HTF Bias")
+htfPeriod1    = input.string("240", "HTF 1",                  group="📊  HTF Bias",
+     options=["30","60","120","240","D","W"],
+     tooltip="Auto recommends based on your chart TF — shown in dashboard.")
+htfPeriod2    = input.string("D",   "HTF 2",                  group="📊  HTF Bias",
+     options=["60","120","240","D","W"])
+emaFast       = input.int(20, "Fast EMA", group="📊  HTF Bias", minval=5,  maxval=50)
+emaSlow       = input.int(50, "Slow EMA", group="📊  HTF Bias", minval=20, maxval=200)
+showBiasCloud = input.bool(true, "Show Bias Cloud", group="📊  HTF Bias")
+
+[htf1Close, htf1Fast, htf1Slow] = request.security(syminfo.tickerid, htfPeriod1,
+     [close, ta.ema(close, emaFast), ta.ema(close, emaSlow)], lookahead=barmerge.lookahead_off)
+[htf2Close, htf2Fast, htf2Slow] = request.security(syminfo.tickerid, htfPeriod2,
+     [close, ta.ema(close, emaFast), ta.ema(close, emaSlow)], lookahead=barmerge.lookahead_off)
+
+htf1Bull = htf1Close > htf1Fast and htf1Close > htf1Slow
+htf1Bear = htf1Close < htf1Fast and htf1Close < htf1Slow
+htf2Bull = htf2Close > htf2Fast and htf2Close > htf2Slow
+htf2Bear = htf2Close < htf2Fast and htf2Close < htf2Slow
+
+overallBull = htf1Bull and htf2Bull
+overallBear = htf1Bear and htf2Bear
+biasTilt    = (htf1Bull or htf2Bull) and not (htf1Bear or htf2Bear) ? "LEANING BULL" : (htf1Bear or htf2Bear) and not (htf1Bull or htf2Bull) ? "LEANING BEAR" : "MIXED"
+
+// ═══════════════════════════════════════════════════════
+// ⚡  MOMENTUM FILTERS
+// ═══════════════════════════════════════════════════════
+useRSI    = input.bool(false, "RSI Filter",         group="⚡  Momentum Filters")
+rsiPeriod = input.int(14,    "RSI Period",           group="⚡  Momentum Filters", minval=5, maxval=30)
+rsiOB     = input.float(70,  "RSI Overbought",       group="⚡  Momentum Filters")
+rsiOS     = input.float(30,  "RSI Oversold",         group="⚡  Momentum Filters")
+useADX    = input.bool(false, "ADX Trend Filter",    group="⚡  Momentum Filters")
+adxPeriod = input.int(14,    "ADX Period",           group="⚡  Momentum Filters", minval=7, maxval=30)
+adxMin    = input.float(20,  "ADX Minimum",          group="⚡  Momentum Filters")
+useVol    = input.bool(false, "Volume Spike Filter", group="⚡  Momentum Filters")
+volMult   = input.float(1.5,  "Volume Multiplier",  group="⚡  Momentum Filters", step=0.1)
+
+rsiVal              = ta.rsi(close, rsiPeriod)
+[diPlus, diMinus, adxVal] = ta.dmi(adxPeriod, adxPeriod)
+volAvg              = ta.sma(volume, 20)
+volSpike            = volume > volAvg * volMult
+
+rsiLongOK  = not useRSI or rsiVal < rsiOB
+rsiShortOK = not useRSI or rsiVal > rsiOS
+adxOK      = not useADX or adxVal >= adxMin
+volOK      = not useVol or volSpike
+
+// ═══════════════════════════════════════════════════════
+// ⏰  SESSIONS
+// ═══════════════════════════════════════════════════════
+useSession   = input.bool(true,            "Session Filter",          group="⏰  Sessions")
+sessionLDN   = input.session("0700-0900", "London Open (UTC)",        group="⏰  Sessions")
+useNYSession = input.bool(true,            "Include New York Session", group="⏰  Sessions")
+sessionNY    = input.session("1200-1500", "New York Open (UTC)",      group="⏰  Sessions")
+showSessOpen = input.bool(true,            "Show Session Open Lines",  group="⏰  Sessions")
+
+effUseSession = autoMode ? (not isCrypto and not isHighTF) : (useSession and not isHighTF)
+
+inLDN      = not na(time(timeframe.period, sessionLDN))
+inNY       = not na(time(timeframe.period, sessionNY))
+effUseNY   = autoMode ? (autoUseNY or useNYSession) : useNYSession
+inSession  = not effUseSession or inLDN or (effUseNY and inNY)
+inAsiaSess = not na(time(timeframe.period, "0000-0700"))
+
+var float sessOpenLDN = na
+var float sessOpenNY  = na
+if isNewDay
+    sessOpenLDN := na
+    sessOpenNY  := na
+if inLDN and not inLDN[1]
+    sessOpenLDN := open
+if inNY and not inNY[1]
+    sessOpenNY  := open
+
+activeSessOpen = inLDN ? sessOpenLDN : (effUseNY and inNY) ? sessOpenNY : na
+
+// ═══════════════════════════════════════════════════════
+// 📐  KEY LEVELS — MANUAL INPUTS (used when autoMode=false)
+// ═══════════════════════════════════════════════════════
+showPDH        = input.bool(true,  "Prev Day High",          group="📐  Key Levels")
+showPDL        = input.bool(true,  "Prev Day Low",           group="📐  Key Levels")
+showPWH        = input.bool(true,  "Prev Week High",         group="📐  Key Levels")
+showPWL        = input.bool(true,  "Prev Week Low",          group="📐  Key Levels")
+showZones      = input.bool(true,  "Show Level Zones",       group="📐  Key Levels")
+levelProximity = input.float(0.5,  "Level Proximity (ATR×)", group="📐  Key Levels", minval=0.1, maxval=3.0)
+weekProxMult   = input.float(0.6,  "Week Proximity (ATR×)",  group="📐  Key Levels", minval=0.1, maxval=3.0)
+
+prevDayHigh  = request.security(syminfo.tickerid, "D", high[1], lookahead=barmerge.lookahead_on)
+prevDayLow   = request.security(syminfo.tickerid, "D", low[1],  lookahead=barmerge.lookahead_on)
+prevWeekHigh = request.security(syminfo.tickerid, "W", high[1], lookahead=barmerge.lookahead_on)
+prevWeekLow  = request.security(syminfo.tickerid, "W", low[1],  lookahead=barmerge.lookahead_on)
+
+// ═══════════════════════════════════════════════════════
+// 🌏  ASIA SESSION
+// ═══════════════════════════════════════════════════════
+showAsia      = input.bool(true,  "Show Asia H/L",         group="🌏  Asia Session")
+asiaProximity = input.float(0.6,  "Asia Proximity (ATR×)", group="🌏  Asia Session", minval=0.1, maxval=3.0)
+
+var float asiaHigh = na
+var float asiaLow  = na
+if isNewDay
+    asiaHigh := na
+    asiaLow  := na
+if inAsiaSess
+    asiaHigh := na(asiaHigh) ? high : math.max(asiaHigh, high)
+    asiaLow  := na(asiaLow)  ? low  : math.min(asiaLow,  low)
+asiaValid = not na(asiaHigh) and not na(asiaLow)
+
+// ═══════════════════════════════════════════════════════
+// MANUAL INPUTS — Rejection / Risk / Trail
+// ═══════════════════════════════════════════════════════
+wickRatioIn  = input.float(2.0, "Wick:Body Ratio",      group="🕯️  Rejection",     minval=1.0, maxval=5.0)
+rrRatioIn    = input.float(2.0, "Risk:Reward Ratio",    group="💰  Risk Management",minval=1.0, maxval=10.0, step=0.5)
+slBufferIn   = input.float(0.3, "SL Buffer (ATR×)",     group="💰  Risk Management",minval=0.0, maxval=1.0,  step=0.1)
+minSLATR     = input.float(0.8, "Min SL Distance (ATR×)",group="💰  Risk Management",minval=0.3, maxval=2.0, step=0.1,
+     tooltip="V13: stop never closer than this to entry. Kills spread-zone / stop-hunt stops on quiet bars.")
+showLevels   = input.bool(true, "Show Entry/SL/TP Lines",group="💰  Risk Management")
+
+trailMode    = input.string("Swing","Trail Mode",        group="🔄  Trail & Reversal",options=["Swing","ATR"])
+swingLen     = input.int(5,    "Swing Lookback",         group="🔄  Trail & Reversal",minval=2, maxval=20)
+trailATRMult = input.float(2.0,"ATR Trail Mult",         group="🔄  Trail & Reversal",minval=1.0, maxval=5.0, step=0.5)
+showTrail    = input.bool(true, "Show Trail Stop",       group="🔄  Trail & Reversal")
+showReversal = input.bool(true, "Show Reversal Warnings",group="🔄  Trail & Reversal")
+
+sweepLookbackIn = input.int(3, "Sweep Return Window",   group="💧  Liquidity Sweeps",minval=1, maxval=5)
+
+showOB   = input.bool(true, "Show Order Blocks",        group="🧱  Order Blocks")
+obLength = input.int(3,     "OB Origin (bars back)",    group="🧱  Order Blocks",   minval=1, maxval=10)
+obExtend = input.int(40,    "OB Extend (bars)",         group="🧱  Order Blocks",   minval=5, maxval=100)
+
+showFVG   = input.bool(true,  "Show FVGs",              group="⬜  Fair Value Gaps")
+fvgMinATR = input.float(0.3,  "Min FVG Size (ATR×)",    group="⬜  Fair Value Gaps", minval=0.05, maxval=3.0)
+fvgExtend = input.int(40,     "FVG Extend (bars)",      group="⬜  Fair Value Gaps", minval=5,    maxval=100)
+
+showChannel   = input.bool(true,  "Show Channel",       group="📈  Dynamic Trend Channel")
+channelLength = input.int(50,     "Lookback (bars)",    group="📈  Dynamic Trend Channel",minval=10, maxval=300, step=5)
+channelMult   = input.float(2.0,  "Width (StdDev×)",    group="📈  Dynamic Trend Channel",minval=0.5, maxval=5.0, step=0.5)
+showChanMid   = input.bool(true,  "Show Midline",       group="📈  Dynamic Trend Channel")
+showChanBreaks= input.bool(true,  "Breakout Markers",   group="📈  Dynamic Trend Channel")
+
+showTracker  = input.bool(true,   "Show Weekly Tracker",group="📅  Weekly Tracker")
+riskPerTrade = input.float(250.0, "Risk Per Trade ($)", group="📅  Weekly Tracker",   minval=10, step=10)
+
+showLabels   = input.bool(true, "Show Signal Labels",   group="🎨  Display")
+showDash     = input.bool(true, "Show Dashboard",       group="🎨  Display")
+showConfluence = input.bool(true,"Show Confluence Score",group="🎨  Display")
+
+// ═══════════════════════════════════════════════════════
+// EFFECTIVE VALUES  — auto overrides manual when autoMode=true
+// ═══════════════════════════════════════════════════════
+effLevelProx = autoMode ? autoLevelProx  : levelProximity
+effAsiaProx  = autoMode ? autoAsiaProx   : asiaProximity
+effWeekProx  = autoMode ? autoWeekProx   : weekProxMult
+effSLBuffer  = autoMode ? autoSLBuffer   : slBufferIn
+effWickRatio = autoMode ? autoWickRatio  : wickRatioIn
+effRR        = autoMode ? autoRR         : rrRatioIn
+effPipSize   = autoMode ? autoPipSize    : (isGold ? 1.0 : isJPY ? 0.01 : 0.0001)
+effPipVal    = autoMode ? autoPipVal     : (isGold ? 100.0 : isJPY ? 1000.0 : 10.0)
+effSweepLB   = autoMode ? autoSweepLB   : sweepLookbackIn
+
+// ═══════════════════════════════════════════════════════
+// CORE ATR + CANDLE MEASUREMENTS
+// ═══════════════════════════════════════════════════════
+atr          = ta.atr(_atrLen)
+proximity    = atr * effLevelProx
+weekProxD    = atr * effWeekProx
+asiaProx     = atr * effAsiaProx
+
+bodySize     = math.abs(close - open)
+prevBodySize = math.abs(close[1] - open[1])
+upperWick    = high - math.max(close, open)
+lowerWick    = math.min(close, open) - low
+isBull       = close > open
+isBear       = close < open
+// V13: "big" requires absolute size too — bigger-than-a-doji is not conviction
+isBigCandle  = bodySize > prevBodySize and bodySize > atr * 0.4
+
+// ═══════════════════════════════════════════════════════
+// PROXIMITY CHECKS
+// ═══════════════════════════════════════════════════════
+nearPDH = not na(prevDayHigh)  and high >= prevDayHigh - proximity  and low  <= prevDayHigh + proximity
+nearPDL = not na(prevDayLow)   and low  <= prevDayLow  + proximity  and high >= prevDayLow  - proximity
+nearPWH = not na(prevWeekHigh) and high >= prevWeekHigh - weekProxD and low  <= prevWeekHigh + weekProxD
+nearPWL = not na(prevWeekLow)  and low  <= prevWeekLow  + weekProxD and high >= prevWeekLow  - weekProxD
+nearAH  = asiaValid and high >= asiaHigh - asiaProx and low  <= asiaHigh + asiaProx
+nearAL  = asiaValid and low  <= asiaLow  + asiaProx and high >= asiaLow  - asiaProx
+
+// ═══════════════════════════════════════════════════════
+// 🧱  ORDER BLOCKS
+// ═══════════════════════════════════════════════════════
+bullOBDetect = showOB and isBear[obLength] and close > high[obLength]
+bearOBDetect = showOB and isBull[obLength] and close < low[obLength]
+
+var float lastBullOBHigh = na
+var float lastBullOBLow  = na
+var float lastBearOBHigh = na
+var float lastBearOBLow  = na
+
+if bullOBDetect
+    lastBullOBHigh := math.max(open[obLength], close[obLength])
+    lastBullOBLow  := math.min(open[obLength], close[obLength])
+    box.new(bar_index - obLength, lastBullOBHigh, bar_index + obExtend, lastBullOBLow,
+            border_color=color.new(color.lime, 30), bgcolor=color.new(color.lime, 87), border_width=1)
+
+if bearOBDetect
+    lastBearOBHigh := math.max(open[obLength], close[obLength])
+    lastBearOBLow  := math.min(open[obLength], close[obLength])
+    box.new(bar_index - obLength, lastBearOBHigh, bar_index + obExtend, lastBearOBLow,
+            border_color=color.new(color.red, 30), bgcolor=color.new(color.red, 87), border_width=1)
+
+nearBullOB = not na(lastBullOBHigh) and close >= lastBullOBLow  - atr * 0.3 and close <= lastBullOBHigh + atr * 0.5
+nearBearOB = not na(lastBearOBHigh) and close <= lastBearOBHigh + atr * 0.3 and close >= lastBearOBLow  - atr * 0.5
+
+// ═══════════════════════════════════════════════════════
+// ⬜  FAIR VALUE GAPS
+// ═══════════════════════════════════════════════════════
+fvgMinSize = atr * fvgMinATR
+bullFVGOK  = showFVG and low > high[2] and (low - high[2]) >= fvgMinSize
+bearFVGOK  = showFVG and high < low[2] and (low[2] - high) >= fvgMinSize
+
+var float lastBullFVGTop = na
+var float lastBullFVGBot = na
+var float lastBearFVGTop = na
+var float lastBearFVGBot = na
+
+if bullFVGOK
+    lastBullFVGTop := low
+    lastBullFVGBot := high[2]
+    box.new(bar_index - 2, low, bar_index + fvgExtend, high[2],
+            border_color=color.new(color.aqua, 40), bgcolor=color.new(color.aqua, 90), border_width=1)
+
+if bearFVGOK
+    lastBearFVGTop := low[2]
+    lastBearFVGBot := high
+    box.new(bar_index - 2, low[2], bar_index + fvgExtend, high,
+            border_color=color.new(color.fuchsia, 40), bgcolor=color.new(color.fuchsia, 90), border_width=1)
+
+nearBullFVG = not na(lastBullFVGTop) and close >= lastBullFVGBot - atr * 0.3 and close <= lastBullFVGTop + atr * 0.5
+nearBearFVG = not na(lastBearFVGTop) and close <= lastBearFVGTop + atr * 0.3 and close >= lastBearFVGBot - atr * 0.5
+
+// ═══════════════════════════════════════════════════════
+// 💧  LIQUIDITY SWEEP DETECTOR
+// ═══════════════════════════════════════════════════════
+var int pdhBreachBar = 0
+var int pdlBreachBar = 0
+var int ahBreachBar  = 0
+var int alBreachBar  = 0
+var int pwhBreachBar = 0
+var int pwlBreachBar = 0
+
+if isNewDay
+    pdhBreachBar := 0
+    pdlBreachBar := 0
+    ahBreachBar  := 0
+    alBreachBar  := 0
+
+pdhBreach = not na(prevDayHigh)  and close > prevDayHigh  and inSession and not locked
+pdlBreach = not na(prevDayLow)   and close < prevDayLow   and inSession and not locked
+ahBreach  = asiaValid            and close > asiaHigh      and inSession and not locked
+alBreach  = asiaValid            and close < asiaLow       and inSession and not locked
+pwhBreach = not na(prevWeekHigh) and close > prevWeekHigh  and inSession and not locked
+pwlBreach = not na(prevWeekLow)  and close < prevWeekLow   and inSession and not locked
+
+if pdhBreach
+    pdhBreachBar := bar_index
+if pdlBreach
+    pdlBreachBar := bar_index
+if ahBreach
+    ahBreachBar := bar_index
+if alBreach
+    alBreachBar := bar_index
+if pwhBreach
+    pwhBreachBar := bar_index
+if pwlBreach
+    pwlBreachBar := bar_index
+
+barsSincePDH = pdhBreachBar > 0 ? bar_index - pdhBreachBar : 999
+barsSincePDL = pdlBreachBar > 0 ? bar_index - pdlBreachBar : 999
+barsSinceAH  = ahBreachBar  > 0 ? bar_index - ahBreachBar  : 999
+barsSinceAL  = alBreachBar  > 0 ? bar_index - alBreachBar  : 999
+barsSincePWH = pwhBreachBar > 0 ? bar_index - pwhBreachBar : 999
+barsSincePWL = pwlBreachBar > 0 ? bar_index - pwlBreachBar : 999
+
+// Return sweeps — V13: Markov gate applied
+pdhSweepRet = barsSincePDH >= 1 and barsSincePDH <= effSweepLB and close < prevDayHigh and isBear and isBigCandle and inSession and not locked and not mkBlockShort
+pdlSweepRet = barsSincePDL >= 1 and barsSincePDL <= effSweepLB and close > prevDayLow  and isBull and isBigCandle and inSession and not locked and not mkBlockLong
+ahSweepRet  = asiaValid and barsSinceAH >= 1 and barsSinceAH <= effSweepLB and close < asiaHigh and isBear and isBigCandle and inSession and not locked and not mkBlockShort
+alSweepRet  = asiaValid and barsSinceAL >= 1 and barsSinceAL <= effSweepLB and close > asiaLow  and isBull and isBigCandle and inSession and not locked and not mkBlockLong
+pwhSweepRet = barsSincePWH >= 1 and barsSincePWH <= effSweepLB and close < prevWeekHigh and isBear and isBigCandle and inSession and not locked and not mkBlockShort
+pwlSweepRet = barsSincePWL >= 1 and barsSincePWL <= effSweepLB and close > prevWeekLow  and isBull and isBigCandle and inSession and not locked and not mkBlockLong
+
+// Same-candle sweeps
+pdhSameCdl = not locked and not na(prevDayHigh) and high > prevDayHigh  and close < prevDayHigh  and isBear and isBigCandle and inSession and not mkBlockShort
+pdlSameCdl = not locked and not na(prevDayLow) and low  < prevDayLow   and close > prevDayLow   and isBull and isBigCandle and inSession and not mkBlockLong
+ahSameCdl  = not locked and asiaValid and high > asiaHigh     and close < asiaHigh     and isBear and isBigCandle and inSession and not mkBlockShort
+alSameCdl  = not locked and asiaValid and low  < asiaLow      and close > asiaLow      and isBull and isBigCandle and inSession and not mkBlockLong
+pwhSameCdl = not locked and not na(prevWeekHigh) and high > prevWeekHigh and close < prevWeekHigh and isBear and isBigCandle and inSession and not mkBlockShort
+pwlSameCdl = not locked and not na(prevWeekLow) and low  < prevWeekLow   and close > prevWeekLow  and isBull and isBigCandle and inSession and not mkBlockLong
+
+sweepBullPDL = pdlSweepRet or pdlSameCdl
+sweepBearPDH = pdhSweepRet or pdhSameCdl
+sweepBullAL  = alSweepRet  or alSameCdl
+sweepBearAH  = ahSweepRet  or ahSameCdl
+sweepBullPWL = pwlSweepRet or pwlSameCdl
+sweepBearPWH = pwhSweepRet or pwhSameCdl
+
+anySweepLong  = sweepBullPDL or sweepBullAL or sweepBullPWL
+anySweepShort = sweepBearPDH or sweepBearAH or sweepBearPWH
+
+if sweepBullPDL
+    pdlBreachBar := 0
+if sweepBearPDH
+    pdhBreachBar := 0
+if sweepBullAL
+    alBreachBar := 0
+if sweepBearAH
+    ahBreachBar := 0
+if sweepBullPWL
+    pwlBreachBar := 0
+if sweepBearPWH
+    pwhBreachBar := 0
+
+// ═══════════════════════════════════════════════════════
+// 🕯️  REJECTION PATTERNS
+// ═══════════════════════════════════════════════════════
+bullWick    = lowerWick >= bodySize * effWickRatio and isBull
+bearWick    = upperWick >= bodySize * effWickRatio and isBear
+bullEngulf  = not na(prevDayLow)   and low  < prevDayLow   and close > prevDayLow  and isBull
+bearEngulf  = not na(prevDayHigh)  and high > prevDayHigh  and close < prevDayHigh and isBear
+bullEngAL   = asiaValid            and low  < asiaLow       and close > asiaLow    and isBull
+bearEngAH   = asiaValid            and high > asiaHigh      and close < asiaHigh   and isBear
+bullEngPWL  = not na(prevWeekLow)  and low  < prevWeekLow   and close > prevWeekLow  and isBull
+bearEngPWH  = not na(prevWeekHigh) and high > prevWeekHigh  and close < prevWeekHigh and isBear
+
+bullRejPDL = (bullWick and nearPDL) or bullEngulf
+bearRejPDH = (bearWick and nearPDH) or bearEngulf
+bullRejAL  = (bullWick and nearAL)  or bullEngAL
+bearRejAH  = (bearWick and nearAH)  or bearEngAH
+bullRejPWL = (bullWick and nearPWL) or bullEngPWL
+bearRejPWH = (bearWick and nearPWH) or bearEngPWH
+
+bullConfPDL = bullRejPDL[1] and isBull and isBigCandle and close > open[1]
+bearConfPDH = bearRejPDH[1] and isBear and isBigCandle and close < open[1]
+bullConfAL  = bullRejAL[1]  and isBull and isBigCandle and close > open[1]
+bearConfAH  = bearRejAH[1]  and isBear and isBigCandle and close < open[1]
+bullConfPWL = bullRejPWL[1] and isBull and isBigCandle and close > open[1]
+bearConfPWH = bearRejPWH[1] and isBear and isBigCandle and close < open[1]
+
+// ═══════════════════════════════════════════════════════
+// LOT SIZE CALCULATOR
+// ═══════════════════════════════════════════════════════
+calcLots(float ep, float sl) =>
+    slDist = math.abs(ep - sl)
+    slPips = slDist / effPipSize
+    raw    = slPips > 0 ? riskAmount / (slPips * effPipVal) : 0.0
+    math.max(0.01, math.round(raw * 100) / 100)
+
+// ═══════════════════════════════════════════════════════
+// RAW SIGNALS + MOMENTUM GATE + MARKOV GATE
+// ═══════════════════════════════════════════════════════
+longPDL  = bullConfPDL and inSession and not na(prevDayLow)   and not locked and rsiLongOK  and adxOK and volOK and not mkBlockLong
+shortPDH = bearConfPDH and inSession and not na(prevDayHigh)  and not locked and rsiShortOK and adxOK and volOK and not mkBlockShort
+longAL   = bullConfAL  and inSession and asiaValid             and not locked and rsiLongOK  and adxOK and volOK and not mkBlockLong
+shortAH  = bearConfAH  and inSession and asiaValid             and not locked and rsiShortOK and adxOK and volOK and not mkBlockShort
+longPWL  = bullConfPWL and inSession and not na(prevWeekLow)  and not locked and rsiLongOK  and adxOK and volOK and not mkBlockLong
+shortPWH = bearConfPWH and inSession and not na(prevWeekHigh) and not locked and rsiShortOK and adxOK and volOK and not mkBlockShort
+
+anyLongRaw  = longPDL  or longAL  or longPWL
+anyShortRaw = shortPDH or shortAH or shortPWH
+
+longAligned  = anyLongRaw  and (not useBiasFilter or overallBull)
+shortAligned = anyShortRaw and (not useBiasFilter or overallBear)
+longLowProb  = anyLongRaw  and useBiasFilter and not overallBull
+shortLowProb = anyShortRaw and useBiasFilter and not overallBear
+
+// ═══════════════════════════════════════════════════════
+// CONFLUENCE SCORING  0–5
+// ═══════════════════════════════════════════════════════
+confBull = 0
+confBull := nearPDL     ? confBull + 1 : confBull
+confBull := nearPWL     ? confBull + 1 : confBull
+confBull := nearAL      ? confBull + 1 : confBull
+confBull := nearBullOB  ? confBull + 1 : confBull
+confBull := nearBullFVG ? confBull + 1 : confBull
+confBull := math.min(confBull, 5)
+
+confBear = 0
+confBear := nearPDH     ? confBear + 1 : confBear
+confBear := nearPWH     ? confBear + 1 : confBear
+confBear := nearAH      ? confBear + 1 : confBear
+confBear := nearBearOB  ? confBear + 1 : confBear
+confBear := nearBearFVG ? confBear + 1 : confBear
+confBear := math.min(confBear, 5)
+
+confluenceScore = anyLongRaw or anySweepLong  ? confBull : anyShortRaw or anySweepShort ? confBear : 0
+
+confLabel(int s) =>
+    s == 5 ? "★★★★★ MAX 5/5"    : s == 4 ? "★★★★☆ ELITE 4/5"  : s == 3 ? "★★★☆☆ STRONG 3/5" : s == 2 ? "★★☆☆☆ MOD 2/5"    : s == 1 ? "★☆☆☆☆ 1/5"        : "—"
+
+confColor = confluenceScore >= 4 ? color.yellow : confluenceScore == 3 ? color.lime    : confluenceScore == 2 ? color.white   : color.gray
+
+// ═══════════════════════════════════════════════════════
+// SIGNAL DECISION SCORE  0–10
+//  2 = signal exists  +2 = bias aligned  +1 = Markov regime aligned
+//  +1 per confluence layer (max 4 counted)  +1 = correct session
+// ═══════════════════════════════════════════════════════
+hasSignal     = anyLongRaw or anyShortRaw or anySweepLong or anySweepShort
+biasAligned   = (anyLongRaw or anySweepLong) and overallBull or (anyShortRaw or anySweepShort) and overallBear
+mkAligned     = (anyLongRaw or anySweepLong) and mkBull or (anyShortRaw or anySweepShort) and mkBear
+sessionBonus  = inLDN or (effUseNY and inNY)
+
+decisionScore = 0
+decisionScore := hasSignal   ? decisionScore + 2 : decisionScore
+decisionScore := biasAligned ? decisionScore + 2 : decisionScore
+decisionScore := mkAligned and hasSignal ? decisionScore + 1 : decisionScore
+decisionScore := decisionScore + math.min(confluenceScore, 4)
+decisionScore := sessionBonus and hasSignal ? decisionScore + 1 : decisionScore
+decisionScore := math.min(decisionScore, 10)
+
+decisionText  = decisionScore >= 8 ? "🟢 EXECUTE NOW"  : decisionScore >= 6 ? "🟡 CONSIDER"     : decisionScore >= 4 ? "🟠 CAUTION"      : hasSignal          ? "🔴 SKIP"          : "— WATCHING —"
+decisionColor = decisionScore >= 8 ? color.lime   : decisionScore >= 6 ? color.yellow : decisionScore >= 4 ? color.orange : color.gray
+
+factorBull = (anyLongRaw or anySweepLong)
+fBias  = biasAligned  ? "✅Bias " : "❌Bias "
+fMk    = mkAligned    ? "✅Mkv "  : "❌Mkv "
+fPDL   = (factorBull ? nearPDL : nearPDH) ? "✅PDx "  : "❌PDx "
+fWeek  = (factorBull ? nearPWL : nearPWH) ? "✅Wk "   : "❌Wk "
+fAsia  = (factorBull ? nearAL  : nearAH)  ? "✅Asia "  : "❌Asia "
+fOB    = (factorBull ? nearBullOB : nearBearOB) ? "✅OB " : "❌OB "
+fFVG   = (factorBull ? nearBullFVG: nearBearFVG)? "✅FVG": "❌FVG"
+factorStr = fBias + fMk + fPDL + fWeek + fAsia + fOB + fFVG
+
+// ═══════════════════════════════════════════════════════
+// DAILY RISK — V13: only tradeable signals (score >= 6) consume
+// the protection budget. Watch-grade noise no longer locks the day.
+// ═══════════════════════════════════════════════════════
+anySignalThisBar = anyLongRaw or anyShortRaw or anySweepLong or anySweepShort
+if anySignalThisBar and decisionScore >= 6 and not locked
+    dailyRisk += riskAmount
+
+// ═══════════════════════════════════════════════════════
+// SIGNAL-SPECIFIC E/SL/TP — V13: min SL distance floor
+// ═══════════════════════════════════════════════════════
+minSLDist = atr * minSLATR
+
+longSLraw = anyLongRaw  ? low[1]  - atr * effSLBuffer : na
+longSL    = not na(longSLraw) ? math.min(longSLraw, close - minSLDist) : na
+longTP    = not na(longSL)  ? close + (close - longSL)  * effRR : na
+longLots  = not na(longSL)  ? calcLots(close, longSL) : na
+longRisk  = not na(longSL) and not na(longLots) ? math.round(longLots * (math.abs(close - longSL) / effPipSize * effPipVal)) : na
+
+shortSLraw = anyShortRaw ? high[1] + atr * effSLBuffer : na
+shortSL    = not na(shortSLraw) ? math.max(shortSLraw, close + minSLDist) : na
+shortTP    = not na(shortSL) ? close - (shortSL - close) * effRR : na
+shortLots  = not na(shortSL) ? calcLots(close, shortSL) : na
+shortRisk  = not na(shortSL) and not na(shortLots) ? math.round(shortLots * (math.abs(shortSL - close) / effPipSize * effPipVal)) : na
+
+sweepLongSLraw = anySweepLong  ? low  - atr * effSLBuffer : na
+sweepLongSL    = not na(sweepLongSLraw) ? math.min(sweepLongSLraw, close - minSLDist) : na
+sweepLongTP    = not na(sweepLongSL)  ? close + (close - sweepLongSL)  * effRR : na
+sweepLongLots  = not na(sweepLongSL)  ? calcLots(close, sweepLongSL) : na
+sweepLongRisk  = not na(sweepLongSL) and not na(sweepLongLots) ? math.round(sweepLongLots  * (math.abs(close - sweepLongSL)  / effPipSize * effPipVal)) : na
+
+sweepShortSLraw = anySweepShort ? high + atr * effSLBuffer : na
+sweepShortSL    = not na(sweepShortSLraw) ? math.max(sweepShortSLraw, close + minSLDist) : na
+sweepShortTP    = not na(sweepShortSL) ? close - (sweepShortSL - close) * effRR : na
+sweepShortLots  = not na(sweepShortSL) ? calcLots(close, sweepShortSL) : na
+sweepShortRisk  = not na(sweepShortSL) and not na(sweepShortLots) ? math.round(sweepShortLots * (math.abs(sweepShortSL - close) / effPipSize * effPipVal)) : na
+
+// ═══════════════════════════════════════════════════════
+// 🎯  REAL OUTCOME TRACKER  (NEW V13)
+//  Every confirmed signal logged with entry/SL/TP, walked forward
+//  bar by bar. SL checked BEFORE TP (conservative). Stats REAL.
+// ═══════════════════════════════════════════════════════
+var array<float> sigEntry = array.new<float>()
+var array<float> sigSL    = array.new<float>()
+var array<float> sigTP    = array.new<float>()
+var array<int>   sigDir   = array.new<int>()      // 1 long, -1 short
+
+var int   wk_wins    = 0
+var int   wk_losses  = 0
+var int   all_wins   = 0
+var int   all_losses = 0
+var float wk_pnlReal = 0.0
+
+// Resolve open signals on each confirmed bar
+if barstate.isconfirmed and array.size(sigDir) > 0
+    i = array.size(sigDir) - 1
+    while i >= 0
+        d  = array.get(sigDir, i)
+        sl = array.get(sigSL, i)
+        tp = array.get(sigTP, i)
+        resolved = false
+        win      = false
+        if d == 1
+            if low <= sl
+                resolved := true
+                win      := false
+            else if high >= tp
+                resolved := true
+                win      := true
+        else
+            if high >= sl
+                resolved := true
+                win      := false
+            else if low <= tp
+                resolved := true
+                win      := true
+        if resolved
+            if win
+                wk_wins    += 1
+                all_wins   += 1
+                wk_pnlReal += effRR * riskPerTrade
+            else
+                wk_losses  += 1
+                all_losses += 1
+                wk_pnlReal -= riskPerTrade
+            array.remove(sigEntry, i)
+            array.remove(sigSL, i)
+            array.remove(sigTP, i)
+            array.remove(sigDir, i)
+        i -= 1
+
+// Log new signals (confirmed bar only, cap 30 open)
+if barstate.isconfirmed and array.size(sigDir) < 30
+    if anySweepLong or (anyLongRaw and not anySweepLong)
+        _e  = close
+        _sl = anySweepLong ? sweepLongSL : longSL
+        _tp = anySweepLong ? sweepLongTP : longTP
+        if not na(_sl) and not na(_tp)
+            array.push(sigEntry, _e)
+            array.push(sigSL, _sl)
+            array.push(sigTP, _tp)
+            array.push(sigDir, 1)
+    if anySweepShort or (anyShortRaw and not anySweepShort)
+        _e  = close
+        _sl = anySweepShort ? sweepShortSL : shortSL
+        _tp = anySweepShort ? sweepShortTP : shortTP
+        if not na(_sl) and not na(_tp)
+            array.push(sigEntry, _e)
+            array.push(sigSL, _sl)
+            array.push(sigTP, _tp)
+            array.push(sigDir, -1)
+
+all_resolved = all_wins + all_losses
+all_winRate  = all_resolved > 0 ? math.round(all_wins / float(all_resolved) * 100.0) : 0
+// Expectancy in R: winRate*RR - lossRate*1
+all_expR     = all_resolved > 0 ? (all_wins / float(all_resolved)) * effRR - (all_losses / float(all_resolved)) : na
+
+// ═══════════════════════════════════════════════════════
+// 📈  DYNAMIC TREND CHANNEL
+// ═══════════════════════════════════════════════════════
+chanReg   = ta.linreg(close, channelLength, 0)
+chanPrev  = ta.linreg(close, channelLength, 1)
+chanSlope = chanReg - chanPrev
+chanStd   = ta.stdev(close, channelLength)
+chanUpper = chanReg + channelMult * chanStd
+chanLower = chanReg - channelMult * chanStd
+chanBull  = chanSlope > 0
+chanRange  = chanUpper - chanLower
+chanPosPct = chanRange > 0 ? math.round((close - chanLower) / chanRange * 100) : 50
+
+chanBreakUp  = showChanBreaks and close > chanUpper and close[1] <= chanUpper[1]
+chanBreakDn  = showChanBreaks and close < chanLower and close[1] >= chanLower[1]
+chanReentryU = showChanBreaks and close < chanUpper and close[1] >= chanUpper[1]
+chanReentryL = showChanBreaks and close > chanLower and close[1] <= chanLower[1]
+
+// ═══════════════════════════════════════════════════════
+// 🔄  TRAIL & REVERSAL
+// ═══════════════════════════════════════════════════════
+var bool  inLong     = false
+var bool  inShort    = false
+var float trailLong  = na
+var float trailShort = na
+
+if anyLongRaw or anySweepLong
+    inLong     := true
+    inShort    := false
+    trailLong  := anySweepLong ? sweepLongSL : longSL
+    trailShort := na
+if anyShortRaw or anySweepShort
+    inShort    := true
+    inLong     := false
+    trailShort := anySweepShort ? sweepShortSL : shortSL
+    trailLong  := na
+
+swingLo  = ta.lowest(low,  swingLen)
+swingHi  = ta.highest(high, swingLen)
+
+if inLong and not na(trailLong)
+    candidate = trailMode == "ATR" ? close - atr * trailATRMult : swingLo
+    if candidate > trailLong
+        trailLong := candidate
+if inShort and not na(trailShort)
+    candidate = trailMode == "ATR" ? close + atr * trailATRMult : swingHi
+    if candidate < trailShort
+        trailShort := candidate
+
+reversalWarnLong  = inLong  and isBear and isBigCandle
+reversalWarnShort = inShort and isBull and isBigCandle
+trailBreachLong   = inLong  and not na(trailLong)  and low  < trailLong
+trailBreachShort  = inShort and not na(trailShort) and high > trailShort
+
+if trailBreachLong or reversalWarnLong
+    inLong    := false
+    trailLong := na
+if trailBreachShort or reversalWarnShort
+    inShort    := false
+    trailShort := na
+
+// ═══════════════════════════════════════════════════════
+// 📅  WEEKLY TRACKER — V13: real outcomes
+// ═══════════════════════════════════════════════════════
+var int   wk_total  = 0
+var int   wk_elite  = 0
+var int   wk_high   = 0
+var int   wk_low    = 0
+var int   wk_longs  = 0
+var int   wk_shorts = 0
+var int   lastWk    = 0
+
+currentWeek = weekofyear(time)
+if currentWeek != lastWk
+    wk_total   := 0
+    wk_elite   := 0
+    wk_high    := 0
+    wk_low     := 0
+    wk_longs   := 0
+    wk_shorts  := 0
+    wk_wins    := 0
+    wk_losses  := 0
+    wk_pnlReal := 0.0
+    lastWk     := currentWeek
+
+if anySweepLong or anySweepShort
+    wk_total += 1
+    wk_elite += 1
+    if anySweepLong
+        wk_longs += 1
+    if anySweepShort
+        wk_shorts += 1
+
+if anyLongRaw or anyShortRaw
+    wk_total += 1
+    if anyLongRaw
+        wk_longs += 1
+    if anyShortRaw
+        wk_shorts += 1
+    if longAligned or shortAligned
+        wk_high += 1
+    else
+        wk_low += 1
+
+wk_resolved = wk_wins + wk_losses
+wk_winRate  = wk_resolved > 0 ? math.round(wk_wins / float(wk_resolved) * 100) : 0
+
+// ═══════════════════════════════════════════════════════
+// BACKGROUNDS
+// ═══════════════════════════════════════════════════════
+bgcolor(showProt ? (locked     ? color.new(color.red,    92) : nearLimit   ? color.new(color.orange, 93) : cautionZone ? color.new(color.yellow, 95) : na) : na, title="Protection BG")
+bgcolor(showBiasCloud and not locked ? (overallBull ? color.new(color.green, 95) : overallBear ? color.new(color.red,   95) : color.new(color.gray, 97)) : na, title="Bias Cloud")
+bgcolor(showReversal ? (trailBreachLong or trailBreachShort ? color.new(color.orange, 80) : reversalWarnLong or reversalWarnShort ? color.new(color.yellow, 75) : na) : na,
+        title="Reversal Flash")
+
+// ═══════════════════════════════════════════════════════
+// PLOTS
+// ═══════════════════════════════════════════════════════
+plot(showPDH ? prevDayHigh : na, "PDH", color=color.new(color.red,   0), linewidth=2)
+plot(showPDL ? prevDayLow  : na, "PDL", color=color.new(color.green, 0), linewidth=2)
+plot(showAsia and asiaValid ? asiaHigh : na, "Asia High", color=color.new(#9b59b6, 0), linewidth=2)
+plot(showAsia and asiaValid ? asiaLow  : na, "Asia Low",  color=color.new(#1abc9c, 0), linewidth=2)
+plot(showPWH and not na(prevWeekHigh) ? prevWeekHigh : na,
+     "PWH", color=color.new(color.orange, 20), linewidth=1, style=plot.style_circles)
+plot(showPWL and not na(prevWeekLow)  ? prevWeekLow  : na,
+     "PWL", color=color.new(color.orange, 20), linewidth=1, style=plot.style_circles)
+plot(showSessOpen and not na(activeSessOpen) ? activeSessOpen : na,
+     "Session Open", color=color.new(color.white, 40), linewidth=1, style=plot.style_stepline)
+plot(ta.ema(close, 5), "EMA 5", color=color.new(color.red, 0), linewidth=2)
+plot(showTrail and inLong  ? trailLong  : na, "Long Trail",
+     color=color.new(color.orange, 0), linewidth=2, style=plot.style_stepline)
+plot(showTrail and inShort ? trailShort : na, "Short Trail",
+     color=color.new(color.orange, 0), linewidth=2, style=plot.style_stepline)
+
+chanLineCol = chanBull ? color.new(color.teal, 10) : color.new(color.red, 10)
+chanMidCol  = chanBull ? color.new(color.teal, 45) : color.new(color.red, 45)
+chanFillCol = chanBull ? color.new(color.teal, 91) : color.new(color.red, 91)
+pChanU = plot(showChannel ? chanUpper : na, "Chan Upper", color=chanLineCol, linewidth=2)
+pChanM = plot(showChannel and showChanMid ? chanReg : na, "Chan Mid", color=chanMidCol, linewidth=1)
+pChanL = plot(showChannel ? chanLower : na, "Chan Lower", color=chanLineCol, linewidth=2)
+fill(pChanU, pChanL, color=showChannel ? chanFillCol : na, title="Channel Fill")
+
+plotshape(chanBreakUp,  "Chan Break Up",   shape.triangleup,   location.belowbar, color.new(color.lime,    0), size=size.tiny)
+plotshape(chanBreakDn,  "Chan Break Down", shape.triangledown, location.abovebar, color.new(color.fuchsia, 0), size=size.tiny)
+plotshape(chanReentryU, "Chan Re-Entry U", shape.circle,       location.abovebar, color.new(color.aqua,   30), size=size.tiny)
+plotshape(chanReentryL, "Chan Re-Entry L", shape.circle,       location.belowbar, color.new(color.aqua,   30), size=size.tiny)
+
+// ═══════════════════════════════════════════════════════
+// PDH/PDL + ASIA ZONES
+// ═══════════════════════════════════════════════════════
+var box pdh_zone   = na
+var box pdl_zone   = na
+var box asiaH_zone = na
+var box asiaL_zone = na
+
+if barstate.islast
+    if showZones
+        if not na(pdh_zone)
+            box.delete(pdh_zone)
+        if not na(pdl_zone)
+            box.delete(pdl_zone)
+        pdh_zone := box.new(bar_index - 100, prevDayHigh + proximity, bar_index + 10, prevDayHigh - proximity,
+                            border_color=color.new(color.red,   60), bgcolor=color.new(color.red,   88))
+        pdl_zone := box.new(bar_index - 100, prevDayLow  + proximity, bar_index + 10, prevDayLow  - proximity,
+                            border_color=color.new(color.green, 60), bgcolor=color.new(color.green, 88))
+    if showAsia and asiaValid
+        if not na(asiaH_zone)
+            box.delete(asiaH_zone)
+        if not na(asiaL_zone)
+            box.delete(asiaL_zone)
+        asiaH_zone := box.new(bar_index - 100, asiaHigh + asiaProx, bar_index + 10, asiaHigh - asiaProx,
+                              border_color=color.new(#9b59b6, 60), bgcolor=color.new(#9b59b6, 88))
+        asiaL_zone := box.new(bar_index - 100, asiaLow  + asiaProx, bar_index + 10, asiaLow  - asiaProx,
+                              border_color=color.new(#1abc9c, 60), bgcolor=color.new(#1abc9c, 88))
+
+// ═══════════════════════════════════════════════════════
+// SIGNAL SHAPES — V13.1: sweep shapes merged (plot-slot limit)
+// ═══════════════════════════════════════════════════════
+plotshape(anySweepLong,  "Sweep Bull", shape.flag, location.belowbar, color.new(color.yellow, 0), size=size.large)
+plotshape(anySweepShort, "Sweep Bear", shape.flag, location.abovebar, color.new(color.yellow, 0), size=size.large)
+plotshape(longAligned,  "Long Hi",  shape.triangleup,   location.belowbar, color.green,               size=size.large)
+plotshape(shortAligned, "Short Hi", shape.triangledown, location.abovebar, color.red,                 size=size.large)
+plotshape(longLowProb,  "Long Lo",  shape.triangleup,   location.belowbar, color.new(color.gray, 20), size=size.large)
+plotshape(shortLowProb, "Short Lo", shape.triangledown, location.abovebar, color.new(color.gray, 20), size=size.large)
+plotshape(showReversal and reversalWarnLong,  "Rev Warn L", shape.xcross, location.abovebar, color.yellow, size=size.normal)
+plotshape(showReversal and reversalWarnShort, "Rev Warn S", shape.xcross, location.belowbar, color.yellow, size=size.normal)
+plotshape(showReversal and trailBreachLong,   "Trail Brch L", shape.circle, location.belowbar, color.new(color.orange, 20), size=size.small)
+plotshape(showReversal and trailBreachShort,  "Trail Brch S", shape.circle, location.abovebar, color.new(color.orange, 20), size=size.small)
+
+// ═══════════════════════════════════════════════════════
+// ENTRY / SL / TP LINES
+// ═══════════════════════════════════════════════════════
+var line entryLine = na
+var line slLine    = na
+var line tpLine    = na
+var label entryLbl = na
+var label slLbl    = na
+var label tpLbl    = na
+var label lotLbl   = na
+
+anySignal = anyLongRaw or anyShortRaw or anySweepLong or anySweepShort
+
+if showLevels and anySignal
+    if not na(entryLine)
+        line.delete(entryLine)
+    if not na(slLine)
+        line.delete(slLine)
+    if not na(tpLine)
+        line.delete(tpLine)
+    if not na(entryLbl)
+        label.delete(entryLbl)
+    if not na(slLbl)
+        label.delete(slLbl)
+    if not na(tpLbl)
+        label.delete(tpLbl)
+    if not na(lotLbl)
+        label.delete(lotLbl)
+
+    ll      = 40
+    isSweep = anySweepLong or anySweepShort
+    isLP    = not isSweep and (longLowProb or shortLowProb)
+    isLong  = anySweepLong or anyLongRaw
+
+    sp = anySweepLong ? sweepLongSL  : anySweepShort ? sweepShortSL  : anyLongRaw ? longSL  : shortSL
+    tp = anySweepLong ? sweepLongTP  : anySweepShort ? sweepShortTP  : anyLongRaw ? longTP  : shortTP
+    lt = anySweepLong ? sweepLongLots: anySweepShort ? sweepShortLots: anyLongRaw ? longLots: shortLots
+    ar = anySweepLong ? sweepLongRisk: anySweepShort ? sweepShortRisk: anyLongRaw ? longRisk: shortRisk
+
+    lc = isSweep ? color.new(color.yellow, 0) : isLP ? color.new(color.gray, 30) : color.white
+    sc = isSweep ? color.new(color.red, 10)   : color.red
+    tc = isSweep ? color.new(color.lime, 10)  : color.green
+
+    entryLine := line.new(bar_index, close, bar_index + ll, close, color=lc, width=2, style=line.style_dashed)
+    slLine    := line.new(bar_index, sp,    bar_index + ll, sp,    color=sc, width=2, style=line.style_solid)
+    tpLine    := line.new(bar_index, tp,    bar_index + ll, tp,    color=tc, width=2, style=line.style_solid)
+
+    dir = isLong ? "LONG" : "SHORT"
+    pfx = isSweep ? "⚡ SWEEP " : ""
+    btg = isLP ? " [LOW PROB]" : isSweep ? " [ELITE]" : ""
+
+    entryLbl := label.new(bar_index + ll, close, pfx + dir + " ENTRY: " + str.tostring(close, "#.#####") + btg,
+         color=color.new(lc, 20), style=label.style_label_left,
+         textcolor=isSweep ? color.black : color.black, size=size.small)
+    slLbl    := label.new(bar_index + ll, sp, "SL: " + str.tostring(sp, "#.#####"),
+         color=color.new(sc, 20), style=label.style_label_left, textcolor=color.white, size=size.small)
+    tpLbl    := label.new(bar_index + ll, tp,
+         "TP (" + str.tostring(effRR, "#.#") + "R): " + str.tostring(tp, "#.#####"),
+         color=color.new(tc, 20), style=label.style_label_left, textcolor=color.white, size=size.small)
+    mid     = (close + sp) / 2
+    lotClr  = isSweep ? color.new(color.yellow, 10) : isLP ? color.new(color.gray, 20) : color.new(#1e90ff, 10)
+    lotTxt  = "LOTS: " + str.tostring(lt, "#.##") + "  |  $" + str.tostring(ar, "#") +
+              "  |  " + confLabel(isSweep or isLong ? confBull : confBear)
+    lotLbl  := label.new(bar_index + ll, mid, lotTxt, color=lotClr,
+         style=label.style_label_left, textcolor=color.white, size=size.normal)
+
+// ═══════════════════════════════════════════════════════
+// SIGNAL LABELS — V13: Markov regime included
+// ═══════════════════════════════════════════════════════
+biasStr = overallBull ? "BULL" : overallBear ? "BEAR" : "NEUTRAL"
+mkStr   = "MKV:" + mkName + (mkPersistence > mkPersThr ? "🔒" : "")
+
+if showLabels and sweepBullPDL
+    label.new(bar_index, low - atr * 2.5,
+              "⚡ SWEEP LONG | ELITE | PDL | " + biasStr + " | " + mkStr +
+              "\nSL: " + str.tostring(sweepLongSL, "#.#####") +
+              "\nTP: " + str.tostring(sweepLongTP, "#.#####") +
+              "\nLots: " + str.tostring(sweepLongLots, "#.##") + "  $" + str.tostring(sweepLongRisk, "#") +
+              "\n" + confLabel(confBull) + "  Score: " + str.tostring(decisionScore) + "/10",
+              color=color.new(color.yellow, 10), style=label.style_label_up,
+              textcolor=color.black, size=size.small)
+
+if showLabels and sweepBullAL
+    label.new(bar_index, low - atr * 2.5,
+              "⚡ SWEEP LONG | ELITE | ASIA LOW | " + biasStr + " | " + mkStr +
+              "\nSL: " + str.tostring(sweepLongSL, "#.#####") +
+              "\nTP: " + str.tostring(sweepLongTP, "#.#####") +
+              "\nLots: " + str.tostring(sweepLongLots, "#.##") + "  $" + str.tostring(sweepLongRisk, "#"),
+              color=color.new(color.yellow, 10), style=label.style_label_up,
+              textcolor=color.black, size=size.small)
+
+if showLabels and sweepBullPWL
+    label.new(bar_index, low - atr * 2.5,
+              "⚡ SWEEP LONG | ELITE | PREV WK LOW | " + biasStr + " | " + mkStr +
+              "\nSL: " + str.tostring(sweepLongSL, "#.#####") +
+              "\nTP: " + str.tostring(sweepLongTP, "#.#####") +
+              "\nLots: " + str.tostring(sweepLongLots, "#.##") + "  $" + str.tostring(sweepLongRisk, "#"),
+              color=color.new(color.yellow, 10), style=label.style_label_up,
+              textcolor=color.black, size=size.small)
+
+if showLabels and sweepBearPDH
+    label.new(bar_index, high + atr * 2.5,
+              "⚡ SWEEP SHORT | ELITE | PDH | " + biasStr + " | " + mkStr +
+              "\nSL: " + str.tostring(sweepShortSL, "#.#####") +
+              "\nTP: " + str.tostring(sweepShortTP, "#.#####") +
+              "\nLots: " + str.tostring(sweepShortLots, "#.##") + "  $" + str.tostring(sweepShortRisk, "#") +
+              "\n" + confLabel(confBear) + "  Score: " + str.tostring(decisionScore) + "/10",
+              color=color.new(color.yellow, 10), style=label.style_label_down,
+              textcolor=color.black, size=size.small)
+
+if showLabels and sweepBearAH
+    label.new(bar_index, high + atr * 2.5,
+              "⚡ SWEEP SHORT | ELITE | ASIA HIGH | " + biasStr + " | " + mkStr +
+              "\nSL: " + str.tostring(sweepShortSL, "#.#####") +
+              "\nTP: " + str.tostring(sweepShortTP, "#.#####") +
+              "\nLots: " + str.tostring(sweepShortLots, "#.##") + "  $" + str.tostring(sweepShortRisk, "#"),
+              color=color.new(color.yellow, 10), style=label.style_label_down,
+              textcolor=color.black, size=size.small)
+
+if showLabels and sweepBearPWH
+    label.new(bar_index, high + atr * 2.5,
+              "⚡ SWEEP SHORT | ELITE | PREV WK HIGH | " + biasStr + " | " + mkStr +
+              "\nSL: " + str.tostring(sweepShortSL, "#.#####") +
+              "\nTP: " + str.tostring(sweepShortTP, "#.#####") +
+              "\nLots: " + str.tostring(sweepShortLots, "#.##") + "  $" + str.tostring(sweepShortRisk, "#"),
+              color=color.new(color.yellow, 10), style=label.style_label_down,
+              textcolor=color.black, size=size.small)
+
+if showLabels and longAligned
+    label.new(bar_index, low - atr * 2.2,
+              "▲ LONG | HIGH PROB | " + biasStr + " | " + mkStr +
+              "\nSL: " + str.tostring(longSL, "#.#####") +
+              "\nTP: " + str.tostring(longTP, "#.#####") +
+              "\nLots: " + str.tostring(longLots, "#.##") + "  $" + str.tostring(longRisk, "#") +
+              "\n" + confLabel(confBull) + "  Score: " + str.tostring(decisionScore) + "/10",
+              color=color.new(color.green, 10), style=label.style_label_up,
+              textcolor=color.white, size=size.small)
+
+if showLabels and longLowProb
+    label.new(bar_index, low - atr * 2.2,
+              "▲ LONG | LOW PROB | " + biasStr + " COUNTER | " + mkStr + "\nSKIP OR REDUCE",
+              color=color.new(color.gray, 10), style=label.style_label_up,
+              textcolor=color.white, size=size.small)
+
+if showLabels and shortAligned
+    label.new(bar_index, high + atr * 2.2,
+              "▼ SHORT | HIGH PROB | " + biasStr + " | " + mkStr +
+              "\nSL: " + str.tostring(shortSL, "#.#####") +
+              "\nTP: " + str.tostring(shortTP, "#.#####") +
+              "\nLots: " + str.tostring(shortLots, "#.##") + "  $" + str.tostring(shortRisk, "#") +
+              "\n" + confLabel(confBear) + "  Score: " + str.tostring(decisionScore) + "/10",
+              color=color.new(color.red, 10), style=label.style_label_down,
+              textcolor=color.white, size=size.small)
+
+if showLabels and shortLowProb
+    label.new(bar_index, high + atr * 2.2,
+              "▼ SHORT | LOW PROB | " + biasStr + " COUNTER | " + mkStr + "\nSKIP OR REDUCE",
+              color=color.new(color.gray, 10), style=label.style_label_down,
+              textcolor=color.white, size=size.small)
+
+if showReversal and reversalWarnLong
+    label.new(bar_index, high + atr * 0.8, "⚠ REVERSAL WARN\nClose LONG",
+              color=color.new(color.yellow, 10), style=label.style_label_down,
+              textcolor=color.black, size=size.small)
+if showReversal and reversalWarnShort
+    label.new(bar_index, low - atr * 0.8, "⚠ REVERSAL WARN\nClose SHORT",
+              color=color.new(color.yellow, 10), style=label.style_label_up,
+              textcolor=color.black, size=size.small)
+if showReversal and trailBreachLong
+    label.new(bar_index, low - atr * 0.8, "🔴 TRAIL BREACHED\nClose LONG on MT5",
+              color=color.new(color.orange, 10), style=label.style_label_up,
+              textcolor=color.white, size=size.small)
+if showReversal and trailBreachShort
+    label.new(bar_index, high + atr * 0.8, "🔴 TRAIL BREACHED\nClose SHORT on MT5",
+              color=color.new(color.orange, 10), style=label.style_label_down,
+              textcolor=color.white, size=size.small)
+
+// ═══════════════════════════════════════════════════════
+// MAIN DASHBOARD — V13: Markov row + real edge row added
+// ═══════════════════════════════════════════════════════
+if barstate.islast and showDash
+    var table dash = table.new(position.top_right, 3, 20, bgcolor=color.new(#1e222d, 80), border_width=1, border_color=color.new(color.gray, 70))
+    T = size.small
+    table.cell(dash, 0, 0, "EE V13", text_color=color.white, bgcolor=color.new(color.navy,10), text_size=T)
+    table.cell(dash, 1, 0, syminfo.ticker, text_color=color.yellow, bgcolor=color.new(color.navy,10), text_size=T)
+    table.cell(dash, 2, 0, timeframe.period + (inSession ? " ON" : " OFF"), text_color=inSession?color.lime:color.gray, bgcolor=color.new(color.navy,10), text_size=T)
+    table.cell(dash, 0, 1, instrType + (autoMode ? " AUTO" : ""), text_color=color.aqua, text_size=T)
+    table.cell(dash, 1, 1, volCtx, text_color=volColor, text_size=T)
+    table.cell(dash, 2, 1, "ATR " + str.tostring(atr, "#.####"), text_color=color.gray, text_size=T)
+    table.cell(dash, 0, 2, "SCORE", text_color=color.gray, text_size=T)
+    table.cell(dash, 1, 2, str.tostring(decisionScore) + "/10", text_color=decisionColor, text_size=T)
+    table.cell(dash, 2, 2, decisionText, text_color=decisionColor, text_size=T)
+    _mkLockTxt = mkBlockLong ? "BLOCK LONGS" : mkBlockShort ? "BLOCK SHORTS" : "open"
+    _mkLockCol = mkBlockLong or mkBlockShort ? color.orange : color.gray
+    table.cell(dash, 0, 3, "MARKOV", text_color=color.gray, text_size=T)
+    table.cell(dash, 1, 3, mkName + " p" + str.tostring(math.round(mkPersistence * 100)) + "% c" + (mkConviction >= 0 ? "+" : "") + str.tostring(mkConviction, "#.##"), text_color=mkColor, text_size=T)
+    table.cell(dash, 2, 3, _mkLockTxt, text_color=_mkLockCol, text_size=T)
+    _edgeCol = na(all_expR) ? color.gray : all_expR > 0 ? color.lime : color.red
+    table.cell(dash, 0, 4, "REAL EDGE", text_color=color.gray, text_size=T)
+    table.cell(dash, 1, 4, all_resolved > 0 ? str.tostring(all_winRate) + "% win (" + str.tostring(all_resolved) + " sig)" : "no data yet", text_color=_edgeCol, text_size=T)
+    table.cell(dash, 2, 4, na(all_expR) ? "—" : "Exp " + (all_expR >= 0 ? "+" : "") + str.tostring(all_expR, "#.##") + "R", text_color=_edgeCol, text_size=T)
+    table.cell(dash, 0, 5, "CONFLUENCE", text_color=color.gray, text_size=T)
+    table.cell(dash, 1, 5, confLabel(confluenceScore), text_color=confColor, text_size=T)
+    table.cell(dash, 2, 5, sessionBonus ? "SESS ON" : "SESS OFF", text_color=sessionBonus?color.lime:color.gray, text_size=T)
+    table.cell(dash, 0, 6, "FACTORS", text_color=color.gray, text_size=T)
+    table.cell(dash, 1, 6, hasSignal ? factorStr : "watching", text_color=color.white, text_size=T)
+    table.cell(dash, 2, 6, "", text_size=T)
+    _st = locked ? "LOCKED" : anySweepLong ? "SWEEP L" : anySweepShort ? "SWEEP S" : longAligned ? "LONG HP" : shortAligned ? "SHORT HP" : longLowProb ? "LONG LP" : shortLowProb ? "SHORT LP" : "WATCHING"
+    _sc = locked ? color.red : (anySweepLong or anySweepShort) ? color.yellow : (longAligned or shortAligned) ? color.lime : color.gray
+    table.cell(dash, 0, 7, "SIGNAL", text_color=color.gray, text_size=T)
+    table.cell(dash, 1, 7, _st, text_color=_sc, text_size=T)
+    _ts = inLong ? "IN LONG" : inShort ? "IN SHORT" : "FLAT"
+    _tc = inLong ? color.lime : inShort ? color.red : color.gray
+    table.cell(dash, 2, 7, _ts, text_color=_tc, text_size=T)
+    table.cell(dash, 0, 8, "HTF BIAS", text_color=color.gray, text_size=T)
+    _ob = overallBull ? "BULL" : overallBear ? "BEAR" : "MIXED"
+    _oc = overallBull ? color.lime : overallBear ? color.red : color.gray
+    table.cell(dash, 1, 8, _ob, text_color=_oc, text_size=T)
+    table.cell(dash, 2, 8, htfPeriod1 + ":" + (htf1Bull ? "B" : htf1Bear ? "S" : "N") + " " + htfPeriod2 + ":" + (htf2Bull ? "B" : htf2Bear ? "S" : "N"), text_color=color.gray, text_size=T)
+    _ruc = locked ? color.red : nearLimit ? color.orange : cautionZone ? color.yellow : color.lime
+    _pst = locked ? "LOCKED" : nearLimit ? "WARN 75%" : cautionZone ? "WARN 50%" : "SAFE"
+    table.cell(dash, 0, 9, "PROTECT", text_color=color.gray, text_size=T)
+    table.cell(dash, 1, 9, "$" + str.tostring(math.round(dailyRisk), "#") + "/$" + str.tostring(dailyLimitD, "#") + " " + str.tostring(math.round(protPct), "#") + "%", text_color=_ruc, text_size=T)
+    table.cell(dash, 2, 9, _pst, text_color=_ruc, text_size=T)
+    table.cell(dash, 0, 10, "PDH/PDL", text_color=color.gray, text_size=T)
+    table.cell(dash, 1, 10, str.tostring(prevDayHigh, "#.####"), text_color=nearPDH?color.red:color.new(color.red,50), text_size=T)
+    table.cell(dash, 2, 10, str.tostring(prevDayLow, "#.####"), text_color=nearPDL?color.lime:color.new(color.lime,50), text_size=T)
+    table.cell(dash, 0, 11, "ASIA H/L", text_color=color.gray, text_size=T)
+    table.cell(dash, 1, 11, asiaValid ? str.tostring(asiaHigh, "#.####") : "building", text_color=nearAH?color.red:color.new(#9b59b6,40), text_size=T)
+    table.cell(dash, 2, 11, asiaValid ? str.tostring(asiaLow, "#.####") : "...", text_color=nearAL?color.lime:color.new(#1abc9c,40), text_size=T)
+    table.cell(dash, 0, 12, "PWH/PWL", text_color=color.gray, text_size=T)
+    table.cell(dash, 1, 12, not na(prevWeekHigh) ? str.tostring(prevWeekHigh, "#.####") : "na", text_color=nearPWH?color.red:color.new(color.orange,50), text_size=T)
+    table.cell(dash, 2, 12, not na(prevWeekLow) ? str.tostring(prevWeekLow, "#.####") : "na", text_color=nearPWL?color.lime:color.new(color.orange,50), text_size=T)
+    table.cell(dash, 0, 13, "OB B/S", text_color=color.gray, text_size=T)
+    table.cell(dash, 1, 13, not na(lastBullOBLow) ? str.tostring(lastBullOBLow,"#.####")+"~"+str.tostring(lastBullOBHigh,"#.####") : "None", text_color=nearBullOB?color.lime:color.new(color.lime,60), text_size=T)
+    table.cell(dash, 2, 13, not na(lastBearOBLow) ? str.tostring(lastBearOBLow,"#.####")+"~"+str.tostring(lastBearOBHigh,"#.####") : "None", text_color=nearBearOB?color.red:color.new(color.red,60), text_size=T)
+    table.cell(dash, 0, 14, "FVG B/S", text_color=color.gray, text_size=T)
+    table.cell(dash, 1, 14, not na(lastBullFVGBot) ? str.tostring(lastBullFVGBot,"#.####")+"~"+str.tostring(lastBullFVGTop,"#.####") : "None", text_color=nearBullFVG?color.aqua:color.new(color.aqua,60), text_size=T)
+    table.cell(dash, 2, 14, not na(lastBearFVGBot) ? str.tostring(lastBearFVGBot,"#.####")+"~"+str.tostring(lastBearFVGTop,"#.####") : "None", text_color=nearBearFVG?color.fuchsia:color.new(color.fuchsia,60), text_size=T)
+    table.cell(dash, 0, 15, "MOMENTUM", text_color=color.gray, text_size=T)
+    _rc2 = rsiVal >= rsiOB ? color.red : rsiVal <= rsiOS ? color.lime : color.white
+    table.cell(dash, 1, 15, "RSI:" + str.tostring(rsiVal, "#.#") + " ADX:" + str.tostring(adxVal, "#.#"), text_color=_rc2, text_size=T)
+    table.cell(dash, 2, 15, volSpike ? "VOL SPIKE" : "vol norm", text_color=volSpike?color.yellow:color.gray, text_size=T)
+    table.cell(dash, 0, 16, "CHANNEL", text_color=color.gray, text_size=T)
+    _posLbl2 = chanPosPct > 80 ? "TOP " + str.tostring(chanPosPct) + "%" : chanPosPct < 20 ? "BOT " + str.tostring(chanPosPct) + "%" : "MID " + str.tostring(chanPosPct) + "%"
+    _posC2 = chanPosPct > 80 ? color.red : chanPosPct < 20 ? color.lime : color.white
+    table.cell(dash, 1, 16, chanBull ? "UP" : "DOWN", text_color=chanBull?color.teal:color.red, text_size=T)
+    table.cell(dash, 2, 16, _posLbl2, text_color=_posC2, text_size=T)
+    table.cell(dash, 0, 17, "AUTO CFG", text_color=color.gray, text_size=T)
+    table.cell(dash, 1, 17, "Px:" + str.tostring(effLevelProx,"#.#") + " SL:" + str.tostring(effSLBuffer,"#.#") + " RR:" + str.tostring(effRR,"#.#"), text_color=color.white, text_size=T)
+    table.cell(dash, 2, 17, "HTF:" + autoHTF1rec + "/" + autoHTF2rec, text_color=color.new(color.aqua,20), text_size=T)
+    table.cell(dash, 0, 18, "ACCOUNT", text_color=color.gray, text_size=T)
+    table.cell(dash, 1, 18, "$" + str.tostring(accountBalance,"#,###") + " risk $" + str.tostring(math.round(riskAmount),"#"), text_color=color.lime, text_size=T)
+    table.cell(dash, 2, 18, not na(activeSessOpen) ? str.tostring(activeSessOpen,"#.####") : "wait", text_color=color.new(color.white,30), text_size=T)
+    table.cell(dash, 0, 19, "TRAIL", text_color=color.gray, text_size=T)
+    _trv = inLong ? trailLong : inShort ? trailShort : na
+    table.cell(dash, 1, 19, na(_trv) ? "flat" : str.tostring(_trv,"#.####"), text_color=color.orange, text_size=T)
+    table.cell(dash, 2, 19, "Pip:" + str.tostring(effPipSize,"#.####"), text_color=color.gray, text_size=T)
+
+// ═══════════════════════════════════════════════════════
+// WEEKLY TRACKER — V13: REAL outcomes, no assumed wins
+// ═══════════════════════════════════════════════════════
+if barstate.islast and showTracker
+    var table wt = table.new(position.bottom_left, 2, 12,
+         bgcolor=color.new(#1e222d, 85), border_width=1,
+         border_color=color.new(color.gray, 60))
+    table.cell(wt, 0, 0,  "WEEKLY TRACKER (REAL)", text_color=color.white,
+               bgcolor=color.new(#2c3e50, 20), text_size=size.small)
+    table.cell(wt, 1, 0,  "Wk " + str.tostring(currentWeek), text_color=color.yellow,
+               bgcolor=color.new(#2c3e50, 20), text_size=size.small)
+    table.cell(wt, 0, 1,  "Total Signals",  text_color=color.gray,   text_size=size.small)
+    table.cell(wt, 1, 1,  str.tostring(wk_total),                    text_color=color.white,  text_size=size.small)
+    table.cell(wt, 0, 2,  "ELITE Sweeps",   text_color=color.gray,   text_size=size.small)
+    table.cell(wt, 1, 2,  str.tostring(wk_elite),                    text_color=color.yellow, text_size=size.small)
+    table.cell(wt, 0, 3,  "High / Low Prob", text_color=color.gray,  text_size=size.small)
+    table.cell(wt, 1, 3,  str.tostring(wk_high) + " / " + str.tostring(wk_low), text_color=color.white, text_size=size.small)
+    table.cell(wt, 0, 4,  "Longs / Shorts", text_color=color.gray,   text_size=size.small)
+    table.cell(wt, 1, 4,  str.tostring(wk_longs) + " / " + str.tostring(wk_shorts),
+               text_color=color.white, text_size=size.small)
+    table.cell(wt, 0, 5,  "Resolved W / L", text_color=color.gray,   text_size=size.small)
+    table.cell(wt, 1, 5,  str.tostring(wk_wins) + " / " + str.tostring(wk_losses),
+               text_color=wk_wins >= wk_losses ? color.green : color.red, text_size=size.small)
+    table.cell(wt, 0, 6,  "Pending",        text_color=color.gray,   text_size=size.small)
+    table.cell(wt, 1, 6,  str.tostring(array.size(sigDir)),          text_color=color.aqua,   text_size=size.small)
+    qc = wk_winRate >= 50 ? color.green : wk_winRate >= 35 ? color.orange : color.red
+    table.cell(wt, 0, 7,  "Win Rate (real)",text_color=color.gray,   text_size=size.small)
+    table.cell(wt, 1, 7,  wk_resolved > 0 ? str.tostring(wk_winRate) + "%" : "n/a", text_color=qc, text_size=size.small)
+    pSign = wk_pnlReal >= 0 ? "+" : ""
+    pClr  = wk_pnlReal >= 0 ? color.green : color.red
+    table.cell(wt, 0, 8,  "P&L (real, R-based)", text_color=color.gray, text_size=size.small)
+    table.cell(wt, 1, 8,  "$" + pSign + str.tostring(wk_pnlReal, "#"), text_color=pClr,       text_size=size.small)
+    _exC = na(all_expR) ? color.gray : all_expR > 0 ? color.green : color.red
+    table.cell(wt, 0, 9,  "All-Time Edge",  text_color=color.gray,   text_size=size.small)
+    table.cell(wt, 1, 9,  all_resolved > 0 ? str.tostring(all_winRate) + "% / " + (all_expR >= 0 ? "+" : "") + str.tostring(all_expR, "#.##") + "R" : "no data", text_color=_exC, text_size=size.small)
+    table.cell(wt, 0, 10, "Instr / Auto",   text_color=color.gray,   text_size=size.small)
+    table.cell(wt, 1, 10, instrType + (autoMode ? " AUTO" : " MAN"), text_color=color.aqua,   text_size=size.small)
+    table.cell(wt, 0, 11, "Resets",         text_color=color.gray,   text_size=size.small)
+    table.cell(wt, 1, 11, "Every Monday",   text_color=color.gray,   text_size=size.small)
+
+// ═══════════════════════════════════════════════════════
+// ALERTS — V13.1: Markov alerts merged into one (plot-slot limit)
+// ═══════════════════════════════════════════════════════
+alertcondition(sweepBullPDL,
+     title="EE V13 — ELITE SWEEP LONG PDL",
+     message="V13 | ELITE SWEEP LONG | PDL | {{ticker}} | Entry: {{close}} | {{time}}")
+alertcondition(sweepBearPDH,
+     title="EE V13 — ELITE SWEEP SHORT PDH",
+     message="V13 | ELITE SWEEP SHORT | PDH | {{ticker}} | Entry: {{close}} | {{time}}")
+alertcondition(sweepBullAL,
+     title="EE V13 — ELITE SWEEP LONG Asia Low",
+     message="V13 | ELITE SWEEP LONG | ASIA LOW | {{ticker}} | Entry: {{close}} | {{time}}")
+alertcondition(sweepBearAH,
+     title="EE V13 — ELITE SWEEP SHORT Asia High",
+     message="V13 | ELITE SWEEP SHORT | ASIA HIGH | {{ticker}} | Entry: {{close}} | {{time}}")
+alertcondition(sweepBullPWL,
+     title="EE V13 — ELITE SWEEP LONG Prev Week Low",
+     message="V13 | ELITE SWEEP LONG | PREV WEEK LOW | {{ticker}} | Entry: {{close}} | {{time}}")
+alertcondition(sweepBearPWH,
+     title="EE V13 — ELITE SWEEP SHORT Prev Week High",
+     message="V13 | ELITE SWEEP SHORT | PREV WEEK HIGH | {{ticker}} | Entry: {{close}} | {{time}}")
+alertcondition(longAligned,
+     title="EE V13 — Long High Prob",
+     message="V13 | LONG HIGH PROB | BULL BIAS | {{ticker}} | Entry: {{close}} | {{time}}")
+alertcondition(shortAligned,
+     title="EE V13 — Short High Prob",
+     message="V13 | SHORT HIGH PROB | BEAR BIAS | {{ticker}} | Entry: {{close}} | {{time}}")
+alertcondition(longLowProb,
+     title="EE V13 — Long Low Prob",
+     message="V13 | LONG LOW PROB | Counter bias | {{ticker}} | Entry: {{close}} | {{time}}")
+alertcondition(shortLowProb,
+     title="EE V13 — Short Low Prob",
+     message="V13 | SHORT LOW PROB | Counter bias | {{ticker}} | Entry: {{close}} | {{time}}")
+alertcondition(bullRejPDL and inSession,
+     title="EE V13 — PDL Rejection Forming",
+     message="V13 | PDL REJECTION forming | {{ticker}} | Watch for confirmation | {{time}}")
+alertcondition(bearRejPDH and inSession,
+     title="EE V13 — PDH Rejection Forming",
+     message="V13 | PDH REJECTION forming | {{ticker}} | Watch for confirmation | {{time}}")
+alertcondition(bullOBDetect,
+     title="EE V13 — Bull Order Block",
+     message="V13 | BULL ORDER BLOCK detected | {{ticker}} | {{close}} | {{time}}")
+alertcondition(bearOBDetect,
+     title="EE V13 — Bear Order Block",
+     message="V13 | BEAR ORDER BLOCK detected | {{ticker}} | {{close}} | {{time}}")
+alertcondition(bullFVGOK,
+     title="EE V13 — Bullish FVG",
+     message="V13 | BULL FVG / IMBALANCE | {{ticker}} | {{close}} | {{time}}")
+alertcondition(bearFVGOK,
+     title="EE V13 — Bearish FVG",
+     message="V13 | BEAR FVG / IMBALANCE | {{ticker}} | {{close}} | {{time}}")
+alertcondition(locked and inSession,
+     title="EE V13 — SESSION LOCKED",
+     message="V13 | PROTECTION LOCKED | {{ticker}} | Daily limit hit | {{time}}")
+alertcondition(nearLimit and inSession,
+     title="EE V13 — Near Daily Limit",
+     message="V13 | CAUTION 75% limit used | {{ticker}} | {{time}}")
+alertcondition(pdhBreach,
+     title="EE V13 — PDH Breached",
+     message="V13 | PDH BREACHED | {{ticker}} | Watch for sweep return | {{time}}")
+alertcondition(pdlBreach,
+     title="EE V13 — PDL Breached",
+     message="V13 | PDL BREACHED | {{ticker}} | Watch for sweep return | {{time}}")
+alertcondition(pwhBreach,
+     title="EE V13 — PWH Breached",
+     message="V13 | PREV WEEK HIGH BREACHED | {{ticker}} | {{time}}")
+alertcondition(pwlBreach,
+     title="EE V13 — PWL Breached",
+     message="V13 | PREV WEEK LOW BREACHED | {{ticker}} | {{time}}")
+alertcondition(reversalWarnLong,
+     title="EE V13 — Reversal Warning Long",
+     message="V13 | REVERSAL | Bearish momentum | Close LONG | {{ticker}} | {{time}}")
+alertcondition(reversalWarnShort,
+     title="EE V13 — Reversal Warning Short",
+     message="V13 | REVERSAL | Bullish momentum | Close SHORT | {{ticker}} | {{time}}")
+alertcondition(trailBreachLong,
+     title="EE V13 — Trail Breached Long",
+     message="V13 | TRAIL BREACHED | Close LONG NOW | {{ticker}} | {{time}}")
+alertcondition(trailBreachShort,
+     title="EE V13 — Trail Breached Short",
+     message="V13 | TRAIL BREACHED | Close SHORT NOW | {{ticker}} | {{time}}")
+alertcondition(chanBreakUp and inSession,
+     title="EE V13 — Channel Break UP",
+     message="V13 | CHANNEL BREAK UP | {{ticker}} | {{close}} | {{time}}")
+alertcondition(chanBreakDn and inSession,
+     title="EE V13 — Channel Break DOWN",
+     message="V13 | CHANNEL BREAK DOWN | {{ticker}} | {{close}} | {{time}}")
+alertcondition(ta.change(mkConfirmed) != 0,
+     title="EE V13 — Markov Regime Flip",
+     message="V13 | MARKOV REGIME FLIP | {{ticker}} | {{close}} | {{time}}")
