@@ -1,6 +1,6 @@
 /* STAALCALIBUR app service worker — caches the shell for instant/offline open;
    license + data calls (/appdata, /verify) always hit the network. */
-var SHELL = "sc-shell-v6";
+var SHELL = "sc-shell-v7";
 var URLS = ["/", "/scapp.webmanifest", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", function (e) {

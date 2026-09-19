@@ -69,6 +69,11 @@ def _drivers(r):
         out.append("Edge quality: recent edge reads as “%s” on a "
                    "deflated-Sharpe test." % lab)
 
+    # live news tilt
+    tilt = (r.get("news_tilt") or "").strip()
+    if tilt and tilt not in ("no news", "no recent news"):
+        out.append("Headlines: %s (see the news list below)." % tilt)
+
     return out
 
 
@@ -96,4 +101,6 @@ def outlook(r):
         "bull_case": bull_case,
         "bear_case": bear_case,
         "bottom_line": a.get("summary", ""),
+        "news_tilt": r.get("news_tilt", ""),
+        "headlines": r.get("headlines", []),
     }

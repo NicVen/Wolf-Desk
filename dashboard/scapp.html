@@ -107,6 +107,10 @@
   .sheet p{font-size:14px;line-height:1.6;color:var(--chrome);margin:10px 0}
   .sheet ul.upd{margin:10px 0 16px;padding-left:18px}
   .sheet ul.upd li{font-size:14px;line-height:1.55;color:var(--chrome);margin:7px 0}
+  .sheet a.hl{display:block;background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin:7px 0;text-decoration:none}
+  .sheet a.hl b{display:block;color:var(--fg);font-size:13px;line-height:1.4;font-weight:700}
+  .sheet a.hl span{display:block;color:var(--mut);font-size:11px;margin-top:3px}
   .sheet .x{float:right;background:var(--card);border:1px solid var(--line);color:var(--chrome);
     border-radius:10px;padding:6px 12px;font-weight:800;cursor:pointer}
   .hidden{display:none}
@@ -321,14 +325,21 @@ function showOutlook(){
   var o=CO; if(!o||!o.outlook) return;
   var ol=o.outlook;
   var infl=(ol.influences||[]).map(function(s){ return '<li>'+esc(s)+'</li>'; }).join("");
+  var heads=ol.headlines||[];
+  var hh = heads.length ? ('<div class="sec">Headlines'+(ol.news_tilt?(' · '+esc(ol.news_tilt)):'')+'</div>'+
+    heads.map(function(h){
+      return '<a class="hl" href="'+esc(h.link||"#")+'" target="_blank" rel="noopener">'+
+        '<b>'+esc(h.title||"")+'</b><span>'+esc(h.source||"")+(h.date?(' · '+esc(h.date)):'')+'</span></a>';
+    }).join("")) : '';
   var body=
     '<p><b>'+esc(ol.headline||"")+'</b></p>'+
     (infl?('<div class="sec">What’s influencing it today</div><ul class="upd">'+infl+'</ul>'):'')+
     '<div class="sec">Potential outcomes</div>'+
     '<p style="color:var(--buy)">▲ '+esc(ol.bull_case||"")+'</p>'+
     '<p style="color:var(--sell)">▼ '+esc(ol.bear_case||"")+'</p>'+
+    hh+
     (ol.bottom_line?('<div class="sec">Bottom line</div><p>'+esc(ol.bottom_line)+'</p>'):'')+
-    '<p class="muted" style="font-size:11px;margin-top:14px">A mechanical read of the tape plus any fundamental backdrop, as of '+esc(ol.as_of||"")+'. Not live news headlines and not financial advice.</p>';
+    '<p class="muted" style="font-size:11px;margin-top:14px">Mechanical read of the tape + fundamentals, with live headlines from Google News, as of '+esc(ol.as_of||"")+'. Educational — not financial advice.</p>';
   openSheet("Daily outlook", o.name||"", ol.verdict||"", body);
 }
 function setTF(tf){

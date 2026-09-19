@@ -3,9 +3,9 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "io.staalcalibur.app",
+      "package_name": "io.sslip.app_38.app_88.app_104.app_178.app.twa",
       "sha256_cert_fingerprints": [
-        "REPLACE_WITH_YOUR_APK_SHA256_FINGERPRINT"
+        "7D:A7:0C:23:47:11:DC:94:AD:81:4E:43:0B:BE:3E:6C:EF:F8:80:12:F5:56:41:D6:64:FF:45:28:16:EE:9D:FF"
       ]
     }
   }

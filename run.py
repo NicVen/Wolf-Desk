@@ -16,6 +16,7 @@ from compiler.score import score_one, rank
 from compiler.analysis import analyze
 from compiler.validation import validate
 from compiler.outlook import outlook
+from scout.news import headlines as news_headlines
 
 # Multiple-testing universe: how many markets the desk scans in total. Used to
 # deflate each DSR (best-of-N shouldn't look like a proven edge).
@@ -58,6 +59,13 @@ def build_class(clskey, cls, brokers):
     for name, (ticker, cat, covkey) in cls["universe"].items():
         pm = price_metrics(ticker)
         row = score_one(name, pm, signals.get(name, {}))
+        # real headlines + news tilt (cached, best-effort) — feeds bull/bear + outlook
+        try:
+            heads, tilt = news_headlines(name, n=4)
+        except Exception:
+            heads, tilt = [], "no news"
+        row["headlines"] = heads
+        row["news_tilt"] = tilt
         row["regime"]   = pm.get("regime") if pm else None
         row["spark"]    = pm.get("spark") if pm else None
         row["atr_abs"]  = pm.get("atr_abs") if pm else None
