@@ -59,6 +59,10 @@ def build_class(clskey, cls, brokers):
         row = score_one(name, pm, signals.get(name, {}))
         row["regime"]   = pm.get("regime") if pm else None
         row["spark"]    = pm.get("spark") if pm else None
+        row["atr_abs"]  = pm.get("atr_abs") if pm else None
+        row["swing_lo"] = pm.get("swing_lo") if pm else None
+        row["swing_hi"] = pm.get("swing_hi") if pm else None
+        row["daily"]    = pm.get("daily") if pm else None
         row["category"] = cat
         row["ticker"]   = ticker
         row["covkey"]   = covkey

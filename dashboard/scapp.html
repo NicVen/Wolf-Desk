@@ -75,6 +75,12 @@
   .chart svg{display:block;width:100%;height:120px}
   .chart .lg{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:8px;font-size:11px;color:var(--mut)}
   .chart .lg i{display:inline-block;width:14px;height:0;border-top:2px solid;margin-right:5px;vertical-align:middle}
+  /* timeframe switch */
+  .tfsw{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .tfb{background:var(--card);color:var(--steel);border:0;padding:5px 12px;font-size:12px;font-weight:800;
+    letter-spacing:1px;cursor:pointer}
+  .tfb.on{background:var(--chrome);color:#0a0e15}
+  .tfb:disabled{opacity:.35;cursor:not-allowed}
   /* tappable tiles */
   .kpi.tap{cursor:pointer}
   .kpi.tap .i{display:block;float:right;color:var(--mut);font-size:11px;line-height:1;margin:-2px -2px 0 0}
@@ -118,32 +124,64 @@ function esc(s){ return (s==null?"":String(s)).replace(/[&<>]/g,function(c){retu
 function verdictOf(o){ return (o.analysis && o.analysis.verdict) ? o.analysis.verdict.toUpperCase() : (o.score>=60?"BUY":o.score>=45?"WATCH":"SELL"); }
 function vColor(v){ return v==="BUY"?"var(--buy)":v==="SELL"?"var(--sell)":"var(--watch)"; }
 function scColor(s){ return s>=65?"var(--buy)":s>=50?"var(--watch)":"var(--sell)"; }
-function regState(o){ return (o.regime && o.regime.state) ? String(o.regime.state).toUpperCase() : ""; }
+function regState(reg){ return (reg && reg.state) ? String(reg.state).toUpperCase() : ""; }
 function valText(o){ return (o.validation && o.validation.label) ? String(o.validation.label) : ""; }
 var CO = null;   // opportunity currently on the consult screen (for info popups)
 var CP = null;   // trade plan for the current opportunity
+var CM = null;   // active-timeframe metrics for the current opportunity
+var CIDX = -1;   // index of the current opportunity (for re-render on TF switch)
+var TF = "1h";   // "1h" | "daily"
 
 // price formatting: more decimals for small-priced instruments
 function fmt(n){ if(n==null||!isFinite(n)) return "—"; var p=Math.abs(n);
   var d = p>=100?2 : p>=1?4 : 6; return Number(n).toFixed(d); }
 
-// ---------- trade plan (entry / stop / target from ATR + verdict) ----------
-function tradePlan(o){
-  var v=verdictOf(o);
-  var price=Number(o.price), atrp=Number(o.atr_pct);
+// metrics for the active timeframe (1H is the row itself; Daily is o.daily)
+function tfMetrics(o){
+  if(TF==="daily" && o.daily){
+    var d=o.daily;
+    return {price:d.last, atr_pct:d.atr_pct, atr_abs:d.atr_abs, ma20:d.ma20, ma50:d.ma50,
+      mom20:d.mom20, above_ma20:d.above_ma20, above_ma50:d.above_ma50,
+      regime:d.regime, spark:d.spark, swing_lo:d.swing_lo, swing_hi:d.swing_hi, tf:"daily"};
+  }
+  return {price:o.price, atr_pct:o.atr_pct, atr_abs:o.atr_abs, ma20:o.ma20, ma50:o.ma50,
+    mom20:o.mom20, above_ma20:o.above_ma20, above_ma50:o.above_ma50,
+    regime:o.regime, spark:o.spark, swing_lo:o.swing_lo, swing_hi:o.swing_hi, tf:"1h"};
+}
+
+// ---------- trade plan (entry / stop / target) ----------
+// Stop is placed beyond the recent swing (structure) when that's sane; otherwise
+// it falls back to 1.5x ATR. Target is at 2R (1:2 reward-to-risk).
+function tradePlan(m, v){
+  var price=Number(m.price), atrp=Number(m.atr_pct);
   if(!isFinite(price)||price<=0||!isFinite(atrp)||atrp<=0) return null;
   if(v!=="BUY" && v!=="SELL") return null;          // WATCH = no trade yet
-  var atr=price*atrp/100;
-  var risk=1.5*atr;          // stop beyond normal daily noise
-  var rr=2;                  // 2:1 reward-to-risk
-  var entry=price;
-  var sl = v==="BUY" ? price-risk : price+risk;
-  var tp = v==="BUY" ? price+rr*risk : price-rr*risk;
-  return {dir:v, entry:entry, sl:sl, tp:tp, atr:atr, risk:risk, rr:rr, riskPct:risk/price*100};
+  var atr = (isFinite(m.atr_abs) && m.atr_abs>0) ? Number(m.atr_abs) : price*atrp/100;
+  var rr=2, entry=price, buf=0.25*atr, sl, risk, basis="atr", swing=null;
+  if(v==="BUY"){
+    var swl=Number(m.swing_lo);
+    if(isFinite(swl) && swl>0 && swl<price){ sl=swl-buf; basis="structure"; swing=swl; }
+    else { sl=price-1.5*atr; }
+    risk=price-sl;
+    if(risk < 0.5*atr){ sl=price-1.5*atr; risk=price-sl; basis="atr"; swing=null; }   // too tight
+    else if(risk > 3.5*atr){ sl=price-1.5*atr; risk=price-sl; basis="atr"; swing=null; } // too far
+    var tp=price+rr*risk;
+  } else {
+    var swh=Number(m.swing_hi);
+    if(isFinite(swh) && swh>price){ sl=swh+buf; basis="structure"; swing=swh; }
+    else { sl=price+1.5*atr; }
+    risk=sl-price;
+    if(risk < 0.5*atr){ sl=price+1.5*atr; risk=sl-price; basis="atr"; swing=null; }
+    else if(risk > 3.5*atr){ sl=price+1.5*atr; risk=sl-price; basis="atr"; swing=null; }
+    var tp=price-rr*risk;
+  }
+  return {dir:v, entry:entry, sl:sl, tp:tp, atr:atr, risk:risk, rr:rr,
+          riskPct:risk/price*100, basis:basis, swing:swing};
 }
 
 // ---------- direction chart (inline SVG sparkline + trade levels) ----------
-function sparkSVG(o, plan){
+function sparkSVG(m, plan){
+  var o=m;
   var s=(o.spark||[]).filter(function(x){return typeof x==="number" && isFinite(x);});
   if(s.length<2) return "";
   var refs=[]; if(o.ma20!=null) refs.push(o.ma20); if(o.ma50!=null) refs.push(o.ma50);
@@ -178,7 +216,7 @@ function sparkSVG(o, plan){
     '<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+
     '<circle cx="'+x(s.length-1).toFixed(1)+'" cy="'+y(s[s.length-1]).toFixed(1)+'" r="3" fill="'+col+'"/>'+
     '</svg>'+
-    '<div class="lg"><span><i style="border-color:'+col+'"></i>Price ('+(up?"↑ up":"↓ down")+' ~3mo)</span>'+
+    '<div class="lg"><span><i style="border-color:'+col+'"></i>Price '+(up?"↑ up":"↓ down")+' ('+(m.tf==="daily"?"~1yr daily":"~1mo hourly")+')</span>'+
       (o.ma20!=null?'<span><i style="border-color:var(--steel);border-top-style:dashed"></i>20-day</span>':'')+
       (o.ma50!=null?'<span><i style="border-color:var(--mut);border-top-style:dotted"></i>50-day</span>':'')+
       (plan?('<span><i style="border-color:var(--steel)"></i>Entry</span>'+
@@ -201,8 +239,8 @@ function info(kind){
       (why?("<p><b>Why "+esc(val)+":</b> "+esc(why)+"</p>"):"")+
       "<p>Rule of thumb: 65+ is a strong setup, 50–64 worth watching, under 50 weak.</p>";
   } else if(kind==="regime"){
-    var rg=o.regime||{};
-    title="Regime"; sub="Markov trend state"; val=regState(o)||"—";
+    var rg=(CM&&CM.regime)||{};
+    title="Regime ("+(TF==="daily"?"Daily":"1H")+")"; sub="Markov trend state"; val=regState(rg)||"—";
     body="<p>What it is: the <b>Markov regime</b> — a mechanical read of whether recent price action is trending up "+
       "(<b>BULL</b>), down (<b>BEAR</b>) or going sideways (<b>SIDE</b>), plus how <i>sticky</i> that state has been.</p>";
     var bits=[];
@@ -214,18 +252,26 @@ function info(kind){
     if(rg.vote===false) body+="<p>Note: too few samples to count toward the market-wide vote — treat this as a hint, not a confirmation.</p>";
   } else if(kind==="entry"||kind==="sl"||kind==="tp"){
     var p=CP; if(!p){ return; }
+    var tfw = TF==="daily" ? "daily" : "hourly";
+    var maw = TF==="daily" ? "50-day average" : "50-hour average";
     var dirw = p.dir==="BUY" ? "long (buy)" : "short (sell)";
     if(kind==="entry"){
       title="Entry"; sub="Where the plan gets in"; val=fmt(p.entry);
       body="<p>What it is: the price to open the trade, in the verdict's direction — this is a <b>"+esc(dirw)+"</b> setup.</p>"+
         "<p><b>Why "+esc(val)+":</b> the current price is used as a market entry. For a tighter fill you can wait for a pullback toward the "+
-        "20-day average"+(o.ma20!=null?(" ("+fmt(o.ma20)+")"):"")+" before entering, but the plan below is measured from here.</p>";
+        "20-"+(TF==="daily"?"day":"hour")+" average"+((CM&&CM.ma20!=null)?(" ("+fmt(CM.ma20)+")"):"")+" before entering, but the plan below is measured from here.</p>";
     } else if(kind==="sl"){
       title="Stop loss (SL)"; sub="Where the idea is wrong"; val=fmt(p.sl);
-      body="<p>What it is: the exit that caps the loss if price goes the other way. Set it and don't move it against yourself.</p>"+
-        "<p><b>Why "+esc(val)+":</b> placed <b>1.5× ATR</b> from entry — ATR (Average True Range) is this instrument's typical daily range, "+
-        "here about "+fmt(p.atr)+" per day, so the stop sits ~<b>"+p.riskPct.toFixed(1)+"%</b> away. That's beyond ordinary day-to-day noise, "+
-        "so you're only stopped out by a real move against the trade, not a random wiggle.</p>";
+      body="<p>What it is: the exit that caps the loss if price goes the other way. Set it and don't move it against yourself.</p>";
+      if(p.basis==="structure"){
+        body+="<p><b>Why "+esc(val)+":</b> placed just beyond the recent <b>swing "+(p.dir==="BUY"?"low":"high")+"</b> "+
+          "("+fmt(p.swing)+") — the structural level price would have to break to prove the "+esc(dirw)+" idea wrong — "+
+          "with a small ATR buffer so a wick through it doesn't trigger you. That puts the stop ~<b>"+p.riskPct.toFixed(1)+"%</b> away.</p>";
+      } else {
+        body+="<p><b>Why "+esc(val)+":</b> no clean swing level was in range, so the stop falls back to <b>1.5× ATR</b> from entry — "+
+          "ATR (Average True Range) is this instrument's typical "+tfw+" range, here about "+fmt(p.atr)+" per bar — "+
+          "putting it ~<b>"+p.riskPct.toFixed(1)+"%</b> away, beyond ordinary noise.</p>";
+      }
     } else {
       title="Take profit (TP)"; sub="Where you bank it"; val=fmt(p.tp);
       body="<p>What it is: the target to close the trade in profit.</p>"+
@@ -256,6 +302,12 @@ function openSheet(title,sub,val,body){
   document.body.appendChild(m);
 }
 function closeSheet(){ var m=el("sheet"); if(m&&m.parentNode) m.parentNode.removeChild(m); }
+function setTF(tf){
+  if(tf===TF) return;
+  if(tf==="daily" && !(CO&&CO.daily)) return;   // no daily data → ignore
+  TF=tf; try{ localStorage.setItem("sc_tf",tf); }catch(e){}
+  if(CIDX>=0) consult(CIDX);
+}
 
 // ---------- gate ----------
 function showGate(msg){
@@ -324,9 +376,9 @@ function renderHome(){
 // ---------- consult ----------
 function consult(i){
   var o=(DATA.opportunities||[])[i]; if(!o) return;
-  CO=o; CP=tradePlan(o); closeSheet();
+  CIDX=i; CO=o; CM=tfMetrics(o); var v=verdictOf(o); CP=tradePlan(CM, v); closeSheet();
   el("refreshBtn").style.display="none"; el("homeBtn").style.display="";
-  var v=verdictOf(o), vc=vColor(v);
+  var vc=vColor(v);
   var a=o.analysis||{};
   var bd=o.breakdown||{};
   var maxes={catalyst:25,trend:25,position:20,supply:20,volfit:10};
@@ -334,14 +386,14 @@ function consult(i){
     var pct=Math.max(0,Math.min(100,Math.round((bd[k]||0)/maxes[k]*100)));
     return '<div class="bar"><span class="bl">'+k+'</span><div class="bt"><i style="width:'+pct+'%"></i></div></div>';
   }).join("");
-  var rg=regState(o), vl=valText(o);
-  // checklist
+  var rg=regState(CM.regime), vl=valText(o);
+  // checklist (trend/momentum/volatility/regime follow the chosen timeframe)
   var isBuy=v==="BUY";
   var checks=[
     ["Score ≥ 60", o.score>=60],
-    ["Trend aligned", isBuy ? (o.above_ma20&&o.above_ma50) : (!o.above_ma20&&!o.above_ma50)],
-    ["Momentum "+(isBuy?"up":"down"), isBuy ? (o.mom20>0) : (o.mom20<0)],
-    ["Volatility sane", (o.atr_pct!=null && o.atr_pct<5)],
+    ["Trend aligned", isBuy ? (CM.above_ma20&&CM.above_ma50) : (!CM.above_ma20&&!CM.above_ma50)],
+    ["Momentum "+(isBuy?"up":"down"), isBuy ? (CM.mom20>0) : (CM.mom20<0)],
+    ["Volatility sane", (CM.atr_pct!=null && CM.atr_pct<5)],
     ["Conviction not Low", (a.conviction||"").toLowerCase()!=="low"]
   ];
   if(rg){ checks.push(["Regime backs it", isBuy?rg.indexOf("BULL")>=0:rg.indexOf("BEAR")>=0]); }
@@ -350,23 +402,31 @@ function consult(i){
     return '<div class="chk"><span class="m">'+(c[1]?"✅":"⬜")+'</span><span>'+c[0]+'</span></div>';
   }).join("");
 
+  // timeframe switch
+  var hasDaily=!!o.daily;
+  var tfSwitch='<div class="tfsw">'+
+    '<button class="tfb'+(TF==="1h"?" on":"")+'" onclick="setTF(\'1h\')">1H</button>'+
+    '<button class="tfb'+(TF==="daily"?" on":"")+'"'+(hasDaily?'':' disabled')+' onclick="setTF(\'daily\')">Daily</button>'+
+    '</div>';
+
   // primary tiles — tappable for an explanation
   var tiles='<div class="kpis">'+
     '<div class="kpi tap" onclick="info(\'score\')"><span class="i">ⓘ</span><div class="l">Score</div><div class="v" style="color:'+scColor(o.score)+'">'+Math.round(o.score)+'/100</div></div>';
-  if(rg){ tiles+='<div class="kpi tap" onclick="info(\'regime\')"><span class="i">ⓘ</span><div class="l">Regime</div><div class="v">'+esc(rg)+'</div></div>'; }
+  if(rg){ tiles+='<div class="kpi tap" onclick="info(\'regime\')"><span class="i">ⓘ</span><div class="l">Regime ('+(TF==="daily"?"D":"1H")+')</div><div class="v">'+esc(rg)+'</div></div>'; }
   if(vl){ tiles+='<div class="kpi tap" onclick="info(\'validation\')"><span class="i">ⓘ</span><div class="l">Validation</div><div class="v" style="font-size:12px">'+esc(vl)+'</div></div>'; }
   tiles+='</div>';
 
   // trade plan tiles (entry / stop / target) — tappable for the reasoning
   var plan=CP, planHtml="";
   if(plan){
-    planHtml='<div class="sec">Trade plan · '+plan.dir+' · risk:reward 1:'+plan.rr+'</div>'+
+    var basisTxt = plan.basis==="structure" ? "swing-structure stop" : "1.5× ATR stop";
+    planHtml='<div class="sec">Trade plan · '+plan.dir+' · '+(TF==="daily"?"Daily":"1H")+' · 1:'+plan.rr+' R:R</div>'+
       '<div class="kpis">'+
         '<div class="kpi tap" onclick="info(\'entry\')"><span class="i">ⓘ</span><div class="l">Entry</div><div class="v" style="color:var(--steel)">'+fmt(plan.entry)+'</div></div>'+
         '<div class="kpi tap" onclick="info(\'sl\')"><span class="i">ⓘ</span><div class="l">Stop</div><div class="v" style="color:var(--sell)">'+fmt(plan.sl)+'</div></div>'+
         '<div class="kpi tap" onclick="info(\'tp\')"><span class="i">ⓘ</span><div class="l">Target</div><div class="v" style="color:var(--buy)">'+fmt(plan.tp)+'</div></div>'+
       '</div>'+
-      '<div class="muted" style="margin:2px 2px 0">Stop ~'+plan.riskPct.toFixed(1)+'% away (1.5× ATR) · target at '+plan.rr+'R. Tap any level for the reasoning.</div>';
+      '<div class="muted" style="margin:2px 2px 0">'+basisTxt+' ~'+plan.riskPct.toFixed(1)+'% away · target at '+plan.rr+'R. Tap any level for the reasoning.</div>';
   } else {
     planHtml='<div class="sec">Trade plan</div>'+
       '<div class="muted">No trade yet — the read is <b>'+v+'</b> (wait for a directional setup). Entry, stop and target appear when a BUY or SELL lines up.</div>';
@@ -377,23 +437,25 @@ function consult(i){
       '<div class="big" style="color:'+vc+'">'+esc(o.name)+' · '+v+'</div>'+
       '<div class="conv">'+esc(a.conviction? (a.conviction+" conviction") : "")+'  ·  '+passed+'/'+checks.length+' checks</div>'+
     '</div>'+
-    '<div class="sec">Direction &amp; levels — recent price</div>'+
-    (sparkSVG(o, plan)||'<p class="muted">Chart data not available for this instrument.</p>')+
+    '<div class="sec" style="display:flex;align-items:center;justify-content:space-between">'+
+      '<span>Direction &amp; levels</span>'+tfSwitch+'</div>'+
+    (sparkSVG(CM, plan)||'<p class="muted">Chart data not available for this timeframe.</p>')+
     tiles+
     planHtml+
     '<div class="kpis">'+
-      '<div class="kpi"><div class="l">Price</div><div class="v">'+esc(o.price)+'</div></div>'+
-      '<div class="kpi"><div class="l">Mom20</div><div class="v" style="color:'+(o.mom20>=0?"var(--buy)":"var(--sell)")+'">'+(o.mom20>=0?"+":"")+esc(o.mom20)+'%</div></div>'+
-      '<div class="kpi"><div class="l">ATR%</div><div class="v">'+esc(o.atr_pct)+'%</div></div>'+
+      '<div class="kpi"><div class="l">Price</div><div class="v">'+fmt(CM.price)+'</div></div>'+
+      '<div class="kpi"><div class="l">Mom'+(TF==="daily"?"20d":"20h")+'</div><div class="v" style="color:'+(CM.mom20>=0?"var(--buy)":"var(--sell)")+'">'+(CM.mom20>=0?"+":"")+esc(CM.mom20)+'%</div></div>'+
+      '<div class="kpi"><div class="l">ATR%</div><div class="v">'+esc(CM.atr_pct)+'%</div></div>'+
     '</div>'+
     '<div class="sec">Pre-trade checklist</div>'+chkHtml+
     '<div class="sec">Score breakdown</div>'+bars+
     '<div class="sec">Why</div><div class="why">'+esc(a.summary||o.note||"—")+(a.price_reasoning?('<br><br>'+esc(a.price_reasoning)):'')+'</div>'+
-    '<div class="foot">STAALCALIBUR is decision-support &amp; education only — a mechanical read of the data, not financial advice and not a signal to trade. Entry, stop and target are illustrative levels derived from price and volatility (ATR), not instructions. Tap any tile marked ⓘ for what it means. You alone decide; trade a demo first and never risk more than you can lose.</div>';
+    '<div class="foot">STAALCALIBUR is decision-support &amp; education only — a mechanical read of the data, not financial advice and not a signal to trade. Entry, stop and target are illustrative levels derived from price structure (recent swings) and volatility (ATR), not instructions. Tap any tile marked ⓘ for what it means. You alone decide; trade a demo first and never risk more than you can lose.</div>';
   window.scrollTo(0,0);
 }
 
 // ---------- boot + PWA ----------
+try{ var _tf=localStorage.getItem("sc_tf"); if(_tf==="daily"||_tf==="1h") TF=_tf; }catch(e){}
 if(K()){ CUR="commodities"; showHome(); } else { showGate(); }
 if("serviceWorker" in navigator){ navigator.serviceWorker.register("/scsw.js").catch(function(){}); }
 </script>
