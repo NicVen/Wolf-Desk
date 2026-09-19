@@ -131,7 +131,8 @@
   <h4>TradingView · Indicators</h4>
   <button class="catbtn" onclick="lock('STAALCALIBUR Edge V13')">⚔️ STAALCALIBUR Edge V13<span class="lk">🔒</span></button>
   <button class="catbtn" onclick="lock('Markov Scalper')">📈 Markov Scalper<span class="lk">🔒</span></button>
-  <button class="catbtn" onclick="lock('Markov 2 Gate')">🚦 Markov 2 Gate<span class="lk">🔒</span></button>
+  <h4>TradingView · Chart Add-on</h4>
+  <button class="catbtn" onclick="openSub(false)">🚦 Markov 2 Gate<span class="lk" style="color:var(--green)">free</span></button>
 </aside>
 <div class="lockmodal" id="lockmodal" onclick="if(event.target.id==='lockmodal')this.classList.remove('on')">
   <div class="lockbox">
@@ -278,7 +279,8 @@ function openRentals(){
     '<p style="font-size:11px;color:var(--steel);margin:4px 0 0">📊 Markov 18-pair — free with the desk (just Subscribe).</p>'+
     '<h4>TradingView · Bots &amp; Indicators <span style="font-size:10px;color:var(--steel)">pricing soon</span></h4>'+
     item('TV_CLAUDEBOT','🤖 Claude Trading Bot','',true)+item('TV_MARKOVBOT','🐺 Markov Signal Bot','',true)+
-    item('TV_EDGE13','⚔️ STAALCALIBUR Edge V13','',true)+item('TV_SCALP','📈 Markov Scalper','',true)+item('TV_2GATE','🚦 Markov 2 Gate','',true);
+    item('TV_EDGE13','⚔️ STAALCALIBUR Edge V13','',true)+item('TV_SCALP','📈 Markov Scalper','',true)+
+    '<p style="font-size:11px;color:var(--steel);margin:4px 0 0">🚦 Markov 2 Gate (chart add-on) — free with the desk (just Subscribe).</p>';
   showBuy();
 }
 

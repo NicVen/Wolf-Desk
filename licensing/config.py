@@ -70,7 +70,8 @@ PRODUCTS = {
     "TV_MARKOVBOT": {"name": "Markov Signal Bot",     "price_solo": 0, "price_vip": 0, "period_days": 30, "type": "tradingview", "vip": False, "tbd": True},
     "TV_EDGE13":    {"name": "STAALCALIBUR Edge V13", "price_solo": 0, "price_vip": 0, "period_days": 30, "type": "tradingview", "vip": False, "tbd": True},
     "TV_SCALP":     {"name": "Markov Scalper",        "price_solo": 0, "price_vip": 0, "period_days": 30, "type": "tradingview", "vip": False, "tbd": True},
-    "TV_2GATE":     {"name": "Markov 2 Gate",         "price_solo": 0, "price_vip": 0, "period_days": 30, "type": "tradingview", "vip": False, "tbd": True},
+    # Markov 2 Gate — a chart add-on (supplementary info, any pair/timeframe), FREE with the free subscription
+    "TV_2GATE":     {"name": "Markov 2 Gate — chart add-on", "price_solo": 0, "price_vip": 0, "period_days": 30, "type": "addon", "vip": False, "free": True},
     # --- VIP membership: $40/mo. Unlocks every vip=True product ---
     "VIP":       {"name": "VIP Membership", "price_solo": 40, "price_vip": 40, "period_days": 30, "type": "bundle", "vip": False},
 }
