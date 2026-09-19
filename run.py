@@ -58,6 +58,11 @@ def build_class(clskey, cls, brokers):
     print(f"WOLF [{clskey}]: scouting prices ...")
     for name, (ticker, cat, covkey) in cls["universe"].items():
         pm = price_metrics(ticker)
+        if pm is None:
+            # no price feed for this symbol — skip it entirely so the app never
+            # shows an empty 0/100 "no data" card.
+            print(f"  [skip] {name} ({ticker}) — no price data")
+            continue
         row = score_one(name, pm, signals.get(name, {}))
         # real headlines + news tilt (cached, best-effort) — feeds bull/bear + outlook
         try:
