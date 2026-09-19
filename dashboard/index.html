@@ -243,38 +243,42 @@ function showBuy(){
 function openVip(){
   document.getElementById('buytitle').textContent='⭐ VIP Membership';
   document.getElementById('buybody').innerHTML =
-    '<p style="font-size:13px;color:var(--steel)">Everything on the desk <b>except</b> the TradingView bots &amp; '+
-    'indicators — every MT5 Expert Advisor and every MT5 signal desk. Billed monthly in crypto; renews '+
-    'automatically on payment, stops if you don\'t renew.</p>'+
-    '<ul style="font-size:13px;line-height:1.6">'+
-    '<li>MT5 EAs: STAALWAG Gold, FX, Crypto, PROP, GOUDBREUK</li>'+
-    '<li>MT5 signals: Gold Desk, VELDRIN FX Desk</li>'+
-    '<li>One activation key unlocks them all</li></ul>'+
+    '<p style="font-size:15px;color:var(--gold2)"><b>$40 / month</b> — billed in crypto, renews on payment.</p>'+
+    '<ul style="font-size:13px;line-height:1.7">'+
+    '<li><b>Included free:</b> STAALWAG Gold, FX, Crypto &amp; PROP EAs + Gold Desk signals</li>'+
+    '<li><b>VIP add-ons</b> (rent separately at the VIP rate): GOUDBREUK +$10/mo · VELDRIN FX Desk +$20/mo</li>'+
+    '<li>One activation key unlocks the included set</li></ul>'+
+    '<p style="font-size:11px;color:var(--steel)">After subscribing, rent add-ons under 🔑 Rentals with the '+
+    '<b>same Telegram ID</b> to get the VIP price.</p>'+
     CONSENT+
-    '<button class="paybtn" disabled onclick="checkout(\'VIP\')" style="width:100%;margin-top:8px">Subscribe with crypto</button>';
+    '<button class="paybtn" disabled onclick="checkout(\'VIP\')" style="width:100%;margin-top:8px">Subscribe VIP — $40/mo</button>';
   showBuy();
 }
 
 function openRentals(){
   document.getElementById('buytitle').textContent='🔑 Rentals';
-  function item(code,label){
+  function item(code,label,price,soon){
+    var right = soon
+      ? '<button disabled style="padding:6px 12px;opacity:.5">soon</button>'
+      : '<button class="paybtn" disabled onclick="checkout(\''+code+'\')" style="padding:6px 12px">Rent</button>';
     return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:5px 0">'+
-      '<span style="font-size:13px">'+label+'</span>'+
-      '<button class="paybtn" disabled onclick="checkout(\''+code+'\')" style="padding:6px 12px">Rent</button></div>';
+      '<span style="font-size:13px">'+label+(price?' <span style="color:var(--steel)">'+price+'</span>':'')+'</span>'+
+      right+'</div>';
   }
   document.getElementById('buybody').innerHTML =
-    '<p style="font-size:12px;color:var(--steel)">Rent any single product in crypto. You get your activation '+
-    'key by message the moment payment confirms; it renews on payment and is removed 4h after a missed renewal.</p>'+
+    '<p style="font-size:12px;color:var(--steel)">Rent any single product in crypto — activation key by message '+
+    'the moment payment confirms, renews on payment, removed 4h after a missed renewal. '+
+    '<b>VIP members:</b> use the same Telegram ID and you\'ll be charged the VIP rate automatically.</p>'+
     CONSENT+
-    '<h4>MT5 · Expert Advisors</h4>'+
-    item('GOLD','🥇 STAALWAG Gold')+item('FX','💱 STAALWAG FX')+item('CRYPTO','🪙 STAALWAG Crypto')+
-    item('PROP','🏦 STAALWAG PROP')+item('GOUDBREUK','⚡ GOUDBREUK')+
+    '<h4>MT5 · Expert Advisors <span style="font-size:10px;color:var(--steel)">$30/mo each · free on VIP</span></h4>'+
+    item('GOLD','🥇 STAALWAG Gold','$30/mo')+item('FX','💱 STAALWAG FX','$30/mo')+item('CRYPTO','🪙 STAALWAG Crypto','$30/mo')+
+    item('PROP','🏦 STAALWAG PROP','$30/mo')+item('GOUDBREUK','⚡ GOUDBREUK','$30/mo · VIP $10')+
     '<h4>MT5 · Signals</h4>'+
-    item('SIG_GOLD','🥇 Gold Desk')+item('SIG_VELDRIN','💱 VELDRIN FX Desk')+
-    '<p style="font-size:11px;color:var(--steel);margin:4px 0 0">Markov 18-pair is free with the desk.</p>'+
-    '<h4>TradingView · Bots &amp; Indicators <span style="font-size:10px;color:var(--steel)">(activated by hand)</span></h4>'+
-    item('TV_CLAUDEBOT','🤖 Claude Trading Bot')+item('TV_MARKOVBOT','🐺 Markov Signal Bot')+
-    item('TV_EDGE13','⚔️ STAALCALIBUR Edge V13')+item('TV_SCALP','📈 Markov Scalper')+item('TV_2GATE','🚦 Markov 2 Gate');
+    item('SIG_GOLD','🥇 Gold Desk','$20/mo · free on VIP')+item('SIG_VELDRIN','💱 VELDRIN FX Desk','$20/mo · VIP $20')+
+    '<p style="font-size:11px;color:var(--steel);margin:4px 0 0">📊 Markov 18-pair — free with the desk (just Subscribe).</p>'+
+    '<h4>TradingView · Bots &amp; Indicators <span style="font-size:10px;color:var(--steel)">pricing soon</span></h4>'+
+    item('TV_CLAUDEBOT','🤖 Claude Trading Bot','',true)+item('TV_MARKOVBOT','🐺 Markov Signal Bot','',true)+
+    item('TV_EDGE13','⚔️ STAALCALIBUR Edge V13','',true)+item('TV_SCALP','📈 Markov Scalper','',true)+item('TV_2GATE','🚦 Markov 2 Gate','',true);
   showBuy();
 }
 

@@ -105,6 +105,17 @@ def all_active_or_pastdue():
         return [dict(r) for r in rows]
 
 
+def has_active_vip(contact):
+    """True if this contact holds a live VIP membership (for add-on pricing)."""
+    if not contact:
+        return False
+    with _LOCK:
+        r = _conn().execute(
+            "SELECT 1 FROM licenses WHERE contact=? AND product='VIP' "
+            "AND status='active' AND paid_until>? LIMIT 1", (contact, now())).fetchone()
+        return bool(r)
+
+
 def subscriber_exists(telegram_id):
     with _LOCK:
         r = _conn().execute("SELECT 1 FROM subscribers WHERE telegram_id=?", (telegram_id,)).fetchone()

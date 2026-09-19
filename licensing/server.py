@@ -29,15 +29,36 @@ def new_license_key(product):
     return "%s-%s" % (product.upper(), secrets.token_hex(4).upper())
 
 
+def price_for(code, contact):
+    """Returns (price, note). price<=0 means don't charge; note explains why."""
+    p = config.product(code)
+    if not p:
+        return 0, "unknown product"
+    if p.get("free"):
+        return 0, "This is free — just Subscribe on the desk."
+    if p.get("tbd"):
+        return 0, "Pricing for this product is coming soon."
+    if code.upper() == "VIP":
+        return p["price_solo"], None            # the membership itself
+    if store.has_active_vip(contact):
+        if p.get("vip"):
+            return 0, "Included free in your VIP membership — already unlocked."
+        return p.get("price_vip", 0), None       # VIP add-on price
+    return p.get("price_solo", 0), None          # non-VIP solo price
+
+
 def start_checkout(product_code, contact):
     p = config.product(product_code)
     if not p:
         return None, "unknown product"
+    price, note = price_for(product_code, contact)
+    if price <= 0:
+        return None, note or "nothing to charge for this item"
     key = new_license_key(product_code)
     store.create(key, product_code.upper(), contact, order_id=key, status="pending")
     url, ref = nowpayments.create_invoice(
-        p["price_usd"], order_id=key,
-        order_description="%s — %d days access" % (p["name"], p["period_days"]))
+        price, order_id=key,
+        order_description="%s — %d days" % (p["name"], p["period_days"]))
     if not url:
         return None, "payment provider error: %s" % ref
     return {"invoice_url": url, "license_key": key}, None
@@ -303,7 +324,7 @@ function go(){
  .then(r=>r.json()).then(d=>{if(d.invoice_url)location=d.invoice_url;else alert(d.error||'error')})
  .catch(e=>alert(e));
 }
-</script>""" % {"name": p["name"], "price": p["price_usd"], "days": p["period_days"],
+</script>""" % {"name": p["name"], "price": p.get("price_solo", 0), "days": p["period_days"],
                "code": product_code.upper(), "grace": config.GRACE_HOURS}
         self._send(200, html, "text/html")
 
