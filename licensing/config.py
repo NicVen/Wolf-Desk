@@ -46,13 +46,31 @@ LICENSE_ADMIN_CHAT = os.environ.get("LICENSE_ADMIN_CHAT", "")  # your own chat i
 # `kind` is just a label (ea / indicator). `key` is the code clients see, e.g.
 # STAAL-GOLD-XXXXXXXX.
 # ---------------------------------------------------------------------------
+# PRICES ARE PLACEHOLDERS — set the real ones, then restart the service.
+# type:  ea  -> LicenseOK() HTTP gate (automated)
+#        signal -> Telegram channel access + copier token (automated via bots)
+#        tradingview -> invite-only, activated by hand for now
+#        bundle -> VIP: grants every product with vip=True
+# vip:   True products are included in the VIP membership.
 PRODUCTS = {
-    "GOLD":        {"name": "STAALWAG Gold EA",        "price_usd": 40, "period_days": 30, "kind": "ea"},
-    "STAALFLITS":  {"name": "STAALFLITS EA",           "price_usd": 40, "period_days": 30, "kind": "ea"},
-    "STAALBREUK":  {"name": "STAALBREUK EA",           "price_usd": 40, "period_days": 30, "kind": "ea"},
-    "EXCALIBUR13": {"name": "Excalibur Edge V13",      "price_usd": 30, "period_days": 30, "kind": "indicator"},
-    "MARKOVSCALP": {"name": "Markov Scalper",          "price_usd": 30, "period_days": 30, "kind": "indicator"},
-    "MARKOV2GATE": {"name": "Markov 2 Gate",           "price_usd": 30, "period_days": 30, "kind": "indicator"},
+    # --- MT5 Expert Advisors ---
+    "GOLD":      {"name": "STAALWAG Gold EA",   "price_usd": 40, "period_days": 30, "type": "ea", "file": "STAALWAG_GOLD.mq5",   "vip": True},
+    "FX":        {"name": "STAALWAG FX EA",     "price_usd": 40, "period_days": 30, "type": "ea", "file": "STAALWAG_FX.mq5",     "vip": True},
+    "CRYPTO":    {"name": "STAALWAG Crypto EA", "price_usd": 40, "period_days": 30, "type": "ea", "file": "STAALWAG_CRYPTO.mq5", "vip": True},
+    "PROP":      {"name": "STAALWAG PROP EA",   "price_usd": 40, "period_days": 30, "type": "ea", "file": "STAALWAG_PROP.mq5",   "vip": True},
+    "GOUDBREUK": {"name": "GOUDBREUK EA",       "price_usd": 40, "period_days": 30, "type": "ea", "file": "GOUDBREUK.mq5",       "vip": True},
+    # --- MT5 Signals (Telegram + copier) ---
+    "SIG_GOLD":    {"name": "STAALWAG Gold Desk — signals", "price_usd": 30, "period_days": 30, "type": "signal", "channel": "@staalwagsignals", "vip": True},
+    "SIG_VELDRIN": {"name": "VELDRIN FX Desk — signals",    "price_usd": 30, "period_days": 30, "type": "signal", "channel": "@veldrinforex",    "vip": True},
+    # Markov 18-pair is FREE (free-tier perk) — not sold individually here.
+    # --- TradingView bots + indicators (invite-only; manual activation for now) ---
+    "TV_CLAUDEBOT": {"name": "Claude Trading Bot",    "price_usd": 30, "period_days": 30, "type": "tradingview", "vip": False},
+    "TV_MARKOVBOT": {"name": "Markov Signal Bot",     "price_usd": 30, "period_days": 30, "type": "tradingview", "vip": False},
+    "TV_EDGE13":    {"name": "STAALCALIBUR Edge V13", "price_usd": 30, "period_days": 30, "type": "tradingview", "vip": False},
+    "TV_SCALP":     {"name": "Markov Scalper",        "price_usd": 30, "period_days": 30, "type": "tradingview", "vip": False},
+    "TV_2GATE":     {"name": "Markov 2 Gate",         "price_usd": 30, "period_days": 30, "type": "tradingview", "vip": False},
+    # --- VIP bundle: everything with vip=True (all EAs + all signals; NOT TradingView) ---
+    "VIP":       {"name": "VIP Membership — all EAs + signals", "price_usd": 149, "period_days": 30, "type": "bundle", "vip": False},
 }
 
 

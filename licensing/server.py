@@ -125,9 +125,19 @@ class H(BaseHTTPRequestHandler):
             body = body.encode()
         self.send_response(code)
         self.send_header("Content-Type", ctype)
+        self.send_header("Access-Control-Allow-Origin", "*")  # buy flow runs on wolf.* desk
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def do_OPTIONS(self):
+        # CORS preflight for the cross-origin /checkout POST from the desk
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Admin-Token")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
 
     def _body(self):
         n = int(self.headers.get("Content-Length", 0) or 0)
@@ -173,7 +183,10 @@ class H(BaseHTTPRequestHandler):
         if not lic:
             return self._send(200, {"valid": False, "reason": "unknown"})
         if product and lic["product"].upper() != product.upper():
-            return self._send(200, {"valid": False, "reason": "wrong_product"})
+            # a VIP membership unlocks every product flagged vip=True
+            reqp = config.product(product)
+            if not (lic["product"] == "VIP" and reqp and reqp.get("vip")):
+                return self._send(200, {"valid": False, "reason": "wrong_product"})
 
         # bind to first account/machine seen; block others (anti-sharing)
         if lic.get("bind_account"):
