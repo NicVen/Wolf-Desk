@@ -172,6 +172,8 @@ class H(BaseHTTPRequestHandler):
 
         if u.path == "/verify":
             self._verify(one("key"), one("account"), one("machine"), one("product"))
+        elif u.path == "/admin/list":
+            self._admin_list()
         elif u.path == "/buy":
             self._buy_page(one("product"))
         elif u.path == "/thanks":
@@ -193,10 +195,20 @@ class H(BaseHTTPRequestHandler):
             self._checkout()
         elif u.path == "/admin/issue":
             self._admin_issue()
+        elif u.path == "/admin/revoke":
+            self._admin_revoke()
+        elif u.path == "/admin/extend":
+            self._admin_extend()
+        elif u.path == "/admin/reset_device":
+            self._admin_reset_device()
         elif u.path == "/subscribe":
             self._subscribe()
         else:
             self._send(404, {"error": "not found"})
+
+    # ---- admin auth ----
+    def _admin_ok(self):
+        return bool(config.ADMIN_TOKEN) and self.headers.get("X-Admin-Token") == config.ADMIN_TOKEN
 
     # ---- handlers ----
     def _verify(self, key, account, machine, product):
@@ -205,25 +217,38 @@ class H(BaseHTTPRequestHandler):
         lic = store.get(key)
         if not lic:
             return self._send(200, {"valid": False, "reason": "unknown"})
+
+        # admin master key: unlocks any product, any device, never expires.
+        if lic.get("admin"):
+            store.update(key, last_seen=store.now(), last_account=account or machine or "")
+            prod = (product or lic["product"]).upper()
+            token = tokens.issue(key, prod, lic.get("paid_until") or (store.now() + 3650 * DAY))
+            return self._send(200, {"valid": True, "reason": "admin", "product": prod,
+                                    "expires_at": lic.get("paid_until"), "server_time": store.now(),
+                                    "token": token, "recheck_in": config.TOKEN_TTL_HOURS * 3600})
+
         if product and lic["product"].upper() != product.upper():
             # a VIP membership unlocks every product flagged vip=True
             reqp = config.product(product)
             if not (lic["product"] == "VIP" and reqp and reqp.get("vip")):
                 return self._send(200, {"valid": False, "reason": "wrong_product"})
 
-        # bind to first account/machine seen; block others (anti-sharing)
-        if lic.get("bind_account"):
-            if account and (account != lic["bind_account"] or
-                            (lic.get("bind_machine") and machine and machine != lic["bind_machine"])):
-                return self._send(200, {"valid": False, "reason": "bound_to_other"})
-        elif account and lic["status"] in ("active", "past_due"):
-            store.update(key, bind_account=account, bind_machine=machine)
-            lic["bind_account"] = account
+        # bind to first account/machine seen; block others (anti-sharing).
+        # no_bind licenses (e.g. multi-device comps) skip this entirely.
+        if not lic.get("no_bind"):
+            if lic.get("bind_account"):
+                if account and (account != lic["bind_account"] or
+                                (lic.get("bind_machine") and machine and machine != lic["bind_machine"])):
+                    return self._send(200, {"valid": False, "reason": "bound_to_other"})
+            elif account and lic["status"] in ("active", "past_due"):
+                store.update(key, bind_account=account, bind_machine=machine)
+                lic["bind_account"] = account
 
         allowed, reason = check_access(lic)
         if not allowed:
             return self._send(200, {"valid": False, "reason": reason,
                                     "product": lic["product"]})
+        store.update(key, last_seen=store.now(), last_account=account or machine or "")
         token = tokens.issue(key, lic["product"], lic["paid_until"])
         self._send(200, {"valid": True, "reason": reason, "product": lic["product"],
                          "expires_at": lic["paid_until"], "server_time": store.now(),
@@ -263,13 +288,15 @@ class H(BaseHTTPRequestHandler):
         self._send(200, res)
 
     def _admin_issue(self):
-        if not config.ADMIN_TOKEN or self.headers.get("X-Admin-Token") != config.ADMIN_TOKEN:
+        if not self._admin_ok():
             return self._send(403, {"error": "forbidden"})
         data = json.loads(self._body() or b"{}")
         p = config.product(data.get("product", ""))
         if not p:
             return self._send(400, {"error": "unknown product"})
-        days = int(data.get("days", p["period_days"]))
+        is_admin = bool(data.get("admin"))
+        no_bind = 1 if (is_admin or data.get("no_bind")) else 0
+        days = int(data.get("days", 3650 if is_admin else p["period_days"]))
         key = data.get("license_key") or new_license_key(data["product"])
         lic = store.get(key)
         if not lic:
@@ -278,9 +305,67 @@ class H(BaseHTTPRequestHandler):
             lic = store.get(key)
         base = max(store.now(), lic.get("paid_until") or 0)
         store.update(key, status="active", paid_until=base + days * DAY,
+                     revoke_at=None, notified=0, no_bind=no_bind,
+                     admin=1 if is_admin else 0)
+        row = store.get(key)
+        self._send(200, {"license_key": key, "status": "active",
+                         "paid_until": row["paid_until"],
+                         "admin": bool(row.get("admin")), "no_bind": bool(row.get("no_bind"))})
+
+    def _admin_list(self):
+        if not self._admin_ok():
+            return self._send(403, {"error": "forbidden"})
+        now = store.now()
+        out = []
+        for l in store.all_licenses():
+            if l.get("admin"):
+                access = "admin"
+            else:
+                _, access = check_access(l)
+            pu = l.get("paid_until") or 0
+            out.append({
+                "key": l["license_key"], "product": l["product"], "contact": l.get("contact"),
+                "status": l["status"], "access": access,
+                "days_left": round((pu - now) / DAY, 1) if pu else None,
+                "admin": bool(l.get("admin")), "no_bind": bool(l.get("no_bind")),
+                "bound": l.get("bind_account") or None,
+                "last_seen": l.get("last_seen"),
+            })
+        # order: problems first (past_due/pending), then by days_left ascending
+        self._send(200, {"count": len(out), "server_time": now, "licenses": out})
+
+    def _admin_revoke(self):
+        if not self._admin_ok():
+            return self._send(403, {"error": "forbidden"})
+        key = json.loads(self._body() or b"{}").get("key", "")
+        if not store.get(key):
+            return self._send(404, {"error": "unknown key"})
+        store.update(key, status="revoked", revoke_at=None)
+        notify.admin("manually revoked: %s" % key)
+        self._send(200, {"license_key": key, "status": "revoked"})
+
+    def _admin_extend(self):
+        if not self._admin_ok():
+            return self._send(403, {"error": "forbidden"})
+        data = json.loads(self._body() or b"{}")
+        key, days = data.get("key", ""), int(data.get("days", 30))
+        lic = store.get(key)
+        if not lic:
+            return self._send(404, {"error": "unknown key"})
+        base = max(store.now(), lic.get("paid_until") or 0)
+        store.update(key, status="active", paid_until=base + days * DAY,
                      revoke_at=None, notified=0)
         self._send(200, {"license_key": key, "status": "active",
                          "paid_until": store.get(key)["paid_until"]})
+
+    def _admin_reset_device(self):
+        if not self._admin_ok():
+            return self._send(403, {"error": "forbidden"})
+        key = json.loads(self._body() or b"{}").get("key", "")
+        if not store.get(key):
+            return self._send(404, {"error": "unknown key"})
+        store.update(key, bind_account=None, bind_machine=None)
+        self._send(200, {"license_key": key, "reset": True})
 
     def _subscribe(self):
         """Free intel-desk subscription. Consent is signed once; after that the

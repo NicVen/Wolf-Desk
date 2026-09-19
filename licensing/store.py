@@ -46,6 +46,15 @@ def _init(c):
             updated       INTEGER
         )""")
     c.execute("CREATE INDEX IF NOT EXISTS idx_order ON licenses(order_id)")
+    # migrations: add columns that may not exist on older databases.
+    for col, ddl in (("no_bind", "INTEGER DEFAULT 0"),
+                     ("admin", "INTEGER DEFAULT 0"),
+                     ("last_seen", "INTEGER"),
+                     ("last_account", "TEXT")):
+        try:
+            c.execute("ALTER TABLE licenses ADD COLUMN %s %s" % (col, ddl))
+        except sqlite3.OperationalError:
+            pass  # already exists
     c.execute("""
         CREATE TABLE IF NOT EXISTS processed_payments (
             payment_id   TEXT PRIMARY KEY,
@@ -102,6 +111,13 @@ def all_active_or_pastdue():
     with _LOCK:
         rows = _conn().execute(
             "SELECT * FROM licenses WHERE status IN ('active','past_due')").fetchall()
+        return [dict(r) for r in rows]
+
+
+def all_licenses():
+    """Every license row, newest activity first (for the admin control view)."""
+    with _LOCK:
+        rows = _conn().execute("SELECT * FROM licenses ORDER BY updated DESC").fetchall()
         return [dict(r) for r in rows]
 
 
