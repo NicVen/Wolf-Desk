@@ -32,7 +32,11 @@ def _side(verdict):
 
 
 def load(path):
-    with open(os.path.join(C.DATA_DIR, path), "r", encoding="utf-8") as f:
+    # tolerant: a class with no manual signals file scores on price metrics alone
+    p = os.path.join(C.DATA_DIR, path)
+    if not os.path.exists(p):
+        return {}
+    with open(p, "r", encoding="utf-8") as f:
         return json.load(f)
 
 

@@ -366,7 +366,8 @@ function buildTabs(){
   document.getElementById('tabs').innerHTML=CLASSES.map(([k,l])=>
     `<div class="tab ${k===CUR?'on':''}" onclick="switchTab('${k}')">${l}</div>`).join('');
 }
-async function switchTab(k){ CUR=k; buildTabs(); await load(); }
+async function switchTab(k){ CUR=k; buildTabs(); await load();
+  if(!LAST||!LAST.opportunities||!LAST.opportunities.length){ await getData(); } }
 
 async function load(){ try{ const r=await fetch('/data?class='+CUR); render(await r.json()); }catch(e){} }
 
@@ -385,7 +386,14 @@ function toggleAuto(){
 function venueList(ops){ const s=new Set(); ops.forEach(o=>(o.coverage||[]).forEach(c=>s.add(c.name))); return [...s].sort(); }
 
 function render(payload){
-  if(!payload||!payload.opportunities) return;
+  if(!payload||!payload.opportunities||!payload.opportunities.length){
+    LAST=payload||null;
+    var lbl=(CLASSES.find(function(c){return c[0]===CUR;})||[null,CUR])[1];
+    document.getElementById('topttl').textContent=lbl+' — press GET DATA to load';
+    document.getElementById('cards').innerHTML='<p style="color:var(--mut);grid-column:1/-1;padding:12px">No data for '+lbl+' yet — click <b>GET DATA</b> to build it.</p>';
+    var tb=document.getElementById('tbl'); if(tb) tb.innerHTML='';
+    return;
+  }
   LAST=payload;
   const ops=payload.opportunities;
   document.getElementById('upd').textContent='Updated '+(payload.generated||'');
