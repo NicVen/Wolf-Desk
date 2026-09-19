@@ -93,6 +93,8 @@
   .sheet h3{margin:0 0 4px;font-size:19px}
   .sheet .val{font-size:22px;font-weight:900;margin:2px 0 6px;color:var(--chrome)}
   .sheet p{font-size:14px;line-height:1.6;color:var(--chrome);margin:10px 0}
+  .sheet ul.upd{margin:10px 0 16px;padding-left:18px}
+  .sheet ul.upd li{font-size:14px;line-height:1.55;color:var(--chrome);margin:7px 0}
   .sheet .x{float:right;background:var(--card);border:1px solid var(--line);color:var(--chrome);
     border-radius:10px;padding:6px 12px;font-weight:800;cursor:pointer}
   .hidden{display:none}
@@ -454,10 +456,68 @@ function consult(i){
   window.scrollTo(0,0);
 }
 
+// ---------- auto-update: notify the renter, one-tap install ----------
+var updSnoozed = false;
+function installedVer(){ try{ return localStorage.getItem("sc_ver")||""; }catch(e){ return ""; } }
+function setInstalledVer(v){ try{ localStorage.setItem("sc_ver", v); }catch(e){} }
+function verCmp(a,b){
+  var pa=String(a).split("."), pb=String(b).split("."), n=Math.max(pa.length,pb.length);
+  for(var i=0;i<n;i++){ var x=parseInt(pa[i]||"0",10)||0, y=parseInt(pb[i]||"0",10)||0;
+    if(x>y) return 1; if(x<y) return -1; }
+  return 0;
+}
+function checkUpdate(){
+  if(updSnoozed) return;
+  fetch("/appversion",{cache:"no-store"}).then(function(r){ return r.json(); }).then(function(d){
+    if(!d||!d.version) return;
+    var cur=installedVer();
+    if(!cur){ setInstalledVer(d.version); return; }   // first run: adopt current silently
+    if(verCmp(d.version,cur)>0) showUpdate(d);
+  }).catch(function(){});
+}
+function showUpdate(d){
+  if(el("upd")) return;
+  var labels={feature:"New features",bug:"Bug fixes",security:"Security update",improvement:"Improvements"};
+  var typeLabel=labels[d.type]||"Update available";
+  var notes=(d.notes||[]).map(function(n){ return '<li>'+esc(n)+'</li>'; }).join("");
+  var m=document.createElement("div"); m.className="modal"; m.id="upd";
+  m.innerHTML='<div class="sheet">'+
+    '<div class="sub">'+esc(typeLabel)+' · v'+esc(d.version)+(d.date?(' · '+esc(d.date)):'')+'</div>'+
+    '<h3>'+esc(d.title||"A new version is ready")+'</h3>'+
+    (notes?('<ul class="upd">'+notes+'</ul>'):'')+
+    '<button class="btn" id="updBtn" onclick="doUpdate()">Update now</button>'+
+    '<button class="btn ghost" style="margin-top:8px" onclick="snoozeUpdate()">Later</button>'+
+    '</div>';
+  document.body.appendChild(m);
+}
+function snoozeUpdate(){ updSnoozed=true; var m=el("upd"); if(m&&m.parentNode) m.parentNode.removeChild(m); }
+function doUpdate(){
+  var b=el("updBtn"); if(b){ b.textContent="Updating…"; b.disabled=true; }
+  function finish(){
+    fetch("/appversion",{cache:"no-store"}).then(function(r){ return r.json(); })
+      .then(function(d){ if(d&&d.version) setInstalledVer(d.version); })
+      .catch(function(){})
+      .then(function(){ location.reload(true); });
+  }
+  try{
+    var jobs=[];
+    if(window.caches){ jobs.push(caches.keys().then(function(ks){
+      return Promise.all(ks.map(function(k){ return caches.delete(k); })); })); }
+    if("serviceWorker" in navigator){ jobs.push(
+      navigator.serviceWorker.getRegistration().then(function(reg){
+        if(!reg) return; try{ reg.update(); }catch(e){}
+        if(reg.waiting) reg.waiting.postMessage({type:"SKIP_WAITING"});
+      }).catch(function(){})); }
+    Promise.all(jobs).then(finish, finish);
+  }catch(e){ finish(); }
+}
+
 // ---------- boot + PWA ----------
 try{ var _tf=localStorage.getItem("sc_tf"); if(_tf==="daily"||_tf==="1h") TF=_tf; }catch(e){}
 if(K()){ CUR="commodities"; showHome(); } else { showGate(); }
 if("serviceWorker" in navigator){ navigator.serviceWorker.register("/scsw.js").catch(function(){}); }
+checkUpdate();
+document.addEventListener("visibilitychange", function(){ if(!document.hidden) checkUpdate(); });
 </script>
 </body>
 </html>

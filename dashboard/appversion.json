@@ -1,0 +1,13 @@
+{
+  "version": "1.3.0",
+  "date": "2026-09-19",
+  "title": "Charts, timeframes & trade levels",
+  "type": "feature",
+  "notes": [
+    "New direction chart on every consult, with entry, stop and target drawn on it.",
+    "1H / Daily switch — see the setup and its levels on either timeframe.",
+    "Structure-based stops placed just beyond the recent swing, with the reasoning.",
+    "Tap any tile (Score, Regime, Validation, or a level) for a plain-English explanation.",
+    "Fixed Regime and Validation showing [object Object]."
+  ]
+}

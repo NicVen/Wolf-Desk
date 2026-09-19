@@ -130,6 +130,20 @@ def cmd_reset(a):
     print(json.dumps(_call("POST", "/admin/reset_device", {"key": a.key}), indent=2)); return 0
 
 
+def cmd_announce(a):
+    try:
+        with open(a.file) as f:
+            ver = json.load(f)
+    except Exception as e:  # noqa: BLE001
+        print("ERROR reading %s: %s" % (a.file, e)); return 1
+    payload = {"product": a.product, "version": ver.get("version", ""),
+               "title": ver.get("title", ""), "type": ver.get("type", ""),
+               "notes": ver.get("notes", [])}
+    print("Announcing %s v%s to active %s renters..." % (a.product, payload["version"], a.product))
+    print(json.dumps(_call("POST", "/admin/announce", payload), indent=2))
+    return 0
+
+
 def main(argv=None):
     _load_env()
     ap = argparse.ArgumentParser(prog="adminctl", description="STAALWAG licensing control")
@@ -158,6 +172,11 @@ def main(argv=None):
 
     prs = sub.add_parser("reset", help="clear a key's device binding")
     prs.add_argument("key"); prs.set_defaults(fn=cmd_reset)
+
+    pan = sub.add_parser("announce", help="notify active renters about a new app version")
+    pan.add_argument("--product", default="APP")
+    pan.add_argument("--file", default="dashboard/appversion.json")
+    pan.set_defaults(fn=cmd_announce)
 
     args = ap.parse_args(argv)
     return args.fn(args)

@@ -206,6 +206,8 @@ class H(BaseHTTPRequestHandler):
             self._admin_extend()
         elif u.path == "/admin/reset_device":
             self._admin_reset_device()
+        elif u.path == "/admin/announce":
+            self._admin_announce()
         elif u.path == "/subscribe":
             self._subscribe()
         else:
@@ -392,6 +394,29 @@ class H(BaseHTTPRequestHandler):
             return self._send(404, {"error": "unknown key"})
         store.update(key, bind_account=None, bind_machine=None)
         self._send(200, {"license_key": key, "reset": True})
+
+    def _admin_announce(self):
+        """Message every active renter of a product about a new version."""
+        if not self._admin_ok():
+            return self._send(403, {"error": "forbidden"})
+        d = json.loads(self._body() or b"{}")
+        product = (d.get("product") or "APP").upper()
+        version = d.get("version") or ""
+        title = d.get("title") or "Update available"
+        notes = d.get("notes") or []
+        p = config.product(product)
+        pname = p["name"] if p else product
+        lines = ["%s — v%s: %s" % (pname, version, title)]
+        for n in notes:
+            lines.append("• " + str(n))
+        lines.append("\nOpen the app and tap “Update now” to install it.")
+        msg = "\n".join(lines)
+        sent = 0
+        for contact in store.active_contacts(product):
+            notify.client(contact, msg)
+            sent += 1
+        notify.admin("announce %s v%s -> %d renter(s)" % (product, version, sent))
+        self._send(200, {"product": product, "version": version, "notified": sent})
 
     def _subscribe(self):
         """Free intel-desk subscription. Consent is signed once; after that the

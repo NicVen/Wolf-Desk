@@ -121,6 +121,16 @@ def all_licenses():
         return [dict(r) for r in rows]
 
 
+def active_contacts(product):
+    """Distinct contacts holding a live (active/past_due) license for `product`."""
+    with _LOCK:
+        rows = _conn().execute(
+            "SELECT DISTINCT contact FROM licenses WHERE product=? "
+            "AND status IN ('active','past_due') AND contact IS NOT NULL AND contact!=''",
+            (product.upper(),)).fetchall()
+        return [r["contact"] for r in rows]
+
+
 def has_active_vip(contact):
     """True if this contact holds a live VIP membership (for add-on pricing)."""
     if not contact:

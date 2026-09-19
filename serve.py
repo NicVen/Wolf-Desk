@@ -542,6 +542,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if path == "/scsw.js":
             self._send(200, _read(os.path.join("dashboard", "scsw.js"), b""),
                        "application/javascript"); return
+        if path == "/appversion":
+            # Ungated changelog/version manifest for the in-app update prompt.
+            self._send(200, _read(os.path.join("dashboard", "appversion.json"),
+                                  b'{"version":"1.0.0","notes":[]}'),
+                       "application/json"); return
         if path == "/appdata":
             key = q.get("key", [""])[0]; dev = q.get("dev", ["app"])[0]
             if not _app_license_ok(key, dev):
