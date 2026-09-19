@@ -388,9 +388,9 @@ function venueList(ops){ const s=new Set(); ops.forEach(o=>(o.coverage||[]).forE
 function render(payload){
   if(!payload||!payload.opportunities||!payload.opportunities.length){
     LAST=payload||null;
-    var lbl=(CLASSES.find(function(c){return c[0]===CUR;})||[null,CUR])[1];
-    document.getElementById('topttl').textContent=lbl+' — press GET DATA to load';
-    document.getElementById('cards').innerHTML='<p style="color:var(--mut);grid-column:1/-1;padding:12px">No data for '+lbl+' yet — click <b>GET DATA</b> to build it.</p>';
+    var clsLbl=(CLASSES.find(function(c){return c[0]===CUR;})||[null,CUR])[1];
+    document.getElementById('topttl').textContent=clsLbl+' — press GET DATA to load';
+    document.getElementById('cards').innerHTML='<p style="color:var(--mut);grid-column:1/-1;padding:12px">No data for '+clsLbl+' yet — click <b>GET DATA</b> to build it.</p>';
     var tb=document.getElementById('tbl'); if(tb) tb.innerHTML='';
     return;
   }
