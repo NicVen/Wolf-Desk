@@ -121,16 +121,38 @@ function scColor(s){ return s>=65?"var(--buy)":s>=50?"var(--watch)":"var(--sell)
 function regState(o){ return (o.regime && o.regime.state) ? String(o.regime.state).toUpperCase() : ""; }
 function valText(o){ return (o.validation && o.validation.label) ? String(o.validation.label) : ""; }
 var CO = null;   // opportunity currently on the consult screen (for info popups)
+var CP = null;   // trade plan for the current opportunity
 
-// ---------- direction chart (inline SVG sparkline) ----------
-function sparkSVG(o){
+// price formatting: more decimals for small-priced instruments
+function fmt(n){ if(n==null||!isFinite(n)) return "—"; var p=Math.abs(n);
+  var d = p>=100?2 : p>=1?4 : 6; return Number(n).toFixed(d); }
+
+// ---------- trade plan (entry / stop / target from ATR + verdict) ----------
+function tradePlan(o){
+  var v=verdictOf(o);
+  var price=Number(o.price), atrp=Number(o.atr_pct);
+  if(!isFinite(price)||price<=0||!isFinite(atrp)||atrp<=0) return null;
+  if(v!=="BUY" && v!=="SELL") return null;          // WATCH = no trade yet
+  var atr=price*atrp/100;
+  var risk=1.5*atr;          // stop beyond normal daily noise
+  var rr=2;                  // 2:1 reward-to-risk
+  var entry=price;
+  var sl = v==="BUY" ? price-risk : price+risk;
+  var tp = v==="BUY" ? price+rr*risk : price-rr*risk;
+  return {dir:v, entry:entry, sl:sl, tp:tp, atr:atr, risk:risk, rr:rr, riskPct:risk/price*100};
+}
+
+// ---------- direction chart (inline SVG sparkline + trade levels) ----------
+function sparkSVG(o, plan){
   var s=(o.spark||[]).filter(function(x){return typeof x==="number" && isFinite(x);});
   if(s.length<2) return "";
   var refs=[]; if(o.ma20!=null) refs.push(o.ma20); if(o.ma50!=null) refs.push(o.ma50);
+  if(plan){ refs.push(plan.entry, plan.sl, plan.tp); }   // keep levels in view
   var all=s.concat(refs);
   var lo=Math.min.apply(null,all), hi=Math.max.apply(null,all);
   if(hi<=lo){ hi=lo+1; }
-  var W=300,H=110,PL=4,PR=4,PT=8,PB=8;
+  var pad=(hi-lo)*0.06; lo-=pad; hi+=pad;
+  var W=300,H=130,PL=4,PR=4,PT=8,PB=8;
   function x(i){ return PL + i/(s.length-1)*(W-PL-PR); }
   function y(v){ return PT + (1-(v-lo)/(hi-lo))*(H-PT-PB); }
   var up = s[s.length-1] >= s[0];
@@ -138,20 +160,30 @@ function sparkSVG(o){
   var d="M"+x(0).toFixed(1)+" "+y(s[0]).toFixed(1);
   for(var i=1;i<s.length;i++){ d+=" L"+x(i).toFixed(1)+" "+y(s[i]).toFixed(1); }
   var area=d+" L"+x(s.length-1).toFixed(1)+" "+(H-PB)+" L"+x(0).toFixed(1)+" "+(H-PB)+" Z";
-  function refLine(vv,c,dash){ if(vv==null) return ""; var yy=y(vv).toFixed(1);
-    return '<line x1="'+PL+'" y1="'+yy+'" x2="'+(W-PR)+'" y2="'+yy+'" stroke="'+c+'" stroke-width="1" stroke-dasharray="'+dash+'" opacity=".7"/>'; }
+  function refLine(vv,c,dash,w){ if(vv==null) return ""; var yy=y(vv).toFixed(1);
+    return '<line x1="'+PL+'" y1="'+yy+'" x2="'+(W-PR)+'" y2="'+yy+'" stroke="'+c+'" stroke-width="'+(w||1)+'" stroke-dasharray="'+dash+'" opacity=".85"/>'; }
   var gid="g"+Math.random().toString(36).slice(2,7);
+  var levels="";
+  if(plan){
+    levels += refLine(plan.tp,"var(--buy)","5 3",1.4);
+    levels += refLine(plan.entry,"var(--steel)","1 0",1.4);
+    levels += refLine(plan.sl,"var(--sell)","5 3",1.4);
+  }
   return '<div class="chart"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+
     '<defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1">'+
       '<stop offset="0" stop-color="'+col+'" stop-opacity=".28"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs>'+
     '<path d="'+area+'" fill="url(#'+gid+')" stroke="none"/>'+
     refLine(o.ma50,"var(--mut)","2 3")+refLine(o.ma20,"var(--steel)","4 2")+
+    levels+
     '<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+
     '<circle cx="'+x(s.length-1).toFixed(1)+'" cy="'+y(s[s.length-1]).toFixed(1)+'" r="3" fill="'+col+'"/>'+
     '</svg>'+
     '<div class="lg"><span><i style="border-color:'+col+'"></i>Price ('+(up?"↑ up":"↓ down")+' ~3mo)</span>'+
-      (o.ma20!=null?'<span><i style="border-color:var(--steel);border-top-style:dashed"></i>20-day avg</span>':'')+
-      (o.ma50!=null?'<span><i style="border-color:var(--mut);border-top-style:dotted"></i>50-day avg</span>':'')+
+      (o.ma20!=null?'<span><i style="border-color:var(--steel);border-top-style:dashed"></i>20-day</span>':'')+
+      (o.ma50!=null?'<span><i style="border-color:var(--mut);border-top-style:dotted"></i>50-day</span>':'')+
+      (plan?('<span><i style="border-color:var(--steel)"></i>Entry</span>'+
+             '<span><i style="border-color:var(--sell);border-top-style:dashed"></i>Stop</span>'+
+             '<span><i style="border-color:var(--buy);border-top-style:dashed"></i>Target</span>'):'')+
     '</div></div>';
 }
 
@@ -180,6 +212,28 @@ function info(kind){
     if(rg.next) bits.push("most likely next state <b>"+esc(String(rg.next).toUpperCase())+"</b>");
     if(bits.length) body+="<p><b>Why "+esc(val)+":</b> "+bits.join(", ")+".</p>";
     if(rg.vote===false) body+="<p>Note: too few samples to count toward the market-wide vote — treat this as a hint, not a confirmation.</p>";
+  } else if(kind==="entry"||kind==="sl"||kind==="tp"){
+    var p=CP; if(!p){ return; }
+    var dirw = p.dir==="BUY" ? "long (buy)" : "short (sell)";
+    if(kind==="entry"){
+      title="Entry"; sub="Where the plan gets in"; val=fmt(p.entry);
+      body="<p>What it is: the price to open the trade, in the verdict's direction — this is a <b>"+esc(dirw)+"</b> setup.</p>"+
+        "<p><b>Why "+esc(val)+":</b> the current price is used as a market entry. For a tighter fill you can wait for a pullback toward the "+
+        "20-day average"+(o.ma20!=null?(" ("+fmt(o.ma20)+")"):"")+" before entering, but the plan below is measured from here.</p>";
+    } else if(kind==="sl"){
+      title="Stop loss (SL)"; sub="Where the idea is wrong"; val=fmt(p.sl);
+      body="<p>What it is: the exit that caps the loss if price goes the other way. Set it and don't move it against yourself.</p>"+
+        "<p><b>Why "+esc(val)+":</b> placed <b>1.5× ATR</b> from entry — ATR (Average True Range) is this instrument's typical daily range, "+
+        "here about "+fmt(p.atr)+" per day, so the stop sits ~<b>"+p.riskPct.toFixed(1)+"%</b> away. That's beyond ordinary day-to-day noise, "+
+        "so you're only stopped out by a real move against the trade, not a random wiggle.</p>";
+    } else {
+      title="Take profit (TP)"; sub="Where you bank it"; val=fmt(p.tp);
+      body="<p>What it is: the target to close the trade in profit.</p>"+
+        "<p><b>Why "+esc(val)+":</b> set at <b>"+p.rr+"R</b> — "+p.rr+"× the distance to your stop — a <b>1:"+p.rr+"</b> reward-to-risk trade. "+
+        "At that ratio you can be wrong more often than right and still come out ahead over many trades.</p>"+
+        "<p>The stop is your risk (1R); the target is "+p.rr+"R of reward.</p>";
+    }
+    openSheet(title,sub,val,body); return;
   } else {
     var vv=o.validation||{};
     title="Validation"; sub="Real edge or noise?"; val=valText(o)||"—";
@@ -270,7 +324,7 @@ function renderHome(){
 // ---------- consult ----------
 function consult(i){
   var o=(DATA.opportunities||[])[i]; if(!o) return;
-  CO=o; closeSheet();
+  CO=o; CP=tradePlan(o); closeSheet();
   el("refreshBtn").style.display="none"; el("homeBtn").style.display="";
   var v=verdictOf(o), vc=vColor(v);
   var a=o.analysis||{};
@@ -303,14 +357,30 @@ function consult(i){
   if(vl){ tiles+='<div class="kpi tap" onclick="info(\'validation\')"><span class="i">ⓘ</span><div class="l">Validation</div><div class="v" style="font-size:12px">'+esc(vl)+'</div></div>'; }
   tiles+='</div>';
 
+  // trade plan tiles (entry / stop / target) — tappable for the reasoning
+  var plan=CP, planHtml="";
+  if(plan){
+    planHtml='<div class="sec">Trade plan · '+plan.dir+' · risk:reward 1:'+plan.rr+'</div>'+
+      '<div class="kpis">'+
+        '<div class="kpi tap" onclick="info(\'entry\')"><span class="i">ⓘ</span><div class="l">Entry</div><div class="v" style="color:var(--steel)">'+fmt(plan.entry)+'</div></div>'+
+        '<div class="kpi tap" onclick="info(\'sl\')"><span class="i">ⓘ</span><div class="l">Stop</div><div class="v" style="color:var(--sell)">'+fmt(plan.sl)+'</div></div>'+
+        '<div class="kpi tap" onclick="info(\'tp\')"><span class="i">ⓘ</span><div class="l">Target</div><div class="v" style="color:var(--buy)">'+fmt(plan.tp)+'</div></div>'+
+      '</div>'+
+      '<div class="muted" style="margin:2px 2px 0">Stop ~'+plan.riskPct.toFixed(1)+'% away (1.5× ATR) · target at '+plan.rr+'R. Tap any level for the reasoning.</div>';
+  } else {
+    planHtml='<div class="sec">Trade plan</div>'+
+      '<div class="muted">No trade yet — the read is <b>'+v+'</b> (wait for a directional setup). Entry, stop and target appear when a BUY or SELL lines up.</div>';
+  }
+
   el("main").innerHTML =
     '<div class="verdict" style="background:'+vc+'1a;border:1px solid '+vc+'55">'+
       '<div class="big" style="color:'+vc+'">'+esc(o.name)+' · '+v+'</div>'+
       '<div class="conv">'+esc(a.conviction? (a.conviction+" conviction") : "")+'  ·  '+passed+'/'+checks.length+' checks</div>'+
     '</div>'+
-    '<div class="sec">Direction — recent price</div>'+
-    (sparkSVG(o)||'<p class="muted">Chart data not available for this instrument.</p>')+
+    '<div class="sec">Direction &amp; levels — recent price</div>'+
+    (sparkSVG(o, plan)||'<p class="muted">Chart data not available for this instrument.</p>')+
     tiles+
+    planHtml+
     '<div class="kpis">'+
       '<div class="kpi"><div class="l">Price</div><div class="v">'+esc(o.price)+'</div></div>'+
       '<div class="kpi"><div class="l">Mom20</div><div class="v" style="color:'+(o.mom20>=0?"var(--buy)":"var(--sell)")+'">'+(o.mom20>=0?"+":"")+esc(o.mom20)+'%</div></div>'+
@@ -319,7 +389,7 @@ function consult(i){
     '<div class="sec">Pre-trade checklist</div>'+chkHtml+
     '<div class="sec">Score breakdown</div>'+bars+
     '<div class="sec">Why</div><div class="why">'+esc(a.summary||o.note||"—")+(a.price_reasoning?('<br><br>'+esc(a.price_reasoning)):'')+'</div>'+
-    '<div class="foot">STAALCALIBUR is decision-support &amp; education only — a mechanical read of the data, not financial advice and not a signal to trade. Tap any tile marked ⓘ for what it means. You alone decide; trade a demo first and never risk more than you can lose.</div>';
+    '<div class="foot">STAALCALIBUR is decision-support &amp; education only — a mechanical read of the data, not financial advice and not a signal to trade. Entry, stop and target are illustrative levels derived from price and volatility (ATR), not instructions. Tap any tile marked ⓘ for what it means. You alone decide; trade a demo first and never risk more than you can lose.</div>';
   window.scrollTo(0,0);
 }
 
