@@ -72,40 +72,41 @@ EOF
 chmod 600 /etc/caddy/desk-auth.conf
 
 # ---------------------------------------------------------------------------
-say "4/8  VNC session (XFCE, bound to localhost, no separate VNC password)"
-mkdir -p "$DESK_HOME/.vnc"
-cat > "$DESK_HOME/.vnc/xstartup" <<'XS'
+say "4/8  Desktop launcher (Xtigervnc directly — skips the buggy migration)"
+# Clean any half-migrated TigerVNC state from a previous attempt.
+rm -rf "$DESK_HOME/.vnc" "$DESK_HOME/.config/tigervnc" 2>/dev/null || true
+# Launch the VNC X server directly + XFCE on it. Bypasses the tigervncserver
+# wrapper (whose ~/.vnc -> ~/.config/tigervnc migration fails on Ubuntu 26.04).
+cat > /usr/local/bin/staalwag-vnc.sh <<EOF
 #!/bin/sh
-unset SESSION_MANAGER
-unset DBUS_SESSION_BUS_ADDRESS
+export HOME=${DESK_HOME}
+export USER=${DESK_USER}
+export DISPLAY=:${VNC_DISPLAY}
 export XDG_CURRENT_DESKTOP=XFCE
 export XDG_SESSION_TYPE=x11
-exec dbus-launch --exit-with-session startxfce4
-XS
-chmod +x "$DESK_HOME/.vnc/xstartup"
-# TigerVNC config: localhost only, no VNC auth (Caddy is the gate).
-cat > "$DESK_HOME/.vnc/config" <<EOF
-geometry=${GEOMETRY}
-depth=24
-localhost
-SecurityTypes=None
+# -localhost keeps the RFB port on loopback; Caddy is the only way in.
+/usr/bin/Xtigervnc :${VNC_DISPLAY} -rfbport ${VNC_PORT} -SecurityTypes None \\
+  -localhost -geometry ${GEOMETRY} -depth 24 -desktop STAALWAG >/var/log/staalwag-vnc.log 2>&1 &
+XPID=\$!
+sleep 3
+dbus-launch --exit-with-session startxfce4
+kill \$XPID 2>/dev/null
 EOF
+chmod +x /usr/local/bin/staalwag-vnc.sh
 
 # ---------------------------------------------------------------------------
 say "5/8  systemd services (desktop + web bridge)"
 cat > /etc/systemd/system/staalwag-desktop.service <<EOF
 [Unit]
-Description=STAALWAG cloud desktop (TigerVNC + XFCE)
+Description=STAALWAG cloud desktop (Xtigervnc + XFCE)
 After=network.target
 
 [Service]
-Type=forking
+Type=simple
 User=${DESK_USER}
 Environment=HOME=${DESK_HOME}
 WorkingDirectory=${DESK_HOME}
-ExecStartPre=-/usr/bin/vncserver -kill :${VNC_DISPLAY}
-ExecStart=/usr/bin/vncserver :${VNC_DISPLAY} -localhost yes -SecurityTypes None -geometry ${GEOMETRY} -depth 24
-ExecStop=/usr/bin/vncserver -kill :${VNC_DISPLAY}
+ExecStart=/usr/local/bin/staalwag-vnc.sh
 Restart=on-failure
 RestartSec=5
 
