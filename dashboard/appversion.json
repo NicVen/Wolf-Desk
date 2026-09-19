@@ -1,12 +1,12 @@
 {
-  "version": "2.4.0",
+  "version": "2.5.0",
   "date": "2026-09-19",
-  "title": "Suggestion box — help shape the app",
+  "title": "Daily Trader Quiz — win monthly",
   "type": "feature",
   "notes": [
-    "NEW: Suggest an improvement — send us your ideas straight from the home screen. We read every one.",
-    "Share this read: post any market's verdict as a branded card.",
-    "Refer & earn front and centre with your live stats.",
-    "Live headlines and the daily outlook on every pair."
+    "NEW: Daily Trader Quiz — 5 intermediate/advanced questions a day, picked fresh by our system. A question is never repeated for you.",
+    "See how the community answered each question (live poll) after you submit.",
+    "Points build all month; top the leaderboard to win. You're shown only by a private random ID — never your name.",
+    "Plus the suggestion box, share cards, referrals, live headlines and daily outlook."
   ]
 }

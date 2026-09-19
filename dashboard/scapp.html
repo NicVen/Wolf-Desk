@@ -80,6 +80,34 @@
   .chart svg{display:block;width:100%;height:120px}
   .chart .lg{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:8px;font-size:11px;color:var(--mut)}
   .chart .lg i{display:inline-block;width:14px;height:0;border-top:2px solid;margin-right:5px;vertical-align:middle}
+  /* trader quiz */
+  .qhdr{display:flex;gap:8px;margin:2px 0 12px}
+  .qhdr>div{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px;text-align:center}
+  .qhdr .l{color:var(--mut);font-size:9.5px;letter-spacing:.5px;text-transform:uppercase}
+  .qhdr .v{font-size:16px;font-weight:900;margin-top:2px}
+  .qintro{color:var(--mut);font-size:12.5px;line-height:1.5;margin:0 0 14px}
+  .qcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+  .qnum{color:var(--steel);font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:800}
+  .qq{font-size:14.5px;font-weight:600;margin:7px 0 12px;line-height:1.45}
+  .qopt{border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin:7px 0;font-size:14px;
+    cursor:pointer;background:var(--bg)}
+  .qopt.sel{border-color:var(--accent);background:rgba(110,168,254,.14);color:#fff}
+  .qopt:active{background:var(--card2)}
+  .qdone{background:rgba(46,204,113,.12);border:1px solid var(--buy);border-radius:12px;padding:13px;
+    font-weight:700;text-align:center;margin:4px 0 10px}
+  .qres{position:relative;border:1px solid var(--line);border-radius:10px;margin:7px 0;overflow:hidden;
+    display:flex;align-items:center;padding:11px 12px;font-size:13.5px}
+  .qres .qbar{position:absolute;left:0;top:0;bottom:0;background:var(--line);z-index:0}
+  .qres.ok{border-color:var(--buy)} .qres.ok .qbar{background:rgba(46,204,113,.22)}
+  .qres.bad{border-color:var(--sell)} .qres.bad .qbar{background:rgba(255,91,91,.18)}
+  .qres .qlab{position:relative;z-index:1;flex:1}
+  .qres .qpct{position:relative;z-index:1;color:var(--mut);font-weight:700;font-size:12px;margin-left:8px}
+  .lbrow{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);
+    border-radius:10px;margin:6px 0;font-size:13.5px}
+  .lbrow.me{border-color:var(--accent);background:rgba(110,168,254,.1)}
+  .lbrow .rk{color:var(--mut);font-weight:800;width:34px}
+  .lbrow .aid{flex:1;font-weight:700;font-family:ui-monospace,Menlo,monospace}
+  .lbrow .pts{color:var(--steel);font-weight:800}
   /* refer & earn card */
   .refcard{background:linear-gradient(135deg,rgba(110,168,254,.16),rgba(46,204,113,.10));
     border:1px solid var(--accent);border-radius:16px;padding:16px 16px 15px;margin:2px 0 14px}
@@ -424,7 +452,9 @@ function loadClass(cb){
 // ---------- home ----------
 function showHome(){
   el("refreshBtn").style.display=""; el("homeBtn").style.display="none";
-  el("main").innerHTML = '<div id="refbox"></div><div class="chips" id="chips"></div><div id="list"></div>'+
+  el("main").innerHTML = '<div id="refbox"></div>'+
+    '<button class="btn" style="margin:2px 0 12px" onclick="openQuiz()">🧠 Daily Trader Quiz — win monthly</button>'+
+    '<div class="chips" id="chips"></div><div id="list"></div>'+
     '<button class="btn ghost" style="margin-top:18px" onclick="openSuggest()">💡 Suggest an improvement</button>';
   el("chips").innerHTML = CLASSES.map(function(c){
     return '<div class="chip'+(c[0]===CUR?' on':'')+'" onclick="pick(\''+c[0]+'\')">'+c[1]+'</div>';
@@ -480,6 +510,96 @@ function renderHome(){
       '<div class="badge" style="background:'+vColor(v)+'22;color:'+vColor(v)+'">'+v+'</div>'+
       '<div class="sc" style="color:'+scColor(o.score)+'">'+Math.round(o.score)+'</div></div>';
   }).join("");
+}
+
+// ---------- trader quiz ----------
+var QSTATE=null, QANS={};
+function openQuiz(){
+  el("refreshBtn").style.display="none"; el("homeBtn").style.display="";
+  el("main").innerHTML='<p class="muted">Loading quiz…</p>';
+  fetch(PAY+"/quiz?key="+encodeURIComponent(K())).then(function(r){ return r.json(); }).then(function(d){
+    if(!d||!d.ok){ el("main").innerHTML='<p class="muted">'+esc((d&&d.reason)||"Couldn't load the quiz.")+'</p>'; return; }
+    QSTATE=d; QANS={};
+    if(d.exhausted) renderQuizExhausted(d);
+    else if(d.played) renderQuizDone(d);
+    else renderQuizPlay(d);
+  }).catch(function(){ el("main").innerHTML='<p class="muted">Network error. Try again.</p>'; });
+}
+function quizHeader(d){
+  return '<div class="qhdr">'+
+    '<div><div class="l">Your ID</div><div class="v">'+esc(d.anon_id||"—")+'</div></div>'+
+    '<div><div class="l">Month</div><div class="v">'+(d.month_points||0)+'</div></div>'+
+    '<div><div class="l">Rank</div><div class="v">'+(d.rank?("#"+d.rank):"—")+'</div></div>'+
+    '<div><div class="l">Days left</div><div class="v">'+(d.days_left!=null?d.days_left:"—")+'</div></div>'+
+  '</div>';
+}
+function quizBoard(d){
+  var b=d.leaderboard||[]; if(!b.length) return "";
+  return '<div class="sec">Leaderboard · this month</div>'+b.map(function(r,i){
+    var me=(r.anon===d.anon_id);
+    return '<div class="lbrow'+(me?" me":"")+'"><span class="rk">#'+(i+1)+'</span>'+
+      '<span class="aid">'+esc(r.anon)+(me?" (you)":"")+'</span><span class="pts">'+r.points+' pts</span></div>';
+  }).join("");
+}
+function pickAns(qid, idx, n){
+  QANS[qid]=idx;
+  for(var i=0;i<n;i++){ var e=el("o-"+qid+"-"+i); if(e) e.className="qopt"+(i===idx?" sel":""); }
+}
+function renderQuizPlay(d){
+  var qs=d.questions.map(function(q,qi){
+    var opts=q.options.map(function(o,oi){
+      return '<div class="qopt" id="o-'+q.id+'-'+oi+'" onclick="pickAns(\''+q.id+'\','+oi+','+q.options.length+')">'+esc(o)+'</div>';
+    }).join("");
+    return '<div class="qcard"><div class="qnum">Q'+(qi+1)+' · '+esc(q.level)+'</div>'+
+      '<div class="qq">'+esc(q.q)+'</div>'+opts+'</div>';
+  }).join("");
+  el("main").innerHTML=quizHeader(d)+
+    '<div class="qintro">5 questions, picked fresh for you today. One quiz per day — points build all month. Top the board to win.</div>'+
+    qs+'<button class="btn" id="qSubmit" style="margin-top:12px" onclick="submitQuiz()">Submit answers</button>'+
+    quizBoard(d);
+  window.scrollTo(0,0);
+}
+function submitQuiz(){
+  var n=(QSTATE.questions||[]).length, answered=Object.keys(QANS).length;
+  if(answered<n){ toast("Answer all "+n+" questions first."); return; }
+  var b=el("qSubmit"); b.disabled=true; b.textContent="Scoring…";
+  fetch(PAY+"/quiz/answer",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({key:K(),answers:QANS})}).then(function(r){ return r.json(); }).then(function(d){
+    if(d&&d.ok){ QSTATE=d; renderQuizDone(d); }
+    else if(d&&d.reason==="already_played"){ renderQuizDone(d.state||{played:true}); }
+    else { toast((d&&d.reason)||"Couldn't submit."); b.disabled=false; b.textContent="Submit answers"; }
+  }).catch(function(){ toast("Network error."); b.disabled=false; b.textContent="Submit answers"; });
+}
+function renderQuizDone(d){
+  var body="";
+  if(d.results && d.results.length){
+    body+='<div class="qdone">You scored '+d.score_today+'/'+(d.total||d.results.length)+' today 🎉</div>';
+    body+=d.results.map(function(r,qi){
+      var total=(r.poll||[]).reduce(function(a,b){return a+b;},0)||1;
+      var opts=r.options.map(function(o,oi){
+        var pct=Math.round((r.poll[oi]||0)/total*100);
+        var cls="qres"; if(oi===r.correct) cls+=" ok"; else if(oi===r.chosen) cls+=" bad";
+        return '<div class="'+cls+'"><div class="qbar" style="width:'+pct+'%"></div>'+
+          '<span class="qlab">'+esc(o)+'</span><span class="qpct">'+pct+'%</span></div>';
+      }).join("");
+      return '<div class="qcard"><div class="qnum">Q'+(qi+1)+(r.ok?" ✅":" ❌")+'</div>'+
+        '<div class="qq">'+esc(r.q)+'</div>'+opts+'</div>';
+    }).join("");
+  } else {
+    body+='<div class="qdone">You’ve played today'+(d.score_today!=null?(" — scored "+d.score_today+"/5"):"")+
+      '. Come back tomorrow for 5 fresh questions.</div>';
+  }
+  el("main").innerHTML=quizHeader(d)+body+quizBoard(d)+
+    '<div class="foot">Winners are decided at month end. Everyone gets a private, random ID (like '+esc(d.anon_id||"SC-XXXXXX")+') — only that ID is ever shown publicly, never your name.</div>';
+  window.scrollTo(0,0);
+}
+
+function renderQuizExhausted(d){
+  el("main").innerHTML=quizHeader(d)+
+    '<div class="qdone">You’ve answered every question in the bank 🏅 Nothing repeats — new questions are added regularly, so check back soon.</div>'+
+    quizBoard(d)+
+    '<div class="foot">Winners are decided at month end. Only your random ID ('+esc(d.anon_id||"SC-XXXXXX")+') is ever shown publicly — never your name.</div>';
+  window.scrollTo(0,0);
 }
 
 // ---------- consult ----------

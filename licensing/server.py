@@ -11,6 +11,8 @@ Endpoints
 
 Run:  python -m licensing.server     (BIND_ADDR/PORT from env; sits behind Caddy)
 """
+import calendar
+import datetime
 import json
 import secrets
 import threading
@@ -18,7 +20,20 @@ import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from . import cardpay, config, moderation, nowpayments, notify, store, tokens
+from . import cardpay, config, moderation, nowpayments, notify, quiz, store, tokens
+
+
+def _today():
+    return datetime.datetime.utcnow().strftime("%Y-%m-%d")
+
+
+def _period():
+    return datetime.datetime.utcnow().strftime("%Y-%m")
+
+
+def _days_left():
+    n = datetime.datetime.utcnow()
+    return calendar.monthrange(n.year, n.month)[1] - n.day
 
 DAY = 86400
 
@@ -251,6 +266,8 @@ class H(BaseHTTPRequestHandler):
             self._verify(one("key"), one("account"), one("machine"), one("product"))
         elif u.path == "/reflink":
             self._reflink(one("key"))
+        elif u.path == "/quiz":
+            self._quiz(one("key"))
         elif u.path == "/admin/list":
             self._admin_list()
         elif u.path == "/admin/app_stats":
@@ -290,8 +307,12 @@ class H(BaseHTTPRequestHandler):
             self._admin_reset_device()
         elif u.path == "/admin/announce":
             self._admin_announce()
+        elif u.path == "/admin/quiz_winner":
+            self._admin_quiz_winner()
         elif u.path == "/suggest":
             self._suggest()
+        elif u.path == "/quiz/answer":
+            self._quiz_answer()
         elif u.path == "/admin/suggestion":
             self._admin_suggestion_update()
         elif u.path == "/subscribe":
@@ -523,6 +544,44 @@ class H(BaseHTTPRequestHandler):
         notify.admin("announce %s v%s -> %d renter(s)" % (product, version, sent))
         self._send(200, {"product": product, "version": version, "notified": sent})
 
+    def _admin_quiz_winner(self):
+        """Decide + announce the Trader Quiz winner for a period. Winner is DM'd
+        privately with the reward; everyone else gets a public message that names
+        only the winner's anonymous id (privacy by design)."""
+        if not self._admin_ok():
+            return self._send(403, {"error": "forbidden"})
+        d = json.loads(self._body() or b"{}")
+        # default to the previous calendar month (typical end-of-month run)
+        period = d.get("period")
+        if not period:
+            first = datetime.datetime.utcnow().replace(day=1)
+            period = (first - datetime.timedelta(days=1)).strftime("%Y-%m")
+        reward = d.get("reward") or "your reward — we'll be in touch"
+        dry = bool(d.get("dry_run"))
+        board = store.quiz_leaderboard(period, 1)
+        if not board:
+            return self._send(200, {"ok": False, "reason": "no quiz plays in %s" % period})
+        anon, pts, wkey = board[0]
+        if dry:
+            return self._send(200, {"ok": True, "dry_run": True, "period": period,
+                                    "winner_anon": anon, "points": pts})
+        wlic = store.get(wkey)
+        # private, personal note to the winner
+        notify.client(wlic.get("contact") if wlic else None,
+                      "🏆 You WON the STAALCALIBUR Trader Quiz for %s with %d points!\n"
+                      "Reward: %s.\nYour public winner id is %s — we only ever announce that, "
+                      "never your identity." % (period, pts, reward, anon))
+        # public announcement to every app subscriber — anonymous id only
+        msg = ("🏆 STAALCALIBUR Trader Quiz — %s winner: %s with %d points! "
+               "Congratulations. Play the daily quiz to top next month's board." % (period, anon, pts))
+        sent = 0
+        for contact in store.active_contacts("APP"):
+            notify.client(contact, msg)
+            sent += 1
+        notify.admin("quiz winner %s: %s (%d pts) — announced to %d" % (period, anon, pts, sent))
+        self._send(200, {"ok": True, "period": period, "winner_anon": anon,
+                         "points": pts, "notified": sent})
+
     def _suggest(self):
         """A subscriber submits an app suggestion. Screened for abusive content
         before it is ever stored or shown to the admin."""
@@ -539,6 +598,80 @@ class H(BaseHTTPRequestHandler):
         store.add_suggestion(lic.get("contact") or key, text)
         notify.admin("💡 new app suggestion: %s" % text[:160])
         self._send(200, {"ok": True})
+
+    def _player_ok(self, lic):
+        if not lic or lic["status"] == "revoked":
+            return False
+        if lic.get("admin"):
+            return True
+        allowed, _ = check_access(lic)
+        return allowed
+
+    def _quiz_state(self, lic, extra=None):
+        key = lic["license_key"]
+        period, today = _period(), _today()
+        anon = store.ensure_anon(key)
+        pts = store.quiz_month_points(key, period)
+        rank, total = store.quiz_rank(key, period)
+        board = [{"anon": a, "points": p} for (a, p, k) in store.quiz_leaderboard(period, 10)]
+        out = {"ok": True, "anon_id": anon, "month_points": pts, "rank": rank,
+               "players": total, "days_left": _days_left(), "leaderboard": board}
+        if extra:
+            out.update(extra)
+        return out
+
+    def _quiz_day_qids(self, key, today):
+        """The exact 5 questions served to this player today. Picks fresh
+        never-seen ones on first request and persists them (so GET and the
+        later POST agree, and questions are never repeated). Returns [] when the
+        player has exhausted the whole bank."""
+        play = store.quiz_get_play(key, today)
+        if play and play.get("qids"):
+            return play["qids"], play.get("score")
+        qids = quiz.pick_unseen(key, today, store.quiz_seen_ids(key))
+        if not qids:
+            return [], None
+        store.quiz_start_play(key, today, qids)
+        return qids, None
+
+    def _quiz(self, key):
+        lic = store.get(key)
+        if not self._player_ok(lic):
+            return self._send(200, {"ok": False, "reason": "Active subscription required to play."})
+        today = _today()
+        play = store.quiz_get_play(key, today)
+        if play and play.get("score") is not None:
+            return self._send(200, self._quiz_state(lic, {"played": True, "score_today": play["score"]}))
+        qids, _ = self._quiz_day_qids(key, today)
+        if not qids:
+            return self._send(200, self._quiz_state(lic, {"played": False, "exhausted": True, "questions": []}))
+        return self._send(200, self._quiz_state(lic, {"played": False,
+                                                      "questions": quiz.client_questions(qids)}))
+
+    def _quiz_answer(self):
+        d = json.loads(self._body() or b"{}")
+        key = d.get("key", "")
+        answers = d.get("answers") or {}
+        lic = store.get(key)
+        if not self._player_ok(lic):
+            return self._send(200, {"ok": False, "reason": "Active subscription required to play."})
+        today = _today()
+        play = store.quiz_get_play(key, today)
+        if play and play.get("score") is not None:
+            return self._send(200, {"ok": False, "reason": "already_played",
+                                    "state": self._quiz_state(lic, {"played": True, "score_today": play["score"]})})
+        qids, _ = self._quiz_day_qids(key, today)
+        if not qids:
+            return self._send(200, {"ok": False, "reason": "exhausted"})
+        score, results = quiz.score_answers(qids, answers)
+        store.quiz_set_score(key, today, score)
+        pairs = [(r["id"], r["chosen"]) for r in results if r["chosen"] is not None and r["chosen"] >= 0]
+        if pairs:
+            store.quiz_bump_votes(pairs)
+        for r in results:
+            r["poll"] = store.quiz_poll(r["id"], len(r["options"]))
+        return self._send(200, self._quiz_state(lic, {"played": True, "score_today": score,
+                                                      "total": len(qids), "results": results}))
 
     def _admin_app_stats(self):
         if not self._admin_ok():

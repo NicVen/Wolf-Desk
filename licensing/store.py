@@ -54,7 +54,8 @@ def _init(c):
                      ("ref_code", "TEXT"),
                      ("referred_by", "TEXT"),
                      ("ref_rewarded", "INTEGER DEFAULT 0"),
-                     ("ref_reward_until", "INTEGER")):
+                     ("ref_reward_until", "INTEGER"),
+                     ("anon_id", "TEXT")):
         try:
             c.execute("ALTER TABLE licenses ADD COLUMN %s %s" % (col, ddl))
         except sqlite3.OperationalError:
@@ -76,6 +77,33 @@ def _init(c):
             text     TEXT,
             status   TEXT DEFAULT 'new',
             created  INTEGER
+        )""")
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS quiz_plays (
+            license_key TEXT,
+            day         TEXT,
+            qids        TEXT,
+            score       INTEGER,
+            created     INTEGER,
+            PRIMARY KEY (license_key, day)
+        )""")
+    try:
+        c.execute("ALTER TABLE quiz_plays ADD COLUMN qids TEXT")
+    except sqlite3.OperationalError:
+        pass
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS quiz_seen (
+            license_key TEXT,
+            qid         TEXT,
+            seen_at     INTEGER,
+            PRIMARY KEY (license_key, qid)
+        )""")
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS quiz_votes (
+            qid   TEXT,
+            opt   INTEGER,
+            n     INTEGER DEFAULT 0,
+            PRIMARY KEY (qid, opt)
         )""")
     c.commit()
 
@@ -241,6 +269,122 @@ def app_stats(active_days=7):
         "referrals": referrals, "free_months_granted": free_granted,
         "suggestions_new": suggestions_new, "active_days": active_days,
     }
+
+
+import secrets as _secrets
+
+
+def ensure_anon(license_key):
+    """Random, unlinkable public id for a subscriber (privacy in leaderboards)."""
+    lic = get(license_key)
+    if not lic:
+        return None
+    if lic.get("anon_id"):
+        return lic["anon_id"]
+    for _ in range(20):
+        aid = "SC-" + _secrets.token_hex(3).upper()
+        with _LOCK:
+            exists = _conn().execute("SELECT 1 FROM licenses WHERE anon_id=?", (aid,)).fetchone()
+        if not exists:
+            update(license_key, anon_id=aid)
+            return aid
+    return "SC-" + _secrets.token_hex(4).upper()
+
+
+def quiz_get_play(license_key, day):
+    """Today's play row: {qids:[...], score:int|None} or None."""
+    with _LOCK:
+        r = _conn().execute("SELECT qids, score FROM quiz_plays WHERE license_key=? AND day=?",
+                            (license_key, day)).fetchone()
+    if not r:
+        return None
+    import json as _json
+    try:
+        qids = _json.loads(r["qids"]) if r["qids"] else []
+    except Exception:
+        qids = []
+    return {"qids": qids, "score": r["score"]}
+
+
+def quiz_seen_ids(license_key):
+    with _LOCK:
+        rows = _conn().execute("SELECT qid FROM quiz_seen WHERE license_key=?", (license_key,)).fetchall()
+        return {r["qid"] for r in rows}
+
+
+def quiz_start_play(license_key, day, qids):
+    """Create today's row with the served questions and mark them permanently
+    seen for this player (so they're never asked again)."""
+    import json as _json
+    t = now()
+    with _LOCK:
+        c = _conn()
+        c.execute("INSERT OR IGNORE INTO quiz_plays (license_key, day, qids, score, created) "
+                  "VALUES (?,?,?,NULL,?)", (license_key, day, _json.dumps(qids), t))
+        for qid in qids:
+            c.execute("INSERT OR IGNORE INTO quiz_seen (license_key, qid, seen_at) VALUES (?,?,?)",
+                      (license_key, qid, t))
+        c.commit()
+
+
+def quiz_set_score(license_key, day, score):
+    with _LOCK:
+        c = _conn()
+        c.execute("UPDATE quiz_plays SET score=? WHERE license_key=? AND day=?",
+                  (score, license_key, day))
+        c.commit()
+
+
+def quiz_bump_votes(pairs):
+    """pairs: list of (qid, opt) — increment each option's tally."""
+    with _LOCK:
+        c = _conn()
+        for qid, opt in pairs:
+            c.execute("INSERT INTO quiz_votes (qid, opt, n) VALUES (?,?,1) "
+                      "ON CONFLICT(qid,opt) DO UPDATE SET n=n+1", (qid, int(opt)))
+        c.commit()
+
+
+def quiz_poll(qid, n_opts):
+    with _LOCK:
+        rows = _conn().execute("SELECT opt, n FROM quiz_votes WHERE qid=?", (qid,)).fetchall()
+    counts = [0] * n_opts
+    for r in rows:
+        if 0 <= r["opt"] < n_opts:
+            counts[r["opt"]] = r["n"]
+    return counts
+
+
+def quiz_month_points(license_key, period):
+    with _LOCK:
+        r = _conn().execute(
+            "SELECT COALESCE(SUM(score),0) p FROM quiz_plays WHERE license_key=? AND substr(day,1,7)=?",
+            (license_key, period)).fetchone()
+        return r["p"] or 0
+
+
+def quiz_leaderboard(period, limit=10):
+    """[(anon_id, points, license_key)] for a period, best first."""
+    with _LOCK:
+        rows = _conn().execute(
+            "SELECT p.license_key k, COALESCE(SUM(p.score),0) pts, l.anon_id aid "
+            "FROM quiz_plays p LEFT JOIN licenses l ON l.license_key=p.license_key "
+            "WHERE substr(p.day,1,7)=? GROUP BY p.license_key ORDER BY pts DESC, MIN(p.created) ASC "
+            "LIMIT ?", (period, limit)).fetchall()
+        return [(r["aid"] or "SC-?????", r["pts"], r["k"]) for r in rows]
+
+
+def quiz_rank(license_key, period):
+    """(rank, total_players) for this key in the period; rank None if no plays."""
+    with _LOCK:
+        rows = _conn().execute(
+            "SELECT license_key k, COALESCE(SUM(score),0) pts FROM quiz_plays "
+            "WHERE substr(day,1,7)=? GROUP BY license_key ORDER BY pts DESC", (period,)).fetchall()
+    total = len(rows)
+    for i, r in enumerate(rows, 1):
+        if r["k"] == license_key:
+            return i, total
+    return None, total
 
 
 def payment_seen(payment_id):

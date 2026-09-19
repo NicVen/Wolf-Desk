@@ -130,6 +130,14 @@ def cmd_reset(a):
     print(json.dumps(_call("POST", "/admin/reset_device", {"key": a.key}), indent=2)); return 0
 
 
+def cmd_quiz_winner(a):
+    payload = {"reward": a.reward, "dry_run": a.dry_run}
+    if a.period:
+        payload["period"] = a.period
+    print(json.dumps(_call("POST", "/admin/quiz_winner", payload), indent=2))
+    return 0
+
+
 def cmd_announce(a):
     try:
         with open(a.file) as f:
@@ -172,6 +180,13 @@ def main(argv=None):
 
     prs = sub.add_parser("reset", help="clear a key's device binding")
     prs.add_argument("key"); prs.set_defaults(fn=cmd_reset)
+
+    pw = sub.add_parser("quiz-winner", help="announce the monthly Trader Quiz winner")
+    pw.add_argument("--period", default="", help="YYYY-MM (default: last month)")
+    pw.add_argument("--reward", default="your reward — we'll be in touch")
+    pw.add_argument("--dry-run", dest="dry_run", action="store_true",
+                    help="just show who would win, send nothing")
+    pw.set_defaults(fn=cmd_quiz_winner)
 
     pan = sub.add_parser("announce", help="notify active renters about a new app version")
     pan.add_argument("--product", default="APP")
