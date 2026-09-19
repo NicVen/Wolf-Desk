@@ -553,6 +553,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
             # into dashboard/assetlinks.json (PWABuilder/Bubblewrap gives it).
             self._send(200, _read(os.path.join("dashboard", "assetlinks.json"), b"[]"),
                        "application/json"); return
+        if path in ("/staalcalibur.apk", "/app.apk"):
+            # The installable Android package. Drop the file at
+            # dashboard/staalcalibur.apk (built once via PWABuilder/Bubblewrap).
+            apk = _read(os.path.join("dashboard", "staalcalibur.apk"), b"")
+            if not apk:
+                self._send(404, "APK not published yet.", "text/plain"); return
+            self._send(200, apk, "application/vnd.android.package-archive"); return
+        if path in ("/download", "/get"):
+            self._send(200, _read(os.path.join("dashboard", "download.html"),
+                                  b"<h2>Download coming soon.</h2>"),
+                       "text/html; charset=utf-8"); return
         if path == "/appdata":
             key = q.get("key", [""])[0]; dev = q.get("dev", ["app"])[0]
             if not _app_license_ok(key, dev):
