@@ -1,10 +1,14 @@
 //@version=6
-indicator("Excalibur Edge V13 — Markov Omnibus", shorttitle="EE V13", overlay=true,
+indicator("STAALCALIBUR Edge V13 — Markov Omnibus", shorttitle="SC V13", overlay=true,
           max_boxes_count=200, max_lines_count=500, max_labels_count=500)
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-//  EXCALIBUR EDGE V13 — MARKOV OMNIBUS
+//  STAALCALIBUR EDGE V13 — MARKOV OMNIBUS  (rebranded from Excalibur Edge V13)
 //  V12 base + Markov regime gate + REAL outcome tracking
+//  V13.2 (STAALCALIBUR) upgrades:
+//   6. Markov sample-size vote gate (8 to vote / 15 to trust) — regime only
+//      blocks/scores once it has enough observed transitions; confidence shown
+//   7. Edge validation label (DSR-spirit t-stat) — REAL vs NOISE on tracked outcomes
 //  Changes vs V12:
 //   1. Markov 3-state regime engine (ported from server.js / Markov skill)
 //      - Blocks signals against persistent counter-regime (>80%)
@@ -96,6 +100,10 @@ useMarkov   = input.bool(true,  "Enable Markov Regime Gate", group="🎲  Markov
 mkPersThr   = input.float(0.80, "Persistence Block (0-1)",   group="🎲  Markov Regime", minval=0.5, maxval=0.99, step=0.05,
      tooltip="If current regime self-transition probability exceeds this AND signal fights the regime → blocked.")
 mkMinHold   = input.int(3,      "Regime Min Hold (bars)",    group="🎲  Markov Regime", minval=1, maxval=10)
+mkMinVote   = input.int(8,      "Regime min N to vote",      group="🎲  Markov Regime", minval=1, maxval=100,
+     tooltip="Sample-size gate (STAALCALIBUR): the regime only blocks trades / adds score once it has this many observed transitions.")
+mkMinTrust  = input.int(15,     "Regime min N to trust",     group="🎲  Markov Regime", minval=1, maxval=200,
+     tooltip="Below this the regime is shown as low-confidence in the dashboard.")
 
 // Auto lookback + threshold per TF and instrument
 mkLB     = tfMins <= 60 ? 5 : tfMins <= 240 ? 10 : 20
@@ -134,12 +142,19 @@ mkConviction  = matrix.get(mkP, mkCur, 1) - matrix.get(mkP, mkCur, 2)   // P(Bul
 mkBull        = mkCur == 1
 mkBear        = mkCur == 2
 
-// Gate logic
-mkBlockLong  = useMarkov and mkBear and mkPersistence > mkPersThr
-mkBlockShort = useMarkov and mkBull and mkPersistence > mkPersThr
+// V13.2 (STAALCALIBUR): sample-size vote gate — regime only acts with enough data
+mkRowN    = matrix.get(mkCnt, mkCur, 0) + matrix.get(mkCnt, mkCur, 1) + matrix.get(mkCnt, mkCur, 2)
+mkCanVote = mkRowN >= mkMinVote
+mkTrusted = mkRowN >= mkMinTrust
+mkConf    = mkRowN <= 0 ? 0.0 : math.min(1.0, mkRowN / float(mkMinTrust))
+
+// Gate logic — only blocks once the regime has a voting-grade sample
+mkBlockLong  = useMarkov and mkCanVote and mkBear and mkPersistence > mkPersThr
+mkBlockShort = useMarkov and mkCanVote and mkBull and mkPersistence > mkPersThr
 
 mkName  = mkBull ? "BULL" : mkBear ? "BEAR" : "SIDE"
 mkColor = mkBull ? color.lime : mkBear ? color.red : color.gray
+mkVoteStr = not mkCanVote ? ("n" + str.tostring(int(mkRowN)) + " low") : mkTrusted ? ("n" + str.tostring(int(mkRowN)) + "✓") : ("n" + str.tostring(int(mkRowN)))
 // (ribbon removed in V13.1 — plot-slot limit; regime visible in dashboard MARKOV row)
 
 // ═══════════════════════════════════════════════════════
@@ -553,7 +568,7 @@ confColor = confluenceScore >= 4 ? color.yellow : confluenceScore == 3 ? color.l
 // ═══════════════════════════════════════════════════════
 hasSignal     = anyLongRaw or anyShortRaw or anySweepLong or anySweepShort
 biasAligned   = (anyLongRaw or anySweepLong) and overallBull or (anyShortRaw or anySweepShort) and overallBear
-mkAligned     = (anyLongRaw or anySweepLong) and mkBull or (anyShortRaw or anySweepShort) and mkBear
+mkAligned     = mkCanVote and ((anyLongRaw or anySweepLong) and mkBull or (anyShortRaw or anySweepShort) and mkBear)
 sessionBonus  = inLDN or (effUseNY and inNY)
 
 decisionScore = 0
@@ -693,6 +708,14 @@ all_resolved = all_wins + all_losses
 all_winRate  = all_resolved > 0 ? math.round(all_wins / float(all_resolved) * 100.0) : 0
 // Expectancy in R: winRate*RR - lossRate*1
 all_expR     = all_resolved > 0 ? (all_wins / float(all_resolved)) * effRR - (all_losses / float(all_resolved)) : na
+
+// V13.2 (STAALCALIBUR): edge validation (DSR-spirit) — real vs noise via a t-stat
+_valP    = all_resolved > 0 ? all_wins / float(all_resolved) : na
+_valVar  = (all_resolved > 0 and not na(all_expR)) ? _valP * math.pow(effRR - all_expR, 2) + (1 - _valP) * math.pow(-1 - all_expR, 2) : na
+_valSd   = na(_valVar) ? na : math.sqrt(_valVar)
+_valT    = (not na(_valSd) and _valSd > 0 and all_resolved > 1) ? all_expR / (_valSd / math.sqrt(all_resolved)) : na
+valLabel = (na(_valT) or all_resolved < 10) ? "UNPROVEN" : _valT >= 2.0 ? "REAL ✅" : _valT >= 1.0 ? "LIKELY" : "NOISE ⚠"
+valColor = (na(_valT) or all_resolved < 10) ? color.gray : _valT >= 2.0 ? color.lime : _valT >= 1.0 ? color.yellow : color.red
 
 // ═══════════════════════════════════════════════════════
 // 📈  DYNAMIC TREND CHANNEL
@@ -1064,9 +1087,9 @@ if showReversal and trailBreachShort
 // MAIN DASHBOARD — V13: Markov row + real edge row added
 // ═══════════════════════════════════════════════════════
 if barstate.islast and showDash
-    var table dash = table.new(position.top_right, 3, 20, bgcolor=color.new(#1e222d, 80), border_width=1, border_color=color.new(color.gray, 70))
+    var table dash = table.new(position.top_right, 3, 21, bgcolor=color.new(#1e222d, 80), border_width=1, border_color=color.new(color.gray, 70))
     T = size.small
-    table.cell(dash, 0, 0, "EE V13", text_color=color.white, bgcolor=color.new(color.navy,10), text_size=T)
+    table.cell(dash, 0, 0, "SC V13", text_color=color.white, bgcolor=color.new(color.navy,10), text_size=T)
     table.cell(dash, 1, 0, syminfo.ticker, text_color=color.yellow, bgcolor=color.new(color.navy,10), text_size=T)
     table.cell(dash, 2, 0, timeframe.period + (inSession ? " ON" : " OFF"), text_color=inSession?color.lime:color.gray, bgcolor=color.new(color.navy,10), text_size=T)
     table.cell(dash, 0, 1, instrType + (autoMode ? " AUTO" : ""), text_color=color.aqua, text_size=T)
@@ -1078,7 +1101,7 @@ if barstate.islast and showDash
     _mkLockTxt = mkBlockLong ? "BLOCK LONGS" : mkBlockShort ? "BLOCK SHORTS" : "open"
     _mkLockCol = mkBlockLong or mkBlockShort ? color.orange : color.gray
     table.cell(dash, 0, 3, "MARKOV", text_color=color.gray, text_size=T)
-    table.cell(dash, 1, 3, mkName + " p" + str.tostring(math.round(mkPersistence * 100)) + "% c" + (mkConviction >= 0 ? "+" : "") + str.tostring(mkConviction, "#.##"), text_color=mkColor, text_size=T)
+    table.cell(dash, 1, 3, mkName + " " + mkVoteStr + " p" + str.tostring(math.round(mkPersistence * 100)) + "% c" + (mkConviction >= 0 ? "+" : "") + str.tostring(mkConviction, "#.##"), text_color=mkColor, text_size=T)
     table.cell(dash, 2, 3, _mkLockTxt, text_color=_mkLockCol, text_size=T)
     _edgeCol = na(all_expR) ? color.gray : all_expR > 0 ? color.lime : color.red
     table.cell(dash, 0, 4, "REAL EDGE", text_color=color.gray, text_size=T)
@@ -1141,6 +1164,9 @@ if barstate.islast and showDash
     _trv = inLong ? trailLong : inShort ? trailShort : na
     table.cell(dash, 1, 19, na(_trv) ? "flat" : str.tostring(_trv,"#.####"), text_color=color.orange, text_size=T)
     table.cell(dash, 2, 19, "Pip:" + str.tostring(effPipSize,"#.####"), text_color=color.gray, text_size=T)
+    table.cell(dash, 0, 20, "VALIDATION", text_color=color.gray, text_size=T)
+    table.cell(dash, 1, 20, valLabel, text_color=valColor, text_size=T)
+    table.cell(dash, 2, 20, na(_valT) ? "t —" : "t " + str.tostring(_valT, "#.#"), text_color=valColor, text_size=T)
 
 // ═══════════════════════════════════════════════════════
 // WEEKLY TRACKER — V13: REAL outcomes, no assumed wins
@@ -1186,89 +1212,89 @@ if barstate.islast and showTracker
 // ALERTS — V13.1: Markov alerts merged into one (plot-slot limit)
 // ═══════════════════════════════════════════════════════
 alertcondition(sweepBullPDL,
-     title="EE V13 — ELITE SWEEP LONG PDL",
+     title="SC V13 — ELITE SWEEP LONG PDL",
      message="V13 | ELITE SWEEP LONG | PDL | {{ticker}} | Entry: {{close}} | {{time}}")
 alertcondition(sweepBearPDH,
-     title="EE V13 — ELITE SWEEP SHORT PDH",
+     title="SC V13 — ELITE SWEEP SHORT PDH",
      message="V13 | ELITE SWEEP SHORT | PDH | {{ticker}} | Entry: {{close}} | {{time}}")
 alertcondition(sweepBullAL,
-     title="EE V13 — ELITE SWEEP LONG Asia Low",
+     title="SC V13 — ELITE SWEEP LONG Asia Low",
      message="V13 | ELITE SWEEP LONG | ASIA LOW | {{ticker}} | Entry: {{close}} | {{time}}")
 alertcondition(sweepBearAH,
-     title="EE V13 — ELITE SWEEP SHORT Asia High",
+     title="SC V13 — ELITE SWEEP SHORT Asia High",
      message="V13 | ELITE SWEEP SHORT | ASIA HIGH | {{ticker}} | Entry: {{close}} | {{time}}")
 alertcondition(sweepBullPWL,
-     title="EE V13 — ELITE SWEEP LONG Prev Week Low",
+     title="SC V13 — ELITE SWEEP LONG Prev Week Low",
      message="V13 | ELITE SWEEP LONG | PREV WEEK LOW | {{ticker}} | Entry: {{close}} | {{time}}")
 alertcondition(sweepBearPWH,
-     title="EE V13 — ELITE SWEEP SHORT Prev Week High",
+     title="SC V13 — ELITE SWEEP SHORT Prev Week High",
      message="V13 | ELITE SWEEP SHORT | PREV WEEK HIGH | {{ticker}} | Entry: {{close}} | {{time}}")
 alertcondition(longAligned,
-     title="EE V13 — Long High Prob",
+     title="SC V13 — Long High Prob",
      message="V13 | LONG HIGH PROB | BULL BIAS | {{ticker}} | Entry: {{close}} | {{time}}")
 alertcondition(shortAligned,
-     title="EE V13 — Short High Prob",
+     title="SC V13 — Short High Prob",
      message="V13 | SHORT HIGH PROB | BEAR BIAS | {{ticker}} | Entry: {{close}} | {{time}}")
 alertcondition(longLowProb,
-     title="EE V13 — Long Low Prob",
+     title="SC V13 — Long Low Prob",
      message="V13 | LONG LOW PROB | Counter bias | {{ticker}} | Entry: {{close}} | {{time}}")
 alertcondition(shortLowProb,
-     title="EE V13 — Short Low Prob",
+     title="SC V13 — Short Low Prob",
      message="V13 | SHORT LOW PROB | Counter bias | {{ticker}} | Entry: {{close}} | {{time}}")
 alertcondition(bullRejPDL and inSession,
-     title="EE V13 — PDL Rejection Forming",
+     title="SC V13 — PDL Rejection Forming",
      message="V13 | PDL REJECTION forming | {{ticker}} | Watch for confirmation | {{time}}")
 alertcondition(bearRejPDH and inSession,
-     title="EE V13 — PDH Rejection Forming",
+     title="SC V13 — PDH Rejection Forming",
      message="V13 | PDH REJECTION forming | {{ticker}} | Watch for confirmation | {{time}}")
 alertcondition(bullOBDetect,
-     title="EE V13 — Bull Order Block",
+     title="SC V13 — Bull Order Block",
      message="V13 | BULL ORDER BLOCK detected | {{ticker}} | {{close}} | {{time}}")
 alertcondition(bearOBDetect,
-     title="EE V13 — Bear Order Block",
+     title="SC V13 — Bear Order Block",
      message="V13 | BEAR ORDER BLOCK detected | {{ticker}} | {{close}} | {{time}}")
 alertcondition(bullFVGOK,
-     title="EE V13 — Bullish FVG",
+     title="SC V13 — Bullish FVG",
      message="V13 | BULL FVG / IMBALANCE | {{ticker}} | {{close}} | {{time}}")
 alertcondition(bearFVGOK,
-     title="EE V13 — Bearish FVG",
+     title="SC V13 — Bearish FVG",
      message="V13 | BEAR FVG / IMBALANCE | {{ticker}} | {{close}} | {{time}}")
 alertcondition(locked and inSession,
-     title="EE V13 — SESSION LOCKED",
+     title="SC V13 — SESSION LOCKED",
      message="V13 | PROTECTION LOCKED | {{ticker}} | Daily limit hit | {{time}}")
 alertcondition(nearLimit and inSession,
-     title="EE V13 — Near Daily Limit",
+     title="SC V13 — Near Daily Limit",
      message="V13 | CAUTION 75% limit used | {{ticker}} | {{time}}")
 alertcondition(pdhBreach,
-     title="EE V13 — PDH Breached",
+     title="SC V13 — PDH Breached",
      message="V13 | PDH BREACHED | {{ticker}} | Watch for sweep return | {{time}}")
 alertcondition(pdlBreach,
-     title="EE V13 — PDL Breached",
+     title="SC V13 — PDL Breached",
      message="V13 | PDL BREACHED | {{ticker}} | Watch for sweep return | {{time}}")
 alertcondition(pwhBreach,
-     title="EE V13 — PWH Breached",
+     title="SC V13 — PWH Breached",
      message="V13 | PREV WEEK HIGH BREACHED | {{ticker}} | {{time}}")
 alertcondition(pwlBreach,
-     title="EE V13 — PWL Breached",
+     title="SC V13 — PWL Breached",
      message="V13 | PREV WEEK LOW BREACHED | {{ticker}} | {{time}}")
 alertcondition(reversalWarnLong,
-     title="EE V13 — Reversal Warning Long",
+     title="SC V13 — Reversal Warning Long",
      message="V13 | REVERSAL | Bearish momentum | Close LONG | {{ticker}} | {{time}}")
 alertcondition(reversalWarnShort,
-     title="EE V13 — Reversal Warning Short",
+     title="SC V13 — Reversal Warning Short",
      message="V13 | REVERSAL | Bullish momentum | Close SHORT | {{ticker}} | {{time}}")
 alertcondition(trailBreachLong,
-     title="EE V13 — Trail Breached Long",
+     title="SC V13 — Trail Breached Long",
      message="V13 | TRAIL BREACHED | Close LONG NOW | {{ticker}} | {{time}}")
 alertcondition(trailBreachShort,
-     title="EE V13 — Trail Breached Short",
+     title="SC V13 — Trail Breached Short",
      message="V13 | TRAIL BREACHED | Close SHORT NOW | {{ticker}} | {{time}}")
 alertcondition(chanBreakUp and inSession,
-     title="EE V13 — Channel Break UP",
+     title="SC V13 — Channel Break UP",
      message="V13 | CHANNEL BREAK UP | {{ticker}} | {{close}} | {{time}}")
 alertcondition(chanBreakDn and inSession,
-     title="EE V13 — Channel Break DOWN",
+     title="SC V13 — Channel Break DOWN",
      message="V13 | CHANNEL BREAK DOWN | {{ticker}} | {{close}} | {{time}}")
 alertcondition(ta.change(mkConfirmed) != 0,
-     title="EE V13 — Markov Regime Flip",
+     title="SC V13 — Markov Regime Flip",
      message="V13 | MARKOV REGIME FLIP | {{ticker}} | {{close}} | {{time}}")
