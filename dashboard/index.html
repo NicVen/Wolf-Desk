@@ -352,8 +352,10 @@ document.addEventListener('click', function(e){
   var n=clicks()+1; setClicks(n);
   if(n>FREE_LIMIT){ e.preventDefault(); e.stopPropagation(); enforceGate(); }
 }, true);
+// admin bypass: open the desk once with ?admin=1 to never be gated on this device
+try{ if(new URLSearchParams(location.search).get('admin')==='1'){ localStorage.setItem('wolf_sub','admin'); } }catch(e){}
 // reflect state on load
-if(subscribed()){ var sb=document.getElementById('subBtn'); if(sb){ sb.textContent='🐺 Subscribed ✓'; } }
+if(subscribed()){ var sb=document.getElementById('subBtn'); if(sb){ sb.textContent=(localStorage.getItem('wolf_sub')==='admin'?'🐺 Admin':'🐺 Subscribed ✓'); } }
 let LAST=null;
 const sc=s=> s>=65?'var(--green)': s>=50?'var(--gold2)': s>=40?'var(--amber)':'var(--red)';
 const fmt=n=> (n===null||n===undefined)?'-':(typeof n==='number'?n.toLocaleString():n);
