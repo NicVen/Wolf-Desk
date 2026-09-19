@@ -18,7 +18,7 @@ import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from . import cardpay, config, nowpayments, notify, store, tokens
+from . import cardpay, config, moderation, nowpayments, notify, store, tokens
 
 DAY = 86400
 
@@ -253,6 +253,12 @@ class H(BaseHTTPRequestHandler):
             self._reflink(one("key"))
         elif u.path == "/admin/list":
             self._admin_list()
+        elif u.path == "/admin/app_stats":
+            self._admin_app_stats()
+        elif u.path == "/admin/suggestions":
+            self._admin_suggestions()
+        elif u.path in ("/admin", "/admin/"):
+            self._admin_page()
         elif u.path == "/buy":
             self._buy_page(one("product"))
         elif u.path == "/thanks":
@@ -284,6 +290,10 @@ class H(BaseHTTPRequestHandler):
             self._admin_reset_device()
         elif u.path == "/admin/announce":
             self._admin_announce()
+        elif u.path == "/suggest":
+            self._suggest()
+        elif u.path == "/admin/suggestion":
+            self._admin_suggestion_update()
         elif u.path == "/subscribe":
             self._subscribe()
         else:
@@ -513,6 +523,43 @@ class H(BaseHTTPRequestHandler):
         notify.admin("announce %s v%s -> %d renter(s)" % (product, version, sent))
         self._send(200, {"product": product, "version": version, "notified": sent})
 
+    def _suggest(self):
+        """A subscriber submits an app suggestion. Screened for abusive content
+        before it is ever stored or shown to the admin."""
+        d = json.loads(self._body() or b"{}")
+        key = d.get("key", "")
+        text = (d.get("text") or "").strip()
+        lic = store.get(key)
+        if not lic or lic["status"] == "revoked":
+            return self._send(200, {"ok": False, "reason": "You need an active app key to send a suggestion."})
+        ok, reason = moderation.screen(text)
+        if not ok:
+            # never stored, never shown to admin — the user gets the notice.
+            return self._send(200, {"ok": False, "reason": reason})
+        store.add_suggestion(lic.get("contact") or key, text)
+        notify.admin("💡 new app suggestion: %s" % text[:160])
+        self._send(200, {"ok": True})
+
+    def _admin_app_stats(self):
+        if not self._admin_ok():
+            return self._send(403, {"error": "forbidden"})
+        self._send(200, store.app_stats())
+
+    def _admin_suggestions(self):
+        if not self._admin_ok():
+            return self._send(403, {"error": "forbidden"})
+        self._send(200, {"suggestions": store.list_suggestions()})
+
+    def _admin_suggestion_update(self):
+        if not self._admin_ok():
+            return self._send(403, {"error": "forbidden"})
+        d = json.loads(self._body() or b"{}")
+        store.set_suggestion_status(d.get("id"), d.get("status", "done"))
+        self._send(200, {"ok": True})
+
+    def _admin_page(self):
+        self._send(200, ADMIN_HTML, "text/html; charset=utf-8")
+
     def _subscribe(self):
         """Free intel-desk subscription. Consent is signed once; after that the
         Telegram id is remembered and no consent is asked again."""
@@ -564,6 +611,92 @@ function go(method){
                "card_btn": ('<button onclick="go(\'card\')">Pay with card</button>'
                             if config.card_enabled() else "")}
         self._send(200, html, "text/html")
+
+
+ADMIN_HTML = """<!doctype html><html lang=en><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>STAALWAG HQ · App</title>
+<style>
+:root{--bg:#0a0e15;--card:#131a26;--card2:#18212f;--line:#1e2a3a;--fg:#e7edf3;--mut:#7d8a9c;
+ --steel:#8aa0b4;--accent:#6ea8fe;--buy:#2ecc71}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);
+ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:26px 18px 60px}
+h1{font-size:22px;font-weight:900;letter-spacing:1px;margin:0 0 2px}
+h1 .a{color:var(--steel)}
+.sub{color:var(--mut);font-size:13px;margin-bottom:22px}
+.gate{max-width:340px;margin:60px auto;text-align:center}
+input{width:100%;padding:13px;border:1px solid var(--line);border-radius:10px;background:var(--card);
+ color:var(--fg);font-size:15px;text-align:center}
+button{cursor:pointer}
+.btn{background:var(--accent);color:#04122b;border:0;border-radius:10px;padding:12px 16px;font-weight:800;font-size:14px;width:100%;margin-top:10px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:6px 0 26px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.tile b{display:block;font-size:30px;font-weight:900}
+.tile span{color:var(--mut);font-size:12px;letter-spacing:.5px}
+.tile.hot b{color:var(--accent)}
+.sec{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--steel);margin:20px 0 10px}
+.sg{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:9px 0}
+.sg .m{color:var(--mut);font-size:11px;margin-bottom:6px}
+.sg .t{font-size:14px;line-height:1.5}
+.sg .done{background:transparent;border:1px solid var(--line);color:var(--steel);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;margin-top:8px;width:auto}
+.row{display:flex;gap:10px;align-items:center}.row .btn{width:auto}
+.muted{color:var(--mut);font-size:13px}
+</style></head><body><div class="wrap">
+<div id=gate class=gate>
+ <h1>STAALWAG <span class=a>HQ</span></h1>
+ <div class=sub>Mobile-app console</div>
+ <input id=tok type=password placeholder="Admin token" autocomplete=off>
+ <button class=btn onclick=unlock()>Unlock</button>
+ <div id=gerr class=muted style="margin-top:10px;min-height:16px"></div>
+</div>
+<div id=app style=display:none>
+ <div class=row><div style=flex:1><h1>STAALCALIBUR <span class=a>App</span></h1>
+  <div class=sub>Live usage &amp; suggestions</div></div>
+  <button class=btn style=width:auto onclick=load()>Refresh</button></div>
+ <div class=tiles id=tiles></div>
+ <div class=sec>Suggestions to review</div>
+ <div id=sugs></div>
+</div>
+<script>
+function T(){try{return localStorage.getItem("hq_tok")||""}catch(e){return""}}
+function H(){return {"X-Admin-Token":T()}}
+function unlock(){var t=document.getElementById("tok").value.trim();if(!t)return;
+ try{localStorage.setItem("hq_tok",t)}catch(e){} load();}
+function tile(v,l,hot){return '<div class="tile'+(hot?' hot':'')+'"><b>'+v+'</b><span>'+l+'</span></div>';}
+function load(){
+ fetch("/admin/app_stats",{headers:H()}).then(function(r){if(r.status==403)throw 0;return r.json()}).then(function(s){
+  document.getElementById("gate").style.display="none";
+  document.getElementById("app").style.display="";
+  document.getElementById("tiles").innerHTML=
+   tile(s.installed,"Installed (keys)")+
+   tile(s.subscribed,"Subscribed / active",1)+
+   tile(s.active_7d,"Using (last 7d)")+
+   tile(s.active_24h,"Using (last 24h)")+
+   tile(s.promoters,"Promoting it")+
+   tile(s.referrals,"Referrals brought")+
+   tile(s.free_months_granted,"Free months earned")+
+   tile(s.suggestions_new,"New suggestions");
+  loadSugs();
+ }).catch(function(){var g=document.getElementById("gerr");if(g)g.textContent="Wrong token.";});
+}
+function loadSugs(){
+ fetch("/admin/suggestions",{headers:H()}).then(function(r){return r.json()}).then(function(d){
+  var box=document.getElementById("sugs");var a=(d.suggestions||[]);
+  if(!a.length){box.innerHTML='<div class=muted>No suggestions yet.</div>';return;}
+  box.innerHTML=a.map(function(s){
+   var dt=new Date((s.created||0)*1000).toLocaleString();
+   var esc=function(x){return (x||"").replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})};
+   return '<div class=sg><div class=m>'+dt+' · '+esc(s.contact)+' · '+esc(s.status)+'</div>'+
+     '<div class=t>'+esc(s.text)+'</div>'+
+     (s.status!=="done"?'<button class=done onclick=mark('+s.id+')>Mark done</button>':'')+'</div>';
+  }).join("");
+ });
+}
+function mark(id){fetch("/admin/suggestion",{method:"POST",headers:Object.assign({"Content-Type":"application/json"},H()),
+ body:JSON.stringify({id:id,status:"done"})}).then(function(){loadSugs();load();});}
+if(T()) load();
+</script></div></body></html>"""
 
 
 def main():

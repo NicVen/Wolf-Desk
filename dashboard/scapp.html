@@ -335,6 +335,23 @@ function openSheet(title,sub,val,body){
   document.body.appendChild(m);
 }
 function closeSheet(){ var m=el("sheet"); if(m&&m.parentNode) m.parentNode.removeChild(m); }
+function openSuggest(){
+  var body='<p class="muted" style="font-size:13px;margin-top:0">Got an idea to make the app better? Tell us — we read every one. Please keep it respectful; abusive or foul messages are auto-rejected and never reach us.</p>'+
+    '<textarea id="sgText" rows="5" placeholder="Your suggestion…" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);font-size:14px;font-family:inherit;resize:vertical"></textarea>'+
+    '<div id="sgErr" class="err" style="min-height:20px;margin:6px 0"></div>'+
+    '<button class="btn" id="sgBtn" onclick="sendSuggest()">Send suggestion</button>';
+  openSheet("Suggest an improvement","Help shape the app","💡",body);
+}
+function sendSuggest(){
+  var t=(el("sgText").value||"").trim();
+  if(t.length<6){ el("sgErr").textContent="Please add a little more detail."; return; }
+  var b=el("sgBtn"); b.disabled=true; b.textContent="Sending…"; el("sgErr").textContent="";
+  fetch(PAY+"/suggest",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({key:K(),text:t})}).then(function(r){ return r.json(); }).then(function(d){
+    if(d&&d.ok){ closeSheet(); toast("Thanks! Your suggestion was sent."); }
+    else { el("sgErr").textContent=(d&&d.reason)||"Couldn't submit — try again."; b.disabled=false; b.textContent="Send suggestion"; }
+  }).catch(function(){ el("sgErr").textContent="Network error — try again."; b.disabled=false; b.textContent="Send suggestion"; });
+}
 function showOutlook(){
   var o=CO; if(!o||!o.outlook) return;
   var ol=o.outlook;
@@ -407,7 +424,8 @@ function loadClass(cb){
 // ---------- home ----------
 function showHome(){
   el("refreshBtn").style.display=""; el("homeBtn").style.display="none";
-  el("main").innerHTML = '<div id="refbox"></div><div class="chips" id="chips"></div><div id="list"></div>';
+  el("main").innerHTML = '<div id="refbox"></div><div class="chips" id="chips"></div><div id="list"></div>'+
+    '<button class="btn ghost" style="margin-top:18px" onclick="openSuggest()">💡 Suggest an improvement</button>';
   el("chips").innerHTML = CLASSES.map(function(c){
     return '<div class="chip'+(c[0]===CUR?' on':'')+'" onclick="pick(\''+c[0]+'\')">'+c[1]+'</div>';
   }).join("");

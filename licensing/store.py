@@ -69,6 +69,14 @@ def _init(c):
             telegram_id  TEXT PRIMARY KEY,
             consented_at INTEGER
         )""")
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS suggestions (
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            contact  TEXT,
+            text     TEXT,
+            status   TEXT DEFAULT 'new',
+            created  INTEGER
+        )""")
     c.commit()
 
 
@@ -180,6 +188,59 @@ def add_subscriber(telegram_id):
         c.execute("INSERT OR IGNORE INTO subscribers (telegram_id, consented_at) VALUES (?,?)",
                   (telegram_id, now()))
         c.commit()
+
+
+def add_suggestion(contact, text):
+    with _LOCK:
+        c = _conn()
+        c.execute("INSERT INTO suggestions (contact, text, status, created) VALUES (?,?, 'new', ?)",
+                  (contact or "", text, now()))
+        c.commit()
+
+
+def list_suggestions(limit=200, status=None):
+    with _LOCK:
+        c = _conn()
+        if status:
+            rows = c.execute("SELECT * FROM suggestions WHERE status=? ORDER BY created DESC LIMIT ?",
+                             (status, limit)).fetchall()
+        else:
+            rows = c.execute("SELECT * FROM suggestions ORDER BY created DESC LIMIT ?",
+                             (limit,)).fetchall()
+        return [dict(r) for r in rows]
+
+
+def set_suggestion_status(sid, status):
+    with _LOCK:
+        c = _conn()
+        c.execute("UPDATE suggestions SET status=? WHERE id=?", (status, int(sid)))
+        c.commit()
+
+
+def app_stats(active_days=7):
+    """Metrics for the STAALCALIBUR mobile app (product APP)."""
+    cutoff = now() - active_days * 86400
+    cutoff1 = now() - 86400
+    with _LOCK:
+        c = _conn()
+        q = lambda sql, *a: c.execute(sql, a).fetchone()[0]
+        installed = q("SELECT COUNT(*) FROM licenses WHERE product='APP'")
+        subscribed = q("SELECT COUNT(*) FROM licenses WHERE product='APP' AND status IN ('active','past_due')")
+        active7 = q("SELECT COUNT(*) FROM licenses WHERE product='APP' AND last_seen>=?", cutoff)
+        active1 = q("SELECT COUNT(*) FROM licenses WHERE product='APP' AND last_seen>=?", cutoff1)
+        sharers = q("SELECT COUNT(*) FROM licenses WHERE product='APP' AND ref_code IS NOT NULL AND ref_code!=''")
+        promoters = q("SELECT COUNT(DISTINCT referred_by) FROM licenses "
+                      "WHERE referred_by IS NOT NULL AND referred_by!='' AND ref_rewarded IN (1,2)")
+        referrals = q("SELECT COUNT(*) FROM licenses WHERE referred_by IS NOT NULL AND referred_by!='' AND ref_rewarded IN (1,2)")
+        free_granted = q("SELECT COUNT(*) FROM licenses WHERE ref_rewarded=1")
+        suggestions_new = q("SELECT COUNT(*) FROM suggestions WHERE status='new'")
+    return {
+        "installed": installed, "subscribed": subscribed,
+        "active_7d": active7, "active_24h": active1,
+        "sharers": sharers, "promoters": promoters,
+        "referrals": referrals, "free_months_granted": free_granted,
+        "suggestions_new": suggestions_new, "active_days": active_days,
+    }
 
 
 def payment_seen(payment_id):

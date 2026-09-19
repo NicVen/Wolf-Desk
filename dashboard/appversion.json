@@ -1,12 +1,12 @@
 {
-  "version": "2.3.0",
+  "version": "2.4.0",
   "date": "2026-09-19",
-  "title": "Share cards + bigger referral rewards",
+  "title": "Suggestion box — help shape the app",
   "type": "feature",
   "notes": [
-    "NEW: Share this read — turn any market's verdict into a branded card you can post anywhere, straight from the consult screen.",
-    "Refer & earn is now front and centre on the home screen with your live stats — friends joined and free months earned.",
-    "Refer as many friends as you like: each subscription earns you a free month (one active at a time).",
+    "NEW: Suggest an improvement — send us your ideas straight from the home screen. We read every one.",
+    "Share this read: post any market's verdict as a branded card.",
+    "Refer & earn front and centre with your live stats.",
     "Live headlines and the daily outlook on every pair."
   ]
 }
