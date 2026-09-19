@@ -48,7 +48,7 @@ PORT        = int(os.environ.get("PORT", "8777"))
 BIND_ADDR   = os.environ.get("BIND_ADDR", "0.0.0.0")
 WOLF_PASS   = os.environ.get("WOLF_PASS", "")           # admin bypass only
 REFRESH_MIN = int(os.environ.get("REFRESH_MIN", "20"))
-CLASSES     = ("commodities", "fx", "indices", "stocks")
+CLASSES     = ("commodities", "fx", "indices", "stocks", "crypto")
 
 BOT_TOKEN    = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 BOT_USERNAME = os.environ.get("BOT_USERNAME", "Staalwag_wolf_Bot")
