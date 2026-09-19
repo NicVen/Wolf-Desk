@@ -2,7 +2,8 @@
 
 Endpoints
   GET  /verify   ?key=&account=&machine=&product=   -> EA/indicator check-in
-  POST /ipn                                          -> NOWPayments webhook
+  POST /ipn                                          -> NOWPayments webhook (crypto)
+  POST /card_ipn                                     -> Stripe webhook (card)
   POST /checkout (product, contact)                  -> create a payment, get pay URL
   GET  /buy?product=CODE                             -> minimal hosted buy page
   POST /admin/issue  (X-Admin-Token)                 -> manually create/extend a license
@@ -17,7 +18,7 @@ import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from . import config, nowpayments, notify, store, tokens
+from . import cardpay, config, nowpayments, notify, store, tokens
 
 DAY = 86400
 
@@ -47,7 +48,7 @@ def price_for(code, contact):
     return p.get("price_solo", 0), None          # non-VIP solo price
 
 
-def start_checkout(product_code, contact):
+def start_checkout(product_code, contact, method="crypto"):
     p = config.product(product_code)
     if not p:
         return None, "unknown product"
@@ -56,9 +57,11 @@ def start_checkout(product_code, contact):
         return None, note or "nothing to charge for this item"
     key = new_license_key(product_code)
     store.create(key, product_code.upper(), contact, order_id=key, status="pending")
-    url, ref = nowpayments.create_invoice(
-        price, order_id=key,
-        order_description="%s — %d days" % (p["name"], p["period_days"]))
+    desc = "%s — %d days" % (p["name"], p["period_days"])
+    if method == "card":
+        url, ref = cardpay.create_checkout(price, order_id=key, description=desc)
+    else:
+        url, ref = nowpayments.create_invoice(price, order_id=key, order_description=desc)
     if not url:
         return None, "payment provider error: %s" % ref
     return {"invoice_url": url, "license_key": key}, None
@@ -191,6 +194,8 @@ class H(BaseHTTPRequestHandler):
         u = urllib.parse.urlparse(self.path)
         if u.path == "/ipn":
             self._ipn()
+        elif u.path == "/card_ipn":
+            self._card_ipn()
         elif u.path == "/checkout":
             self._checkout()
         elif u.path == "/admin/issue":
@@ -275,6 +280,26 @@ class H(BaseHTTPRequestHandler):
         # NOWPayments just wants a 200
         self._send(200, {"ok": True})
 
+    def _card_ipn(self):
+        raw = self._body()
+        sig = self.headers.get("Stripe-Signature", "")
+        if not cardpay.verify_webhook(raw, sig):
+            return self._send(401, {"error": "bad signature"})
+        try:
+            d = json.loads(raw)
+        except Exception:  # noqa: BLE001
+            return self._send(400, {"error": "bad json"})
+        if (d.get("type") or "") == "checkout.session.completed":
+            obj = (d.get("data") or {}).get("object") or {}
+            if (obj.get("payment_status") or "") == "paid":
+                order_id = ((obj.get("metadata") or {}).get("order_id")
+                            or obj.get("client_reference_id") or "")
+                payment_id = str(obj.get("payment_intent") or obj.get("id") or "")
+                if payment_id and store.payment_seen(payment_id):
+                    return self._send(200, {"ok": True, "dup": True})
+                apply_payment(order_id, payment_id)
+        self._send(200, {"ok": True})
+
     def _checkout(self):
         ct = self.headers.get("Content-Type", "")
         raw = self._body()
@@ -282,7 +307,8 @@ class H(BaseHTTPRequestHandler):
             data = json.loads(raw or b"{}")
         else:
             data = {k: v[0] for k, v in urllib.parse.parse_qs(raw.decode()).items()}
-        res, err = start_checkout(data.get("product", ""), data.get("contact", ""))
+        res, err = start_checkout(data.get("product", ""), data.get("contact", ""),
+                                  method=(data.get("method") or "crypto"))
         if err:
             return self._send(400, {"error": err})
         self._send(200, res)
@@ -399,18 +425,21 @@ button{background:#111a2b;color:#fff;border:0;cursor:pointer}small{color:#667}</
 message the moment payment confirms.</p>
 <label>Your Telegram chat id or email (so we can send your key + renewal reminders)</label>
 <input id=contact placeholder="e.g. 123456789 or you@email.com">
-<button onclick="go()">Pay with crypto</button>
-<small>Powered by NOWPayments. Access renews automatically on payment; lapses are
-removed %(grace)dh after a reminder.</small>
+<button onclick="go('crypto')">Pay with crypto</button>
+%(card_btn)s
+<small>Access renews automatically on payment; lapses are removed %(grace)dh
+after a reminder.</small>
 <script>
-function go(){
+function go(method){
  fetch('/checkout',{method:'POST',headers:{'Content-Type':'application/json'},
-  body:JSON.stringify({product:'%(code)s',contact:document.getElementById('contact').value})})
+  body:JSON.stringify({product:'%(code)s',method:method,contact:document.getElementById('contact').value})})
  .then(r=>r.json()).then(d=>{if(d.invoice_url)location=d.invoice_url;else alert(d.error||'error')})
  .catch(e=>alert(e));
 }
 </script>""" % {"name": p["name"], "price": p.get("price_solo", 0), "days": p["period_days"],
-               "code": product_code.upper(), "grace": config.GRACE_HOURS}
+               "code": product_code.upper(), "grace": config.GRACE_HOURS,
+               "card_btn": ('<button onclick="go(\'card\')">Pay with card</button>'
+                            if config.card_enabled() else "")}
         self._send(200, html, "text/html")
 
 

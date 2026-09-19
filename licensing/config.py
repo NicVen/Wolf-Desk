@@ -19,10 +19,23 @@ BIND_ADDR = os.environ.get("BIND_ADDR", "127.0.0.1")   # behind Caddy
 PORT = _int("PORT", 8790)
 DB_PATH = os.environ.get("DB_PATH", "/var/lib/staalwag-licensing/licenses.db")
 
-# --- NOWPayments ---
+# --- NOWPayments (crypto) ---
 NOWPAYMENTS_API = os.environ.get("NOWPAYMENTS_API", "https://api.nowpayments.io/v1")
 NOWPAYMENTS_API_KEY = os.environ.get("NOWPAYMENTS_API_KEY", "")
 NOWPAYMENTS_IPN_SECRET = os.environ.get("NOWPAYMENTS_IPN_SECRET", "")
+
+# --- Card payments (Stripe) — inert until these are set ---
+# Sign up at stripe.com, then put the keys in the service env file and restart:
+#   STRIPE_SECRET_KEY=sk_live_...        (or sk_test_... while testing)
+#   STRIPE_WEBHOOK_SECRET=whsec_...      (from the webhook you point at /card_ipn)
+STRIPE_API = os.environ.get("STRIPE_API", "https://api.stripe.com/v1")
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+
+
+def card_enabled():
+    """True once a card provider is configured (keys present in the env)."""
+    return bool(STRIPE_SECRET_KEY)
 
 # --- this service's public base (for IPN callback + return links) ---
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "https://pay.178.104.88.38.sslip.io").rstrip("/")
