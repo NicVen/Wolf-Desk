@@ -69,7 +69,9 @@ basic_auth {
 	${DESK_USERNAME} ${HASH}
 }
 EOF
-chmod 600 /etc/caddy/desk-auth.conf
+# 0644 so the `caddy` user can read it at reload (it holds a bcrypt hash, not
+# the plaintext password). 0600/root-owned makes `caddy reload` fail to import.
+chmod 644 /etc/caddy/desk-auth.conf
 
 # ---------------------------------------------------------------------------
 say "4/8  Desktop launcher (Xtigervnc directly — skips the buggy migration)"
