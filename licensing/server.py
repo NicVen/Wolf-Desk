@@ -319,6 +319,7 @@ class H(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Access-Control-Allow-Origin", "*")  # buy flow runs on wolf.* desk
+        self.send_header("Cache-Control", "no-store")          # always serve fresh (HQ/pages)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
