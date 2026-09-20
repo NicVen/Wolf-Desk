@@ -152,8 +152,10 @@ Icon=$3
 EOF
   chmod +x "$f"
 }
-make_link "STAALWAG HQ"        "https://178.104.88.38.sslip.io"          "user-home"
-make_link "WOLF Intraday Desk" "https://wolf.178.104.88.38.sslip.io"     "utilities-system-monitor"
+make_link "STAALWAG HQ"        "https://hq.178.104.88.38.sslip.io"       "utilities-system-monitor"
+make_link "HQ Hub"             "https://178.104.88.38.sslip.io"          "user-home"
+make_link "WOLF Intraday Desk" "https://wolf.178.104.88.38.sslip.io"     "applications-office"
+make_link "STAALCALIBUR App"   "https://app.178.104.88.38.sslip.io"      "phone"
 make_link "EA Forge"           "https://forge.178.104.88.38.sslip.io"    "applications-engineering"
 make_link "STAALWAG Desk"      "https://staalwag.178.104.88.38.sslip.io" "emblem-favorite"
 make_link "VELDRIN Desk"       "https://veldrin.178.104.88.38.sslip.io"  "emblem-favorite"

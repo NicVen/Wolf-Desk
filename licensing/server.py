@@ -16,6 +16,8 @@ import datetime
 import json
 import os
 import secrets
+import shutil
+import subprocess
 import threading
 import time
 import urllib.parse
@@ -340,6 +342,10 @@ class H(BaseHTTPRequestHandler):
         q = urllib.parse.parse_qs(u.query)
         one = lambda k: (q.get(k) or [""])[0]
 
+        host = (self.headers.get("Host", "") or "").lower()
+        if host.startswith("hq.") and u.path in ("/", "/index.html"):
+            return self._admin_page()
+
         if u.path == "/verify":
             self._verify(one("key"), one("account"), one("machine"), one("product"))
         elif u.path == "/reflink":
@@ -354,6 +360,8 @@ class H(BaseHTTPRequestHandler):
             self._admin_suggestions()
         elif u.path == "/admin/quiz_stats":
             self._admin_quiz_stats()
+        elif u.path == "/admin/health":
+            self._admin_health()
         elif u.path in ("/admin", "/admin/"):
             self._admin_page()
         elif u.path == "/buy":
@@ -751,6 +759,36 @@ class H(BaseHTTPRequestHandler):
         s["next_reward"] = peek_reward()
         self._send(200, s)
 
+    def _admin_health(self):
+        if not self._admin_ok():
+            return self._send(403, {"error": "forbidden"})
+        services = []
+        for u in config.HQ_UNITS:
+            try:
+                r = subprocess.run(["systemctl", "is-active", u],
+                                   capture_output=True, text=True, timeout=5)
+                st = (r.stdout or "").strip().splitlines()[0].strip() if r.stdout else ""
+            except Exception:  # noqa: BLE001
+                st = ""
+            if st not in ("active", "inactive", "failed", "activating", "deactivating", "reloading"):
+                st = "unknown"
+            services.append({"unit": u, "status": st})
+        host = {}
+        try:
+            t, u2, f = shutil.disk_usage("/")
+            host["disk_used_pct"] = round(u2 / t * 100, 1)
+            host["disk_free_gb"] = round(f / 1e9, 1)
+        except Exception:  # noqa: BLE001
+            pass
+        try:
+            with open("/proc/uptime") as fp:
+                host["uptime_days"] = round(float(fp.read().split()[0]) / 86400, 1)
+            with open("/proc/loadavg") as fp:
+                host["load"] = fp.read().split()[0]
+        except Exception:  # noqa: BLE001
+            pass
+        self._send(200, {"services": services, "host": host, "server_time": store.now()})
+
     def _admin_suggestion_update(self):
         if not self._admin_ok():
             return self._send(403, {"error": "forbidden"})
@@ -823,112 +861,236 @@ function go(method){
 
 ADMIN_HTML = """<!doctype html><html lang=en><head><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<title>STAALWAG HQ · App</title>
+<meta name=theme-color content="#0a0e15">
+<title>STAALWAG HQ</title>
 <style>
 :root{--bg:#0a0e15;--card:#131a26;--card2:#18212f;--line:#1e2a3a;--fg:#e7edf3;--mut:#7d8a9c;
- --steel:#8aa0b4;--accent:#6ea8fe;--buy:#2ecc71}
+ --steel:#8aa0b4;--accent:#6ea8fe;--buy:#2ecc71;--sell:#ff5b5b;--watch:#f2c14e}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);
  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
-.wrap{max-width:900px;margin:0 auto;padding:26px 18px 60px}
-h1{font-size:22px;font-weight:900;letter-spacing:1px;margin:0 0 2px}
+.wrap{max-width:1000px;margin:0 auto;padding:20px 16px 70px}
+h1{font-size:22px;font-weight:900;letter-spacing:1px;margin:0}
 h1 .a{color:var(--steel)}
-.sub{color:var(--mut);font-size:13px;margin-bottom:22px}
+.sub{color:var(--mut);font-size:13px;margin:2px 0 16px}
 .gate{max-width:340px;margin:60px auto;text-align:center}
 input{width:100%;padding:13px;border:1px solid var(--line);border-radius:10px;background:var(--card);
  color:var(--fg);font-size:15px;text-align:center}
-button{cursor:pointer}
-.btn{background:var(--accent);color:#04122b;border:0;border-radius:10px;padding:12px 16px;font-weight:800;font-size:14px;width:100%;margin-top:10px}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:6px 0 26px}
-.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
-.tile b{display:block;font-size:30px;font-weight:900}
-.tile span{color:var(--mut);font-size:12px;letter-spacing:.5px}
-.tile.hot b{color:var(--accent)}
-.sec{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--steel);margin:20px 0 10px}
-.sg{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:9px 0}
-.sg .m{color:var(--mut);font-size:11px;margin-bottom:6px}
-.sg .t{font-size:14px;line-height:1.5}
-.sg .done{background:transparent;border:1px solid var(--line);color:var(--steel);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;margin-top:8px;width:auto}
-.row{display:flex;gap:10px;align-items:center}.row .btn{width:auto}
+button{cursor:pointer;font-family:inherit}
+.btn{background:var(--accent);color:#04122b;border:0;border-radius:10px;padding:12px 16px;font-weight:800;font-size:14px}
 .muted{color:var(--mut);font-size:13px}
-.qb{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);
- border-radius:10px;padding:9px 12px;margin:6px 0;font-size:13px}
-.qb .rk{color:var(--mut);font-weight:800;width:34px}
-.qb .aid{flex:1;font-weight:700;font-family:ui-monospace,Menlo,monospace}
-.qb .pts{color:var(--steel);font-weight:800}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.top .sp{flex:1}
+.top img{width:34px;height:34px;border-radius:9px}
+.rbtn{background:var(--card);border:1px solid var(--line);color:var(--chrome,#c7d2dd);border-radius:9px;padding:8px 12px;font-weight:700;font-size:13px}
+.tabs{display:flex;gap:6px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:18px}
+.tab{background:none;border:0;color:var(--mut);padding:11px 14px;font-weight:800;font-size:13px;border-bottom:2px solid transparent;white-space:nowrap}
+.tab.on{color:var(--fg);border-bottom-color:var(--accent)}
+.pane{display:none}.pane.on{display:block}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:6px 0 20px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.tile b{display:block;font-size:28px;font-weight:900}
+.tile span{color:var(--mut);font-size:11.5px;letter-spacing:.4px}
+.tile.hot b{color:var(--accent)}
+.sec{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--steel);margin:18px 0 10px}
+.svc{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0}
+.dot{width:11px;height:11px;border-radius:50%;background:var(--mut);flex:none}
+.dot.ok{background:var(--buy)}.dot.bad{background:var(--sell)}
+.svc .u{flex:1;font-weight:700;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.svc .st{font-size:12px;font-weight:800;text-transform:uppercase}
+.links{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+a.card{display:block;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;transition:.12s}
+a.card:hover{border-color:var(--accent);background:var(--card2)}
+a.card .ic{font-size:22px}
+a.card .nm{font-weight:800;margin:8px 0 3px}
+a.card .ds{color:var(--mut);font-size:12.5px;line-height:1.45}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+th{color:var(--steel);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+td .k{font-family:ui-monospace,Menlo,monospace}
+.act{background:var(--card2);border:1px solid var(--line);color:var(--chrome,#c7d2dd);border-radius:7px;padding:4px 8px;font-size:11px;font-weight:700;margin-right:4px}
+.qb{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin:6px 0;font-size:13px}
+.qb .rk{color:var(--mut);font-weight:800;width:34px}.qb .aid{flex:1;font-weight:700;font-family:ui-monospace,Menlo,monospace}.qb .pts{color:var(--steel);font-weight:800}
+.sg{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px;margin:8px 0}
+.sg .m{color:var(--mut);font-size:11px;margin-bottom:5px}.sg .t{font-size:14px;line-height:1.5}
+.sg .done{background:transparent;border:1px solid var(--line);color:var(--steel);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;margin-top:8px}
+.map h3{font-size:14px;margin:16px 0 6px}
+.map p,.map li{font-size:13px;color:var(--chrome,#c7d2dd);line-height:1.55}
+.map code{background:var(--card);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:12px;font-family:ui-monospace,Menlo,monospace}
+.map .box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 16px;margin:8px 0}
 </style></head><body><div class="wrap">
 <div id=gate class=gate>
- <h1>STAALWAG <span class=a>HQ</span></h1>
- <div class=sub>Mobile-app console</div>
+ <h1>STAALWAG <span class=a>HQ</span></h1><div class=sub>Central command center</div>
  <input id=tok type=password placeholder="Admin token" autocomplete=off>
- <button class=btn onclick=unlock()>Unlock</button>
+ <button class=btn style=width:100% onclick=unlock()>Unlock</button>
  <div id=gerr class=muted style="margin-top:10px;min-height:16px"></div>
 </div>
-<div id=app style=display:none>
- <div class=row><div style=flex:1><h1>STAALCALIBUR <span class=a>App</span></h1>
-  <div class=sub>Live usage &amp; suggestions</div></div>
-  <button class=btn style=width:auto onclick=load()>Refresh</button></div>
- <div class=tiles id=tiles></div>
- <div class=sec>Trader Quiz · this month <span id=qperiod class=muted></span></div>
- <div class=tiles id=qtiles></div>
- <div id=qreward class=muted style="margin:2px 0 12px"></div>
- <div id=qboard></div>
- <div class=sec>Suggestions to review</div>
- <div id=sugs></div>
+<div id=hq style=display:none>
+ <div class=top>
+  <img src="/icon-192.png" alt="" onerror="this.style.display='none'">
+  <div><h1>STAALWAG <span class=a>HQ</span></h1><div class=sub id=hsub>Central command center</div></div>
+  <div class=sp></div>
+  <button class=rbtn onclick=loadAll()>&#8635; Refresh</button>
+ </div>
+ <div class=tabs>
+  <button class="tab on" data-p=overview onclick=tab('overview')>Overview</button>
+  <button class=tab data-p=desks onclick=tab('desks')>Desks &amp; links</button>
+  <button class=tab data-p=app onclick=tab('app')>App</button>
+  <button class=tab data-p=lic onclick=tab('lic')>Licenses</button>
+  <button class=tab data-p=map onclick=tab('map')>Map</button>
+ </div>
+
+ <div id=p-overview class="pane on">
+  <div class=sec>Service health</div><div id=svc></div>
+  <div class=sec>Server</div><div class=tiles id=htiles></div>
+  <div class=sec>At a glance</div><div class=tiles id=gtiles></div>
+ </div>
+
+ <div id=p-desks class=pane>
+  <div class=sec>Open any desk (new tab)</div><div class=links id=links></div>
+ </div>
+
+ <div id=p-app class=pane>
+  <div class=sec>Mobile app</div><div class=tiles id=atiles></div>
+  <div class=sec>Trader Quiz &#183; this month <span id=qperiod class=muted></span></div>
+  <div class=tiles id=qtiles></div><div id=qreward class=muted style="margin:2px 0 12px"></div><div id=qboard></div>
+  <div class=sec>Suggestions</div><div id=sugs></div>
+ </div>
+
+ <div id=p-lic class=pane>
+  <div class=sec>All licenses</div>
+  <div style=overflow-x:auto><table id=lictbl><thead><tr><th>Key<th>Product<th>Status<th>Days<th>Flags<th>Actions</tr></thead><tbody></tbody></table></div>
+ </div>
+
+ <div id=p-map class="pane map">
+  <div class=sec>Where everything lives</div>
+  <div class=box>
+   <h3>Live services (systemd on the VPS)</h3>
+   <ul>
+    <li><code>caddy</code> &#8212; the web front door (HTTPS, routes every subdomain)</li>
+    <li><code>wolf-desk</code> &#8212; the WOLF intel desk + the mobile app + the marketing site (port 8777)</li>
+    <li><code>staalwag-licensing</code> &#8212; licensing, payments, referrals, quiz, THIS HQ (port 8790)</li>
+    <li><code>staalwag-desktop</code> &#8212; the cloud desktop (noVNC)</li>
+   </ul>
+   <h3>Fix a service (in PowerShell)</h3>
+   <div class=box><code>ssh root@178.104.88.38 "systemctl restart wolf-desk"</code></div>
+   <p>Swap in <code>caddy</code>, <code>staalwag-licensing</code> or <code>staalwag-desktop</code>. See why one failed:</p>
+   <div class=box><code>ssh root@178.104.88.38 "journalctl -u wolf-desk -n 40 --no-pager"</code></div>
+   <h3>Deploy code changes</h3>
+   <div class=box><code>ssh root@178.104.88.38 "cd /opt/wolf-desk &amp;&amp; sudo -u wolf git pull &amp;&amp; sudo systemctl restart wolf-desk staalwag-licensing"</code></div>
+   <p>Rebuild the market data (after ticker/universe changes): add <code>sudo -u wolf python3 run.py</code> before the restart.</p>
+   <h3>Where files live on the VPS</h3>
+   <ul>
+    <li>Code: <code>/opt/wolf-desk</code> (this repo)</li>
+    <li>App + site + desk pages: <code>/opt/wolf-desk/dashboard</code></li>
+    <li>Licensing/quiz/referrals code: <code>/opt/wolf-desk/licensing</code></li>
+    <li>Market data JSON: <code>/opt/wolf-desk/data</code></li>
+    <li>Licence database: <code>/var/lib/staalwag-licensing/licenses.db</code></li>
+    <li>Secrets/config: <code>/etc/staalwag-licensing.env</code></li>
+    <li>Caddy config: <code>/etc/caddy/Caddyfile</code></li>
+   </ul>
+   <h3>Common admin commands</h3>
+   <div class=box><code>python3 -m licensing.adminctl list</code> &#8212; every key<br>
+    <code>python3 -m licensing.adminctl admin-key</code> &#8212; your master key<br>
+    <code>python3 -m licensing.adminctl announce</code> &#8212; tell renters about an update<br>
+    <code>python3 -m licensing.adminctl quiz-winner --dry-run</code> &#8212; preview the quiz winner</div>
+   <p class=muted>Run these after <code>ssh root@178.104.88.38</code> then <code>cd /opt/wolf-desk</code>.</p>
+  </div>
+ </div>
 </div>
 <script>
 function T(){try{return localStorage.getItem("hq_tok")||""}catch(e){return""}}
 function H(){return {"X-Admin-Token":T()}}
-function unlock(){var t=document.getElementById("tok").value.trim();if(!t)return;
- try{localStorage.setItem("hq_tok",t)}catch(e){} load();}
+function esc(x){return (x==null?"":String(x)).replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
+function unlock(){var t=document.getElementById("tok").value.trim();if(!t)return;try{localStorage.setItem("hq_tok",t)}catch(e){}loadAll();}
+function tab(p){var ts=document.querySelectorAll(".tab");for(var i=0;i<ts.length;i++)ts[i].className="tab"+(ts[i].getAttribute("data-p")===p?" on":"");
+ var ps=document.querySelectorAll(".pane");for(var j=0;j<ps.length;j++)ps[j].className="pane"+(ps[j].id==="p-"+p?" on":"");}
 function tile(v,l,hot){return '<div class="tile'+(hot?' hot':'')+'"><b>'+v+'</b><span>'+l+'</span></div>';}
-function load(){
- fetch("/admin/app_stats",{headers:H()}).then(function(r){if(r.status==403)throw 0;return r.json()}).then(function(s){
-  document.getElementById("gate").style.display="none";
-  document.getElementById("app").style.display="";
-  document.getElementById("tiles").innerHTML=
-   tile(s.installed,"Installed (keys)")+
-   tile(s.subscribed,"Subscribed / active",1)+
-   tile(s.active_7d,"Using (last 7d)")+
-   tile(s.active_24h,"Using (last 24h)")+
-   tile(s.promoters,"Promoting it")+
-   tile(s.referrals,"Referrals brought")+
-   tile(s.free_months_granted,"Free months earned")+
-   tile(s.suggestions_new,"New suggestions");
-  loadSugs(); loadQuiz();
- }).catch(function(){var g=document.getElementById("gerr");if(g)g.textContent="Wrong token.";});
+function base(){var h=location.hostname;var p=h.split(".");return p.length>2?p.slice(1).join("."):h;}
+function sub(s){return location.protocol+"//"+s+"."+base();}
+function loadAll(){
+ fetch("/admin/health",{headers:H()}).then(function(r){if(r.status==403)throw 0;return r.json()}).then(function(d){
+  document.getElementById("gate").style.display="none";document.getElementById("hq").style.display="";
+  renderHealth(d);loadGlance();loadApp();loadLic();renderLinks();
+ }).catch(function(){var g=document.getElementById("gerr");if(g)g.textContent="Wrong token."});
 }
-function loadQuiz(){
+function renderHealth(d){
+ var s=d.services||[];
+ document.getElementById("svc").innerHTML=s.map(function(x){
+  var ok=x.status==="active";return '<div class=svc><span class="dot '+(ok?"ok":"bad")+'"></span><span class=u>'+esc(x.unit)+'</span><span class=st style="color:'+(ok?"var(--buy)":"var(--sell)")+'">'+esc(x.status)+'</span></div>';
+ }).join("");
+ var h=d.host||{};
+ document.getElementById("htiles").innerHTML=
+  tile((h.disk_used_pct!=null?h.disk_used_pct+"%":"?"),"Disk used")+
+  tile((h.disk_free_gb!=null?h.disk_free_gb+" GB":"?"),"Disk free")+
+  tile((h.uptime_days!=null?h.uptime_days+"d":"?"),"Uptime")+
+  tile((h.load!=null?h.load:"?"),"Load (1m)");
+}
+function loadGlance(){
+ fetch("/admin/app_stats",{headers:H()}).then(function(r){return r.json()}).then(function(s){
+  document.getElementById("gtiles").innerHTML=
+   tile(s.installed,"App keys")+tile(s.subscribed,"Active subs",1)+
+   tile(s.active_7d,"Using (7d)")+tile(s.suggestions_new,"New suggestions");
+ });
+}
+function loadApp(){
+ fetch("/admin/app_stats",{headers:H()}).then(function(r){return r.json()}).then(function(s){
+  document.getElementById("atiles").innerHTML=
+   tile(s.installed,"Installed")+tile(s.subscribed,"Active",1)+tile(s.active_7d,"Using 7d")+
+   tile(s.active_24h,"Using 24h")+tile(s.promoters,"Promoting")+tile(s.referrals,"Referrals")+
+   tile(s.free_months_granted,"Free months")+tile(s.suggestions_new,"New ideas");
+ });
  fetch("/admin/quiz_stats",{headers:H()}).then(function(r){return r.json()}).then(function(s){
   document.getElementById("qperiod").textContent="("+(s.period||"")+")";
-  var lead=s.leader?(s.leader.anon+" · "+s.leader.points+" pts"):"—";
-  document.getElementById("qtiles").innerHTML=
-   tile(s.players,"Players")+tile(s.plays_today,"Plays today")+
-   tile(s.plays_month,"Plays this month")+tile(s.avg_score,"Avg score /5")+
-   '<div class="tile hot"><b style="font-size:15px">'+lead+'</b><span>Current leader</span></div>';
-  var esc=function(x){return (x||"").replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})};
-  document.getElementById("qreward").innerHTML="🎁 Next winner's reward: <b style=color:var(--fg)>"+esc(s.next_reward||"")+"</b> (rotates each month)";
-  var b=s.leaderboard||[];
-  document.getElementById("qboard").innerHTML=b.length?b.map(function(r,i){
-    return '<div class=qb><span class=rk>#'+(i+1)+'</span><span class=aid>'+esc(r.anon)+'</span><span class=pts>'+r.points+' pts</span></div>';
-  }).join(""):'<div class=muted>No quiz plays yet this month.</div>';
+  var lead=s.leader?(s.leader.anon+" &#183; "+s.leader.points+" pts"):"&#8212;";
+  document.getElementById("qtiles").innerHTML=tile(s.players,"Players")+tile(s.plays_today,"Plays today")+
+   tile(s.plays_month,"Plays month")+tile(s.avg_score,"Avg /5")+'<div class="tile hot"><b style=font-size:15px>'+lead+'</b><span>Leader</span></div>';
+  document.getElementById("qreward").innerHTML="&#127873; Next reward: <b style=color:var(--fg)>"+esc(s.next_reward||"")+"</b> (rotates monthly)";
+  var b=s.leaderboard||[];document.getElementById("qboard").innerHTML=b.length?b.map(function(r,i){
+   return '<div class=qb><span class=rk>#'+(i+1)+'</span><span class=aid>'+esc(r.anon)+'</span><span class=pts>'+r.points+' pts</span></div>';}).join(""):'<div class=muted>No plays yet.</div>';
  });
-}
-function loadSugs(){
  fetch("/admin/suggestions",{headers:H()}).then(function(r){return r.json()}).then(function(d){
-  var box=document.getElementById("sugs");var a=(d.suggestions||[]);
-  if(!a.length){box.innerHTML='<div class=muted>No suggestions yet.</div>';return;}
-  box.innerHTML=a.map(function(s){
+  var a=d.suggestions||[];document.getElementById("sugs").innerHTML=a.length?a.map(function(s){
    var dt=new Date((s.created||0)*1000).toLocaleString();
-   var esc=function(x){return (x||"").replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})};
-   return '<div class=sg><div class=m>'+dt+' · '+esc(s.contact)+' · '+esc(s.status)+'</div>'+
-     '<div class=t>'+esc(s.text)+'</div>'+
-     (s.status!=="done"?'<button class=done onclick=mark('+s.id+')>Mark done</button>':'')+'</div>';
-  }).join("");
+   return '<div class=sg><div class=m>'+dt+' &#183; '+esc(s.contact)+' &#183; '+esc(s.status)+'</div><div class=t>'+esc(s.text)+'</div>'+
+    (s.status!=="done"?'<button class=done onclick=mark('+s.id+')>Mark done</button>':'')+'</div>';}).join(""):'<div class=muted>No suggestions yet.</div>';
  });
 }
-function mark(id){fetch("/admin/suggestion",{method:"POST",headers:Object.assign({"Content-Type":"application/json"},H()),
- body:JSON.stringify({id:id,status:"done"})}).then(function(){loadSugs();load();});}
-if(T()) load();
+function mark(id){fetch("/admin/suggestion",{method:"POST",headers:Object.assign({"Content-Type":"application/json"},H()),body:JSON.stringify({id:id,status:"done"})}).then(loadApp);}
+function loadLic(){
+ fetch("/admin/list",{headers:H()}).then(function(r){return r.json()}).then(function(d){
+  var rows=(d.licenses||[]).map(function(l){
+   var flags=[];if(l.admin)flags.push("ADMIN");if(l.no_bind)flags.push("no-bind");if(l.bound)flags.push("bound");
+   var dl=l.days_left==null?"":l.days_left;
+   var act='<button class=act onclick="lact(\''+l.key+'\',\'extend\')">+30d</button>'+
+     '<button class=act onclick="lact(\''+l.key+'\',\'revoke\')">Revoke</button>'+
+     '<button class=act onclick="lact(\''+l.key+'\',\'reset\')">Unbind</button>';
+   return '<tr><td class=k>'+esc(l.key)+'<td>'+esc(l.product)+'<td>'+esc(l.status)+'<td>'+dl+'<td>'+flags.join(" ")+'<td>'+act+'</tr>';
+  }).join("");
+  document.querySelector("#lictbl tbody").innerHTML=rows||'<tr><td colspan=6 class=muted>No licenses yet.</td></tr>';
+ });
+}
+function lact(key,what){
+ if(what==="revoke"&&!confirm("Revoke "+key+"?"))return;
+ var url=what==="extend"?"/admin/extend":what==="revoke"?"/admin/revoke":"/admin/reset_device";
+ var body=what==="extend"?{key:key,days:30}:{key:key};
+ fetch(url,{method:"POST",headers:Object.assign({"Content-Type":"application/json"},H()),body:JSON.stringify(body)}).then(loadLic);
+}
+function renderLinks(){
+ var L=[
+  {ic:"&#127760;",nm:"HQ Hub",u:location.protocol+"//"+base()+"/",ds:"The public command-centre landing."},
+  {ic:"&#128058;",nm:"WOLF Intel Desk",u:sub("wolf")+"/?admin=1",ds:"Intraday intel desk (admin view)."},
+  {ic:"&#128241;",nm:"STAALCALIBUR App",u:sub("app")+"/",ds:"The mobile app (unlock with a key)."},
+  {ic:"&#11015;",nm:"App Download",u:sub("app")+"/download",ds:"Install page + APK."},
+  {ic:"&#127760;",nm:"Marketing Site",u:"https://staalwag.com",ds:"Public shop front."},
+  {ic:"&#128421;",nm:"Cloud Desktop",u:sub("desk")+"/",ds:"Your remote desktop (incognito)."},
+  {ic:"&#9876;",nm:"EA Forge",u:sub("forge")+"/",ds:"Build & prove EAs."},
+  {ic:"&#128176;",nm:"Buy / Rent",u:sub("pay")+"/buy?product=APP",ds:"The hosted buy page."}
+ ];
+ document.getElementById("links").innerHTML=L.map(function(x){
+  return '<a class=card target=_blank rel=noopener href="'+x.u+'"><div class=ic>'+x.ic+'</div><div class=nm>'+x.nm+'</div><div class=ds>'+x.ds+'</div></a>';
+ }).join("");
+}
+if(T()) loadAll();
 </script></div></body></html>"""
 
 

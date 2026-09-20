@@ -55,6 +55,9 @@ RENEW_NOTICE_DAYS = _int("RENEW_NOTICE_DAYS", 3)  # warn client this many days b
 # --- admin (manual issue / comp) ---
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
 
+# --- HQ health monitor: systemd units to watch (space-separated) ---
+HQ_UNITS = os.environ.get("HQ_UNITS", "caddy wolf-desk staalwag-licensing staalwag-desktop").split()
+
 # --- notifications (optional) ---
 LICENSE_BOT_TOKEN = os.environ.get("LICENSE_BOT_TOKEN", "")  # Telegram bot for client notices
 LICENSE_ADMIN_CHAT = os.environ.get("LICENSE_ADMIN_CHAT", "")  # your own chat id for copies

@@ -27,6 +27,11 @@ pay.staalwag.com {
 	encode zstd gzip
 	reverse_proxy 127.0.0.1:8790
 }
+# --- STAALWAG HQ (central command center) — admin token gates the data ---
+hq.staalwag.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8790
+}
 
 # --- HQ hub (apex, sslip fallback) ---
 178.104.88.38.sslip.io {
@@ -76,6 +81,12 @@ veldrin.178.104.88.38.sslip.io {
 		root * /opt/wolf-desk/deploy/veldrin-landing
 		file_server
 	}
+}
+
+# --- STAALWAG HQ (central command center, sslip fallback) ---
+hq.178.104.88.38.sslip.io {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8790
 }
 
 # --- Licensing / payments (NOWPayments + activation codes) ---
