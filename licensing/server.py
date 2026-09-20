@@ -918,7 +918,13 @@ td .k{font-family:ui-monospace,Menlo,monospace}
 .map p,.map li{font-size:13px;color:var(--chrome,#c7d2dd);line-height:1.55}
 .map code{background:var(--card);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:12px;font-family:ui-monospace,Menlo,monospace}
 .map .box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 16px;margin:8px 0}
-</style></head><body><div class="wrap">
+</style></head><body>
+<script>
+window.showDiag=function(m){try{var b=document.getElementById('diag');if(!b){b=document.createElement('div');b.id='diag';b.style.cssText='position:fixed;top:0;left:0;right:0;background:#7a1f1f;color:#fff;font:13px monospace;padding:10px;z-index:99999;white-space:pre-wrap';document.body.appendChild(b);}b.textContent=m;}catch(_){}}
+window.addEventListener('error',function(e){window.showDiag('JS ERROR: '+(e.message||e.type||'')+' @ '+(e.filename||'')+':'+(e.lineno||''));});
+window.addEventListener('unhandledrejection',function(e){window.showDiag('PROMISE: '+((e.reason&&e.reason.message)||e.reason||''));});
+</script>
+<div class="wrap">
 <div id=gate class=gate>
  <h1>STAALWAG <span class=a>HQ</span></h1><div class=sub>Central command center</div>
  <input id=tok type=text placeholder="Admin token" autocomplete=off autocapitalize=off autocorrect=off spellcheck=false>
@@ -1010,12 +1016,13 @@ function base(){var h=location.hostname;var p=h.split(".");return p.length>2?p.s
 function sub(s){return location.protocol+"//"+s+"."+base();}
 function loadAll(){
  var g=document.getElementById("gerr");if(g)g.textContent="Checking…";
- fetch("/admin/app_stats",{headers:H()}).then(function(r){if(r.status==403)throw 0;if(!r.ok)throw 1;return r.json()}).then(function(s){
+ var code=0;
+ fetch("/admin/app_stats",{headers:H()}).then(function(r){code=r.status;if(r.status==403)throw 0;if(!r.ok)throw 1;return r.json()}).then(function(s){
   if(g)g.textContent="";
   document.getElementById("gate").style.display="none";document.getElementById("hq").style.display="";
   document.getElementById("gtiles").innerHTML=tile(s.installed,"App keys")+tile(s.subscribed,"Active subs",1)+tile(s.active_7d,"Using (7d)")+tile(s.suggestions_new,"New suggestions");
   loadHealth();loadApp();loadLic();renderLinks();
- }).catch(function(e){if(g)g.textContent=(e===0?"Wrong token.":"Couldn't reach HQ — try again.");});
+ }).catch(function(e){var m=(e===0?"Wrong token (403).":"Couldn't reach HQ (status "+code+").");if(g)g.textContent=m;if(window.showDiag)window.showDiag("Login failed: "+m+" token len="+(T()||"").length);});
 }
 function loadHealth(){
  var box=document.getElementById("svc");if(box)box.innerHTML='<div class=muted>Checking services…</div>';
