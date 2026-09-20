@@ -1,0 +1,21 @@
+[Unit]
+Description=Paperclip — Nico's Trading Desk (cockpit + agent orchestrator)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=wolf
+WorkingDirectory=/opt/paperclip
+# Cockpit binds to localhost only; Caddy (with basic auth) is the only way in.
+Environment=HOST=127.0.0.1
+Environment=PORT=3100
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=PAPERCLIP_BUILD_VERSION=cloud
+ExecStart=/usr/bin/npx --yes paperclipai run
+Restart=always
+RestartSec=8
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

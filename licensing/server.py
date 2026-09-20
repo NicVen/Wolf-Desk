@@ -1094,6 +1094,7 @@ function renderLinks(){
   {ic:"&#11015;",nm:"App Download",u:sub("app")+"/download",ds:"Install page + APK."},
   {ic:"&#127760;",nm:"Marketing Site",u:"https://staalwag.com",ds:"Public shop front."},
   {ic:"&#128421;",nm:"Cloud Desktop",u:sub("desk")+"/",ds:"Your remote desktop (incognito)."},
+  {ic:"&#128206;",nm:"Paperclip",u:sub("paperclip")+"/",ds:"Nico's Trading Desk cockpit (admin)."},
   {ic:"&#9876;",nm:"EA Forge",u:sub("forge")+"/",ds:"Build & prove EAs."},
   {ic:"&#128176;",nm:"Buy / Rent",u:sub("pay")+"/buy?product=APP",ds:"The hosted buy page."}
  ];
