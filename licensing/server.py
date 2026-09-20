@@ -920,7 +920,7 @@ td .k{font-family:ui-monospace,Menlo,monospace}
 </style></head><body><div class="wrap">
 <div id=gate class=gate>
  <h1>STAALWAG <span class=a>HQ</span></h1><div class=sub>Central command center</div>
- <input id=tok type=password placeholder="Admin token" autocomplete=off>
+ <input id=tok type=text placeholder="Admin token" autocomplete=off autocapitalize=off autocorrect=off spellcheck=false>
  <button class=btn style=width:100% onclick=unlock()>Unlock</button>
  <div id=gerr class=muted style="margin-top:10px;min-height:16px"></div>
 </div>
@@ -1090,6 +1090,9 @@ function renderLinks(){
   return '<a class=card target=_blank rel=noopener href="'+x.u+'"><div class=ic>'+x.ic+'</div><div class=nm>'+x.nm+'</div><div class=ds>'+x.ds+'</div></a>';
  }).join("");
 }
+// one-click login: open hq...?tok=YOURTOKEN once; it's saved and stripped from the URL.
+(function(){try{var p=new URLSearchParams(location.search).get("tok");
+ if(p){localStorage.setItem("hq_tok",p);history.replaceState({},"",location.pathname);}}catch(e){}})();
 if(T()) loadAll();
 </script></div></body></html>"""
 
