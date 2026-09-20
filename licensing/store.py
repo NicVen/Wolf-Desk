@@ -374,6 +374,22 @@ def quiz_leaderboard(period, limit=10):
         return [(r["aid"] or "SC-?????", r["pts"], r["k"]) for r in rows]
 
 
+def quiz_stats(period, day):
+    """Live quiz metrics for the admin console."""
+    with _LOCK:
+        c = _conn()
+        one = lambda sql, *a: c.execute(sql, a).fetchone()[0]
+        players = one("SELECT COUNT(DISTINCT license_key) FROM quiz_plays WHERE substr(day,1,7)=? AND score IS NOT NULL", period)
+        plays_month = one("SELECT COUNT(*) FROM quiz_plays WHERE substr(day,1,7)=? AND score IS NOT NULL", period)
+        plays_today = one("SELECT COUNT(*) FROM quiz_plays WHERE day=? AND score IS NOT NULL", day)
+        avg = one("SELECT COALESCE(ROUND(AVG(score),1),0) FROM quiz_plays WHERE substr(day,1,7)=? AND score IS NOT NULL", period)
+    lb = quiz_leaderboard(period, 10)
+    return {"period": period, "players": players, "plays_month": plays_month,
+            "plays_today": plays_today, "avg_score": avg,
+            "leader": ({"anon": lb[0][0], "points": lb[0][1]} if lb else None),
+            "leaderboard": [{"anon": a, "points": p} for (a, p, k) in lb]}
+
+
 def quiz_rank(license_key, period):
     """(rank, total_players) for this key in the period; rank None if no plays."""
     with _LOCK:

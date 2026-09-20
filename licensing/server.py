@@ -274,6 +274,8 @@ class H(BaseHTTPRequestHandler):
             self._admin_app_stats()
         elif u.path == "/admin/suggestions":
             self._admin_suggestions()
+        elif u.path == "/admin/quiz_stats":
+            self._admin_quiz_stats()
         elif u.path in ("/admin", "/admin/"):
             self._admin_page()
         elif u.path == "/buy":
@@ -683,6 +685,11 @@ class H(BaseHTTPRequestHandler):
             return self._send(403, {"error": "forbidden"})
         self._send(200, {"suggestions": store.list_suggestions()})
 
+    def _admin_quiz_stats(self):
+        if not self._admin_ok():
+            return self._send(403, {"error": "forbidden"})
+        self._send(200, store.quiz_stats(_period(), _today()))
+
     def _admin_suggestion_update(self):
         if not self._admin_ok():
             return self._send(403, {"error": "forbidden"})
@@ -782,6 +789,11 @@ button{cursor:pointer}
 .sg .done{background:transparent;border:1px solid var(--line);color:var(--steel);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;margin-top:8px;width:auto}
 .row{display:flex;gap:10px;align-items:center}.row .btn{width:auto}
 .muted{color:var(--mut);font-size:13px}
+.qb{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);
+ border-radius:10px;padding:9px 12px;margin:6px 0;font-size:13px}
+.qb .rk{color:var(--mut);font-weight:800;width:34px}
+.qb .aid{flex:1;font-weight:700;font-family:ui-monospace,Menlo,monospace}
+.qb .pts{color:var(--steel);font-weight:800}
 </style></head><body><div class="wrap">
 <div id=gate class=gate>
  <h1>STAALWAG <span class=a>HQ</span></h1>
@@ -795,6 +807,9 @@ button{cursor:pointer}
   <div class=sub>Live usage &amp; suggestions</div></div>
   <button class=btn style=width:auto onclick=load()>Refresh</button></div>
  <div class=tiles id=tiles></div>
+ <div class=sec>Trader Quiz · this month <span id=qperiod class=muted></span></div>
+ <div class=tiles id=qtiles></div>
+ <div id=qboard></div>
  <div class=sec>Suggestions to review</div>
  <div id=sugs></div>
 </div>
@@ -817,8 +832,22 @@ function load(){
    tile(s.referrals,"Referrals brought")+
    tile(s.free_months_granted,"Free months earned")+
    tile(s.suggestions_new,"New suggestions");
-  loadSugs();
+  loadSugs(); loadQuiz();
  }).catch(function(){var g=document.getElementById("gerr");if(g)g.textContent="Wrong token.";});
+}
+function loadQuiz(){
+ fetch("/admin/quiz_stats",{headers:H()}).then(function(r){return r.json()}).then(function(s){
+  document.getElementById("qperiod").textContent="("+(s.period||"")+")";
+  var lead=s.leader?(s.leader.anon+" · "+s.leader.points+" pts"):"—";
+  document.getElementById("qtiles").innerHTML=
+   tile(s.players,"Players")+tile(s.plays_today,"Plays today")+
+   tile(s.plays_month,"Plays this month")+tile(s.avg_score,"Avg score /5")+
+   '<div class="tile hot"><b style="font-size:15px">'+lead+'</b><span>Current leader</span></div>';
+  var b=s.leaderboard||[];var esc=function(x){return (x||"").replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})};
+  document.getElementById("qboard").innerHTML=b.length?b.map(function(r,i){
+    return '<div class=qb><span class=rk>#'+(i+1)+'</span><span class=aid>'+esc(r.anon)+'</span><span class=pts>'+r.points+' pts</span></div>';
+  }).join(""):'<div class=muted>No quiz plays yet this month.</div>';
+ });
 }
 function loadSugs(){
  fetch("/admin/suggestions",{headers:H()}).then(function(r){return r.json()}).then(function(d){
