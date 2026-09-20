@@ -1069,13 +1069,15 @@ function loadLic(){
  fetch("/admin/list",{headers:H()}).then(function(r){return r.json()}).then(function(d){
   var rows=(d.licenses||[]).map(function(l){
    var flags=[];if(l.admin)flags.push("ADMIN");if(l.no_bind)flags.push("no-bind");if(l.bound)flags.push("bound");
-   var dl=l.days_left==null?"":l.days_left;
-   var act='<button class=act onclick="lact(\''+l.key+'\',\'extend\')">+30d</button>'+
-     '<button class=act onclick="lact(\''+l.key+'\',\'revoke\')">Revoke</button>'+
-     '<button class=act onclick="lact(\''+l.key+'\',\'reset\')">Unbind</button>';
-   return '<tr><td class=k>'+esc(l.key)+'<td>'+esc(l.product)+'<td>'+esc(l.status)+'<td>'+dl+'<td>'+flags.join(" ")+'<td>'+act+'</tr>';
+   var dl=l.days_left==null?"":l.days_left;var k=esc(l.key);
+   var act='<button class=act data-k="'+k+'" data-a="extend">+30d</button>'+
+     '<button class=act data-k="'+k+'" data-a="revoke">Revoke</button>'+
+     '<button class=act data-k="'+k+'" data-a="reset">Unbind</button>';
+   return '<tr><td class=k>'+k+'<td>'+esc(l.product)+'<td>'+esc(l.status)+'<td>'+dl+'<td>'+flags.join(" ")+'<td>'+act+'</tr>';
   }).join("");
-  document.querySelector("#lictbl tbody").innerHTML=rows||'<tr><td colspan=6 class=muted>No licenses yet.</td></tr>';
+  var tb=document.querySelector("#lictbl tbody");
+  tb.innerHTML=rows||'<tr><td colspan=6 class=muted>No licenses yet.</td></tr>';
+  tb.onclick=function(e){var b=e.target.closest?e.target.closest("button[data-a]"):null;if(b)lact(b.getAttribute("data-k"),b.getAttribute("data-a"));};
  });
 }
 function lact(key,what){
