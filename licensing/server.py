@@ -175,6 +175,35 @@ def _reward_referrer(lic):
                  % (ref["license_key"], days, lic["license_key"]))
 
 
+def announce_quiz_winner(period, reward, public=True):
+    """Decide + announce the Trader Quiz winner for a period. Winner gets a
+    private DM with the reward; everyone else gets a public message naming only
+    the winner's anonymous id. Returns a result dict."""
+    board = store.quiz_leaderboard(period, 1)
+    if not board:
+        return {"ok": False, "reason": "no quiz plays in %s" % period}
+    anon, pts, wkey = board[0]
+    wlic = store.get(wkey)
+    notify.client(wlic.get("contact") if wlic else None,
+                  "🏆 You WON the STAALCALIBUR Trader Quiz for %s with %d points!\n"
+                  "Reward: %s.\nYour public winner id is %s — we only ever announce that, "
+                  "never your identity." % (period, pts, reward, anon))
+    sent = 0
+    if public:
+        msg = ("🏆 STAALCALIBUR Trader Quiz — %s winner: %s with %d points! "
+               "Congratulations. Play the daily quiz to top next month's board." % (period, anon, pts))
+        for contact in store.active_contacts("APP"):
+            notify.client(contact, msg)
+            sent += 1
+    notify.admin("quiz winner %s: %s (%d pts) — announced to %d" % (period, anon, pts, sent))
+    return {"ok": True, "period": period, "winner_anon": anon, "points": pts, "notified": sent}
+
+
+def _prev_period():
+    first = datetime.datetime.utcnow().replace(day=1)
+    return (first - datetime.timedelta(days=1)).strftime("%Y-%m")
+
+
 def check_access(lic):
     """Return (allowed, reason)."""
     now = store.now()
@@ -219,6 +248,16 @@ def sweeper():
                                       "Your %s access has been removed for non-payment. "
                                       "Renew any time to restore it." % lic["product"])
                         notify.admin("revoked: %s" % key)
+            # Monthly Trader Quiz winner — announce the previous month once, when
+            # the month has rolled over. Runs wherever the service runs; no cron.
+            if config.QUIZ_AUTO_WINNER:
+                prev = _prev_period()
+                if store.meta_get("quiz_winner_last") != prev:
+                    try:
+                        announce_quiz_winner(prev, config.QUIZ_REWARD)
+                    except Exception as e:  # noqa: BLE001
+                        notify.admin("auto quiz-winner error: %s" % e)
+                    store.meta_set("quiz_winner_last", prev)   # mark done either way
         except Exception as e:  # noqa: BLE001
             notify.admin("sweeper error: %s" % e)
         time.sleep(60)
@@ -553,36 +592,16 @@ class H(BaseHTTPRequestHandler):
         if not self._admin_ok():
             return self._send(403, {"error": "forbidden"})
         d = json.loads(self._body() or b"{}")
-        # default to the previous calendar month (typical end-of-month run)
-        period = d.get("period")
-        if not period:
-            first = datetime.datetime.utcnow().replace(day=1)
-            period = (first - datetime.timedelta(days=1)).strftime("%Y-%m")
-        reward = d.get("reward") or "your reward — we'll be in touch"
-        dry = bool(d.get("dry_run"))
-        board = store.quiz_leaderboard(period, 1)
-        if not board:
-            return self._send(200, {"ok": False, "reason": "no quiz plays in %s" % period})
-        anon, pts, wkey = board[0]
-        if dry:
+        period = d.get("period") or _prev_period()   # default: previous calendar month
+        reward = d.get("reward") or config.QUIZ_REWARD
+        if d.get("dry_run"):
+            board = store.quiz_leaderboard(period, 1)
+            if not board:
+                return self._send(200, {"ok": False, "reason": "no quiz plays in %s" % period})
+            anon, pts, _ = board[0]
             return self._send(200, {"ok": True, "dry_run": True, "period": period,
                                     "winner_anon": anon, "points": pts})
-        wlic = store.get(wkey)
-        # private, personal note to the winner
-        notify.client(wlic.get("contact") if wlic else None,
-                      "🏆 You WON the STAALCALIBUR Trader Quiz for %s with %d points!\n"
-                      "Reward: %s.\nYour public winner id is %s — we only ever announce that, "
-                      "never your identity." % (period, pts, reward, anon))
-        # public announcement to every app subscriber — anonymous id only
-        msg = ("🏆 STAALCALIBUR Trader Quiz — %s winner: %s with %d points! "
-               "Congratulations. Play the daily quiz to top next month's board." % (period, anon, pts))
-        sent = 0
-        for contact in store.active_contacts("APP"):
-            notify.client(contact, msg)
-            sent += 1
-        notify.admin("quiz winner %s: %s (%d pts) — announced to %d" % (period, anon, pts, sent))
-        self._send(200, {"ok": True, "period": period, "winner_anon": anon,
-                         "points": pts, "notified": sent})
+        self._send(200, announce_quiz_winner(period, reward))
 
     def _suggest(self):
         """A subscriber submits an app suggestion. Screened for abusive content

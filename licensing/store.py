@@ -105,6 +105,7 @@ def _init(c):
             n     INTEGER DEFAULT 0,
             PRIMARY KEY (qid, opt)
         )""")
+    c.execute("CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)")
     c.commit()
 
 
@@ -401,6 +402,19 @@ def quiz_rank(license_key, period):
         if r["k"] == license_key:
             return i, total
     return None, total
+
+
+def meta_get(k, default=None):
+    with _LOCK:
+        r = _conn().execute("SELECT v FROM meta WHERE k=?", (k,)).fetchone()
+        return r["v"] if r else default
+
+
+def meta_set(k, v):
+    with _LOCK:
+        c = _conn()
+        c.execute("INSERT INTO meta (k, v) VALUES (?,?) ON CONFLICT(k) DO UPDATE SET v=?", (k, v, v))
+        c.commit()
 
 
 def payment_seen(payment_id):
