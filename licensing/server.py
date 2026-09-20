@@ -14,6 +14,7 @@ Run:  python -m licensing.server     (BIND_ADDR/PORT from env; sits behind Caddy
 import calendar
 import datetime
 import json
+import os
 import secrets
 import threading
 import time
@@ -175,13 +176,49 @@ def _reward_referrer(lic):
                  % (ref["license_key"], days, lic["license_key"]))
 
 
-def announce_quiz_winner(period, reward, public=True):
+def _load_rewards():
+    """The rotating reward pool. Editable at licensing/quiz_rewards.json, or via
+    the QUIZ_REWARDS env (pipe-separated); falls back to the single QUIZ_REWARD."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "quiz_rewards.json")
+    try:
+        with open(path) as f:
+            r = json.load(f)
+        pool = [str(x).strip() for x in r if str(x).strip()]
+        if pool:
+            return pool
+    except Exception:  # noqa: BLE001
+        pass
+    env = os.environ.get("QUIZ_REWARDS", "")
+    if env.strip():
+        return [s.strip() for s in env.split("|") if s.strip()]
+    return [config.QUIZ_REWARD]
+
+
+def peek_reward():
+    """Next reward without advancing the rotation (for previews)."""
+    pool = _load_rewards()
+    idx = int(store.meta_get("quiz_reward_idx", "0") or "0")
+    return pool[idx % len(pool)]
+
+
+def next_reward():
+    """Next reward AND advance the rotation so the following month differs."""
+    pool = _load_rewards()
+    idx = int(store.meta_get("quiz_reward_idx", "0") or "0")
+    store.meta_set("quiz_reward_idx", str((idx + 1) % 1000000))
+    return pool[idx % len(pool)]
+
+
+def announce_quiz_winner(period, reward=None, public=True):
     """Decide + announce the Trader Quiz winner for a period. Winner gets a
     private DM with the reward; everyone else gets a public message naming only
-    the winner's anonymous id. Returns a result dict."""
+    the winner's anonymous id. When reward is None the rotating pool is used and
+    advanced. Returns a result dict."""
     board = store.quiz_leaderboard(period, 1)
     if not board:
         return {"ok": False, "reason": "no quiz plays in %s" % period}
+    if reward is None:
+        reward = next_reward()
     anon, pts, wkey = board[0]
     wlic = store.get(wkey)
     notify.client(wlic.get("contact") if wlic else None,
@@ -195,8 +232,10 @@ def announce_quiz_winner(period, reward, public=True):
         for contact in store.active_contacts("APP"):
             notify.client(contact, msg)
             sent += 1
-    notify.admin("quiz winner %s: %s (%d pts) — announced to %d" % (period, anon, pts, sent))
-    return {"ok": True, "period": period, "winner_anon": anon, "points": pts, "notified": sent}
+    notify.admin("quiz winner %s: %s (%d pts) — %s — announced to %d" % (period, anon, pts, reward, sent))
+    store.meta_set("quiz_winner_last", period)   # so it won't be announced twice
+    return {"ok": True, "period": period, "winner_anon": anon, "points": pts,
+            "reward": reward, "notified": sent}
 
 
 def _prev_period():
@@ -254,7 +293,7 @@ def sweeper():
                 prev = _prev_period()
                 if store.meta_get("quiz_winner_last") != prev:
                     try:
-                        announce_quiz_winner(prev, config.QUIZ_REWARD)
+                        announce_quiz_winner(prev)   # None reward -> rotating pool
                     except Exception as e:  # noqa: BLE001
                         notify.admin("auto quiz-winner error: %s" % e)
                     store.meta_set("quiz_winner_last", prev)   # mark done either way
@@ -593,14 +632,15 @@ class H(BaseHTTPRequestHandler):
             return self._send(403, {"error": "forbidden"})
         d = json.loads(self._body() or b"{}")
         period = d.get("period") or _prev_period()   # default: previous calendar month
-        reward = d.get("reward") or config.QUIZ_REWARD
+        reward = d.get("reward")   # None -> use the rotating pool
         if d.get("dry_run"):
             board = store.quiz_leaderboard(period, 1)
             if not board:
                 return self._send(200, {"ok": False, "reason": "no quiz plays in %s" % period})
             anon, pts, _ = board[0]
             return self._send(200, {"ok": True, "dry_run": True, "period": period,
-                                    "winner_anon": anon, "points": pts})
+                                    "winner_anon": anon, "points": pts,
+                                    "would_reward": reward or peek_reward()})
         self._send(200, announce_quiz_winner(period, reward))
 
     def _suggest(self):
@@ -707,7 +747,9 @@ class H(BaseHTTPRequestHandler):
     def _admin_quiz_stats(self):
         if not self._admin_ok():
             return self._send(403, {"error": "forbidden"})
-        self._send(200, store.quiz_stats(_period(), _today()))
+        s = store.quiz_stats(_period(), _today())
+        s["next_reward"] = peek_reward()
+        self._send(200, s)
 
     def _admin_suggestion_update(self):
         if not self._admin_ok():
@@ -828,6 +870,7 @@ button{cursor:pointer}
  <div class=tiles id=tiles></div>
  <div class=sec>Trader Quiz · this month <span id=qperiod class=muted></span></div>
  <div class=tiles id=qtiles></div>
+ <div id=qreward class=muted style="margin:2px 0 12px"></div>
  <div id=qboard></div>
  <div class=sec>Suggestions to review</div>
  <div id=sugs></div>
@@ -862,7 +905,9 @@ function loadQuiz(){
    tile(s.players,"Players")+tile(s.plays_today,"Plays today")+
    tile(s.plays_month,"Plays this month")+tile(s.avg_score,"Avg score /5")+
    '<div class="tile hot"><b style="font-size:15px">'+lead+'</b><span>Current leader</span></div>';
-  var b=s.leaderboard||[];var esc=function(x){return (x||"").replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})};
+  var esc=function(x){return (x||"").replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})};
+  document.getElementById("qreward").innerHTML="🎁 Next winner's reward: <b style=color:var(--fg)>"+esc(s.next_reward||"")+"</b> (rotates each month)";
+  var b=s.leaderboard||[];
   document.getElementById("qboard").innerHTML=b.length?b.map(function(r,i){
     return '<div class=qb><span class=rk>#'+(i+1)+'</span><span class=aid>'+esc(r.anon)+'</span><span class=pts>'+r.points+' pts</span></div>';
   }).join(""):'<div class=muted>No quiz plays yet this month.</div>';
