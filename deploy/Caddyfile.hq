@@ -1,3 +1,17 @@
+# =====================================================================
+# Global options.
+# Restrict to HTTP/1.1 + HTTP/2 (no HTTP/3). noVNC's websockify only
+# speaks WebSockets over HTTP/1.1; when Caddy advertises HTTP/3 the
+# browser switches to it and the cloud-desktop WebSocket fails with
+# "Failed to connect to server". Dropping h3 keeps the desk working
+# while every other site still gets HTTP/2.
+# =====================================================================
+{
+	servers {
+		protocols h1 h2
+	}
+}
+
 # STAALWAG HQ — one VPS, every desk, automatic HTTPS.
 #
 # All hostnames are free sslip.io names that resolve to the VPS IP
