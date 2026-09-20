@@ -149,7 +149,7 @@
         <li>VELDRIN FX signals — $20 add-on</li>
         <li>Priority on everything new</li>
       </ul>
-      <a class="btn primary" href="#get">Go VIP</a>
+      <a class="btn primary rent" href="#get">Go VIP</a>
     </div>
     <div class="tier">
       <div class="nm">STAALCALIBUR Mobile App</div>
@@ -171,7 +171,7 @@
         <li>Markov 18-pair signals — free</li>
         <li>GOUDBREUK — $10/mo on VIP</li>
       </ul>
-      <a class="btn ghost" href="#get">Browse</a>
+      <a class="btn ghost rent" href="#get">Browse</a>
     </div>
     <div class="tier">
       <div class="nm">TradingView</div>
@@ -182,7 +182,7 @@
         <li>Markov 2 Gate add-on — free</li>
         <li>Add to any chart, any timeframe</li>
       </ul>
-      <a class="btn ghost" href="#get">Enquire</a>
+      <a class="btn ghost rent" href="#get">Enquire</a>
     </div>
   </div>
 </div></section>
@@ -223,6 +223,11 @@
     var apk = appBase + "/staalcalibur.apk";
     var a=document.getElementById("apkBtn"), w=document.getElementById("webBtn");
     if(a) a.href=apk; if(w) w.href=appBase;
+    // Rentals (VIP / EAs / signals / TradingView) are handled on the Intraday
+    // Intel Desk — point those buttons there.
+    var deskBase = onStaalwag ? "https://wolf.staalwag.com" : "https://wolf.178.104.88.38.sslip.io";
+    var rent=document.querySelectorAll("a.rent");
+    for(var i=0;i<rent.length;i++){ rent[i].href=deskBase+"/"; rent[i].target="_blank"; rent[i].rel="noopener"; }
     try{ new QRCode(document.getElementById("qr"), {text:appBase, width:150, height:150,
       colorDark:"#0a0e15", colorLight:"#ffffff"}); }catch(e){}
   })();
