@@ -766,7 +766,7 @@ class H(BaseHTTPRequestHandler):
         for u in config.HQ_UNITS:
             try:
                 r = subprocess.run(["systemctl", "is-active", u],
-                                   capture_output=True, text=True, timeout=5)
+                                   capture_output=True, text=True, timeout=2)
                 st = (r.stdout or "").strip().splitlines()[0].strip() if r.stdout else ""
             except Exception:  # noqa: BLE001
                 st = ""
@@ -1008,10 +1008,18 @@ function tile(v,l,hot){return '<div class="tile'+(hot?' hot':'')+'"><b>'+v+'</b>
 function base(){var h=location.hostname;var p=h.split(".");return p.length>2?p.slice(1).join("."):h;}
 function sub(s){return location.protocol+"//"+s+"."+base();}
 function loadAll(){
- fetch("/admin/health",{headers:H()}).then(function(r){if(r.status==403)throw 0;return r.json()}).then(function(d){
+ var g=document.getElementById("gerr");if(g)g.textContent="Checking…";
+ fetch("/admin/app_stats",{headers:H()}).then(function(r){if(r.status==403)throw 0;if(!r.ok)throw 1;return r.json()}).then(function(s){
+  if(g)g.textContent="";
   document.getElementById("gate").style.display="none";document.getElementById("hq").style.display="";
-  renderHealth(d);loadGlance();loadApp();loadLic();renderLinks();
- }).catch(function(){var g=document.getElementById("gerr");if(g)g.textContent="Wrong token."});
+  document.getElementById("gtiles").innerHTML=tile(s.installed,"App keys")+tile(s.subscribed,"Active subs",1)+tile(s.active_7d,"Using (7d)")+tile(s.suggestions_new,"New suggestions");
+  loadHealth();loadApp();loadLic();renderLinks();
+ }).catch(function(e){if(g)g.textContent=(e===0?"Wrong token.":"Couldn't reach HQ — try again.");});
+}
+function loadHealth(){
+ var box=document.getElementById("svc");if(box)box.innerHTML='<div class=muted>Checking services…</div>';
+ fetch("/admin/health",{headers:H()}).then(function(r){return r.json()}).then(function(d){renderHealth(d)})
+  .catch(function(){if(box)box.innerHTML='<div class=muted>Health check unavailable.</div>';});
 }
 function renderHealth(d){
  var s=d.services||[];
@@ -1024,13 +1032,6 @@ function renderHealth(d){
   tile((h.disk_free_gb!=null?h.disk_free_gb+" GB":"?"),"Disk free")+
   tile((h.uptime_days!=null?h.uptime_days+"d":"?"),"Uptime")+
   tile((h.load!=null?h.load:"?"),"Load (1m)");
-}
-function loadGlance(){
- fetch("/admin/app_stats",{headers:H()}).then(function(r){return r.json()}).then(function(s){
-  document.getElementById("gtiles").innerHTML=
-   tile(s.installed,"App keys")+tile(s.subscribed,"Active subs",1)+
-   tile(s.active_7d,"Using (7d)")+tile(s.suggestions_new,"New suggestions");
- });
 }
 function loadApp(){
  fetch("/admin/app_stats",{headers:H()}).then(function(r){return r.json()}).then(function(s){
