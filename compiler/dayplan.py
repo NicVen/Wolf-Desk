@@ -81,11 +81,14 @@ def _gold_setup(m, opp):
         t1, t2 = mid + risk, mid + 2 * risk
     rr = round(abs(t1 - mid) / max(risk, 1e-9), 1)
     r = lambda v: round(v, 2)
+    reg = m.get("regime")
+    if isinstance(reg, dict):
+        reg = " ".join(str(x) for x in (reg.get("state"), reg.get("persist")) if x)
     return {
         "bias": bias, "last": r(last), "atr": r(atr),
         "entry_low": r(entry_lo), "entry_high": r(entry_hi),
         "stop": r(stop), "t1": r(t1), "t2": r(t2), "rr": rr,
-        "risk_pct": 1, "regime": m.get("regime") or "",
+        "risk_pct": 1, "regime": (reg or "n/a"),
     }
 
 
