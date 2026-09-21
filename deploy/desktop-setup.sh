@@ -153,7 +153,6 @@ EOF
   chmod +x "$f"
 }
 make_link "STAALWAG HQ"        "https://hq.178.104.88.38.sslip.io"       "utilities-system-monitor"
-make_link "Paperclip"          "https://paperclip.178.104.88.38.sslip.io" "accessories-text-editor"
 make_link "HQ Hub"             "https://178.104.88.38.sslip.io"          "user-home"
 make_link "WOLF Intraday Desk" "https://wolf.178.104.88.38.sslip.io"     "applications-office"
 make_link "STAALCALIBUR App"   "https://app.178.104.88.38.sslip.io"      "phone"
