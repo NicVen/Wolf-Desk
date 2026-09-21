@@ -363,6 +363,8 @@ class H(BaseHTTPRequestHandler):
             self._admin_quiz_stats()
         elif u.path == "/admin/health":
             self._admin_health()
+        elif u.path == "/admin/daily_plan":
+            self._admin_daily_plan()
         elif u.path in ("/admin", "/admin/"):
             self._admin_page()
         elif u.path == "/buy":
@@ -797,6 +799,18 @@ class H(BaseHTTPRequestHandler):
         store.set_suggestion_status(d.get("id"), d.get("status", "done"))
         self._send(200, {"ok": True})
 
+    def _admin_daily_plan(self):
+        """On-demand daily trade plan: live gold + top estate signals + one
+        Gemini reasoning pass. The estate itself stays AI-free; this is the only
+        place an AI is called, and only when the HQ button is pressed."""
+        if not self._admin_ok():
+            return self._send(403, {"error": "forbidden"})
+        try:
+            from compiler.dayplan import build_day_plan
+            self._send(200, build_day_plan())
+        except Exception as e:  # noqa: BLE001
+            self._send(500, {"error": "plan_failed", "detail": str(e)})
+
     def _admin_page(self):
         self._send(200, ADMIN_HTML, "text/html; charset=utf-8")
 
@@ -940,6 +954,7 @@ window.addEventListener('unhandledrejection',function(e){window.showDiag('PROMIS
  </div>
  <div class=tabs>
   <button class="tab on" data-p=overview onclick=tab('overview')>Overview</button>
+  <button class=tab data-p=plan onclick=tab('plan')>Daily Plan</button>
   <button class=tab data-p=desks onclick=tab('desks')>Desks &amp; links</button>
   <button class=tab data-p=app onclick=tab('app')>App</button>
   <button class=tab data-p=lic onclick=tab('lic')>Licenses</button>
@@ -950,6 +965,12 @@ window.addEventListener('unhandledrejection',function(e){window.showDiag('PROMIS
   <div class=sec>Service health</div><div id=svc></div>
   <div class=sec>Server</div><div class=tiles id=htiles></div>
   <div class=sec>At a glance</div><div class=tiles id=gtiles></div>
+ </div>
+
+ <div id=p-plan class=pane>
+  <div class=sec>Today's trade plan</div>
+  <button class=btn id=planbtn onclick=getPlan()>Get today's plan</button>
+  <div id=planout class=muted style="margin-top:12px">Press the button to pull live gold + the estate's top signals and generate today's plan. One free Gemini call, on demand.</div>
  </div>
 
  <div id=p-desks class=pane>
@@ -1012,6 +1033,34 @@ function unlock(){var t=document.getElementById("tok").value.trim();if(!t)return
 function tab(p){var ts=document.querySelectorAll(".tab");for(var i=0;i<ts.length;i++)ts[i].className="tab"+(ts[i].getAttribute("data-p")===p?" on":"");
  var ps=document.querySelectorAll(".pane");for(var j=0;j<ps.length;j++)ps[j].className="pane"+(ps[j].id==="p-"+p?" on":"");}
 function tile(v,l,hot){return '<div class="tile'+(hot?' hot':'')+'"><b>'+v+'</b><span>'+l+'</span></div>';}
+function getPlan(){
+ var b=document.getElementById("planbtn"),o=document.getElementById("planout");
+ if(!T()){o.innerHTML='<span style="color:#f66">Unlock HQ first (admin token).</span>';return;}
+ b.disabled=true;var old=b.textContent;b.textContent="Working… pulling data + reasoning";
+ o.textContent="Fetching live gold, ranking signals, and reasoning… (a few seconds)";
+ fetch("/admin/daily_plan",{headers:H()}).then(function(r){return r.json()}).then(function(d){
+  b.disabled=false;b.textContent=old;
+  if(d.error){o.innerHTML='<span style="color:#f66">Error: '+esc(d.detail||d.error)+'</span>';return;}
+  var s=d.setup||{};
+  var h='<div style="font-weight:800;font-size:15px;margin:6px 0">'+esc(d.date)+' &#183; Gold plan</div>';
+  h+='<table style="margin:8px 0">'
+   +'<tr><th>Bias<td><b>'+esc(s.bias)+'</b> on XAUUSD'
+   +'<tr><th>Entry zone<td>'+esc(s.entry_low)+' &#8211; '+esc(s.entry_high)
+   +'<tr><th>Stop<td>'+esc(s.stop)
+   +'<tr><th>Target 1<td>'+esc(s.t1)
+   +'<tr><th>Target 2<td>'+esc(s.t2)
+   +'<tr><th>R:R<td>1 : '+esc(s.rr)+' (risk '+esc(s.risk_pct)+'%)'
+   +'<tr><th>Live / regime<td>'+esc(s.last)+' &#183; '+esc(s.regime)+' (ATR '+esc(s.atr)+')</table>';
+  h+='<div class=sec>Reasoning &amp; findings</div><div style="white-space:pre-wrap;line-height:1.55">'+esc(d.reasoning)+'</div>';
+  if(d.top_signals&&d.top_signals.length){
+   h+='<div class=sec>Top estate signals</div><div style=overflow-x:auto><table><thead><tr><th>Market<th>Class<th>Score<th>Trend</tr></thead><tbody>';
+   for(var i=0;i<d.top_signals.length;i++){var t=d.top_signals[i];
+    h+='<tr><td>'+esc(t.name)+'<td>'+esc(t["class"])+'<td>'+esc(t.score)+'<td>'+esc(t.trend);}
+   h+='</tbody></table></div>';}
+  h+='<div class=muted style="margin-top:10px">Live gold quote + estate findings, reasoned once by Gemini (free). Generated '+esc(d.generated_utc)+(d.data_asof?' &#183; findings as of '+esc(d.data_asof):'')+'.</div>';
+  o.innerHTML=h;
+ }).catch(function(e){b.disabled=false;b.textContent=old;o.innerHTML='<span style="color:#f66">Request failed — check you are unlocked and the service is up.</span>';});
+}
 function base(){var h=location.hostname;var p=h.split(".");return p.length>2?p.slice(1).join("."):h;}
 function sub(s){return location.protocol+"//"+s+"."+base();}
 function loadAll(){
