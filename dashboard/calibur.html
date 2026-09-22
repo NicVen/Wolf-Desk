@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0e15" />
+<title>STAALCALIBUR — Pre-trade co-pilot | STAALWAG</title>
+<meta name="description" content="STAALCALIBUR: a pre-trade read on any market in seconds — direction, levels, a 0–100 score with a BUY/SELL/WATCH verdict, regime and edge validation. Rental only, private to your device." />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="STAALWAG" />
+<meta property="og:title" content="STAALCALIBUR — Pre-trade co-pilot" />
+<meta property="og:description" content="A clear read on any market in seconds. Direction, levels, score, verdict. Rental only, private to your device." />
+<meta property="og:image" content="/og-staalwag.png" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<link rel="icon" href="/favicon-32.png" />
+<style>
+  :root{--bg:#0a0e15;--card:#131a26;--card2:#18212f;--line:#1e2a3a;--fg:#e7edf3;--mut:#7d8a9c;
+    --faint:#4d5a6c;--steel:#8aa0b4;--chrome:#c7d2dd;--accent:#6ea8fe}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth;background:#0a0e15}
+  body{margin:0;background:var(--bg);color:var(--fg);min-height:100vh;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55}
+  a{color:var(--accent);text-decoration:none}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 20px}
+  nav{position:sticky;top:0;z-index:20;background:rgba(10,14,21,.92);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;gap:12px;height:58px}
+  .navlogo{width:26px;height:26px;border-radius:7px}
+  .brand{font-weight:900;letter-spacing:2px;font-size:17px}
+  .brand .w{color:var(--steel)}
+  nav .sp{flex:1}
+  .back{color:var(--steel);font-size:13px;font-weight:700}
+  /* hero */
+  .hero{padding:60px 0 30px;text-align:center}
+  .kicker{color:var(--steel);font-size:12px;font-weight:800;letter-spacing:3px;text-transform:uppercase}
+  .hero h1{font-size:40px;font-weight:900;letter-spacing:2px;margin:10px 0 6px}
+  .hero .lead{color:var(--chrome);font-size:17px;max-width:640px;margin:6px auto 0}
+  /* feature list */
+  section{padding:34px 0;border-top:1px solid var(--line)}
+  h2{font-size:22px;font-weight:900;letter-spacing:.5px;margin:0 0 22px;text-align:center}
+  .feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+  .feat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;gap:15px;align-items:flex-start}
+  .feat .ic{flex:0 0 auto;color:var(--steel)}
+  .feat .ic svg{width:34px;height:34px;display:block}
+  .feat h3{font-size:15.5px;margin:2px 0 5px}
+  .feat p{color:var(--mut);font-size:13.5px;margin:0}
+  /* how it works */
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;counter-reset:s}
+  .step{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:18px 18px 18px 18px;position:relative}
+  .step:before{counter-increment:s;content:counter(s);display:flex;align-items:center;justify-content:center;
+    width:28px;height:28px;border-radius:8px;background:var(--accent);color:#04122b;font-weight:900;font-size:14px;margin-bottom:10px}
+  .step h4{margin:0 0 5px;font-size:14.5px}
+  .step p{margin:0;color:var(--mut);font-size:13px}
+  /* download */
+  .dl{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:20px;padding:30px;text-align:center}
+  .dl h2{margin-bottom:8px}
+  .s-sub{color:var(--mut);text-align:center;max-width:600px;margin:0 auto 22px;font-size:14.5px}
+  .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .btn{padding:14px 22px;border-radius:12px;font-weight:800;font-size:15px;display:inline-block}
+  .btn.primary{background:var(--accent);color:#04122b}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--chrome)}
+  #qr{width:148px;height:148px;background:#fff;border-radius:12px;margin:18px auto 6px;padding:8px}
+  #qr img,#qr canvas{width:100%;height:100%}
+  .qcap{color:var(--mut);font-size:12px}
+  .price-line{color:var(--chrome);font-size:14px;margin:16px 0 0}
+  .price-line b{font-size:18px}
+  footer{border-top:1px solid var(--line);padding:26px 0 46px;color:var(--faint);font-size:12px;line-height:1.7;text-align:center}
+  footer a{color:var(--steel)}
+  .disc{color:var(--faint);font-size:11px;max-width:720px;margin:16px auto 0;line-height:1.6}
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+  <img class="navlogo" src="/icon-192.png" alt="" />
+  <span class="brand">STAAL<span class="w">WAG</span></span>
+  <span class="sp"></span>
+  <a class="back" href="/site">&larr; Back</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <div class="kicker">The STAALCALIBUR App</div>
+  <h1>STAALCALIBUR</h1>
+  <p class="lead">A pre-trade read on any market in seconds — what it's doing, why, where the levels are,
+    and whether the edge is real. Not signals to follow blindly; the reasoning to decide for yourself.</p>
+</div></header>
+
+<section><div class="wrap">
+  <h2>What it gives you</h2>
+  <div class="feats">
+    <div class="feat">
+      <span class="ic"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 40h32"/><path d="M11 31l8-7 7 5 10-14"/><path d="M8 19h32M8 27h32" stroke-dasharray="3 4" opacity=".55"/></svg></span>
+      <div><h3>Direction, chart &amp; levels</h3><p>A clean price chart with entry, stop and target drawn on it — structure-based stops and 2:1 targets, on 1H or Daily.</p></div>
+    </div>
+    <div class="feat">
+      <span class="ic"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 33a14 14 0 0 1 28 0"/><path d="M24 33l8-9"/><circle cx="24" cy="33" r="2.2" fill="currentColor" stroke="none"/></svg></span>
+      <div><h3>Score &amp; verdict</h3><p>A 0–100 read blending trend, momentum, positioning, supply/demand and volatility — with a plain BUY / SELL / WATCH call.</p></div>
+    </div>
+    <div class="feat">
+      <span class="ic"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="16" r="4"/><circle cx="34" cy="16" r="4"/><circle cx="24" cy="34" r="4"/><path d="M18 16h12M17 20l5 10M31 20l-5 10"/></svg></span>
+      <div><h3>Regime gate</h3><p>The statistical state of the tape — bull, bear or sideways — with a confidence gate so thin data can't fake a signal.</p></div>
+    </div>
+    <div class="feat">
+      <span class="ic"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="21" cy="21" r="11"/><path d="M29 29l9 9"/><path d="M16 21l4 4 7-8"/></svg></span>
+      <div><h3>Edge validation</h3><p>A deflated-Sharpe test flags whether an edge looks real or is just noise. If it can't be proven, it says so.</p></div>
+    </div>
+    <div class="feat">
+      <span class="ic"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="10" width="24" height="28" rx="2.5"/><path d="M17 18h14M17 24h14M17 30h9"/></svg></span>
+      <div><h3>Daily outlook &amp; headlines</h3><p>A plain-language brief on what's driving each pair today, with live market headlines and the outcomes that matter.</p></div>
+    </div>
+    <div class="feat">
+      <span class="ic"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M24 8l13 5v9c0 8-5.5 13.5-13 16-7.5-2.5-13-8-13-16v-9z"/><path d="M19 24l3.5 3.5L29 21"/></svg></span>
+      <div><h3>Private to your device</h3><p>Rental only, locked to your phone. Installs like a real app with its own icon — no app store, no sharing, no reselling.</p></div>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>How it works</h2>
+  <div class="steps">
+    <div class="step"><h4>Pick a market</h4><p>Gold, a forex pair, an index, a stock or a coin — open it in the app.</p></div>
+    <div class="step"><h4>Get the read</h4><p>Direction, levels, the 0–100 score and a BUY / SELL / WATCH verdict — in seconds.</p></div>
+    <div class="step"><h4>Check the why</h4><p>Regime, edge validation and today's headlines, so the call is never a black box.</p></div>
+    <div class="step"><h4>You decide</h4><p>It's decision-support, not orders. You pull the trigger, on your own terms.</p></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="dl">
+    <h2>Get STAALCALIBUR</h2>
+    <p class="s-sub">Install it on your Android phone, or open it in any browser. Access activates the moment payment confirms and renews automatically.</p>
+    <div class="btns">
+      <a class="btn primary" id="apkBtn" href="https://app.staalwag.com/staalcalibur.apk">Download for Android</a>
+      <a class="btn ghost" id="webBtn" href="https://app.staalwag.com">Open web app</a>
+    </div>
+    <div id="qr"></div>
+    <div class="qcap">Scan to open on your phone</div>
+    <p class="price-line"><b>$25</b> / month · rental only · cancel anytime</p>
+  </div>
+  <p class="disc">STAALWAG is decision-support &amp; education only — a mechanical read of market data, not
+    financial advice and not a recommendation to trade. Markets carry risk; you alone decide, and you should
+    never risk more than you can afford to lose. Trade a demo account first.</p>
+</div></section>
+
+<footer><div class="wrap">
+  <div><span class="brand">STAAL<span class="w">WAG</span></span> · Proven, not promised.</div>
+  <div style="margin-top:10px"><a href="/site">Home</a> · <a href="/proof">Track record</a> · <a href="https://app.staalwag.com">Open app</a></div>
+  <div style="margin-top:12px;color:var(--faint)">© STAALWAG. All rights reserved.</div>
+</div></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  (function(){
+    var onStaalwag = /staalwag\.com$/i.test(location.hostname);
+    var appBase = onStaalwag ? "https://app.staalwag.com" : "https://app.178.104.88.38.sslip.io";
+    var a=document.getElementById("apkBtn"), w=document.getElementById("webBtn");
+    if(a) a.href=appBase + "/staalcalibur.apk"; if(w) w.href=appBase;
+    try{ new QRCode(document.getElementById("qr"), {text:appBase, width:148, height:148,
+      colorDark:"#0a0e15", colorLight:"#ffffff"}); }catch(e){}
+  })();
+</script>
+</body>
+</html>

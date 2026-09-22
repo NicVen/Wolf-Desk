@@ -535,6 +535,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, _read(os.path.join("dashboard", "landing.html")),
                        "text/html; charset=utf-8"); return
 
+        # STAALCALIBUR app details page (ungated marketing page).
+        if path in ("/calibur", "/staalcalibur", "/app-info"):
+            self._send(200, _read(os.path.join("dashboard", "calibur.html")),
+                       "text/html; charset=utf-8"); return
+
         # Public track-record / proof page (ungated) — the honest record wall.
         # Data (data/proof.json) is published by the PC HQ via POST /proof.
         if path in ("/proof", "/track", "/track-record"):
