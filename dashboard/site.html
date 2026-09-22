@@ -88,7 +88,10 @@
   /* download band */
   .dl{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
     border-radius:20px;padding:30px;text-align:center;margin-top:10px}
-  .dl h2{margin-bottom:8px}
+  .dl h2{margin-bottom:8px;font-size:30px}
+  .dl .kick{color:var(--steel);font-size:12px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px}
+  .dl .pitch{color:var(--chrome);font-size:17px;line-height:1.75;max-width:640px;margin:14px auto 0}
+  .dl .pitch b{color:var(--fg);font-weight:800}
   #qr{width:150px;height:150px;background:#fff;border-radius:12px;margin:18px auto 6px;padding:8px}
   #qr img,#qr canvas{width:100%;height:100%}
   .qcap{color:var(--mut);font-size:12px}
@@ -147,14 +150,9 @@
 
 <section id="get"><div class="wrap">
   <div class="dl">
-    <h2>Get the app</h2>
-    <p class="s-sub" style="margin-bottom:6px">Install it on your Android phone, or open it in any browser.</p>
-    <div class="btns">
-      <a class="btn primary" id="apkBtn" href="https://app.staalwag.com/staalcalibur.apk">Download for Android</a>
-      <a class="btn ghost" id="webBtn" href="https://app.staalwag.com">Open web app</a>
-    </div>
-    <div id="qr"></div>
-    <div class="qcap">Scan to open on your phone</div>
+    <div class="kick">STAALCALIBUR · the mobile app</div>
+    <h2>The whole desk, in your pocket.</h2>
+    <p class="pitch">Before you risk a cent, open STAALCALIBUR and pull up any market — gold, forex, indices, stocks or crypto. In seconds you've got the read: which way it's leaning, the levels that actually matter, and a straight <b>BUY / SELL / WATCH</b> call scored 0–100. No twenty tabs, no guesswork, no waiting on someone else's signal — just the answer you need for your next trade, one tap away, wherever you are. Your edge doesn't stay chained to a desk. It rides in your pocket.</p>
   </div>
   <p class="disc">STAALWAG is decision-support &amp; education only — a mechanical read of market data, not
     financial advice and not a recommendation to trade. Markets carry risk; you alone decide, and you should
@@ -170,24 +168,5 @@
   <div style="margin-top:12px;color:var(--faint)">© STAALWAG. All rights reserved.</div>
 </div></footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script>
-  // App links: use app.staalwag.com when this site is on the real domain,
-  // else fall back to the current sslip.io host so links work pre-DNS.
-  (function(){
-    var onStaalwag = /staalwag\.com$/i.test(location.hostname);
-    var appBase = onStaalwag ? "https://app.staalwag.com" : "https://app.178.104.88.38.sslip.io";
-    var apk = appBase + "/staalcalibur.apk";
-    var a=document.getElementById("apkBtn"), w=document.getElementById("webBtn");
-    if(a) a.href=apk; if(w) w.href=appBase;
-    // Rentals (VIP / EAs / signals / TradingView) are handled on the Intraday
-    // Intel Desk — point those buttons there.
-    var deskBase = onStaalwag ? "https://wolf.staalwag.com" : "https://wolf.178.104.88.38.sslip.io";
-    var rent=document.querySelectorAll("a.rent");
-    for(var i=0;i<rent.length;i++){ rent[i].href=deskBase+"/"; rent[i].target="_blank"; rent[i].rel="noopener"; }
-    try{ new QRCode(document.getElementById("qr"), {text:appBase, width:150, height:150,
-      colorDark:"#0a0e15", colorLight:"#ffffff"}); }catch(e){}
-  })();
-</script>
 </body>
 </html>
