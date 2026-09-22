@@ -59,9 +59,12 @@
   .btn{padding:14px 22px;border-radius:12px;font-weight:800;font-size:15px;display:inline-block}
   .btn.primary{background:var(--accent);color:#04122b}
   .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--chrome)}
-  .classes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:28px}
-  .classes span{font-size:12px;font-weight:700;color:var(--steel);background:var(--card);
-    border:1px solid var(--line);border-radius:999px;padding:6px 13px}
+  .markets{display:flex;gap:38px;justify-content:center;flex-wrap:wrap;margin-top:44px}
+  .mkt{display:flex;flex-direction:column;align-items:center;gap:12px;color:var(--steel);transition:color .2s ease}
+  .mkt svg{width:46px;height:46px;display:block}
+  .mkt span{font-size:12.5px;font-weight:700;letter-spacing:1.5px;color:var(--chrome);text-transform:uppercase}
+  .mkt:hover{color:var(--accent)}
+  @media(max-width:520px){.markets{gap:20px 26px}.mkt svg{width:40px;height:40px}}
   /* sections */
   section{padding:44px 0;border-top:1px solid var(--line)}
   h2{font-size:24px;font-weight:900;letter-spacing:.5px;margin:0 0 6px;text-align:center}
@@ -100,10 +103,6 @@
   <img class="navlogo" src="/icon-192.png" alt="" />
   <span class="brand">STAAL<span class="w">WAG</span></span>
   <span class="sp"></span>
-  <a class="lnk" href="#app">App</a>
-  <a class="lnk" href="#features">Features</a>
-  <a class="lnk" href="#pricing">Pricing</a>
-  <a class="cta" href="#get">Get the app</a>
 </div></nav>
 
 <header class="hero"><div class="wrap">
@@ -112,12 +111,27 @@
   <p class="lead">Proven, not promised.</p>
   <p class="sub">Pre-trade intelligence across every market — a mechanical read of the tape with charts,
     trade levels, a daily outlook and live headlines on every pair. Check before you pull the trigger.</p>
-  <div class="btns">
-    <a class="btn primary" href="#get">Get the STAALCALIBUR Mobile App</a>
-    <a class="btn ghost" href="#pricing">See rentals &amp; VIP</a>
-  </div>
-  <div class="classes">
-    <span>Commodities</span><span>FX</span><span>Indices</span><span>Stocks</span><span>Crypto</span>
+  <div class="markets">
+    <div class="mkt">
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M16 19h16l4 10H12z"/><path d="M20 19l-1 10M28 19l1 10"/></svg>
+      <span>Commodities</span>
+    </div>
+    <div class="mkt">
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 21a11 11 0 0 1 20-4"/><path d="M33 12v6h-6"/><path d="M35 27a11 11 0 0 1-20 4"/><path d="M15 36v-6h6"/></svg>
+      <span>FX</span>
+    </div>
+    <div class="mkt">
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 37h26"/><path d="M16 37v-7M23 37v-12M30 37v-18"/><path d="M13 24l7-5 7 3 8-9"/></svg>
+      <span>Indices</span>
+    </div>
+    <div class="mkt">
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 13v22"/><rect x="13" y="19" width="8" height="11" rx="1"/><path d="M31 15v22"/><rect x="27" y="22" width="8" height="9" rx="1"/></svg>
+      <span>Stocks</span>
+    </div>
+    <div class="mkt">
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="24" r="12"/><path d="M21 17v14M25 15v2M25 31v2"/><path d="M21 18h6a3 3 0 0 1 0 6h-6h7a3 3 0 0 1 0 6h-7"/></svg>
+      <span>Crypto</span>
+    </div>
   </div>
 </div></header>
 
