@@ -627,6 +627,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
             page = LOGIN.replace("__BOT__", BOT_USERNAME).replace("__AUTHURL__", auth_url)
             self._send(200, page, "text/html; charset=utf-8"); return
 
+        # WOLF Intraday Intel Desk on its own subdomain: serve the desk shell to
+        # everyone (the live data endpoints stay gated, so nothing sensitive leaks).
+        if self.headers.get("Host", "").lower().startswith("wolf.") and path in ("/", "/index.html"):
+            cookie = None
+            if WOLF_PASS and q.get("key", [""])[0] == WOLF_PASS:
+                cookie = "wolf=%s; Path=/; Max-Age=2592000; HttpOnly" % WOLF_PASS
+            self._send(200, _read(os.path.join("dashboard", "index.html")),
+                       "text/html; charset=utf-8", cookie); return
+
         if path in ("/", "/index.html"):
             if not ok:
                 # Public front door: the STAALWAG brand landing page (not the bare
