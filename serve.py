@@ -617,26 +617,6 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, _read(os.path.join("dashboard", "scapp.html")),
                        "text/html; charset=utf-8"); return
 
-        # WOLF desk intel — free for all to view. VIP-only items are locked on the
-        # page itself, not by gating these read endpoints.
-        if path == "/data":
-            self._send(200, _read(os.path.join("data", "opportunities_%s.json" % cls))); return
-        if path == "/refresh":
-            try:
-                with contextlib.redirect_stdout(io.StringIO()):
-                    run.main(only=cls)
-                self._send(200, _read(os.path.join("data", "opportunities_%s.json" % cls)))
-            except Exception as e:
-                self._send(500, json.dumps({"error": str(e)}))
-            return
-        if path == "/news":
-            try:
-                news, tilt = headlines(q.get("name", [""])[0])
-                self._send(200, json.dumps({"news": news, "tilt": tilt}))
-            except Exception as e:
-                self._send(200, json.dumps({"news": [], "tilt": "no news", "error": str(e)}))
-            return
-
         ok = self._authed(q)
 
         # Explicit member login gate (landing "member" button points here).
@@ -647,8 +627,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             page = LOGIN.replace("__BOT__", BOT_USERNAME).replace("__AUTHURL__", auth_url)
             self._send(200, page, "text/html; charset=utf-8"); return
 
-        # WOLF Intraday Intel Desk on its own subdomain: a free, public page for
-        # everyone (VIP-only items are locked on the page itself).
+        # WOLF Intraday Intel Desk on its own subdomain: serve the desk shell to
+        # everyone (the live data endpoints stay gated, so nothing sensitive leaks).
         if self.headers.get("Host", "").lower().startswith("wolf.") and path in ("/", "/index.html"):
             cookie = None
             if WOLF_PASS and q.get("key", [""])[0] == WOLF_PASS:
@@ -673,7 +653,22 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if not ok:
             self._send(401, b'{"error":"auth required"}'); return
 
-        if path == "/markov.json":
+        if path == "/data":
+            self._send(200, _read(os.path.join("data", f"opportunities_{cls}.json")))
+        elif path == "/refresh":
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    run.main(only=cls)
+                self._send(200, _read(os.path.join("data", f"opportunities_{cls}.json")))
+            except Exception as e:
+                self._send(500, json.dumps({"error": str(e)}))
+        elif path == "/news":
+            try:
+                news, tilt = headlines(q.get("name", [""])[0])
+                self._send(200, json.dumps({"news": news, "tilt": tilt}))
+            except Exception as e:
+                self._send(200, json.dumps({"news": [], "tilt": "no news", "error": str(e)}))
+        elif path == "/markov.json":
             # Latest Markov regime summary, for the PC-side MT5 bridge (pc_bridge.py).
             try:
                 import markov_export
