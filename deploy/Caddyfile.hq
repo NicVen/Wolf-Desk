@@ -33,6 +33,11 @@ staalwag.com, www.staalwag.com {
 	encode zstd gzip
 	reverse_proxy 127.0.0.1:8777
 }
+# --- WOLF Intraday Intel Desk (branded subdomain) ---
+wolf.staalwag.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8777
+}
 app.staalwag.com {
 	encode zstd gzip
 	reverse_proxy 127.0.0.1:8777
