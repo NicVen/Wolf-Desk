@@ -71,10 +71,8 @@
   .s-sub{color:var(--mut);text-align:center;max-width:620px;margin:0 auto 28px;font-size:15px}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
   .feat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
-  .feat .ic{color:var(--steel);height:34px;transition:color .2s ease}
-  .feat .ic svg{width:34px;height:34px;display:block}
-  .feat:hover .ic{color:var(--accent)}
-  .feat h3{font-size:16px;margin:12px 0 6px}
+  .feat .ic{font-size:24px}
+  .feat h3{font-size:16px;margin:10px 0 6px}
   .feat p{color:var(--mut);font-size:13.5px;margin:0}
   /* pricing */
   .price{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
@@ -139,26 +137,12 @@
 
 <section id="app"><div class="wrap">
   <div class="grid" id="features">
-    <div class="feat">
-      <div class="ic"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M42 8L6 22l12 4 4 12 5-7 9 7z"/><path d="M18 26L42 8"/></svg></div>
-      <h3>Telegram channels</h3>
-      <p>Free daily gold &amp; FX reads in the open channels; VIP calls in the paid ones. Watch the record build, then upgrade.</p>
-    </div>
-    <div class="feat">
-      <div class="ic"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="16" width="24" height="18" rx="3"/><circle cx="19" cy="25" r="2" fill="currentColor" stroke="none"/><circle cx="29" cy="25" r="2" fill="currentColor" stroke="none"/><path d="M24 10v6M18 34v3M30 34v3"/><circle cx="24" cy="9" r="1.6" fill="currentColor" stroke="none"/></svg></div>
-      <h3>MT5 Expert Advisors</h3>
-      <p>Automated experts for MetaTrader 5 — STAALWAG Gold, FX, PROP and GOUDBREUK. Set your risk, they trade the plan.</p>
-    </div>
-    <div class="feat">
-      <div class="ic"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="31" r="3" fill="currentColor" stroke="none"/><path d="M17 24a10 10 0 0 1 14 0M12 19a17 17 0 0 1 24 0"/></svg></div>
-      <h3>Signals</h3>
-      <p>Gold Desk and VELDRIN FX calls — entry, stop and target, scored on real price and logged in the open.</p>
-    </div>
-    <div class="feat">
-      <div class="ic"><svg viewBox="0 0 48 48" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M16 12v24" fill="none"/><rect x="12" y="18" width="8" height="12" rx="1.5" fill="currentColor" stroke="none"/><path d="M30 15v22" fill="none"/><rect x="26" y="21" width="8" height="10" rx="1.5" fill="currentColor" stroke="none"/></svg></div>
-      <h3>TradingView indicators</h3>
-      <p>STAALCALIBUR Edge V13, Markov Scalper, and the free Markov 2 Gate. Add to any chart, any timeframe.</p>
-    </div>
+    <div class="feat"><div class="ic">📈</div><h3>Direction chart &amp; levels</h3><p>A clean price chart with entry, stop and target drawn on it — structure-based stops, 2:1 targets, on 1H or Daily.</p></div>
+    <div class="feat"><div class="ic">🎯</div><h3>Score &amp; verdict</h3><p>A 0–100 read blending trend, momentum, positioning, supply/demand and volatility, with a BUY / SELL / WATCH call.</p></div>
+    <div class="feat"><div class="ic">🧭</div><h3>Markov regime</h3><p>The statistical state of the tape — bull, bear or sideways — with a confidence gate so thin data can't fake a signal.</p></div>
+    <div class="feat"><div class="ic">🔬</div><h3>Edge validation</h3><p>A deflated-Sharpe test flags whether an edge looks real or is just noise — honesty built in.</p></div>
+    <div class="feat"><div class="ic">📰</div><h3>Daily outlook + headlines</h3><p>A plain-language brief on what's influencing each pair today, with live market headlines and the potential outcomes.</p></div>
+    <div class="feat"><div class="ic">🔒</div><h3>Yours, private</h3><p>Rental only, tied to your device. Installs like a real app with its own icon — no store, no middleman.</p></div>
   </div>
 </div></section>
 
