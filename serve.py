@@ -39,6 +39,7 @@ os.chdir(HERE)
 sys.path.insert(0, HERE)
 import run                      # noqa
 import watchdog
+import atomicio
 from scout.news import headlines
 
 PORT        = int(os.environ.get("PORT", "8777"))
@@ -437,6 +438,28 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return True
         return not (WOLF_PASS or BOT_TOKEN)   # fully open only if nothing configured
 
+    def do_POST(self):
+        u = urlparse(self.path); path = u.path; q = parse_qs(u.query)
+        # Admin ingest: the PC HQ publishes the public track record here.
+        # Key-gated (WOLF_PASS) so only the operator can update the proof wall.
+        if path == "/proof":
+            if not (WOLF_PASS and q.get("key", [""])[0] == WOLF_PASS):
+                self._send(403, b'{"error":"forbidden"}'); return
+            try:
+                ln = int(self.headers.get("Content-Length", "0") or "0")
+                if ln <= 0 or ln > 2_000_000:
+                    raise ValueError("empty or oversized body")
+                data = json.loads(self.rfile.read(ln).decode("utf-8"))
+                if not isinstance(data, dict):
+                    raise ValueError("proof payload must be a JSON object")
+                data.setdefault("generated", time.strftime("%Y-%m-%dT%H:%M", time.gmtime()))
+                atomicio.write_json(os.path.join("data", "proof.json"), data)
+                self._send(200, json.dumps({"ok": True}))
+            except Exception as e:
+                self._send(400, json.dumps({"error": str(e)}))
+            return
+        self._send(404, b'{"error":"not found"}')
+
     def do_GET(self):
         u = urlparse(self.path); path = u.path; q = parse_qs(u.query)
         cls = (q.get("class", ["commodities"])[0]).lower()
@@ -511,6 +534,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if path in ("/staalwag", "/about", "/home"):
             self._send(200, _read(os.path.join("dashboard", "landing.html")),
                        "text/html; charset=utf-8"); return
+
+        # Public track-record / proof page (ungated) — the honest record wall.
+        # Data (data/proof.json) is published by the PC HQ via POST /proof.
+        if path in ("/proof", "/track", "/track-record"):
+            self._send(200, _read(os.path.join("dashboard", "proof.html")),
+                       "text/html; charset=utf-8"); return
+        if path == "/proof.json":
+            self._send(200, _read(os.path.join("data", "proof.json"), b"{}"),
+                       "application/json"); return
 
         # Tracked link: count the click, then redirect to the real destination.
         if path == "/l":

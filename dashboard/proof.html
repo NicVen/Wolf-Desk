@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STAALWAG — Track Record</title>
+<meta name="description" content="STAALWAG's honest, append-only trading track record. Scored on real price, never edited.">
+<style>
+  :root{
+    --bg:#0a0e15; --panel:#111826; --line:#1e2a3d; --txt:#cdd6df; --mut:#7f8ea3;
+    --steel:#5b6b82; --gold:#d4af37; --green:#3ecf8e; --red:#ff5c6c; --amber:#e6b450;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;line-height:1.5}
+  .wrap{max-width:960px;margin:0 auto;padding:24px 16px 64px}
+  header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .brand{font-weight:800;letter-spacing:1px;font-size:22px}
+  .brand .a{color:var(--gold)}
+  .sub{color:var(--mut);font-size:13px}
+  .asof{color:var(--steel);font-size:12px;margin-left:auto}
+  h2{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--steel);
+    margin:34px 0 10px;font-weight:700}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+  /* headline */
+  .hero{display:flex;flex-wrap:wrap;align-items:flex-end;gap:22px}
+  .hero .name{font-size:20px;font-weight:800}
+  .hero .stat{display:flex;flex-direction:column}
+  .hero .stat b{font-size:26px;font-weight:800;line-height:1.1}
+  .hero .stat span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1px}
+  .pos{color:var(--green)} .neg{color:var(--red)}
+  /* badges */
+  .badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.8px;
+    padding:3px 8px;border-radius:999px;text-transform:uppercase;vertical-align:middle}
+  .b-live{background:rgba(62,207,142,.15);color:var(--green);border:1px solid rgba(62,207,142,.4)}
+  .b-back{background:rgba(230,180,80,.13);color:var(--amber);border:1px solid rgba(230,180,80,.4)}
+  .b-shadow{background:rgba(123,146,180,.13);color:#9db0c9;border:1px solid rgba(123,146,180,.4)}
+  .b-proven{background:rgba(62,207,142,.15);color:var(--green);border:1px solid rgba(62,207,142,.4)}
+  .b-proving{background:rgba(230,180,80,.13);color:var(--amber);border:1px solid rgba(230,180,80,.4)}
+  .b-parked{background:rgba(123,146,180,.10);color:var(--steel);border:1px solid rgba(123,146,180,.3)}
+  /* honesty box */
+  .rules{list-style:none;margin:0;padding:0}
+  .rules li{padding:7px 0 7px 24px;position:relative;font-size:13.5px;color:var(--txt);border-bottom:1px solid var(--line)}
+  .rules li:last-child{border-bottom:0}
+  .rules li:before{content:"\2713";position:absolute;left:0;color:var(--green);font-weight:800}
+  /* table */
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{text-align:left;color:var(--steel);font-weight:700;font-size:11px;letter-spacing:.8px;
+    text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--line)}
+  td{padding:11px 10px;border-bottom:1px solid var(--line)}
+  tr:last-child td{border-bottom:0}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .desk-name{font-weight:700}
+  .desk-note{color:var(--mut);font-size:12px}
+  .win{color:var(--green)} .loss{color:var(--red)}
+  .disclaimer{margin-top:32px;padding:14px 16px;border:1px dashed var(--line);border-radius:10px;
+    color:var(--mut);font-size:12.5px}
+  .muted{color:var(--mut)}
+  .empty{color:var(--steel);padding:16px;text-align:center;font-size:13px}
+  a{color:var(--gold)}
+  @media (max-width:560px){ .hero{gap:16px} .hero .stat b{font-size:22px} .asof{width:100%;margin-left:0} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">STAALWAG <span class="a">Track Record</span></div>
+    <div class="asof" id="asof">loading…</div>
+  </header>
+  <div class="sub">Every result scored on real price and banked once — append-only, never edited. This is the honest record, wins and losses.</div>
+
+  <h2>The anchor</h2>
+  <div class="card hero" id="hero"><div class="empty">Loading…</div></div>
+
+  <h2>How every result is scored</h2>
+  <div class="card">
+    <ul class="rules" id="rules"></ul>
+  </div>
+
+  <h2>Desks</h2>
+  <div class="card"><div id="desks"><div class="empty">Loading…</div></div></div>
+
+  <h2>Research desk — shadow calls</h2>
+  <div class="card"><div id="research"><div class="empty">—</div></div></div>
+
+  <h2>Recent resolved</h2>
+  <div class="card"><div id="recent"><div class="empty">—</div></div></div>
+
+  <div class="disclaimer" id="disclaimer">
+    Signals, not financial advice. Past performance does not guarantee future results.
+  </div>
+</div>
+
+<script>
+"use strict";
+var DEFAULT_RULES = [
+  "Scored on real market price, not on anyone's execution.",
+  "Fills use the worst edge of the entry zone — the realistic fill, never the flattering one.",
+  "When one bar touches both stop and target, it is counted as a LOSS.",
+  "Unfilled setups are shown separately, never quietly counted as wins.",
+  "Append-only: once a result is banked it is never re-derived, edited, or deleted."
+];
+function n(v){ return (v===null||v===undefined||v==="")? null : Number(v); }
+function money(v){ v=n(v); if(v===null) return "—"; return (v<0?"-$":"$")+Math.abs(v).toLocaleString(undefined,{maximumFractionDigits:0}); }
+function pct(v){ v=n(v); return v===null? "—" : v.toFixed(1)+"%"; }
+function pf(v){ v=n(v); return v===null? "—" : v.toFixed(2); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+function provBadge(p){
+  p=(p||"").toLowerCase();
+  if(p==="live")     return '<span class="badge b-live">live</span>';
+  if(p==="backtest") return '<span class="badge b-back">backtest</span>';
+  if(p==="shadow")   return '<span class="badge b-shadow">shadow</span>';
+  return "";
+}
+function statusBadge(s){
+  s=(s||"").toLowerCase();
+  if(s==="proven")  return '<span class="badge b-proven">proven</span>';
+  if(s==="proving") return '<span class="badge b-proving">in proving</span>';
+  if(s==="parked")  return '<span class="badge b-parked">parked</span>';
+  return '<span class="badge b-parked">'+esc(s)+'</span>';
+}
+
+function render(d){
+  document.getElementById("asof").textContent =
+    d.generated ? ("as of " + esc(String(d.generated).replace("T"," ").slice(0,16)) + " · updates daily") : "";
+
+  // hero
+  var h = d.headline;
+  var hero = document.getElementById("hero");
+  if(h){
+    var netCls = n(h.net_usd)>=0 ? "pos":"neg";
+    hero.innerHTML =
+      '<div class="stat" style="min-width:150px">'+
+        '<div class="name">'+esc(h.name)+' '+provBadge(h.provenance)+'</div>'+
+        '<span class="muted" style="margin-top:4px">'+esc(h.note||"")+'</span>'+
+      '</div>'+
+      '<div class="stat"><b>'+pf(h.pf)+'</b><span>profit factor</span></div>'+
+      '<div class="stat"><b class="'+netCls+'">'+money(h.net_usd)+'</b><span>net</span></div>'+
+      '<div class="stat"><b>'+(n(h.trades)===null?"—":h.trades)+'</b><span>trades</span></div>'+
+      '<div class="stat"><b>'+pct(h.win_rate)+'</b><span>win rate</span></div>';
+  } else {
+    hero.innerHTML = '<div class="empty">No proven desk to feature yet — still building the record.</div>';
+  }
+
+  // rules
+  var rules = (d.rules && d.rules.length) ? d.rules : DEFAULT_RULES;
+  document.getElementById("rules").innerHTML = rules.map(function(r){return "<li>"+esc(r)+"</li>";}).join("");
+
+  // desks
+  var desks = d.desks||[];
+  var dt = document.getElementById("desks");
+  if(desks.length){
+    var rows = desks.map(function(x){
+      return "<tr>"+
+        '<td><span class="desk-name">'+esc(x.name)+'</span> '+statusBadge(x.status)+provBadge(x.provenance)+
+          (x.note?'<div class="desk-note">'+esc(x.note)+'</div>':"")+'</td>'+
+        '<td class="num">'+(n(x.trades)===null?"—":x.trades)+'</td>'+
+        '<td class="num">'+pct(x.win_rate)+'</td>'+
+        '<td class="num">'+pf(x.pf)+'</td>'+
+        '<td class="num '+(n(x.net_usd)>=0?"win":"loss")+'">'+(x.net_usd==null?"—":money(x.net_usd))+'</td>'+
+      "</tr>";
+    }).join("");
+    dt.innerHTML = '<table><thead><tr><th>Desk</th><th class="num">Trades</th><th class="num">Win rate</th><th class="num">PF</th><th class="num">Net</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  } else { dt.innerHTML = '<div class="empty">No desks reported yet.</div>'; }
+
+  // research
+  var r = d.research;
+  var rd = document.getElementById("research");
+  if(r){
+    rd.innerHTML =
+      '<div class="hero">'+
+        '<div class="stat"><b>'+(n(r.calls)===null?"—":r.calls)+'</b><span>calls</span></div>'+
+        '<div class="stat"><b>'+pct(r.accuracy)+'</b><span>accuracy</span></div>'+
+        '<div class="stat"><b>'+pf(r.pf)+'</b><span>profit factor</span></div>'+
+      '</div>'+
+      '<div class="desk-note" style="margin-top:10px">'+esc(r.note||"Shadow research — scored on real price, nothing is traded off it.")+'</div>';
+  } else { rd.innerHTML = '<div class="empty">—</div>'; }
+
+  // recent
+  var rec = d.recent||[];
+  var re = document.getElementById("recent");
+  if(rec.length){
+    var rr = rec.map(function(x){
+      var res=(x.result||"").toUpperCase();
+      var cls = res==="WIN"||res==="TARGET" ? "win" : (res==="LOSS"||res==="STOP" ? "loss":"muted");
+      return "<tr>"+
+        '<td class="muted">'+esc(String(x.date||"").slice(0,10))+'</td>'+
+        '<td>'+esc(x.desk||"")+'</td>'+
+        '<td>'+esc(x.pair||"")+' '+esc(x.direction||"")+'</td>'+
+        '<td class="'+cls+'">'+esc(res||"—")+'</td>'+
+        '<td class="num '+cls+'">'+(n(x.r)===null?"":(n(x.r)>0?"+":"")+n(x.r).toFixed(1)+"R")+'</td>'+
+      "</tr>";
+    }).join("");
+    re.innerHTML = '<table><thead><tr><th>Date</th><th>Desk</th><th>Setup</th><th>Result</th><th class="num">R</th></tr></thead><tbody>'+rr+'</tbody></table>';
+  } else { re.innerHTML = '<div class="empty">No resolved trades published yet.</div>'; }
+
+  if(d.disclaimer) document.getElementById("disclaimer").textContent = d.disclaimer;
+}
+
+fetch("/proof.json",{cache:"no-store"})
+  .then(function(r){ if(!r.ok) throw new Error("no data"); return r.json(); })
+  .then(render)
+  .catch(function(){
+    document.getElementById("hero").innerHTML =
+      '<div class="empty">The track record has not been published yet. Check back soon.</div>';
+    document.getElementById("rules").innerHTML =
+      DEFAULT_RULES.map(function(r){return "<li>"+esc(r)+"</li>";}).join("");
+    document.getElementById("asof").textContent = "";
+  });
+</script>
+</body>
+</html>
