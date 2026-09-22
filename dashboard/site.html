@@ -100,6 +100,31 @@
   #qr{width:150px;height:150px;background:#fff;border-radius:12px;margin:18px auto 6px;padding:8px}
   #qr img,#qr canvas{width:100%;height:100%}
   .qcap{color:var(--mut);font-size:12px}
+  /* funnel panels */
+  .funnel{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:6px}
+  @media(max-width:720px){.funnel{grid-template-columns:1fr}}
+  .panel{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:20px;padding:28px;display:flex;flex-direction:column}
+  .panel h3{font-size:21px;font-weight:900;margin:0 0 9px;letter-spacing:.3px}
+  .panel .p-sub{color:var(--mut);font-size:14px;line-height:1.6;margin:0 0 16px}
+  .panel .p-sub b{color:var(--chrome)}
+  .panel .p-list{list-style:none;padding:0;margin:0 0 20px}
+  .panel .p-list li{position:relative;padding:7px 0 7px 22px;font-size:14px;color:var(--chrome)}
+  .panel .p-list li:before{content:"";position:absolute;left:0;top:13px;width:7px;height:7px;border-radius:2px;background:var(--accent)}
+  .panel .btn{text-align:center;margin-top:auto}
+  .p-tag{align-self:flex-start;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--steel);border:1px solid var(--line);border-radius:6px;padding:3px 9px;margin-bottom:14px}
+  /* mockup dashboard */
+  .mockup{background:#0b111c;border:1px solid var(--line);border-radius:14px;padding:16px 16px 10px;margin-bottom:16px}
+  .m-top{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:8px}
+  .m-label,.m-dlabel{font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--faint)}
+  .m-pnl{display:flex;flex-direction:column;gap:2px}
+  .m-pnl b{font-size:27px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1;color:var(--buy)}
+  .m-dial{text-align:center;width:90px}
+  .m-dial svg{width:90px;height:48px;display:block;margin:0 auto}
+  .m-dval{margin-top:-16px}
+  .m-dval b{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--chrome);display:block;line-height:1}
+  #mChart{width:100%;height:148px;display:block}
   footer{padding:26px 0 46px;color:var(--faint);font-size:12px;line-height:1.7;text-align:center}
   footer a{color:var(--steel)}
   .disc{color:var(--faint);font-size:11px;max-width:720px;margin:16px auto 0;line-height:1.6}
@@ -164,6 +189,41 @@
     never risk more than you can afford to lose. Trade a demo account first.</p>
 </div></section>
 
+<section id="funnel"><div class="wrap">
+  <div class="funnel">
+
+    <div class="panel">
+      <div class="p-tag">Free to start</div>
+      <h3>The WOLF Intel Desk</h3>
+      <p class="p-sub">One place for everything we run — free daily gold &amp; FX reads, the scored BUY / SELL / WATCH board, and the full catalogue of EAs, signals and tools. Start free, upgrade when the record convinces you.</p>
+      <ul class="p-list">
+        <li>Free Telegram channels — daily reads, no cost</li>
+        <li>Live scored desk across every market</li>
+        <li>EAs, signals &amp; TradingView tools in one hub</li>
+      </ul>
+      <a class="btn primary deskbtn" href="#">See the live desk &rarr;</a>
+    </div>
+
+    <div class="panel">
+      <div class="p-tag">Illustrative preview</div>
+      <h3>The Track Record</h3>
+      <div class="mockup">
+        <div class="m-top">
+          <div class="m-pnl"><span class="m-label">Session P&amp;L</span><b id="mPnl">+$0</b></div>
+          <div class="m-dial">
+            <svg viewBox="0 0 88 48"><path d="M9 45 A34 34 0 0 1 79 45" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="7" stroke-linecap="round"/><path id="mArc" pathLength="100" d="M9 45 A34 34 0 0 1 79 45" fill="none" stroke="#6ea8fe" stroke-width="7" stroke-linecap="round" stroke-dasharray="0 100"/></svg>
+            <div class="m-dval"><b id="mDialVal">0%</b><span class="m-dlabel">hit rate</span></div>
+          </div>
+        </div>
+        <canvas id="mChart"></canvas>
+      </div>
+      <p class="p-sub" style="margin-bottom:16px">A live-style look at the desk. The full <b style="color:var(--chrome)">verified, append-only record</b> — every real call, scored on price — is VIP-only.</p>
+      <a class="btn primary vipbtn" href="#">🔒 Unlock the verified record</a>
+    </div>
+
+  </div>
+</div></section>
+
 <footer><div class="wrap">
   <div><span class="brand">STAAL<span class="w">WAG</span></span> · Proven, not promised.</div>
   <div style="margin-top:10px">
@@ -173,5 +233,73 @@
   <div style="margin-top:12px;color:var(--faint)">© STAALWAG. All rights reserved.</div>
 </div></footer>
 
+<script>
+(function(){
+  var onStaalwag=/staalwag\.com$/i.test(location.hostname);
+  var deskBase=onStaalwag?"https://wolf.staalwag.com":"https://wolf.178.104.88.38.sslip.io";
+  var d=document.querySelector(".deskbtn"), v=document.querySelector(".vipbtn");
+  if(d) d.href=deskBase+"/";
+  if(v) v.href=deskBase+"/";
+
+  var canvas=document.getElementById("mChart");
+  if(!canvas||!canvas.getContext) return;
+  var ctx=canvas.getContext("2d"), W=1,H=1,DPR=1;
+  function resize(){
+    DPR=Math.min(window.devicePixelRatio||1,2);
+    var r=canvas.getBoundingClientRect();
+    W=Math.max(1,r.width); H=Math.max(1,r.height);
+    canvas.width=Math.round(W*DPR); canvas.height=Math.round(H*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener("resize",resize);
+
+  var R=Math.random, N=64, pts=[], val=30+R()*40, drift=(R()*2-1)*0.12;
+  for(var i=0;i<N;i++){ val+=drift+(R()*2-1)*1.5; pts.push(val); }
+  var pnl=(R()*2-1)*700, pnlT=pnl, dial=48+R()*40, dialT=dial, tStep=0, tDial=0;
+  var pnlEl=document.getElementById("mPnl"),
+      dialEl=document.getElementById("mDialVal"),
+      arcEl=document.getElementById("mArc");
+  function money(x){ return (x<0?"-$":"+$")+Math.round(Math.abs(x)).toLocaleString(); }
+
+  resize();
+  function frame(t){
+    if(!tStep) tStep=t;
+    if(t-tStep>460){
+      tStep=t;
+      drift+=(R()*2-1)*0.05; drift=Math.max(-0.28,Math.min(0.28,drift));
+      val+=drift+(R()*2-1)*1.7; pts.push(val); if(pts.length>N) pts.shift();
+      pnlT+=(R()*2-1)*150; pnlT=Math.max(-1700,Math.min(2600,pnlT));
+    }
+    if(!tDial) tDial=t;
+    if(t-tDial>2400){ tDial=t; dialT=47+R()*43; }
+    pnl+=(pnlT-pnl)*0.05; dial+=(dialT-dial)*0.035;
+
+    ctx.clearRect(0,0,W,H);
+    var mn=Math.min.apply(null,pts), mx=Math.max.apply(null,pts), pd=(mx-mn)*0.16+1;
+    mn-=pd; mx+=pd;
+    var xw=W/(N-1);
+    function Y(vv){ return H-((vv-mn)/(mx-mn))*H; }
+    ctx.strokeStyle="rgba(255,255,255,0.05)"; ctx.lineWidth=1;
+    for(var g=1;g<4;g++){ var yy=Math.round(H*g/4)+0.5; ctx.beginPath(); ctx.moveTo(0,yy); ctx.lineTo(W,yy); ctx.stroke(); }
+    var grad=ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,"rgba(110,168,254,0.30)"); grad.addColorStop(1,"rgba(110,168,254,0)");
+    ctx.beginPath(); ctx.moveTo(0,Y(pts[0]));
+    for(var j=1;j<pts.length;j++) ctx.lineTo(j*xw,Y(pts[j]));
+    ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(0,Y(pts[0]));
+    for(var k=1;k<pts.length;k++) ctx.lineTo(k*xw,Y(pts[k]));
+    ctx.strokeStyle="#6ea8fe"; ctx.lineWidth=2.2; ctx.lineJoin="round";
+    ctx.shadowColor="rgba(110,168,254,0.55)"; ctx.shadowBlur=9; ctx.stroke(); ctx.shadowBlur=0;
+    var hx=(pts.length-1)*xw, hy=Y(pts[pts.length-1]);
+    ctx.beginPath(); ctx.arc(hx,hy,3,0,6.3); ctx.fillStyle="#dbe7ff"; ctx.fill();
+
+    if(pnlEl){ pnlEl.textContent=money(pnl); pnlEl.style.color=pnl>=0?"#3ecf8e":"#ff5b5b"; }
+    if(dialEl) dialEl.textContent=Math.round(dial)+"%";
+    if(arcEl) arcEl.setAttribute("stroke-dasharray", dial.toFixed(1)+" 100");
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
 </body>
 </html>
