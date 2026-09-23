@@ -104,6 +104,34 @@ def _load_plan():
     return plan
 
 
+def _load_plans():
+    """The full daily slate: the primary Gold plan plus the FX/crypto setups the
+    desk writes under '## MORE PLANS'. Returns a list (primary first)."""
+    primary = _load_plan()
+    plans = [primary] if primary else []
+    try:
+        txt = PLAN_FILE.read_text(encoding="utf-8")
+    except Exception:
+        return plans
+    # ### SYMBOL — DIR  then  Entry: a – b | Stop: c | TP1: d | TP2: e | R:R f
+    for m in re.finditer(
+            r"###\s*([A-Z0-9]+)\s*[—\-]\s*(LONG|SHORT|BUY|SELL)\s*\n([^\n]+)", txt, re.I):
+        sym, bias, line = m.group(1).upper(), m.group(2).upper(), m.group(3)
+
+        def g(lbl):
+            mm = re.search(lbl + r"\s*:?\s*([0-9][0-9.,]*(?:\s*[–—-]\s*[0-9][0-9.,]*)?)", line, re.I)
+            return mm.group(1).strip() if mm else None
+
+        rr = re.search(r"R:R\s*([0-9:.]+)", line, re.I)
+        plans.append({
+            "asset": sym, "bias": bias, "stand_aside": False,
+            "entry": g("Entry"), "stop": g("Stop"),
+            "tp1": g("TP1"), "tp2": g("TP2"),
+            "rr": rr.group(1) if rr else None,
+        })
+    return plans
+
+
 def _stats(outcomes):
     """Trades, win-rate, profit-factor, net USD from a list of WIN/LOSS outcomes."""
     wins = [o for o in outcomes if o.get("result") == "WIN"]
@@ -219,7 +247,7 @@ def build_snapshot():
     return {
         "firm": "STAALWAG",
         "generated": bank.get("generated") or research.get("generated"),
-        "plan": _load_plan(),
+        "plans": _load_plans(),
         "headline": headline,
         "desks": desks,
         "research": research_out,
