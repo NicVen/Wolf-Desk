@@ -108,7 +108,22 @@
   .lockbox{background:var(--panel);border:2px solid var(--gold);border-radius:14px;padding:30px 36px;text-align:center;max-width:360px}
   .lockbox .big{font-size:22px;font-weight:800;color:var(--gold);letter-spacing:1px}
   .lockbox .msg{color:var(--mut);font-size:13px;margin:14px 0 20px;line-height:1.55}
-  @media(max-width:700px){body{padding-right:0}.catalog{position:static;width:auto;height:auto}}
+  @media(max-width:700px){
+    /* Stack the page: desk first, rentals catalogue dropped to the very bottom. */
+    body{padding-right:0;display:flex;flex-direction:column}
+    .wrap{order:1;width:100%;padding:12px}
+    .catalog{order:2;position:static;width:auto;height:auto;border-left:0;border-top:1px solid var(--line);margin-top:8px}
+    /* Header wraps instead of overflowing the viewport. */
+    header{flex-wrap:wrap;gap:8px;row-gap:10px}
+    .spacer{display:none}
+    header .navbtn,header #get{padding:8px 12px;font-size:12px}
+    .logo{flex:1 1 100%}
+    /* Nothing spills sideways. */
+    .tabs{gap:5px}
+    .tab{padding:8px 12px}
+    table{font-size:12.5px}
+    th,td{padding:6px 6px}
+  }
 </style>
 </head>
 <body>
