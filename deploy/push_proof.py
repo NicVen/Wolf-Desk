@@ -28,7 +28,13 @@ import urllib.request
 import urllib.parse
 from pathlib import Path
 
-HQ_DIR = Path(os.environ.get("HQ_DIR") or Path(__file__).resolve().parent)
+# HQ folder holds the *_view.json the snapshot reads. Defaults to the real HQ
+# path so the script runs from anywhere (e.g. Downloads) with no file-moving;
+# override with HQ_DIR. Falls back to the script's own folder if that path is
+# absent (e.g. running on a different machine).
+_HQ_DEFAULT = Path(r"C:\Users\nvent\OneDrive\Desktop\CLAUDE\Projects\STAALWAG-HQ")
+HQ_DIR = Path(os.environ.get("HQ_DIR")
+              or (_HQ_DEFAULT if _HQ_DEFAULT.exists() else Path(__file__).resolve().parent))
 # Where the daily plan is written by the desk (agents/daily-plan.js). Override
 # with PLAN_FILE if the desk lives elsewhere.
 PLAN_FILE = Path(os.environ.get("PLAN_FILE")
