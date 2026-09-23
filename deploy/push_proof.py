@@ -59,51 +59,87 @@ def _num(v):
         return None
 
 
+def _stats(outcomes):
+    """Trades, win-rate, profit-factor, net USD from a list of WIN/LOSS outcomes."""
+    wins = [o for o in outcomes if o.get("result") == "WIN"]
+    losses = [o for o in outcomes if o.get("result") == "LOSS"]
+    gp = sum(o.get("pnl_usd", 0) or 0 for o in wins)
+    gl = sum(o.get("pnl_usd", 0) or 0 for o in losses)
+    n = len(wins) + len(losses)
+    wr = round(100 * len(wins) / n, 1) if n else None
+    pf = round(gp / abs(gl), 2) if gl else None
+    return n, wr, pf, round(gp + gl, 2)
+
+
 def build_snapshot():
-    """Assemble the public-safe proof from HQ's own view files."""
+    """Assemble the public-safe proof from HQ's own view files.
+
+    EVERY record goes on the wall, good or bad -- the losers show where to
+    focus. Nothing is hidden and nothing is invented; each row is labelled with
+    what it actually is (real EA fills / dispatched signals / raw scanner).
+    """
+    ea = _load("ea_results.json") or {}
     bank = _load("desk_bank_view.json") or {}
     research = _load("paperclip_view.json") or {}
+    scanner = _load("signals_view.json") or {}
 
-    overall = bank.get("overall") or {}
-    by_desk = bank.get("by_desk") or {}
-
-    # Per-desk rows (real, append-only, banked at 0.1 lot).
     desks = []
-    for name, d in by_desk.items():
+
+    # 1) REAL EA fills, per product -- the actual executed money record.
+    acct, win = ea.get("account"), ea.get("window_days")
+    for p in (ea.get("products") or []):
+        n, wr, pf, net = _stats(p.get("outcomes") or [])
+        if n == 0:
+            desks.append({"name": p.get("product"), "status": "parked",
+                          "provenance": "live", "trades": 0, "win_rate": None,
+                          "pf": None, "net_usd": 0,
+                          "note": "live EA — no fills in the window"})
+            continue
+        proven = net > 0 and pf and pf >= 1.3 and n >= 30
+        desks.append({
+            "name": p.get("product"), "status": "proven" if proven else "proving",
+            "provenance": "live", "trades": n, "win_rate": wr, "pf": pf,
+            "net_usd": net,
+            "note": "real EA fills — account %s, last %sd" % (acct, win),
+        })
+
+    # 2) Banked dispatched signals (the Telegram desks), scored on real price.
+    for name, d in (bank.get("by_desk") or {}).items():
         trades = int(d.get("trades") or 0)
         net = _num(d.get("net_usd"))
         conclusive = bool(d.get("conclusive"))
-        # Honest status: only "proven" once the sample is conclusive AND positive.
-        if conclusive and (net or 0) > 0 and trades >= 30:
-            status = "proven"
-        else:
-            status = "proving"
+        proven = conclusive and (net or 0) > 0 and trades >= 30
         desks.append({
-            "name": name, "status": status, "provenance": "live",
+            "name": "%s — signals" % name,
+            "status": "proven" if proven else "proving", "provenance": "live",
             "trades": trades, "win_rate": _num(d.get("win_rate")),
             "pf": _num(d.get("profit_factor")), "net_usd": net,
-            "note": None if conclusive else "building sample, not yet conclusive",
+            "note": "dispatched signals scored on real price"
+                    + ("" if conclusive else " — building sample"),
         })
-    desks.sort(key=lambda x: (x["status"] != "proven", -(x["net_usd"] or 0)))
 
-    # Headline: only feature a desk that is genuinely proven. Otherwise feature
-    # the whole-firm banked record, labelled honestly -- never invent a winner.
+    # 3) Raw Markov scanner -- the unfiltered firehose. Shown honestly, parked:
+    #    it is research signal, not a traded desk, and the win rate says so.
+    ss = scanner.get("stats") or {}
+    if ss.get("closed"):
+        desks.append({
+            "name": "Markov signal bot (raw scanner)", "status": "parked",
+            "provenance": "shadow", "trades": int(ss.get("closed") or 0),
+            "win_rate": _num(ss.get("win_rate")), "pf": None, "net_usd": None,
+            "note": "unfiltered scanner output — research only, never traded",
+        })
+
+    # Proven first, then by biggest net.
+    desks.sort(key=lambda x: (x["status"] != "proven", -((x["net_usd"] or 0))))
+
+    # Headline: the strongest genuinely-proven record (real fills win over signals).
     headline = None
-    proven = [d for d in desks if d["status"] == "proven"]
-    if proven:
-        h = proven[0]
-        headline = {"name": h["name"], "provenance": "live", "pf": h["pf"],
+    proven_rows = [d for d in desks if d["status"] == "proven"]
+    if proven_rows:
+        h = proven_rows[0]
+        headline = {"name": h["name"], "provenance": h["provenance"], "pf": h["pf"],
                     "net_usd": h["net_usd"], "trades": h["trades"],
-                    "win_rate": h["win_rate"], "note": "the anchor"}
-    elif overall.get("trades"):
-        headline = {
-            "name": "STAALWAG — all desks", "provenance": "live",
-            "pf": _num(overall.get("profit_factor")),
-            "net_usd": _num(overall.get("net_usd")),
-            "trades": int(overall.get("trades") or 0),
-            "win_rate": _num(overall.get("win_rate")),
-            "note": "every dispatched signal, banked once at 0.1 lot on real price",
-        }
+                    "win_rate": h["win_rate"], "note": "the anchor — real executed record"}
 
     # Research desk (shadow -- scored, never traded).
     ro = research.get("overall") or {}
