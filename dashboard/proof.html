@@ -22,6 +22,11 @@
   h2{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--steel);
     margin:34px 0 10px;font-weight:700}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .planhdr{display:flex;align-items:center;gap:14px;margin:34px 0 10px}
+  #getplans{background:var(--gold);color:#0a0e15;border:0;font-weight:800;letter-spacing:1px;
+    padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px}
+  #getplans:hover{filter:brightness(1.08)}
+  #getplans:disabled{opacity:.6;cursor:wait}
   .planset{padding:14px 0;border-bottom:1px solid var(--line)}
   .planset:first-child{padding-top:0}
   .planset:last-child{border-bottom:0;padding-bottom:0}
@@ -72,7 +77,7 @@
   </header>
   <div class="sub"><span style="color:var(--gold);font-style:italic">Proven, not promised.</span>&nbsp; Every result scored on real price and banked once — append-only, never edited. This is the honest record, wins and losses.</div>
 
-  <h2>Today's plan</h2>
+  <div class="planhdr"><h2 style="margin:0">Today's plan</h2><button id="getplans" onclick="loadProof(this)">GET PLANS</button></div>
   <div class="card" id="plan"><div class="empty">—</div></div>
 
   <h2>The anchor</h2>
@@ -212,16 +217,21 @@ function render(d){
   if(d.disclaimer) document.getElementById("disclaimer").textContent = d.disclaimer;
 }
 
-fetch("/proof.json",{cache:"no-store"})
-  .then(function(r){ if(!r.ok) throw new Error("no data"); return r.json(); })
-  .then(render)
-  .catch(function(){
-    document.getElementById("hero").innerHTML =
-      '<div class="empty">The track record has not been published yet. Check back soon.</div>';
-    document.getElementById("rules").innerHTML =
-      DEFAULT_RULES.map(function(r){return "<li>"+esc(r)+"</li>";}).join("");
-    document.getElementById("asof").textContent = "";
-  });
+function loadProof(btn){
+  if(btn){ btn.disabled = true; btn.textContent = "LOADING…"; }
+  return fetch("/proof.json",{cache:"no-store"})
+    .then(function(r){ if(!r.ok) throw new Error("no data"); return r.json(); })
+    .then(function(d){ render(d); })
+    .catch(function(){
+      document.getElementById("hero").innerHTML =
+        '<div class="empty">The track record has not been published yet. Check back soon.</div>';
+      document.getElementById("rules").innerHTML =
+        DEFAULT_RULES.map(function(r){return "<li>"+esc(r)+"</li>";}).join("");
+      document.getElementById("asof").textContent = "";
+    })
+    .then(function(){ if(btn){ btn.disabled = false; btn.textContent = "GET PLANS"; } });
+}
+loadProof();
 </script>
 </body>
 </html>
