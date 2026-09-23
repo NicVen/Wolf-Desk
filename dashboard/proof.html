@@ -129,6 +129,16 @@ function statusBadge(s){
 }
 
 function planRow(k,v){ return v ? '<tr><td class="muted" style="width:110px">'+k+'</td><td>'+esc(v)+'</td></tr>' : ""; }
+function freshnessBanner(pub){
+  if(!pub) return "";
+  var t = Date.parse(pub); if(isNaN(t)) return "";
+  var min = (Date.now()-t)/60000;
+  var ago = min<60 ? Math.max(0,Math.round(min))+" min" : (min/60).toFixed(1)+" h";
+  if(min>240){ // older than 4h
+    return '<div style="background:rgba(230,180,80,.13);border:1px solid rgba(230,180,80,.4);color:var(--amber);border-radius:8px;padding:9px 12px;margin-bottom:12px;font-size:13px;font-weight:700">⏳ EXPIRED — this plan is '+ago+' old. A fresh one is due (the desk refreshes every 4h).</div>';
+  }
+  return '<div style="background:rgba(62,207,142,.12);border:1px solid rgba(62,207,142,.35);color:var(--green);border-radius:8px;padding:9px 12px;margin-bottom:12px;font-size:13px;font-weight:700">🟢 FRESH — published '+ago+' ago.</div>';
+}
 
 function render(d){
   document.getElementById("asof").textContent =
@@ -156,7 +166,7 @@ function render(d){
   }
   if(plans.length){
     var dt = (plans[0]&&plans[0].date) ? plans[0].date : "";
-    pc.innerHTML = plans.map(onePlan).join("") +
+    pc.innerHTML = freshnessBanner(d.published_at) + plans.map(onePlan).join("") +
       (dt?'<div class="desk-note" style="margin-top:10px">'+esc(dt)+' · signals, not advice</div>':"");
   } else {
     pc.innerHTML = '<div class="empty">No plan published yet — check back before the London session.</div>';

@@ -20,6 +20,7 @@ Run:  python push_proof.py
 """
 from __future__ import annotations
 
+import datetime
 import json
 import os
 import re
@@ -253,6 +254,10 @@ def build_snapshot():
     return {
         "firm": "STAALWAG",
         "generated": bank.get("generated") or research.get("generated"),
+        # When this snapshot was published. The page uses it to mark a plan
+        # "fresh" or "expired" (older than 4h) so an old plan never looks current.
+        "published_at": datetime.datetime.now(datetime.timezone.utc)
+                        .replace(microsecond=0).isoformat(),
         "plans": _load_plans(),
         "headline": headline,
         "desks": desks,

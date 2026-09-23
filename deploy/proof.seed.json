@@ -1,144 +1,145 @@
 {
-  "firm": "STAALWAG",
-  "generated": "2026-09-21T05:20:36+00:00",
-  "plans": [
-    {
-      "date": "8 September 2026 (Tuesday)",
-      "asset": "XAUUSD",
-      "stand_aside": false,
-      "bias": "LONG",
-      "entry": "$4435 \u2014 $4438",
-      "stop": "$4430",
-      "tp1": "$4450",
-      "tp2": "$4462",
-      "lot": "0.03 lots",
-      "rr": "1:1.5"
-    }
-  ],
-  "headline": {
-    "name": "STAALWAG Gold",
-    "provenance": "live",
-    "pf": 4.34,
-    "net_usd": 3839.92,
-    "trades": 192,
-    "win_rate": 55.2,
-    "note": "the anchor \u2014 real executed record"
+ "firm": "STAALWAG",
+ "generated": "2026-09-21T05:20:36+00:00",
+ "published_at": "2026-09-08T00:00:00+00:00",
+ "plans": [
+  {
+   "date": "8 September 2026 (Tuesday)",
+   "asset": "XAUUSD",
+   "stand_aside": false,
+   "bias": "LONG",
+   "entry": "$4435 \u2014 $4438",
+   "stop": "$4430",
+   "tp1": "$4450",
+   "tp2": "$4462",
+   "lot": "0.03 lots",
+   "rr": "1:1.5"
+  }
+ ],
+ "headline": {
+  "name": "STAALWAG Gold",
+  "provenance": "live",
+  "pf": 4.34,
+  "net_usd": 3839.92,
+  "trades": 192,
+  "win_rate": 55.2,
+  "note": "the anchor \u2014 real executed record"
+ },
+ "desks": [
+  {
+   "name": "STAALWAG Gold",
+   "status": "proven",
+   "provenance": "live",
+   "trades": 192,
+   "win_rate": 55.2,
+   "pf": 4.34,
+   "net_usd": 3839.92,
+   "note": "real EA fills \u2014 account 109223212, last 180d"
   },
-  "desks": [
-    {
-      "name": "STAALWAG Gold",
-      "status": "proven",
-      "provenance": "live",
-      "trades": 192,
-      "win_rate": 55.2,
-      "pf": 4.34,
-      "net_usd": 3839.92,
-      "note": "real EA fills \u2014 account 109223212, last 180d"
-    },
-    {
-      "name": "STAALWAG Gold \u2014 signals",
-      "status": "proving",
-      "provenance": "live",
-      "trades": 5,
-      "win_rate": 40.0,
-      "pf": 1.34,
-      "net_usd": 46.3,
-      "note": "dispatched signals scored on real price \u2014 building sample"
-    },
-    {
-      "name": "STAALWAG Crypto",
-      "status": "parked",
-      "provenance": "live",
-      "trades": 0,
-      "win_rate": null,
-      "pf": null,
-      "net_usd": 0,
-      "note": "live EA \u2014 no fills in the window"
-    },
-    {
-      "name": "Markov signal bot (raw scanner)",
-      "status": "parked",
-      "provenance": "shadow",
-      "trades": 319,
-      "win_rate": 12.9,
-      "pf": null,
-      "net_usd": null,
-      "note": "unfiltered scanner output \u2014 research only, never traded"
-    },
-    {
-      "name": "Signal Engine v2 (My Trading Bot)",
-      "status": "proving",
-      "provenance": "shadow",
-      "trades": 5,
-      "win_rate": 0.0,
-      "pf": null,
-      "net_usd": null,
-      "note": "forward paper \u2014 scored on real price; -5.0 net R over 5 closed (6 open) \u00b7 edges: xauusd-donchian55, gbpjpy-boll2.5"
-    },
-    {
-      "name": "VELDRIN FX \u2014 signals",
-      "status": "proving",
-      "provenance": "live",
-      "trades": 34,
-      "win_rate": 20.6,
-      "pf": 0.97,
-      "net_usd": -6.9,
-      "note": "dispatched signals scored on real price"
-    },
-    {
-      "name": "JAGTER bridge (py)",
-      "status": "proving",
-      "provenance": "live",
-      "trades": 22,
-      "win_rate": 31.8,
-      "pf": 0.68,
-      "net_usd": -30.49,
-      "note": "real EA fills \u2014 account 109223212, last 180d"
-    },
-    {
-      "name": "STAALWAG FX",
-      "status": "proving",
-      "provenance": "live",
-      "trades": 70,
-      "win_rate": 50.0,
-      "pf": 0.62,
-      "net_usd": -41.51,
-      "note": "real EA fills \u2014 account 109223212, last 180d"
-    },
-    {
-      "name": "STAALWAG PROP",
-      "status": "proving",
-      "provenance": "live",
-      "trades": 156,
-      "win_rate": 66.7,
-      "pf": 0.74,
-      "net_usd": -199.17,
-      "note": "real EA fills \u2014 account 109223212, last 180d"
-    },
-    {
-      "name": "STAALWAG SNYPER",
-      "status": "proving",
-      "provenance": "live",
-      "trades": 194,
-      "win_rate": 43.8,
-      "pf": 0.73,
-      "net_usd": -270.31,
-      "note": "real EA fills \u2014 account 109223212, last 180d"
-    }
-  ],
-  "research": {
-    "calls": 60,
-    "filled": 49,
-    "accuracy": 44.9,
-    "pf": 0.93,
-    "note": "Paperclip research desk -- calls scored on real price. Shadow only; nothing is traded off it."
+  {
+   "name": "STAALWAG Gold \u2014 signals",
+   "status": "proving",
+   "provenance": "live",
+   "trades": 5,
+   "win_rate": 40.0,
+   "pf": 1.34,
+   "net_usd": 46.3,
+   "note": "dispatched signals scored on real price \u2014 building sample"
   },
-  "rules": [
-    "Scored on real market price, not on anyone's execution.",
-    "Fills use the worst edge of the entry zone -- the realistic fill, never the flattering one.",
-    "When one bar touches both stop and target, it is counted as a LOSS.",
-    "Unfilled setups are shown separately, never quietly counted as wins.",
-    "Append-only: once a result is banked it is never re-derived, edited, or deleted."
-  ],
-  "disclaimer": "Signals, not financial advice. Past performance does not guarantee future results."
+  {
+   "name": "STAALWAG Crypto",
+   "status": "parked",
+   "provenance": "live",
+   "trades": 0,
+   "win_rate": null,
+   "pf": null,
+   "net_usd": 0,
+   "note": "live EA \u2014 no fills in the window"
+  },
+  {
+   "name": "Markov signal bot (raw scanner)",
+   "status": "parked",
+   "provenance": "shadow",
+   "trades": 319,
+   "win_rate": 12.9,
+   "pf": null,
+   "net_usd": null,
+   "note": "unfiltered scanner output \u2014 research only, never traded"
+  },
+  {
+   "name": "Signal Engine v2 (My Trading Bot)",
+   "status": "proving",
+   "provenance": "shadow",
+   "trades": 5,
+   "win_rate": 0.0,
+   "pf": null,
+   "net_usd": null,
+   "note": "forward paper \u2014 scored on real price; -5.0 net R over 5 closed (6 open) \u00b7 edges: xauusd-donchian55, gbpjpy-boll2.5"
+  },
+  {
+   "name": "VELDRIN FX \u2014 signals",
+   "status": "proving",
+   "provenance": "live",
+   "trades": 34,
+   "win_rate": 20.6,
+   "pf": 0.97,
+   "net_usd": -6.9,
+   "note": "dispatched signals scored on real price"
+  },
+  {
+   "name": "JAGTER bridge (py)",
+   "status": "proving",
+   "provenance": "live",
+   "trades": 22,
+   "win_rate": 31.8,
+   "pf": 0.68,
+   "net_usd": -30.49,
+   "note": "real EA fills \u2014 account 109223212, last 180d"
+  },
+  {
+   "name": "STAALWAG FX",
+   "status": "proving",
+   "provenance": "live",
+   "trades": 70,
+   "win_rate": 50.0,
+   "pf": 0.62,
+   "net_usd": -41.51,
+   "note": "real EA fills \u2014 account 109223212, last 180d"
+  },
+  {
+   "name": "STAALWAG PROP",
+   "status": "proving",
+   "provenance": "live",
+   "trades": 156,
+   "win_rate": 66.7,
+   "pf": 0.74,
+   "net_usd": -199.17,
+   "note": "real EA fills \u2014 account 109223212, last 180d"
+  },
+  {
+   "name": "STAALWAG SNYPER",
+   "status": "proving",
+   "provenance": "live",
+   "trades": 194,
+   "win_rate": 43.8,
+   "pf": 0.73,
+   "net_usd": -270.31,
+   "note": "real EA fills \u2014 account 109223212, last 180d"
+  }
+ ],
+ "research": {
+  "calls": 60,
+  "filled": 49,
+  "accuracy": 44.9,
+  "pf": 0.93,
+  "note": "Paperclip research desk -- calls scored on real price. Shadow only; nothing is traded off it."
+ },
+ "rules": [
+  "Scored on real market price, not on anyone's execution.",
+  "Fills use the worst edge of the entry zone -- the realistic fill, never the flattering one.",
+  "When one bar touches both stop and target, it is counted as a LOSS.",
+  "Unfilled setups are shown separately, never quietly counted as wins.",
+  "Append-only: once a result is banked it is never re-derived, edited, or deleted."
+ ],
+ "disclaimer": "Signals, not financial advice. Past performance does not guarantee future results."
 }
