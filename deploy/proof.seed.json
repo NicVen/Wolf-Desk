@@ -52,6 +52,16 @@
       "note": "unfiltered scanner output \u2014 research only, never traded"
     },
     {
+      "name": "Signal Engine v2 (My Trading Bot)",
+      "status": "proving",
+      "provenance": "shadow",
+      "trades": 5,
+      "win_rate": 0.0,
+      "pf": null,
+      "net_usd": null,
+      "note": "forward paper \u2014 scored on real price; -5.0 net R over 5 closed (6 open) \u00b7 edges: xauusd-donchian55, gbpjpy-boll2.5"
+    },
+    {
       "name": "VELDRIN FX \u2014 signals",
       "status": "proving",
       "provenance": "live",

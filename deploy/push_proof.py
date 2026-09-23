@@ -129,6 +129,23 @@ def build_snapshot():
             "note": "unfiltered scanner output — research only, never traded",
         })
 
+    # 4) Signal Engine v2 ("My Trading Bot") -- forward paper track, scored on
+    #    real price. Small and currently red; shown because every record counts.
+    ev2 = _load("engine_v2_track.json") or {}
+    eo = ev2.get("overall") or {}
+    if eo.get("closed") is not None:
+        closed = int(eo.get("closed") or 0)
+        openn = int(eo.get("open") or 0)
+        net_r = _num(eo.get("net_r"))
+        edges = ", ".join((ev2.get("per_edge") or {}).keys())
+        desks.append({
+            "name": "Signal Engine v2 (My Trading Bot)", "status": "proving",
+            "provenance": "shadow", "trades": closed,
+            "win_rate": _num(eo.get("win_rate")), "pf": None, "net_usd": None,
+            "note": "forward paper — scored on real price; %s net R over %d closed (%d open)%s"
+                    % (net_r, closed, openn, (" · edges: " + edges) if edges else ""),
+        })
+
     # Proven first, then by biggest net.
     desks.sort(key=lambda x: (x["status"] != "proven", -((x["net_usd"] or 0))))
 
