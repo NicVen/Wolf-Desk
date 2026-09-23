@@ -28,7 +28,9 @@ import urllib.parse
 from pathlib import Path
 
 HQ_DIR = Path(os.environ.get("HQ_DIR") or Path(__file__).resolve().parent)
-HOST = (os.environ.get("WOLF_HOST") or "https://178.104.88.38.sslip.io").rstrip("/")
+# Live domain by default; override with WOLF_HOST for the sslip fallback
+# (https://178.104.88.38.sslip.io) or a local test server.
+HOST = (os.environ.get("WOLF_HOST") or "https://staalwag.com").rstrip("/")
 KEY = os.environ.get("WOLF_PASS", "")
 
 RULES = [
@@ -143,8 +145,9 @@ def main():
     snap = build_snapshot()
 
     if not snap["desks"] and not snap["headline"]:
-        print("[push_proof] No banked data found in %s -- run an HQ Refresh first."
-              % HQ_DIR)
+        print("[push_proof] No banked data found in %s" % HQ_DIR)
+        print("             Expected desk_bank_view.json (from desk_bank.py). "
+              "Run an HQ Refresh first, then re-run this.")
         sys.exit(1)
 
     if dry:
