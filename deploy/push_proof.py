@@ -98,6 +98,9 @@ def _load_plan():
         "lot": find(r"Lot Size\*{0,2}\s*\|\s*\*{0,2}([^\|\n*]+)"),
         "rr": find(r"R:R\s*\|\s*([^\|\n]+)"),
     })
+    # Strip desk jargon like "(worst-edge fill)" — the public plan shows a clean R:R.
+    if plan.get("rr"):
+        plan["rr"] = re.sub(r"\s*\(.*$", "", plan["rr"]).strip()
     return plan
 
 
