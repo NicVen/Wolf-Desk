@@ -22,12 +22,17 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import urllib.request
 import urllib.parse
 from pathlib import Path
 
 HQ_DIR = Path(os.environ.get("HQ_DIR") or Path(__file__).resolve().parent)
+# Where the daily plan is written by the desk (agents/daily-plan.js). Override
+# with PLAN_FILE if the desk lives elsewhere.
+PLAN_FILE = Path(os.environ.get("PLAN_FILE")
+                 or r"C:\Users\nvent\nicos-trading-desk\TODAYS-PLAN.md")
 # Live domain by default; override with WOLF_HOST for the sslip fallback
 # (https://178.104.88.38.sslip.io) or a local test server.
 HOST = (os.environ.get("WOLF_HOST") or "https://staalwag.com").rstrip("/")
@@ -57,6 +62,43 @@ def _num(v):
         return round(float(v), 2)
     except Exception:
         return None
+
+
+def _load_plan():
+    """Parse the desk's TODAYS-PLAN.md into a public-safe plan block.
+
+    Handles both a live setup (bias + entry/stop/targets) and a STAND-ASIDE day.
+    Returns None if no plan file is present.
+    """
+    try:
+        txt = PLAN_FILE.read_text(encoding="utf-8")
+    except Exception:
+        return None
+
+    def find(pat):
+        m = re.search(pat, txt, re.I)
+        return m.group(1).strip() if m else None
+
+    plan = {"date": find(r"\*\*Date:\*\*\s*(.+?)\s*\|"),
+            "asset": find(r"\|\s*Asset\s*\|\s*([A-Z0-9]+)") or "XAUUSD"}
+
+    if re.search(r"STAND ASIDE", txt, re.I):
+        plan.update({"stand_aside": True,
+                     "reason": find(r"Reason:\s*(.+)") or "conditions not favourable",
+                     "bias": find(r"context only\):\s*(\w+)") or find(r"BIAS:\s*(\w+)")})
+        return plan
+
+    plan.update({
+        "stand_aside": False,
+        "bias": (find(r"\|\s*Bias\s*\|\s*(\w+)") or find(r"BIAS:\s*(\w+)")),
+        "entry": find(r"Entry Zone\s*\|\s*([^\|\n]+)"),
+        "stop": find(r"Stop Loss\s*\|\s*([^\|\n]+)"),
+        "tp1": find(r"Target 1\s*\|\s*([^\|\n]+)"),
+        "tp2": find(r"Target 2\s*\|\s*([^\|\n]+)"),
+        "lot": find(r"Lot Size\*{0,2}\s*\|\s*\*{0,2}([^\|\n*]+)"),
+        "rr": find(r"R:R\s*\|\s*([^\|\n]+)"),
+    })
+    return plan
 
 
 def _stats(outcomes):
@@ -184,6 +226,7 @@ def build_snapshot():
     return {
         "firm": "STAALWAG",
         "generated": bank.get("generated") or research.get("generated"),
+        "plan": _load_plan(),
         "headline": headline,
         "desks": desks,
         "research": research_out,

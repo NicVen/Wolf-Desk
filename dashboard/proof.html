@@ -69,6 +69,9 @@
   </header>
   <div class="sub"><span style="color:var(--gold);font-style:italic">Proven, not promised.</span>&nbsp; Every result scored on real price and banked once — append-only, never edited. This is the honest record, wins and losses.</div>
 
+  <h2>Today's plan</h2>
+  <div class="card" id="plan"><div class="empty">—</div></div>
+
   <h2>The anchor</h2>
   <div class="card hero" id="hero"><div class="empty">Loading…</div></div>
 
@@ -120,9 +123,34 @@ function statusBadge(s){
   return '<span class="badge b-parked">'+esc(s)+'</span>';
 }
 
+function planRow(k,v){ return v ? '<tr><td class="muted" style="width:110px">'+k+'</td><td>'+esc(v)+'</td></tr>' : ""; }
+
 function render(d){
   document.getElementById("asof").textContent =
     d.generated ? ("as of " + esc(String(d.generated).replace("T"," ").slice(0,16)) + " · updates daily") : "";
+
+  // today's plan
+  var pl = d.plan, pc = document.getElementById("plan");
+  if(pl && pl.stand_aside){
+    pc.innerHTML =
+      '<div style="font-size:18px;font-weight:800;color:var(--amber)">STAND ASIDE — no trade today</div>'+
+      '<div class="muted" style="margin-top:6px">'+esc(pl.reason||"conditions not favourable")+'</div>'+
+      (pl.date?'<div class="desk-note" style="margin-top:8px">'+esc(pl.date)+' · signals, not advice</div>':"");
+  } else if(pl){
+    var dir=(pl.bias||"").toUpperCase();
+    var dcls=(dir.indexOf("LONG")>=0||dir.indexOf("BUY")>=0)?"win":(dir.indexOf("SHORT")>=0||dir.indexOf("SELL")>=0?"loss":"muted");
+    pc.innerHTML =
+      '<div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:14px">'+
+        '<div style="font-size:20px;font-weight:800">'+esc(pl.asset||"")+' <span class="'+dcls+'">'+esc(dir||"—")+'</span></div>'+
+        (pl.rr?'<span class="muted">R:R '+esc(pl.rr)+'</span>':"")+
+      '</div>'+
+      '<table style="margin-top:10px"><tbody>'+
+        planRow("Entry",pl.entry)+planRow("Stop",pl.stop)+planRow("Target 1",pl.tp1)+planRow("Target 2",pl.tp2)+
+      '</tbody></table>'+
+      (pl.date?'<div class="desk-note" style="margin-top:8px">'+esc(pl.date)+' · signals, not advice</div>':"");
+  } else {
+    pc.innerHTML = '<div class="empty">No plan published yet — check back before the London session.</div>';
+  }
 
   // hero
   var h = d.headline;

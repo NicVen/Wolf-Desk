@@ -1,6 +1,18 @@
 {
   "firm": "STAALWAG",
   "generated": "2026-09-21T05:20:36+00:00",
+  "plan": {
+    "date": "8 September 2026 (Tuesday)",
+    "asset": "XAUUSD",
+    "stand_aside": false,
+    "bias": "LONG",
+    "entry": "$4435 \u2014 $4438",
+    "stop": "$4430",
+    "tp1": "$4450",
+    "tp2": "$4462",
+    "lot": "0.03 lots",
+    "rr": "1:1.5 (worst-edge fill)"
+  },
   "headline": {
     "name": "STAALWAG Gold",
     "provenance": "live",
