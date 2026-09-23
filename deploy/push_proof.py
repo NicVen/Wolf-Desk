@@ -213,16 +213,6 @@ def build_snapshot():
                      "Shadow only; nothing is traded off it."),
         }
 
-    # Recent resolved (last 8), from the banked ledger.
-    recent = []
-    for r in (bank.get("recent") or [])[:8]:
-        recent.append({
-            "desk": r.get("desk"), "pair": r.get("pair"),
-            "direction": r.get("direction"), "result": r.get("result"),
-            "r": _num(r.get("r")),
-            "date": (r.get("closed") or r.get("time") or "")[:10],
-        })
-
     return {
         "firm": "STAALWAG",
         "generated": bank.get("generated") or research.get("generated"),
@@ -230,7 +220,6 @@ def build_snapshot():
         "headline": headline,
         "desks": desks,
         "research": research_out,
-        "recent": recent,
         "rules": RULES,
         "disclaimer": DISCLAIMER,
     }

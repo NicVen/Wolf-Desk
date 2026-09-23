@@ -86,9 +86,6 @@
   <h2>Research desk — shadow calls</h2>
   <div class="card"><div id="research"><div class="empty">—</div></div></div>
 
-  <h2>Recent resolved</h2>
-  <div class="card"><div id="recent"><div class="empty">—</div></div></div>
-
   <div class="disclaimer" id="disclaimer">
     Signals, not financial advice. Past performance does not guarantee future results.
   </div>
@@ -203,24 +200,6 @@ function render(d){
       '</div>'+
       '<div class="desk-note" style="margin-top:10px">'+esc(r.note||"Shadow research — scored on real price, nothing is traded off it.")+'</div>';
   } else { rd.innerHTML = '<div class="empty">—</div>'; }
-
-  // recent
-  var rec = d.recent||[];
-  var re = document.getElementById("recent");
-  if(rec.length){
-    var rr = rec.map(function(x){
-      var res=(x.result||"").toUpperCase();
-      var cls = res==="WIN"||res==="TARGET" ? "win" : (res==="LOSS"||res==="STOP" ? "loss":"muted");
-      return "<tr>"+
-        '<td class="muted">'+esc(String(x.date||"").slice(0,10))+'</td>'+
-        '<td>'+esc(x.desk||"")+'</td>'+
-        '<td>'+esc(x.pair||"")+' '+esc(x.direction||"")+'</td>'+
-        '<td class="'+cls+'">'+esc(res||"—")+'</td>'+
-        '<td class="num '+cls+'">'+(n(x.r)===null?"":(n(x.r)>0?"+":"")+n(x.r).toFixed(1)+"R")+'</td>'+
-      "</tr>";
-    }).join("");
-    re.innerHTML = '<table><thead><tr><th>Date</th><th>Desk</th><th>Setup</th><th>Result</th><th class="num">R</th></tr></thead><tbody>'+rr+'</tbody></table>';
-  } else { re.innerHTML = '<div class="empty">No resolved trades published yet.</div>'; }
 
   if(d.disclaimer) document.getElementById("disclaimer").textContent = d.disclaimer;
 }
