@@ -77,7 +77,7 @@
   </header>
   <div class="sub"><span style="color:var(--gold);font-style:italic">Proven, not promised.</span>&nbsp; Every result scored on real price and banked once — append-only, never edited. This is the honest record, wins and losses.</div>
 
-  <div class="planhdr"><h2 style="margin:0">Today's plan</h2><button id="getplans" onclick="loadProof(this)">GET PLANS</button></div>
+  <div class="planhdr"><h2 style="margin:0">Today's plan</h2><button id="getplans" onclick="loadProof(this)">GET PLANS</button><span id="planmsg" class="muted" style="font-size:12px"></span></div>
   <div class="card" id="plan"><div class="empty">—</div></div>
 
   <h2>The anchor</h2>
@@ -217,17 +217,29 @@ function render(d){
   if(d.disclaimer) document.getElementById("disclaimer").textContent = d.disclaimer;
 }
 
+function setPlanMsg(t){ var m=document.getElementById("planmsg"); if(m) m.textContent=t||""; }
 function loadProof(btn){
   if(btn){ btn.disabled = true; btn.textContent = "LOADING…"; }
+  setPlanMsg("checking…");
   return fetch("/proof.json",{cache:"no-store"})
     .then(function(r){ if(!r.ok) throw new Error("no data"); return r.json(); })
-    .then(function(d){ render(d); })
+    .then(function(d){
+      render(d);
+      var plans = d.plans || (d.plan ? [d.plan] : []);
+      if(plans.length){
+        var when = (plans[0] && plans[0].date) ? plans[0].date : "";
+        setPlanMsg("✓ loaded" + (when ? " · " + when : ""));
+      } else {
+        setPlanMsg("no plans published yet");
+      }
+    })
     .catch(function(){
       document.getElementById("hero").innerHTML =
         '<div class="empty">The track record has not been published yet. Check back soon.</div>';
       document.getElementById("rules").innerHTML =
         DEFAULT_RULES.map(function(r){return "<li>"+esc(r)+"</li>";}).join("");
       document.getElementById("asof").textContent = "";
+      setPlanMsg("couldn't reach the server");
     })
     .then(function(){ if(btn){ btn.disabled = false; btn.textContent = "GET PLANS"; } });
 }
