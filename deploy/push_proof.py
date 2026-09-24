@@ -293,8 +293,8 @@ def main():
         with urllib.request.urlopen(req, timeout=30) as r:
             resp = json.loads(r.read().decode("utf-8"))
         if resp.get("ok"):
-            print("[push_proof] Published -> %s/proof  (%d desks, %d recent)"
-                  % (HOST, len(snap["desks"]), len(snap["recent"])))
+            print("[push_proof] Published -> %s/proof  (%d desks, %d plans)"
+                  % (HOST, len(snap["desks"]), len(snap.get("plans") or [])))
         else:
             print("[push_proof] Server rejected it:", resp)
     except Exception as e:
