@@ -524,10 +524,16 @@ class H(BaseHTTPRequestHandler):
         p = config.product("APP") or {}
         crypto_on = bool(getattr(config, "NOWPAYMENTS_API_KEY", ""))
         card_on = config.card_enabled()
+        price = p.get("price_solo", 25)
+        regular = p.get("price_regular", price)
+        promo = regular > price          # only a promo while live price is below the "was" price
         self._send(200, {
             "product": "APP",
             "name": p.get("name", "STAALCALIBUR App"),
-            "price": p.get("price_solo", 25),
+            "price": price,
+            "price_regular": regular,
+            "promo": promo,
+            "promo_note": config.APP_PROMO_NOTE if promo else "",
             "period_days": p.get("period_days", 30),
             "trial_days": config.APP_TRIAL_DAYS,
             "crypto": crypto_on,

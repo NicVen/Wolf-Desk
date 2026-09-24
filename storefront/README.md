@@ -32,10 +32,22 @@ no exposed internal URL.
 
 | What | Where |
 |------|-------|
-| **Monthly price** | `licensing/config.py` → `PRODUCTS["APP"]["price_solo"]` (currently 25) |
+| **Charged price** (promo) | `licensing/config.py` → `PRODUCTS["APP"]["price_solo"]` and `price_vip` (currently **9.99**) |
+| **Regular / "was" price** | `licensing/config.py` → `PRODUCTS["APP"]["price_regular"]` (display only, **25** — never charged) |
+| **Promo note text** | `licensing/config.py` → `APP_PROMO_NOTE` (or env `APP_PROMO_NOTE`) |
+| **End the promo** | set `price_solo`/`price_vip` back to `25`; the storefront then drops the strike-through, "limited time" badge and lock-in line automatically |
 | **Free-trial length** | `licensing/config.py` → `APP_TRIAL_DAYS` (or env `APP_TRIAL_DAYS`; `0` = trials off) |
 | **Turn trials off** | set `APP_TRIAL_DAYS=0` and restart the licensing service |
 | **Sales copy / design** | `storefront/index.html` |
+
+**The launch-price play:** the app is charged at **$9.99/mo** now (a real, limited-time
+promo). `price_regular` (25) is shown struck-through so buyers see the deal. The page
+tells them plainly: keep the sub alive and you hold the $9.99 rate; let it lapse and you
+rejoin at whatever the price is then. When you're ready to end the promo, bump
+`price_solo` back to 25 — new buyers pay full, and anyone who lapsed re-joins at 25.
+(Renewals are charged at the price live at payment time; the "lock-in" is the promise
+that you won't raise *their* rate while they stay subscribed, so end the promo by
+raising the price for *new/lapsed* buyers, not existing ones.)
 
 The page auto-reflects the price/trial numbers from `/app/pricing`, so editing
 `config.py` and restarting the licensing service updates the page — no HTML edit

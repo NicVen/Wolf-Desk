@@ -44,6 +44,7 @@ PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "https://pay.178.104.88.38.s
 SIGNING_SECRET = os.environ.get("LICENSE_SIGNING_SECRET", "")   # signs rolling tokens
 GRACE_HOURS = _int("GRACE_HOURS", 4)        # access removed this long after a lapse
 APP_TRIAL_DAYS = _int("APP_TRIAL_DAYS", 7)  # free STAALCALIBUR App trial length (0 = trials off)
+APP_PROMO_NOTE = os.environ.get("APP_PROMO_NOTE", "Launch price — limited time only")  # shown on the storefront while the App promo price is live
 REFERRAL_REWARD_DAYS = _int("REFERRAL_REWARD_DAYS", 30)  # free days a referrer earns per paid referral
 SITE_URL = os.environ.get("SITE_URL", "https://staalwag.com").rstrip("/")
 
@@ -96,8 +97,12 @@ PRODUCTS = {
     "TV_SCALP":     {"name": "Markov Scalper",        "price_solo": 0, "price_vip": 0, "period_days": 30, "type": "tradingview", "vip": False, "tbd": True},
     # Markov 2 Gate — a chart add-on (supplementary info, any pair/timeframe), FREE with the free subscription
     "TV_2GATE":     {"name": "Markov 2 Gate — chart add-on", "price_solo": 0, "price_vip": 0, "period_days": 30, "type": "addon", "vip": False, "free": True},
-    # --- STAALCALIBUR mobile app: rental only, $25/mo (not bundled in VIP) ---
-    "APP":       {"name": "STAALCALIBUR App", "price_solo": 25, "price_vip": 25, "period_days": 30, "type": "app", "vip": False},
+    # --- STAALCALIBUR mobile app: rental only (not bundled in VIP) ---
+    # Launch promo: charged price is $9.99/mo; price_regular ($25) is the "was"
+    # price shown struck-through. To END the promo: set price_solo/price_vip back
+    # to 25 (the storefront then drops the strike-through + "limited time" badge
+    # automatically). price_regular is display-only; it is never charged.
+    "APP":       {"name": "STAALCALIBUR App", "price_solo": 9.99, "price_vip": 9.99, "price_regular": 25, "period_days": 30, "type": "app", "vip": False},
     # --- VIP membership: $40/mo. Unlocks every vip=True product ---
     "VIP":       {"name": "VIP Membership", "price_solo": 40, "price_vip": 40, "period_days": 30, "type": "bundle", "vip": False},
 }

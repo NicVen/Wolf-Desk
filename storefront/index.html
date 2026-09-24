@@ -60,14 +60,23 @@
   nav{position:sticky;top:0;z-index:20;backdrop-filter:blur(10px);
     background:rgba(10,14,21,.72);border-bottom:1px solid var(--line)}
   nav .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
-  .brand{font-weight:900;letter-spacing:2.5px;font-size:17px}
-  .brand .v{color:var(--steel)}
+  .brand{font-weight:900;letter-spacing:2.5px;font-size:17px;
+    background:linear-gradient(100deg,#c7d2dd 20%,#ffffff 38%,#8aa0b4 55%,#c7d2dd 75%);
+    background-size:220% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    animation:shine 5.5s linear infinite}
+  .brand .v{-webkit-text-fill-color:var(--steel)}
+  @keyframes shine{to{background-position:220% center}}
+  @media (prefers-reduced-motion:reduce){.brand{animation:none}}
   nav .cta{padding:10px 16px;font-size:14px}
 
   /* ---- hero ---- */
   .hero{padding:56px 0 30px}
   .hero .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:44px;align-items:center}
-  h1{font-size:44px;line-height:1.08;margin:16px 0 14px;letter-spacing:-.5px}
+  .kicker{margin-top:16px;color:var(--gold);font-weight:800;letter-spacing:1px;font-size:14px;text-transform:uppercase}
+  h1{font-size:44px;line-height:1.08;margin:8px 0 14px;letter-spacing:-.5px}
+  .pulse{position:relative;box-shadow:0 0 0 0 rgba(67,214,163,.5);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(67,214,163,.45)}70%{box-shadow:0 0 0 14px rgba(67,214,163,0)}100%{box-shadow:0 0 0 0 rgba(67,214,163,0)}}
+  @media (prefers-reduced-motion:reduce){.pulse{animation:none}}
   h1 .hl{background:linear-gradient(90deg,var(--chrome),var(--accent));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
   .sub{font-size:18px;color:var(--chrome);max-width:560px;margin:0 0 26px}
   .heroctas{display:flex;gap:12px;flex-wrap:wrap}
@@ -83,7 +92,10 @@
   .scr .logo{font-weight:900;letter-spacing:2px;font-size:14px;text-align:center;margin:14px 0 12px}
   .scr .logo .v{color:var(--steel)}
   .scoredial{text-align:center;margin:6px 0 12px}
-  .scoredial .n{font-size:46px;font-weight:900;color:var(--accent2)}
+  .scoredial .n{font-size:46px;font-weight:900;
+    background:linear-gradient(100deg,var(--accent2) 20%,#eafff6 40%,var(--accent) 60%,var(--accent2) 80%);
+    background-size:220% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    animation:shine 4s linear infinite}
   .scoredial .lab{font-size:11px;letter-spacing:2px;color:var(--mut);text-transform:uppercase}
   .bars{display:grid;gap:7px;margin-top:6px}
   .bar{display:grid;grid-template-columns:64px 1fr;gap:8px;align-items:center;font-size:10px;color:var(--steel)}
@@ -121,6 +133,13 @@
   .plan .name{font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--steel);font-size:13px}
   .plan .amt{font-size:40px;font-weight:900;margin:8px 0 2px}
   .plan .amt small{font-size:15px;color:var(--mut);font-weight:600}
+  .plan .was{font-size:19px;color:var(--mut);font-weight:700;text-decoration:line-through;margin-right:8px}
+  .badge{display:inline-block;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:800;
+    letter-spacing:1.4px;text-transform:uppercase;background:linear-gradient(90deg,var(--gold),#f0c96a);
+    color:#2a1e05;margin-bottom:6px}
+  .promonote{color:var(--gold);font-size:13px;font-weight:700;margin:2px 0 8px}
+  .lockline{color:var(--steel);font-size:12.5px;margin-top:10px;line-height:1.5}
+  .lockline b{color:var(--chrome)}
   .plan ul{list-style:none;padding:0;margin:16px 0 22px}
   .plan li{padding:7px 0 7px 26px;position:relative;color:var(--chrome);font-size:14.5px;border-bottom:1px solid #16202e}
   .plan li:last-child{border-bottom:0}
@@ -171,7 +190,7 @@
 </head>
 <body>
 
-  <div class="banner">🚀 <b>Launch offer:</b> Start a <b>free 7-day trial</b> — no card needed. See the market the way a desk does.</div>
+  <div class="banner">🚀 <b>Launch offer — limited time:</b> free <b>7-day trial</b>, then lock in <b>$9.99/mo</b> <span style="opacity:.7;text-decoration:line-through">$25</span>. No card to try it.</div>
 
   <nav><div class="wrap">
     <div class="brand">STAALCALIBUR <span class="v">V13</span></div>
@@ -181,11 +200,12 @@
   <!-- HERO -->
   <header class="hero"><div class="wrap"><div class="grid">
     <div>
-      <span class="pill">Pre-trade intel · Android</span>
+      <span class="pill">STAALWAG · Pre-trade intel · Android</span>
+      <div class="kicker">The trading desk in your pocket.</div>
       <h1>Know the setup <span class="hl">before</span> you risk a cent.</h1>
-      <p class="sub">STAALCALIBUR grades every instrument the way a trading desk does — a single <b>0–100 score</b>, the current <b>market regime</b>, and a hard <b>real-vs-noise</b> check on the edge — then hands you a clean trade plan. On your phone, in seconds.</p>
+      <p class="sub">STAALCALIBUR grades every market the way a professional desk does — one razor <b>0–100 score</b>, the live <b>regime</b>, and a cold <b>real-vs-noise</b> check on the edge — then hands you a clean trade plan. No hunches. No noise. Just the read, in seconds, on your phone.</p>
       <div class="heroctas">
-        <button class="btn green" onclick="openTrial()">Start free 7-day trial</button>
+        <button class="btn green pulse" onclick="openTrial()">Start free 7-day trial →</button>
         <a class="btn ghost" href="#how">See how it works</a>
       </div>
       <div class="truststrip">
@@ -260,8 +280,10 @@
         <div class="fineprint">One trial per person.</div>
       </div>
       <div class="plan hi">
+        <span class="badge" id="promoBadge">⚡ Limited time only</span>
         <div class="name">Full access</div>
-        <div class="amt">$<span id="price">25</span> <small>/ month</small></div>
+        <div class="amt"><span class="was" id="regPrice">$25</span>$<span id="price">9.99</span> <small>/ month</small></div>
+        <div class="promonote" id="promoNote">Launch price — locked in while you stay subscribed.</div>
         <ul>
           <li>Everything in the trial, ongoing</li>
           <li>New instruments &amp; updates as they ship</li>
@@ -272,6 +294,7 @@
           <button class="btn" id="buyCrypto" onclick="buy('crypto')">Pay with crypto</button>
           <button class="btn gold" id="buyCard" onclick="buy('card')">Pay by card</button>
         </div>
+        <div class="lockline" id="lockLine">🔒 <b>Lock in $9.99/mo now.</b> Stay subscribed and it's yours at this rate. Let it lapse and you rejoin at the standard <b>$25/mo</b>.</div>
         <div class="fineprint">Rental — cancel anytime. Secure checkout.</div>
       </div>
     </div>
@@ -337,13 +360,27 @@
   // Pricing/trial numbers come from the licensing catalog (single source of truth:
   // licensing/config.py). If the call fails we keep the sensible defaults in the HTML.
   fetch('/app/pricing').then(r=>r.json()).then(d=>{
-    if(d && d.price){ document.getElementById('price').textContent = d.price; }
-    if(d && d.trial_days){
+    if(!d) return;
+    if(d.price){ document.getElementById('price').textContent = d.price; }
+    if(d.trial_days){
       ['trialDays','trialDays2'].forEach(id=>{var e=document.getElementById(id);if(e)e.textContent=d.trial_days;});
     }
+    // Promo handling: only show the strike-through, badge and lock-in line while
+    // the live price is genuinely below the regular price. Turn the promo off
+    // (config price_solo back to 25) and all of this vanishes on its own.
+    if(d.promo){
+      if(d.price_regular) document.getElementById('regPrice').textContent = '$'+d.price_regular;
+      if(d.promo_note)    document.getElementById('promoNote').textContent = d.promo_note;
+      var ll=document.getElementById('lockLine');
+      if(ll && d.price && d.price_regular){
+        ll.innerHTML='🔒 <b>Lock in $'+d.price+'/mo now.</b> Stay subscribed and it’s yours at this rate. Let it lapse and you rejoin at the standard <b>$'+d.price_regular+'/mo</b>.';
+      }
+    } else {
+      ['promoBadge','regPrice','promoNote','lockLine'].forEach(hide);
+    }
     // hide a pay button whose rail isn't configured yet on the server
-    if(d && d.crypto===false) hide('buyCrypto');
-    if(d && d.card===false)   hide('buyCard');
+    if(d.crypto===false) hide('buyCrypto');
+    if(d.card===false)   hide('buyCard');
   }).catch(()=>{});
   function hide(id){var e=document.getElementById(id);if(e)e.classList.add('hidden');}
 
