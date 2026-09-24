@@ -148,17 +148,26 @@ def _reward_referrer(lic):
     ref = store.get_by_ref_code(code)
     if not ref or ref["license_key"] == lic["license_key"]:
         # Not a customer's referral code -> treat it as an external PARTNER banner
-        # tag. Credit the partner's tally (settled manually via /admin) and mark
-        # this license so it can't double-count. Self-referral codes fall here too
-        # and are harmless (a partner tag never matches a real license key).
+        # tag. Count the conversion, then grant a reward window ONLY if the partner
+        # isn't already inside one -> NO STACKING, no banking (mirrors the customer
+        # free-month rule). Self-referral codes fall here too and are harmless.
         if code and not ref:
-            days = config.PARTNER_REWARD_DAYS
-            pr = store.partner_credit(code, days, contact=lic.get("contact") or "")
+            pr = store.partner_touch(code)
             store.update(lic["license_key"], ref_rewarded=3)
             if pr:
-                notify.admin("PARTNER referral: tag '%s' paid_refs=%d earned=%dd (owes settle=%dd) via %s"
-                             % (code, pr["paid_refs"], pr["days_earned"],
-                                pr["days_earned"] - pr.get("days_settled", 0), lic["license_key"]))
+                now = store.now(); days = config.PARTNER_REWARD_DAYS
+                active_until = pr.get("reward_until") or 0
+                if now < active_until:
+                    when = time.strftime("%Y-%m-%d", time.gmtime(active_until))
+                    notify.admin("PARTNER (no-stack): tag '%s' converted (paid_refs=%d) but "
+                                 "already in a reward window to %s — not extended."
+                                 % (code, pr["paid_refs"], when))
+                else:
+                    store.partner_open_window(code, days)
+                    when = time.strftime("%Y-%m-%d", time.gmtime(now + days * DAY))
+                    notify.admin("PARTNER reward: tag '%s' earned a %d-day window (to %s, no-stack); "
+                                 "paid_refs=%d. Settle via /admin/partner_settle."
+                                 % (code, days, when, pr["paid_refs"]))
         return
     now = store.now()
     days = config.REFERRAL_REWARD_DAYS
@@ -634,47 +643,58 @@ class H(BaseHTTPRequestHandler):
     def _admin_partners(self):
         if not self._admin_ok():
             return self._send(403, {"error": "forbidden"})
+        now = store.now()
         rows = store.partner_list()
         for r in rows:
-            r["days_owed"] = (r.get("days_earned") or 0) - (r.get("days_settled") or 0)
-        self._send(200, {"partners": rows, "reward_days_each": config.PARTNER_REWARD_DAYS})
+            ru = r.get("reward_until") or 0
+            r["reward_active"] = now < ru
+            r["reward_days_left"] = max(0, round((ru - now) / DAY, 1)) if ru else 0
+        self._send(200, {"partners": rows, "reward_days_each": config.PARTNER_REWARD_DAYS,
+                         "policy": "no stacking — one reward window per partner at a time"})
 
     def _admin_partner_settle(self):
-        """Settle a partner's owed reward. Body: {tag, days?, issue_app?, contact?}.
-        Marks `days` (default: all owed) as settled. If issue_app is true and a
-        contact is known, also grants that many App-days to the partner's own
-        license so the payout can be automatic instead of cash."""
+        """Pay out a partner's current reward as App access. Body:
+        {tag, contact?, days?}. NO STACKING: if the partner's App license is
+        already active, its expiry is only pushed out to cover the reward window,
+        never extended on top of existing paid time. Sets/updates the partner's
+        contact so future payouts can target the same license."""
         if not self._admin_ok():
             return self._send(403, {"error": "forbidden"})
         data = json.loads(self._body() or b"{}")
         tag = (data.get("tag") or "").strip()
-        rows = {r["tag"]: r for r in store.partner_list()}
-        p = rows.get(tag)
+        p = store.partner_get(tag)
         if not p:
             return self._send(404, {"error": "unknown partner tag"})
-        owed = (p.get("days_earned") or 0) - (p.get("days_settled") or 0)
-        days = int(data.get("days", owed))
+        contact = (data.get("contact") or p.get("contact") or "").strip()
+        if not contact:
+            return self._send(400, {"error": "no contact on file — pass contact to pay this partner"})
+        days = int(data.get("days", config.PARTNER_REWARD_DAYS))
         if days <= 0:
-            return self._send(400, {"error": "nothing to settle", "days_owed": owed})
-        issued = None
-        if data.get("issue_app"):
-            contact = (data.get("contact") or p.get("contact") or "").strip()
-            if not contact:
-                return self._send(400, {"error": "no contact on file to issue App days to"})
-            key = data.get("license_key") or new_license_key("APP")
+            return self._send(400, {"error": "days must be positive"})
+        # find the partner's own App license by contact, or make one
+        key = data.get("license_key") or ""
+        lic = store.get(key) if key else None
+        if not lic:
+            for l in store.all_active_or_pastdue():
+                if l["product"] == "APP" and (l.get("contact") or "") == contact:
+                    lic, key = l, l["license_key"]; break
+        if not lic:
+            key = new_license_key("APP")
+            store.create(key, "APP", contact, order_id=key, status="pending")
             lic = store.get(key)
-            if not lic:
-                store.create(key, "APP", contact, order_id=key, status="pending")
-                lic = store.get(key)
-            base = max(store.now(), lic.get("paid_until") or 0)
-            store.update(key, status="active", paid_until=base + days * DAY,
-                         revoke_at=None, notified=0, contact=contact)
-            issued = {"license_key": key, "contact": contact, "days": days}
-        store.partner_settle(tag, days)
-        notify.admin("PARTNER settle: '%s' settled %dd%s"
-                     % (tag, days, (" -> App key %s" % issued["license_key"]) if issued else ""))
-        self._send(200, {"ok": True, "tag": tag, "days_settled_now": days,
-                         "issued": issued})
+        now = store.now()
+        target = now + days * DAY
+        # no stacking: cover the window, don't add on top of existing paid time
+        paid_until = max(lic.get("paid_until") or 0, target)
+        store.update(key, status="active", paid_until=paid_until, revoke_at=None,
+                     notified=0, contact=contact)
+        store.partner_set_contact(tag, contact)
+        until = time.strftime("%Y-%m-%d", time.gmtime(paid_until))
+        notify.admin("PARTNER payout: '%s' -> App key %s for %s active to %s (no-stack)"
+                     % (tag, key, contact, until))
+        self._send(200, {"ok": True, "tag": tag, "license_key": key,
+                         "contact": contact, "active_until": paid_until,
+                         "days_granted": days})
 
     def _admin_list(self):
         if not self._admin_ok():

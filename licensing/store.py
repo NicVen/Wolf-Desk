@@ -113,11 +113,15 @@ def _init(c):
             name          TEXT,
             contact       TEXT,
             paid_refs     INTEGER DEFAULT 0,
-            days_earned   INTEGER DEFAULT 0,
-            days_settled  INTEGER DEFAULT 0,
-            last_ref      INTEGER,
-            created       INTEGER
+            reward_until  INTEGER,
+            created       INTEGER,
+            last_ref      INTEGER
         )""")
+    # migration: add reward_until to a partners table created by an earlier build
+    try:
+        c.execute("ALTER TABLE partners ADD COLUMN reward_until INTEGER")
+    except sqlite3.OperationalError:
+        pass  # already exists
     c.commit()
 
 
@@ -154,10 +158,17 @@ def is_ref_code(code):
     return bool(get_by_ref_code(code))
 
 
-def partner_credit(tag, days, name="", contact=""):
-    """Record one paid referral for an external partner banner tag: bump their
-    paid count and days earned. Creates the partner row on first credit.
-    Returns the updated partner dict."""
+def partner_get(tag):
+    with _LOCK:
+        r = _conn().execute("SELECT * FROM partners WHERE tag=?",
+                            ((tag or "").strip()[:40],)).fetchone()
+        return dict(r) if r else None
+
+
+def partner_touch(tag, name="", contact=""):
+    """Record one paid referral for an external partner banner tag: bump the
+    conversion counter and stamp it. Does NOT grant a reward window — that is
+    gated separately so rewards never stack. Returns the partner dict."""
     tag = (tag or "").strip()[:40]
     if not tag:
         return None
@@ -166,16 +177,34 @@ def partner_credit(tag, days, name="", contact=""):
         c = _conn()
         row = c.execute("SELECT * FROM partners WHERE tag=?", (tag,)).fetchone()
         if row:
-            c.execute("UPDATE partners SET paid_refs=paid_refs+1, days_earned=days_earned+?, "
-                      "last_ref=?, name=COALESCE(NULLIF(?,''),name), "
+            c.execute("UPDATE partners SET paid_refs=paid_refs+1, last_ref=?, "
+                      "name=COALESCE(NULLIF(?,''),name), "
                       "contact=COALESCE(NULLIF(?,''),contact) WHERE tag=?",
-                      (int(days), t, name, contact, tag))
+                      (t, name, contact, tag))
         else:
-            c.execute("INSERT INTO partners (tag,name,contact,paid_refs,days_earned,"
-                      "days_settled,last_ref,created) VALUES (?,?,?,?,?,0,?,?)",
-                      (tag, name, contact, 1, int(days), t, t))
+            c.execute("INSERT INTO partners (tag,name,contact,paid_refs,reward_until,"
+                      "created,last_ref) VALUES (?,?,?,1,0,?,?)",
+                      (tag, name, contact, t, t))
         c.commit()
         return dict(c.execute("SELECT * FROM partners WHERE tag=?", (tag,)).fetchone())
+
+
+def partner_open_window(tag, days):
+    """Open a fresh no-stack reward window for the partner: reward_until = now +
+    days. Callers must check the partner is NOT already inside a window first."""
+    with _LOCK:
+        c = _conn()
+        c.execute("UPDATE partners SET reward_until=? WHERE tag=?",
+                  (now() + int(days) * 86400, (tag or "").strip()[:40]))
+        c.commit()
+
+
+def partner_set_contact(tag, contact):
+    with _LOCK:
+        c = _conn()
+        c.execute("UPDATE partners SET contact=? WHERE tag=?",
+                  (contact, (tag or "").strip()[:40]))
+        c.commit()
 
 
 def partner_list():
@@ -183,15 +212,6 @@ def partner_list():
         rows = _conn().execute(
             "SELECT * FROM partners ORDER BY paid_refs DESC, last_ref DESC").fetchall()
         return [dict(r) for r in rows]
-
-
-def partner_settle(tag, days):
-    """Mark `days` of a partner's earned reward as settled (paid out)."""
-    with _LOCK:
-        c = _conn()
-        c.execute("UPDATE partners SET days_settled=days_settled+? WHERE tag=?",
-                  (int(days), (tag or "").strip()[:40]))
-        c.commit()
 
 
 def trial_used(contact, product):
