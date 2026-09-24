@@ -37,6 +37,24 @@ def card_enabled():
     """True once a card provider is configured (keys present in the env)."""
     return bool(STRIPE_SECRET_KEY)
 
+
+# --- PayPal — inert until these are set ---
+# Create a REST app at developer.paypal.com -> Apps & Credentials (Live), copy the
+# Client ID + Secret into the service env, then add a webhook at that same page
+# pointing to <PUBLIC_BASE_URL>/paypal_ipn (event: PAYMENT.CAPTURE.COMPLETED) and
+# copy its Webhook ID:
+#   PAYPAL_CLIENT_ID=...    PAYPAL_SECRET=...    PAYPAL_WEBHOOK_ID=...
+# Use the live API by default; set PAYPAL_API to the sandbox host while testing.
+PAYPAL_API = os.environ.get("PAYPAL_API", "https://api-m.paypal.com").rstrip("/")
+PAYPAL_CLIENT_ID = os.environ.get("PAYPAL_CLIENT_ID", "")
+PAYPAL_SECRET = os.environ.get("PAYPAL_SECRET", "")
+PAYPAL_WEBHOOK_ID = os.environ.get("PAYPAL_WEBHOOK_ID", "")
+
+
+def paypal_enabled():
+    """True once PayPal is configured (client id + secret present)."""
+    return bool(PAYPAL_CLIENT_ID and PAYPAL_SECRET)
+
 # --- this service's public base (for IPN callback + return links) ---
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "https://pay.178.104.88.38.sslip.io").rstrip("/")
 

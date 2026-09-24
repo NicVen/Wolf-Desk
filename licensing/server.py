@@ -23,7 +23,7 @@ import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from . import cardpay, config, moderation, nowpayments, notify, quiz, store, tokens
+from . import cardpay, config, moderation, nowpayments, notify, paypal, quiz, store, tokens
 
 
 def _today():
@@ -109,6 +109,8 @@ def start_checkout(product_code, contact, method="crypto", ref=""):
     desc = "%s — %d days" % (p["name"], p["period_days"])
     if method == "card":
         url, ref = cardpay.create_checkout(price, order_id=key, description=desc)
+    elif method == "paypal":
+        url, ref = paypal.create_checkout(price, order_id=key, description=desc)
     else:
         url, ref = nowpayments.create_invoice(price, order_id=key, order_description=desc)
     if not url:
@@ -394,6 +396,8 @@ class H(BaseHTTPRequestHandler):
             self._pricing()
         elif u.path == "/buy":
             self._buy_page(one("product"))
+        elif u.path == "/paypal_return":
+            self._paypal_return(one("token"))
         elif u.path == "/thanks":
             self._send(200, "<h2>Thank you — your activation key is on its way.</h2>", "text/html")
         elif u.path == "/cancelled":
@@ -411,6 +415,8 @@ class H(BaseHTTPRequestHandler):
             self._ipn()
         elif u.path == "/card_ipn":
             self._card_ipn()
+        elif u.path == "/paypal_ipn":
+            self._paypal_ipn()
         elif u.path == "/checkout":
             self._checkout()
         elif u.path == "/trial":
@@ -529,6 +535,42 @@ class H(BaseHTTPRequestHandler):
                 apply_payment(order_id, payment_id)
         self._send(200, {"ok": True})
 
+    def _paypal_return(self, paypal_order_id):
+        """Buyer came back from PayPal — capture the order and activate."""
+        if not paypal_order_id:
+            return self._send(400, "<h2>Missing PayPal order.</h2>", "text/html")
+        our_id, ok, err = paypal.capture_order(paypal_order_id)
+        if ok and our_id:
+            if not store.payment_seen(paypal_order_id):
+                apply_payment(our_id, paypal_order_id)
+            return self._send(200, "<h2>Thank you — your activation key is on its way.</h2>",
+                              "text/html")
+        notify.admin("paypal capture not completed for %s: %s" % (paypal_order_id, err or ok))
+        self._send(200, "<h2>Payment not completed. If you were charged, contact support.</h2>",
+                   "text/html")
+
+    def _paypal_ipn(self):
+        raw = self._body()
+        if not paypal.verify_webhook(self.headers, raw):
+            return self._send(401, {"error": "bad signature"})
+        try:
+            d = json.loads(raw)
+        except Exception:  # noqa: BLE001
+            return self._send(400, {"error": "bad json"})
+        if (d.get("event_type") or "") == "PAYMENT.CAPTURE.COMPLETED":
+            res = d.get("resource") or {}
+            order_id = res.get("custom_id") or ""
+            payment_id = str(res.get("id") or "")
+            if not order_id:
+                # fall back to the order's supplementary data if custom_id is absent
+                sd = (res.get("supplementary_data") or {}).get("related_ids") or {}
+                order_id = sd.get("order_id") or ""
+            if payment_id and store.payment_seen(payment_id):
+                return self._send(200, {"ok": True, "dup": True})
+            if order_id:
+                apply_payment(order_id, payment_id)
+        self._send(200, {"ok": True})
+
     def _checkout(self):
         ct = self.headers.get("Content-Type", "")
         raw = self._body()
@@ -549,6 +591,7 @@ class H(BaseHTTPRequestHandler):
         p = config.product("APP") or {}
         crypto_on = bool(getattr(config, "NOWPAYMENTS_API_KEY", ""))
         card_on = config.card_enabled()
+        paypal_on = config.paypal_enabled()
         price = p.get("price_solo", 25)
         regular = p.get("price_regular", price)
         promo = regular > price          # only a promo while live price is below the "was" price
@@ -563,6 +606,7 @@ class H(BaseHTTPRequestHandler):
             "trial_days": config.APP_TRIAL_DAYS,
             "crypto": crypto_on,
             "card": card_on,
+            "paypal": paypal_on,
         })
 
     def _trial(self):

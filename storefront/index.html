@@ -293,6 +293,7 @@
         <div class="payrow">
           <button class="btn" id="buyCrypto" onclick="buy('crypto')">Pay with crypto</button>
           <button class="btn gold" id="buyCard" onclick="buy('card')">Pay by card</button>
+          <button class="btn hidden" id="buyPaypal" onclick="buy('paypal')" style="background:#0070ba;color:#fff">Pay with PayPal</button>
         </div>
         <div class="lockline" id="lockLine">🔒 <b>Lock in $9.99/mo now.</b> Stay subscribed and it's yours at this rate. Let it lapse and you rejoin at the standard <b>$25/mo</b>.</div>
         <div class="fineprint">Rental — cancel anytime. Secure checkout.</div>
@@ -391,6 +392,7 @@
     // hide a pay button whose rail isn't configured yet on the server
     if(d.crypto===false) hide('buyCrypto');
     if(d.card===false)   hide('buyCard');
+    if(d.paypal){ var pp=document.getElementById('buyPaypal'); if(pp) pp.classList.remove('hidden'); }
   }).catch(()=>{});
   function hide(id){var e=document.getElementById(id);if(e)e.classList.add('hidden');}
 
