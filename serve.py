@@ -502,12 +502,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
             except Exception:
                 self._send(400, json.dumps({"error": "bad request"})); return
             if path == "/app/trial":
-                res, err = _lic_post("/trial", {"contact": payload.get("contact", "")})
+                res, err = _lic_post("/trial", {"contact": payload.get("contact", ""),
+                                                "ref": payload.get("ref", "")})
             else:
                 res, err = _lic_post("/checkout", {
                     "product": "APP",
                     "method": (payload.get("method") or "crypto"),
                     "contact": payload.get("contact", ""),
+                    "ref": payload.get("ref", ""),
                 })
             if res is None:
                 self._send(502, json.dumps({"error": "licensing unavailable", "detail": err}))

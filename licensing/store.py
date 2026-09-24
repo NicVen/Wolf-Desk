@@ -107,6 +107,17 @@ def _init(c):
             PRIMARY KEY (qid, opt)
         )""")
     c.execute("CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)")
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS partners (
+            tag           TEXT PRIMARY KEY,
+            name          TEXT,
+            contact       TEXT,
+            paid_refs     INTEGER DEFAULT 0,
+            days_earned   INTEGER DEFAULT 0,
+            days_settled  INTEGER DEFAULT 0,
+            last_ref      INTEGER,
+            created       INTEGER
+        )""")
     c.commit()
 
 
@@ -135,6 +146,52 @@ def get_by_order(order_id):
     with _LOCK:
         r = _conn().execute("SELECT * FROM licenses WHERE order_id=?", (order_id,)).fetchone()
         return dict(r) if r else None
+
+
+def is_ref_code(code):
+    """True if `code` belongs to a customer license (a customer referral),
+    as opposed to an external partner banner tag."""
+    return bool(get_by_ref_code(code))
+
+
+def partner_credit(tag, days, name="", contact=""):
+    """Record one paid referral for an external partner banner tag: bump their
+    paid count and days earned. Creates the partner row on first credit.
+    Returns the updated partner dict."""
+    tag = (tag or "").strip()[:40]
+    if not tag:
+        return None
+    t = now()
+    with _LOCK:
+        c = _conn()
+        row = c.execute("SELECT * FROM partners WHERE tag=?", (tag,)).fetchone()
+        if row:
+            c.execute("UPDATE partners SET paid_refs=paid_refs+1, days_earned=days_earned+?, "
+                      "last_ref=?, name=COALESCE(NULLIF(?,''),name), "
+                      "contact=COALESCE(NULLIF(?,''),contact) WHERE tag=?",
+                      (int(days), t, name, contact, tag))
+        else:
+            c.execute("INSERT INTO partners (tag,name,contact,paid_refs,days_earned,"
+                      "days_settled,last_ref,created) VALUES (?,?,?,?,?,0,?,?)",
+                      (tag, name, contact, 1, int(days), t, t))
+        c.commit()
+        return dict(c.execute("SELECT * FROM partners WHERE tag=?", (tag,)).fetchone())
+
+
+def partner_list():
+    with _LOCK:
+        rows = _conn().execute(
+            "SELECT * FROM partners ORDER BY paid_refs DESC, last_ref DESC").fetchall()
+        return [dict(r) for r in rows]
+
+
+def partner_settle(tag, days):
+    """Mark `days` of a partner's earned reward as settled (paid out)."""
+    with _LOCK:
+        c = _conn()
+        c.execute("UPDATE partners SET days_settled=days_settled+? WHERE tag=?",
+                  (int(days), (tag or "").strip()[:40]))
+        c.commit()
 
 
 def trial_used(contact, product):

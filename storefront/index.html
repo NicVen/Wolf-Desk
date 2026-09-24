@@ -357,6 +357,16 @@
 <script>
   document.getElementById('yr').textContent = new Date().getFullYear();
 
+  // Partner attribution: capture ?ref=TAG on landing and remember it, so a paid
+  // signup — even after a trial or a return visit — credits the partner who sent them.
+  var REF = "";
+  try {
+    var u = new URLSearchParams(location.search);
+    var r = (u.get('ref') || '').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,40);
+    if (r) { REF = r; localStorage.setItem('stw_ref', r); }
+    else { REF = localStorage.getItem('stw_ref') || ''; }
+  } catch(e) { REF = ""; }
+
   // Pricing/trial numbers come from the licensing catalog (single source of truth:
   // licensing/config.py). If the call fails we keep the sensible defaults in the HTML.
   fetch('/app/pricing').then(r=>r.json()).then(d=>{
@@ -396,7 +406,7 @@
     var contact=(document.getElementById('contact').value||'').trim();
     if(contact.length<3){ msg('Enter an email or Telegram ID first.','err'); return; }
     var btn=document.getElementById('trialBtn'); btn.disabled=true; msg('Issuing your key…');
-    fetch('/app/trial',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contact:contact})})
+    fetch('/app/trial',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contact:contact,ref:REF})})
       .then(r=>r.json())
       .then(d=>{
         btn.disabled=false;
@@ -425,7 +435,7 @@
     btn.disabled=true; btn.textContent='Opening checkout…';
     var contact=prompt('Email or Telegram ID for your receipt & key:')||'';
     if(!contact.trim()){ btn.disabled=false; btn.textContent=old; return; }
-    fetch('/app/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({method:method,contact:contact.trim()})})
+    fetch('/app/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({method:method,contact:contact.trim(),ref:REF})})
       .then(r=>r.json())
       .then(d=>{
         if(d.invoice_url){ location.href=d.invoice_url; }

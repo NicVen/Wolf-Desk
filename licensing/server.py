@@ -147,6 +147,18 @@ def _reward_referrer(lic):
         return
     ref = store.get_by_ref_code(code)
     if not ref or ref["license_key"] == lic["license_key"]:
+        # Not a customer's referral code -> treat it as an external PARTNER banner
+        # tag. Credit the partner's tally (settled manually via /admin) and mark
+        # this license so it can't double-count. Self-referral codes fall here too
+        # and are harmless (a partner tag never matches a real license key).
+        if code and not ref:
+            days = config.PARTNER_REWARD_DAYS
+            pr = store.partner_credit(code, days, contact=lic.get("contact") or "")
+            store.update(lic["license_key"], ref_rewarded=3)
+            if pr:
+                notify.admin("PARTNER referral: tag '%s' paid_refs=%d earned=%dd (owes settle=%dd) via %s"
+                             % (code, pr["paid_refs"], pr["days_earned"],
+                                pr["days_earned"] - pr.get("days_settled", 0), lic["license_key"]))
         return
     now = store.now()
     days = config.REFERRAL_REWARD_DAYS
@@ -363,6 +375,8 @@ class H(BaseHTTPRequestHandler):
             self._admin_quiz_stats()
         elif u.path == "/admin/health":
             self._admin_health()
+        elif u.path == "/admin/partners":
+            self._admin_partners()
         elif u.path == "/admin/daily_plan":
             self._admin_daily_plan()
         elif u.path in ("/admin", "/admin/"):
@@ -394,6 +408,8 @@ class H(BaseHTTPRequestHandler):
             self._trial()
         elif u.path == "/admin/issue":
             self._admin_issue()
+        elif u.path == "/admin/partner_settle":
+            self._admin_partner_settle()
         elif u.path == "/admin/revoke":
             self._admin_revoke()
         elif u.path == "/admin/extend":
@@ -556,10 +572,13 @@ class H(BaseHTTPRequestHandler):
             return self._send(400, {"error": "contact_required"})
         if store.trial_used(contact, "APP"):
             return self._send(200, {"error": "trial_used"})
+        ref = "".join(ch for ch in (data.get("ref") or "") if ch.isalnum() or ch in "-_")[:40]
         key = new_license_key("APP")
         store.create(key, "APP", contact, order_id=key, status="pending")
         store.update(key, status="active", paid_until=store.now() + days * DAY,
                      revoke_at=None, notified=0, trial=1)
+        if ref:
+            store.update(key, referred_by=ref)   # remembered if the trial later converts
         row = store.get(key)
         try:
             notify.admin("New APP trial: %s (%d days)" % (contact, days))
@@ -611,6 +630,51 @@ class H(BaseHTTPRequestHandler):
         self._send(200, {"license_key": key, "status": "active",
                          "paid_until": row["paid_until"],
                          "admin": bool(row.get("admin")), "no_bind": bool(row.get("no_bind"))})
+
+    def _admin_partners(self):
+        if not self._admin_ok():
+            return self._send(403, {"error": "forbidden"})
+        rows = store.partner_list()
+        for r in rows:
+            r["days_owed"] = (r.get("days_earned") or 0) - (r.get("days_settled") or 0)
+        self._send(200, {"partners": rows, "reward_days_each": config.PARTNER_REWARD_DAYS})
+
+    def _admin_partner_settle(self):
+        """Settle a partner's owed reward. Body: {tag, days?, issue_app?, contact?}.
+        Marks `days` (default: all owed) as settled. If issue_app is true and a
+        contact is known, also grants that many App-days to the partner's own
+        license so the payout can be automatic instead of cash."""
+        if not self._admin_ok():
+            return self._send(403, {"error": "forbidden"})
+        data = json.loads(self._body() or b"{}")
+        tag = (data.get("tag") or "").strip()
+        rows = {r["tag"]: r for r in store.partner_list()}
+        p = rows.get(tag)
+        if not p:
+            return self._send(404, {"error": "unknown partner tag"})
+        owed = (p.get("days_earned") or 0) - (p.get("days_settled") or 0)
+        days = int(data.get("days", owed))
+        if days <= 0:
+            return self._send(400, {"error": "nothing to settle", "days_owed": owed})
+        issued = None
+        if data.get("issue_app"):
+            contact = (data.get("contact") or p.get("contact") or "").strip()
+            if not contact:
+                return self._send(400, {"error": "no contact on file to issue App days to"})
+            key = data.get("license_key") or new_license_key("APP")
+            lic = store.get(key)
+            if not lic:
+                store.create(key, "APP", contact, order_id=key, status="pending")
+                lic = store.get(key)
+            base = max(store.now(), lic.get("paid_until") or 0)
+            store.update(key, status="active", paid_until=base + days * DAY,
+                         revoke_at=None, notified=0, contact=contact)
+            issued = {"license_key": key, "contact": contact, "days": days}
+        store.partner_settle(tag, days)
+        notify.admin("PARTNER settle: '%s' settled %dd%s"
+                     % (tag, days, (" -> App key %s" % issued["license_key"]) if issued else ""))
+        self._send(200, {"ok": True, "tag": tag, "days_settled_now": days,
+                         "issued": issued})
 
     def _admin_list(self):
         if not self._admin_ok():

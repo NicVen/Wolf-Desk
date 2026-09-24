@@ -46,6 +46,7 @@ GRACE_HOURS = _int("GRACE_HOURS", 4)        # access removed this long after a l
 APP_TRIAL_DAYS = _int("APP_TRIAL_DAYS", 7)  # free STAALCALIBUR App trial length (0 = trials off)
 APP_PROMO_NOTE = os.environ.get("APP_PROMO_NOTE", "Launch price — limited time only")  # shown on the storefront while the App promo price is live
 REFERRAL_REWARD_DAYS = _int("REFERRAL_REWARD_DAYS", 30)  # free days a referrer earns per paid referral
+PARTNER_REWARD_DAYS = _int("PARTNER_REWARD_DAYS", 30)    # reward (in App-days) an external banner partner earns per paid referral
 SITE_URL = os.environ.get("SITE_URL", "https://staalwag.com").rstrip("/")
 
 # --- Trader Quiz monthly winner (auto-announced on the 1st) ---
