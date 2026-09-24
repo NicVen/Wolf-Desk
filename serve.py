@@ -678,7 +678,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # Public advertising page + paid/trial download gate. Self-contained in
         # the storefront/ folder; talks to the licensing service via the proxy
         # routes below. Nothing here changes the existing app/site/desk behaviour.
-        if path in ("/store", "/store/", "/get-app", "/getapp"):
+        if path.rstrip("/.") in ("/store", "/get-app", "/getapp"):
+            # tolerate trailing "/" or "." (browsers/autocomplete sometimes append one)
             self._send(200, _read(os.path.join("storefront", "index.html"),
                                   b"<h2>Storefront coming soon.</h2>"),
                        "text/html; charset=utf-8"); return
