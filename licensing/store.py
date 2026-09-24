@@ -55,7 +55,8 @@ def _init(c):
                      ("referred_by", "TEXT"),
                      ("ref_rewarded", "INTEGER DEFAULT 0"),
                      ("ref_reward_until", "INTEGER"),
-                     ("anon_id", "TEXT")):
+                     ("anon_id", "TEXT"),
+                     ("trial", "INTEGER DEFAULT 0")):
         try:
             c.execute("ALTER TABLE licenses ADD COLUMN %s %s" % (col, ddl))
         except sqlite3.OperationalError:
@@ -134,6 +135,18 @@ def get_by_order(order_id):
     with _LOCK:
         r = _conn().execute("SELECT * FROM licenses WHERE order_id=?", (order_id,)).fetchone()
         return dict(r) if r else None
+
+
+def trial_used(contact, product):
+    """True if this contact already claimed a free trial for this product.
+    Keeps the public trial endpoint from being farmed for endless free keys."""
+    if not contact:
+        return False
+    with _LOCK:
+        r = _conn().execute(
+            "SELECT 1 FROM licenses WHERE contact=? AND product=? AND trial=1 LIMIT 1",
+            (contact, product.upper())).fetchone()
+        return bool(r)
 
 
 def update(license_key, **fields):

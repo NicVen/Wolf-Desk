@@ -43,6 +43,7 @@ PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "https://pay.178.104.88.38.s
 # --- licensing behaviour ---
 SIGNING_SECRET = os.environ.get("LICENSE_SIGNING_SECRET", "")   # signs rolling tokens
 GRACE_HOURS = _int("GRACE_HOURS", 4)        # access removed this long after a lapse
+APP_TRIAL_DAYS = _int("APP_TRIAL_DAYS", 7)  # free STAALCALIBUR App trial length (0 = trials off)
 REFERRAL_REWARD_DAYS = _int("REFERRAL_REWARD_DAYS", 30)  # free days a referrer earns per paid referral
 SITE_URL = os.environ.get("SITE_URL", "https://staalwag.com").rstrip("/")
 

@@ -25,7 +25,7 @@ Routes:
   /news?name=Gold   live headlines on demand
 """
 import http.server, socketserver, json, os, sys, io, contextlib, threading, time
-import hashlib, hmac, base64, urllib.parse, urllib.request
+import hashlib, hmac, base64, urllib.parse, urllib.request, urllib.error
 from urllib.parse import urlparse, parse_qs, urlencode
 
 try:
@@ -404,6 +404,39 @@ def _app_license_ok(key, dev):
     return ok
 
 
+# --- Storefront proxy: same-origin bridge to the licensing service ------------
+# The public sales page (storefront/) calls these so the browser never talks to
+# the licensing box directly (no CORS, no exposed internal URL). Purely additive:
+# none of the existing app/site/desk routes are touched.
+def _lic_base():
+    return os.environ.get("LICENSING_URL", "http://127.0.0.1:8790")
+
+def _lic_get(path, timeout=6):
+    """GET the licensing service; return (dict, error_str)."""
+    try:
+        with urllib.request.urlopen(_lic_base() + path, timeout=timeout) as r:
+            return json.loads(r.read().decode()), None
+    except Exception as e:
+        return None, str(e)
+
+def _lic_post(path, payload, timeout=12):
+    """POST JSON to the licensing service; return (dict, error_str)."""
+    try:
+        body = json.dumps(payload or {}).encode("utf-8")
+        req = urllib.request.Request(_lic_base() + path, data=body,
+                                     headers={"Content-Type": "application/json"},
+                                     method="POST")
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read().decode()), None
+    except urllib.error.HTTPError as e:
+        try:
+            return json.loads(e.read().decode()), None   # forward the service's error JSON
+        except Exception:
+            return None, "http %s" % e.code
+    except Exception as e:
+        return None, str(e)
+
+
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *a): pass
 
@@ -458,6 +491,30 @@ class Handler(http.server.BaseHTTPRequestHandler):
             except Exception as e:
                 self._send(400, json.dumps({"error": str(e)}))
             return
+
+        # ---- STOREFRONT proxy (same-origin bridge to licensing) --------------
+        if path in ("/app/trial", "/app/checkout"):
+            try:
+                ln = int(self.headers.get("Content-Length", "0") or "0")
+                payload = json.loads(self.rfile.read(ln).decode("utf-8")) if ln > 0 else {}
+                if not isinstance(payload, dict):
+                    raise ValueError("bad body")
+            except Exception:
+                self._send(400, json.dumps({"error": "bad request"})); return
+            if path == "/app/trial":
+                res, err = _lic_post("/trial", {"contact": payload.get("contact", "")})
+            else:
+                res, err = _lic_post("/checkout", {
+                    "product": "APP",
+                    "method": (payload.get("method") or "crypto"),
+                    "contact": payload.get("contact", ""),
+                })
+            if res is None:
+                self._send(502, json.dumps({"error": "licensing unavailable", "detail": err}))
+            else:
+                self._send(200, json.dumps(res))
+            return
+
         self._send(404, b'{"error":"not found"}')
 
     def do_GET(self):
@@ -616,6 +673,44 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if host.startswith("app.") and path in ("/", "/index.html"):
             self._send(200, _read(os.path.join("dashboard", "scapp.html")),
                        "text/html; charset=utf-8"); return
+
+        # ---- STOREFRONT (isolated sales funnel; reachable on any host) --------
+        # Public advertising page + paid/trial download gate. Self-contained in
+        # the storefront/ folder; talks to the licensing service via the proxy
+        # routes below. Nothing here changes the existing app/site/desk behaviour.
+        if path in ("/store", "/store/", "/get-app", "/getapp"):
+            self._send(200, _read(os.path.join("storefront", "index.html"),
+                                  b"<h2>Storefront coming soon.</h2>"),
+                       "text/html; charset=utf-8"); return
+        if path.startswith("/store/"):
+            # static assets that live beside the sales page (images, etc.)
+            rel = path[len("/store/"):].split("?")[0].strip("/")
+            if rel and ".." not in rel:
+                fp = os.path.join("storefront", *rel.split("/"))
+                if os.path.isfile(fp):
+                    ext = os.path.splitext(rel)[1].lower()
+                    ct = {".png":"image/png",".jpg":"image/jpeg",".jpeg":"image/jpeg",
+                          ".webp":"image/webp",".svg":"image/svg+xml",".css":"text/css",
+                          ".js":"application/javascript",".ico":"image/x-icon",
+                          ".json":"application/json"}.get(ext, "application/octet-stream")
+                    self._send(200, _read(fp, b""), ct); return
+            self._send(404, b"not found", "text/plain"); return
+        if path == "/app/pricing":
+            # Price + trial length + which pay rails are live (single source of
+            # truth: licensing/config.py). Falls back to sane defaults offline.
+            data, _err = _lic_get("/pricing")
+            if not data:
+                data = {"price": 25, "trial_days": 7, "crypto": True, "card": False}
+            self._send(200, json.dumps(data)); return
+        if path == "/app/get":
+            # Gated download: only a valid license (trial OR paid) gets the APK.
+            key = q.get("key", [""])[0]; dev = q.get("dev", ["app"])[0]
+            if not _app_license_ok(key, dev):
+                self._send(403, b"Your key isn't active. Start a free trial or buy at /store", "text/plain"); return
+            apk = _read(os.path.join("dashboard", "staalcalibur.apk"), b"")
+            if not apk:
+                self._send(404, "APK not published yet.", "text/plain"); return
+            self._send(200, apk, "application/vnd.android.package-archive"); return
 
         # WOLF desk intel — free for all to view. VIP-only items are locked on the
         # page itself, not by gating these read endpoints.

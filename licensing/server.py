@@ -367,6 +367,8 @@ class H(BaseHTTPRequestHandler):
             self._admin_daily_plan()
         elif u.path in ("/admin", "/admin/"):
             self._admin_page()
+        elif u.path == "/pricing":
+            self._pricing()
         elif u.path == "/buy":
             self._buy_page(one("product"))
         elif u.path == "/thanks":
@@ -388,6 +390,8 @@ class H(BaseHTTPRequestHandler):
             self._card_ipn()
         elif u.path == "/checkout":
             self._checkout()
+        elif u.path == "/trial":
+            self._trial()
         elif u.path == "/admin/issue":
             self._admin_issue()
         elif u.path == "/admin/revoke":
@@ -513,6 +517,51 @@ class H(BaseHTTPRequestHandler):
         if err:
             return self._send(400, {"error": err})
         self._send(200, res)
+
+    def _pricing(self):
+        """Public: what the storefront needs to render the offer. No secrets —
+        just the App price, trial length, and which pay rails are live."""
+        p = config.product("APP") or {}
+        crypto_on = bool(getattr(config, "NOWPAYMENTS_API_KEY", ""))
+        card_on = config.card_enabled()
+        self._send(200, {
+            "product": "APP",
+            "name": p.get("name", "STAALCALIBUR App"),
+            "price": p.get("price_solo", 25),
+            "period_days": p.get("period_days", 30),
+            "trial_days": config.APP_TRIAL_DAYS,
+            "crypto": crypto_on,
+            "card": card_on,
+        })
+
+    def _trial(self):
+        """Public: issue a free App trial key. One per contact; length from
+        config.APP_TRIAL_DAYS. Abuse-guarded, no payment, no card."""
+        days = config.APP_TRIAL_DAYS
+        if days <= 0:
+            return self._send(403, {"error": "trials_off"})
+        raw = self._body()
+        try:
+            data = json.loads(raw or b"{}")
+        except Exception:  # noqa: BLE001
+            data = {}
+        contact = (data.get("contact") or "").strip()[:120]
+        if len(contact) < 3:
+            return self._send(400, {"error": "contact_required"})
+        if store.trial_used(contact, "APP"):
+            return self._send(200, {"error": "trial_used"})
+        key = new_license_key("APP")
+        store.create(key, "APP", contact, order_id=key, status="pending")
+        store.update(key, status="active", paid_until=store.now() + days * DAY,
+                     revoke_at=None, notified=0, trial=1)
+        row = store.get(key)
+        try:
+            notify.admin("New APP trial: %s (%d days)" % (contact, days))
+        except Exception:  # noqa: BLE001
+            pass
+        self._send(200, {"license_key": key, "status": "active",
+                         "paid_until": row["paid_until"], "trial": True,
+                         "trial_days": days})
 
     def _reflink(self, key):
         """Return the caller's personal referral link + stats. Any known,
