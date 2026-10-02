@@ -121,7 +121,7 @@ PRODUCTS = {
     # price shown struck-through. To END the promo: set price_solo/price_vip back
     # to 25 (the storefront then drops the strike-through + "limited time" badge
     # automatically). price_regular is display-only; it is never charged.
-    "APP":       {"name": "STAALCALIBUR App", "price_solo": 9.99, "price_vip": 9.99, "price_regular": 25, "period_days": 30, "type": "app", "vip": False},
+    "APP":       {"name": "STAALCALIBUR App", "price_solo": 14.99, "price_vip": 14.99, "price_regular": 25, "period_days": 30, "type": "app", "vip": False},
     # --- VIP membership: $40/mo. Unlocks every vip=True product ---
     "VIP":       {"name": "VIP Membership", "price_solo": 40, "price_vip": 40, "period_days": 30, "type": "bundle", "vip": False},
 }

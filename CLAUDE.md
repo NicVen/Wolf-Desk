@@ -62,7 +62,7 @@ information out of Claude has been painful. Fix that by how you communicate.
   (the "daemon" window — fires plans every 4h + auto-publishes) and Paperclip
   (`npm exec paperclipai run`, hosts the DB on :54329). Yahoo prices work on the
   PC, are BLOCKED from Claude's cloud container.
-- **The store:** `staalwag.com/store` — free 7-day trial → $9.99/mo (launch promo,
+- **The store:** `staalwag.com/store` — free 7-day trial → $14.99/mo (launch promo,
   reg $25). Crypto pay live; card off until Stripe keys added. Partner banner kit
   at `/store/banners.html`. Partner rewards = no stacking (one window at a time).
 
