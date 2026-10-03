@@ -418,7 +418,11 @@ function showGate(msg){
     '<input id="keyIn" placeholder="Enter your activation key" value="'+esc(K())+'" autocapitalize="characters" autocomplete="off">'+
     '<div class="err" id="gErr">'+(msg?esc(msg):"")+'</div>'+
     '<button class="btn" onclick="unlock()">Unlock</button>'+
-    '<a class="btn ghost" href="'+PAY+'/buy?product=APP" target="_blank" rel="noopener">Get the app — $25/mo</a>'+
+    // Google Play bans in-app links to outside payment, so hide the "get the app"
+    // link when running as the installed app (standalone). Web visitors still see it.
+    (((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone)
+       ? ''
+       : '<a class="btn ghost" href="https://staalwag.com/store" target="_blank" rel="noopener">Need a key? Get the app →</a>')+
     '<div class="muted">Rental only. Your key is remembered on this device. Decision-support &amp; education only — not financial advice.</div>'+
     '</div>';
 }
