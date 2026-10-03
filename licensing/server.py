@@ -13,6 +13,7 @@ Run:  python -m licensing.server     (BIND_ADDR/PORT from env; sits behind Caddy
 """
 import calendar
 import datetime
+import hmac
 import json
 import os
 import re
@@ -363,7 +364,7 @@ def send_weekly_digest(include_ideas):
     """The ONE message the owner gets each week (Monday). Bugs every week; the
     top-voted ideas only in the week of a 2-weekly update."""
     bugs = store.open_bugs()
-    lines = ["📋 STAALCALIBUR weekly — forward this to your developer to get it built."]
+    lines = ["📋 STAALCALIBUR weekly"]
     if bugs:
         lines.append("\n🐞 Fix this week (%d bug report%s):" % (len(bugs), "" if len(bugs) == 1 else "s"))
         lines += ["• %s" % b["text"][:160] for b in bugs[:15]]
@@ -376,8 +377,26 @@ def send_weekly_digest(include_ideas):
         if big:
             lines.append("\n🏗 Big ideas for %s:" % _fmt_day(next_big_release()))
             lines += _idea_lines(big)
-    lines.append("\nNothing to do yourself. Hide anything odd in HQ → App.")
-    notify.admin("\n".join(lines))
+    if config.DIGEST_TOKEN:
+        lines.append("\n🔧 Being built now. You'll get a ✅ Approve button here when it's ready.")
+    else:
+        lines.append("\nForward this to your developer to get it built.")
+    notify.updates("\n".join(lines))
+
+
+def digest_data(today=None):
+    """What the automated Monday build works from (GET /digest)."""
+    today = today or datetime.datetime.utcnow().date()
+    release_week = (next_release(today) - today).days <= 6
+    return {
+        "date": today.isoformat(),
+        "release_week": release_week,
+        "next_update": next_release(today).isoformat(),
+        "next_big_update": next_big_release(today).isoformat(),
+        "bugs": [{"id": b["id"], "text": b["text"]} for b in store.open_bugs()],
+        "ideas": store.top_ideas("small", 5) if release_week else [],
+        "big_ideas": store.top_ideas("big", 3),
+    }
 
 
 def run_digests(now_dt=None):
@@ -491,6 +510,8 @@ class H(BaseHTTPRequestHandler):
             self._ideas(one("key"))
         elif u.path == "/notices":
             self._notices(one("key"))
+        elif u.path == "/digest":
+            self._digest(one("token"))
         elif u.path == "/admin/list":
             self._admin_list()
         elif u.path == "/admin/app_stats":
@@ -554,6 +575,8 @@ class H(BaseHTTPRequestHandler):
             self._suggest()
         elif u.path == "/ideas/vote":
             self._ideas_vote()
+        elif u.path == "/ready":
+            self._ready()
         elif u.path == "/quiz/answer":
             self._quiz_answer()
         elif u.path == "/admin/suggestion":
@@ -999,6 +1022,32 @@ class H(BaseHTTPRequestHandler):
                          "next_update": next_release().isoformat(),
                          "next_big_update": next_big_release().isoformat(),
                          "categories": CAT_LABELS})
+
+    def _digest_ok(self, token):
+        return bool(config.DIGEST_TOKEN) and hmac.compare_digest(token or "", config.DIGEST_TOKEN)
+
+    def _digest(self, token):
+        if not self._digest_ok(token):
+            return self._send(403, {"error": "forbidden"})
+        self._send(200, digest_data())
+
+    def _ready(self):
+        """The Monday build says a PR is ready: post it to the updates channel
+        with an Approve button. Only links to a PR in our own repo."""
+        try:
+            d = json.loads(self._body() or b"{}")
+        except ValueError:
+            d = {}
+        if not self._digest_ok(d.get("token")):
+            return self._send(403, {"error": "forbidden"})
+        pr = (d.get("pr_url") or "").strip()
+        if not re.fullmatch(re.escape(config.UPDATES_REPO_URL) + r"/pull/\d+", pr, re.I):
+            return self._send(400, {"error": "pr_url must be a pull request in %s" % config.UPDATES_REPO_URL})
+        summary = (d.get("summary") or "").strip()[:1500]
+        notify.updates("🔔 Ready for your approval\n\n%s\n\nTap the button, check it, then tap Merge. "
+                       "It goes live in the app within 5 minutes." % summary,
+                       button=("✅ Review & approve", pr))
+        self._send(200, {"ok": True})
 
     def _notices(self, key):
         if not self._ideas_lic(key):

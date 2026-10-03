@@ -88,6 +88,10 @@ information out of Claude has been painful. Fix that by how you communicate.
   a week (Monday): bugs to fix + (every 2nd week, from `RELEASE_ANCHOR`) the
   top-voted ideas; big ideas ship on the 1st. Auto-ship only messages on
   failure. HQ → App: mark built (voters get "you asked, we built it"), hide.
+  With the "STAALWAG Updates" channel set up (deploy/updates-channel-setup.sh),
+  a Monday routine reads `GET /digest`, builds the fixes/ideas as a PR into the
+  live branch, and `POST /ready` puts a "✅ Review & approve" button in the
+  channel; Nic merging = approval = live in 5 min. The app never depends on it.
 - **Status (Oct 2026):** v1 submitted to Play closed testing; needs 12 testers
   for 14 days (free tester-swap app, e.g. TheClosedTest) before production access.
   Opt-in link appears once Google approves the closed-test release.

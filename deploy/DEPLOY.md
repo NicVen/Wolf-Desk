@@ -133,6 +133,22 @@ cd /opt/wolf-desk && sudo -u wolf git pull
 systemctl restart wolf-desk staalwag-licensing
 ```
 
+## Updates channel + automatic Monday build
+
+One private Telegram channel gets the weekly bug/idea list, the "✅ Review &
+approve" button when the Monday build is ready, and "✅ Live" once merged.
+
+1. Telegram → New Channel → name it `STAALWAG Updates` → Private.
+2. Channel → Administrators → Add admin → your licensing bot.
+3. Post `hi` in the channel.
+4. On the VPS: `cd /opt/wolf-desk && sudo -u wolf git pull && sudo bash deploy/updates-channel-setup.sh`
+   It prints a `DIGEST_TOKEN=...` line for the cloud environment that runs the
+   Monday build (that environment must also allow the host `pay.staalwag.com`).
+
+The token can only read the weekly list (`GET /digest`) and post a link to a PR
+in this repo (`POST /ready`). Rotate it by deleting the line from
+`/etc/staalwag-licensing.env` and re-running step 4.
+
 ## Swapping in a real domain later
 
 Point the domain's DNS **A record** at `178.104.88.38`, then edit the first line

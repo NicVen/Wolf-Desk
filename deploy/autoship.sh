@@ -25,7 +25,8 @@ git_app() { as_app git -C "$REPO" "$@"; }
 tg() {
     local tok chat
     tok=$(grep -E '^LICENSE_BOT_TOKEN=' "$ENV_FILE" 2>/dev/null | cut -d= -f2- | tr -d '"'"'"'')
-    chat=$(grep -E '^LICENSE_ADMIN_CHAT=' "$ENV_FILE" 2>/dev/null | cut -d= -f2- | tr -d '"'"'"'')
+    chat=$(grep -E '^UPDATES_CHAT=' "$ENV_FILE" 2>/dev/null | cut -d= -f2- | tr -d '"'"'"'')
+    [ -n "$chat" ] || chat=$(grep -E '^LICENSE_ADMIN_CHAT=' "$ENV_FILE" 2>/dev/null | cut -d= -f2- | tr -d '"'"'"'')
     [ -n "$tok" ] && [ -n "$chat" ] || { log "no Telegram configured: $1"; return 0; }
     curl -s -m 15 "https://api.telegram.org/bot$tok/sendMessage" \
         --data-urlencode "chat_id=$chat" --data-urlencode "text=[STAALWAG auto-ship] $1" \
@@ -84,4 +85,10 @@ restart_all
 healthy || fail "app didn't come back up"
 
 rm -f "$STATE/bad"
-log "live: $(git_app log -1 --format=%s "$NEW")"   # success stays quiet; only problems message the owner
+MSG=$(git_app log -1 --format=%s "$NEW")
+log "live: $MSG"
+# Success is only announced in the dedicated updates channel (confirms an
+# approval landed); without that channel it stays quiet.
+if grep -qE '^UPDATES_CHAT=.+' "$ENV_FILE" 2>/dev/null; then
+    tg "✅ Live in the app: $MSG"
+fi
