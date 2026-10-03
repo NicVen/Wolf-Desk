@@ -70,6 +70,12 @@ SITE_URL = os.environ.get("SITE_URL", "https://staalwag.com").rstrip("/")
 # --- Trader Quiz monthly winner (auto-announced on the 1st) ---
 QUIZ_AUTO_WINNER = os.environ.get("QUIZ_AUTO_WINNER", "1") not in ("0", "false", "False", "")
 QUIZ_REWARD = os.environ.get("QUIZ_REWARD", "1 month free VIP — we'll be in touch to set it up")
+# --- App update rhythm (shown on the in-app Ideas board + drives the digests) ---
+# Bugs: fixed weekly (bug list every Monday). Small ideas: every 2 weeks, counted
+# from RELEASE_ANCHOR (top ideas sent the Monday before). Big ideas: the 1st of
+# each month.
+RELEASE_ANCHOR = os.environ.get("RELEASE_ANCHOR", "2026-10-17")
+DIGEST_HOUR_UTC = _int("DIGEST_HOUR_UTC", 7)
 TOKEN_TTL_HOURS = _int("TOKEN_TTL_HOURS", 6)  # how long a rolling token is trusted offline
 RENEW_NOTICE_DAYS = _int("RENEW_NOTICE_DAYS", 3)  # warn client this many days before expiry
 
@@ -82,6 +88,12 @@ HQ_UNITS = os.environ.get("HQ_UNITS", "caddy wolf-desk staalwag-licensing staalw
 # --- notifications (optional) ---
 LICENSE_BOT_TOKEN = os.environ.get("LICENSE_BOT_TOKEN", "")  # Telegram bot for client notices
 LICENSE_ADMIN_CHAT = os.environ.get("LICENSE_ADMIN_CHAT", "")  # your own chat id for copies
+UPDATES_CHAT = os.environ.get("UPDATES_CHAT", "")  # private "STAALWAG Updates" channel (deploy/updates-channel-setup.sh)
+# Read/post token for the automated Monday build (GET /digest, POST /ready). Can
+# only read the weekly bug/idea list and post a "ready to approve" link to a PR
+# in the Wolf-Desk repo — nothing else. Blank = both endpoints off.
+DIGEST_TOKEN = os.environ.get("DIGEST_TOKEN", "")
+UPDATES_REPO_URL = os.environ.get("UPDATES_REPO_URL", "https://github.com/NicVen/Wolf-Desk")
 LICENSE_BOT_USERNAME = os.environ.get("LICENSE_BOT_USERNAME", "")  # e.g. @StaalwagBot (shown on the buy page)
 
 # ---------------------------------------------------------------------------

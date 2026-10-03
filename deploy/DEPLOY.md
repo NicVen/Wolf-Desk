@@ -112,12 +112,42 @@ puller there — it pulls `GET /markov.json` and writes the gate files into MT5'
 2. Set once (so it's remembered): `setx WOLF_HOST "https://178.104.88.38.sslip.io"` and `setx WOLF_PASS "your-key"`
 3. In each EA, keep the Markov gate ON; Gold uses `markov_regime.txt`, others use `markov_<SYMBOL>.txt`.
 
-## Updating the server later
+## Updating the server later — auto-ship (hands-off)
+
+Turn it on once:
+
+```bash
+cd /opt/wolf-desk && sudo -u wolf git pull && sudo bash deploy/autoship-setup.sh
+```
+
+From then on, anything merged into the live branch is live (site + app) within
+5 minutes. `deploy/autoship.sh` pulls, compile-checks, restarts and health-checks;
+successful updates stay quiet; if the app doesn't come back it rolls back by itself and Telegrams you (it uses
+`LICENSE_BOT_TOKEN` / `LICENSE_ADMIN_CHAT` from `/etc/staalwag-licensing.env`).
+Check it: `systemctl list-timers autoship.timer` · log: `journalctl -u autoship -n 30`.
+
+Manual update (still works any time):
 
 ```bash
 cd /opt/wolf-desk && sudo -u wolf git pull
-systemctl restart wolf-desk
+systemctl restart wolf-desk staalwag-licensing
 ```
+
+## Updates channel + automatic Monday build
+
+One private Telegram channel gets the weekly bug/idea list, the "✅ Review &
+approve" button when the Monday build is ready, and "✅ Live" once merged.
+
+1. Telegram → New Channel → name it `STAALWAG Updates` → Private.
+2. Channel → Administrators → Add admin → your licensing bot.
+3. Post `hi` in the channel.
+4. On the VPS: `cd /opt/wolf-desk && sudo -u wolf git pull && sudo bash deploy/updates-channel-setup.sh`
+   It prints a `DIGEST_TOKEN=...` line for the cloud environment that runs the
+   Monday build (that environment must also allow the host `pay.staalwag.com`).
+
+The token can only read the weekly list (`GET /digest`) and post a link to a PR
+in this repo (`POST /ready`). Rotate it by deleting the line from
+`/etc/staalwag-licensing.env` and re-running step 4.
 
 ## Swapping in a real domain later
 

@@ -13,8 +13,10 @@ Run:  python -m licensing.server     (BIND_ADDR/PORT from env; sits behind Caddy
 """
 import calendar
 import datetime
+import hmac
 import json
 import os
+import re
 import secrets
 import shutil
 import subprocess
@@ -283,6 +285,133 @@ def check_access(lic):
 
 
 # ---------------------------------------------------------------------------
+# Ideas board: release rhythm, one-tap review links, owner digests
+# ---------------------------------------------------------------------------
+CAT_LABELS = {"signals": "Signals", "charts": "Charts", "alerts": "Alerts",
+              "quiz": "Quiz", "bug": "Bug", "other": "Other"}
+
+
+def next_release(today=None):
+    """Next biweekly small-update date (on or after today)."""
+    today = today or datetime.datetime.utcnow().date()
+    try:
+        anchor = datetime.date.fromisoformat(config.RELEASE_ANCHOR)
+    except ValueError:
+        anchor = today
+    if today <= anchor:
+        return anchor
+    return anchor + datetime.timedelta(days=-(-(today - anchor).days // 14) * 14)
+
+
+def next_big_release(today=None):
+    """Big updates ship on the 1st of the month."""
+    today = today or datetime.datetime.utcnow().date()
+    if today.day == 1:
+        return today
+    return (today.replace(day=28) + datetime.timedelta(days=4)).replace(day=1)
+
+
+def _fmt_day(d):
+    return "%d %s" % (d.day, d.strftime("%b"))
+
+
+def apply_idea_status(sid, status, size=None):
+    """Set an idea's status and tell the right people in the app:
+    built -> everyone who voted; duplicate -> the person who sent it."""
+    before = store.get_suggestion(sid)
+    store.set_suggestion_status(sid, status, size)
+    if not before or before["status"] == status:
+        return
+    short = before["text"] if len(before["text"]) <= 80 else before["text"][:77] + "…"
+    if status == "built":
+        for k in store.idea_voters(sid):
+            store.add_notice(k, "🎉 You asked, we built it: “%s”. Update the app to get it." % short)
+    elif status == "duplicate":
+        store.add_notice(before.get("license_key"),
+                         "👍 Good news: “%s” is already in the app. See Built ✅ on the Ideas board." % short)
+
+
+_STOP = set("the and for with please add can you app would like have that this make more should "
+             "could when what from into also want need".split())
+
+
+def _words(t):
+    return {w[:-1] if w.endswith("s") else w
+            for w in re.findall(r"[a-z0-9]+", (t or "").lower()) if len(w) > 2 and w not in _STOP}
+
+
+def similar_idea(text, threshold=0.6):
+    """Plain word-overlap match (same rule the app uses while typing) against
+    ideas on the board. Returns the best match or None. No AI involved."""
+    a, best, score = _words(text), None, 0.0
+    if not a:
+        return None
+    for x in store.public_ideas():
+        b = _words(x["text"])
+        if b:
+            v = len(a & b) / min(len(a), len(b))
+            if v > score:
+                best, score = x, v
+    return best if score >= threshold else None
+
+
+def _idea_lines(rows):
+    return ["%d. [%s] %s — 👍 %d" % (i, CAT_LABELS.get(x["category"], "Other"), x["text"][:120], x["votes"])
+            for i, x in enumerate(rows, 1)]
+
+
+def send_weekly_digest(include_ideas):
+    """The ONE message the owner gets each week (Monday). Bugs every week; the
+    top-voted ideas only in the week of a 2-weekly update."""
+    bugs = store.open_bugs()
+    lines = ["📋 STAALCALIBUR weekly"]
+    if bugs:
+        lines.append("\n🐞 Fix this week (%d bug report%s):" % (len(bugs), "" if len(bugs) == 1 else "s"))
+        lines += ["• %s" % b["text"][:160] for b in bugs[:15]]
+    else:
+        lines.append("\n🐞 No open bug reports.")
+    if include_ideas:
+        small, big = store.top_ideas("small", 5), store.top_ideas("big", 3)
+        lines.append("\n💡 Build for the %s update (most votes first):" % _fmt_day(next_release()))
+        lines += _idea_lines(small) or ["(no ideas on the board yet)"]
+        if big:
+            lines.append("\n🏗 Big ideas for %s:" % _fmt_day(next_big_release()))
+            lines += _idea_lines(big)
+    if config.DIGEST_TOKEN:
+        lines.append("\n🔧 Being built now. You'll get a ✅ Approve button here when it's ready.")
+    else:
+        lines.append("\nForward this to your developer to get it built.")
+    notify.updates("\n".join(lines))
+
+
+def digest_data(today=None):
+    """What the automated Monday build works from (GET /digest)."""
+    today = today or datetime.datetime.utcnow().date()
+    release_week = (next_release(today) - today).days <= 6
+    return {
+        "date": today.isoformat(),
+        "release_week": release_week,
+        "next_update": next_release(today).isoformat(),
+        "next_big_update": next_big_release(today).isoformat(),
+        "bugs": [{"id": b["id"], "text": b["text"]} for b in store.open_bugs()],
+        "ideas": store.top_ideas("small", 5) if release_week else [],
+        "big_ideas": store.top_ideas("big", 3),
+    }
+
+
+def run_digests(now_dt=None):
+    """Called from the sweeper. Mondays after DIGEST_HOUR_UTC, once per day."""
+    n = now_dt or datetime.datetime.utcnow()
+    if n.weekday() != 0 or n.hour < config.DIGEST_HOUR_UTC:
+        return
+    today = n.date().isoformat()
+    if store.meta_get("digest_last") == today:
+        return
+    store.meta_set("digest_last", today)
+    send_weekly_digest(include_ideas=(next_release(n.date()) - n.date()).days <= 6)
+
+
+# ---------------------------------------------------------------------------
 # background sweeper: pre-expiry reminders, lapse -> past_due, revoke after grace
 # ---------------------------------------------------------------------------
 def sweeper():
@@ -322,6 +451,7 @@ def sweeper():
                     except Exception as e:  # noqa: BLE001
                         notify.admin("auto quiz-winner error: %s" % e)
                     store.meta_set("quiz_winner_last", prev)   # mark done either way
+            run_digests()
         except Exception as e:  # noqa: BLE001
             notify.admin("sweeper error: %s" % e)
         time.sleep(60)
@@ -376,6 +506,12 @@ class H(BaseHTTPRequestHandler):
             self._reflink(one("key"))
         elif u.path == "/quiz":
             self._quiz(one("key"))
+        elif u.path == "/ideas":
+            self._ideas(one("key"))
+        elif u.path == "/notices":
+            self._notices(one("key"))
+        elif u.path == "/digest":
+            self._digest(one("token"))
         elif u.path == "/admin/list":
             self._admin_list()
         elif u.path == "/admin/app_stats":
@@ -437,6 +573,10 @@ class H(BaseHTTPRequestHandler):
             self._admin_quiz_winner()
         elif u.path == "/suggest":
             self._suggest()
+        elif u.path == "/ideas/vote":
+            self._ideas_vote()
+        elif u.path == "/ready":
+            self._ready()
         elif u.path == "/quiz/answer":
             self._quiz_answer()
         elif u.path == "/admin/suggestion":
@@ -840,11 +980,18 @@ class H(BaseHTTPRequestHandler):
         self._send(200, announce_quiz_winner(period, reward))
 
     def _suggest(self):
-        """A subscriber submits an app suggestion. Screened for abusive content
-        before it is ever stored or shown to the admin."""
+        """A subscriber submits an app idea or bug. Screened for abusive content
+        before it is ever stored. Runs itself, no owner taps needed:
+          - bug  -> stored privately, listed in the Monday message
+          - idea matching one already built -> sender is told it's already there
+          - idea matching one on the board  -> counted as a vote for that one
+          - new idea -> straight onto the public board"""
         d = json.loads(self._body() or b"{}")
         key = d.get("key", "")
         text = (d.get("text") or "").strip()
+        category = (d.get("category") or "other").lower()
+        if category not in CAT_LABELS:
+            category = "other"
         lic = store.get(key)
         if not lic or lic["status"] == "revoked":
             return self._send(200, {"ok": False, "reason": "You need an active app key to send a suggestion."})
@@ -852,9 +999,75 @@ class H(BaseHTTPRequestHandler):
         if not ok:
             # never stored, never shown to admin — the user gets the notice.
             return self._send(200, {"ok": False, "reason": reason})
-        store.add_suggestion(lic.get("contact") or key, text)
-        notify.admin("💡 new app suggestion: %s" % text[:160])
+        if category == "bug":
+            store.add_suggestion(lic.get("contact") or key, text, category, key)
+            return self._send(200, {"ok": True, "bug": True})
+        match = similar_idea(text)
+        if match and match["status"] == "built":
+            return self._send(200, {"ok": True, "dup": "built", "text": match["text"]})
+        if match:
+            if key not in store.idea_voters(match["id"]):
+                store.toggle_vote(match["id"], key)
+            return self._send(200, {"ok": True, "dup": "open", "text": match["text"]})
+        sid = store.add_suggestion(lic.get("contact") or key, text, category, key)
+        store.set_suggestion_status(sid, "open", "small")
         self._send(200, {"ok": True})
+
+    def _ideas_lic(self, key):
+        lic = store.get(key) if key else None
+        return lic if lic and lic["status"] != "revoked" else None
+
+    def _ideas(self, key):
+        if not self._ideas_lic(key):
+            return self._send(200, {"ok": False, "reason": "You need an active app key to see the ideas board."})
+        self._send(200, {"ok": True, "ideas": store.public_ideas(key),
+                         "next_update": next_release().isoformat(),
+                         "next_big_update": next_big_release().isoformat(),
+                         "categories": CAT_LABELS})
+
+    def _digest_ok(self, token):
+        return bool(config.DIGEST_TOKEN) and hmac.compare_digest(token or "", config.DIGEST_TOKEN)
+
+    def _digest(self, token):
+        if not self._digest_ok(token):
+            return self._send(403, {"error": "forbidden"})
+        self._send(200, digest_data())
+
+    def _ready(self):
+        """The Monday build says a PR is ready: post it to the updates channel
+        with an Approve button. Only links to a PR in our own repo."""
+        try:
+            d = json.loads(self._body() or b"{}")
+        except ValueError:
+            d = {}
+        if not self._digest_ok(d.get("token")):
+            return self._send(403, {"error": "forbidden"})
+        pr = (d.get("pr_url") or "").strip()
+        if not re.fullmatch(re.escape(config.UPDATES_REPO_URL) + r"/pull/\d+", pr, re.I):
+            return self._send(400, {"error": "pr_url must be a pull request in %s" % config.UPDATES_REPO_URL})
+        summary = (d.get("summary") or "").strip()[:1500]
+        notify.updates("🔔 Ready for your approval\n\n%s\n\nTap the button, check it, then tap Merge. "
+                       "It goes live in the app within 5 minutes." % summary,
+                       button=("✅ Review & approve", pr))
+        self._send(200, {"ok": True})
+
+    def _notices(self, key):
+        if not self._ideas_lic(key):
+            return self._send(200, {"ok": False, "notices": []})
+        self._send(200, {"ok": True, "notices": store.pop_notices(key)})
+
+    def _ideas_vote(self):
+        d = json.loads(self._body() or b"{}")
+        key = d.get("key", "")
+        if not self._ideas_lic(key):
+            return self._send(200, {"ok": False, "reason": "You need an active app key to vote."})
+        try:
+            ok, voted, n = store.toggle_vote(int(d.get("id")), key)
+        except (TypeError, ValueError):
+            ok, voted, n = False, False, 0
+        if not ok:
+            return self._send(200, {"ok": False, "reason": "That idea isn't open for votes."})
+        self._send(200, {"ok": True, "voted": voted, "votes": n})
 
     def _player_ok(self, lic):
         if not lic or lic["status"] == "revoked":
@@ -981,7 +1194,7 @@ class H(BaseHTTPRequestHandler):
         if not self._admin_ok():
             return self._send(403, {"error": "forbidden"})
         d = json.loads(self._body() or b"{}")
-        store.set_suggestion_status(d.get("id"), d.get("status", "done"))
+        apply_idea_status(d.get("id"), d.get("status", "done"), d.get("size"))
         self._send(200, {"ok": True})
 
     def _admin_daily_plan(self):
@@ -1293,12 +1506,17 @@ function loadApp(){
  });
  fetch("/admin/suggestions",{headers:H()}).then(function(r){return r.json()}).then(function(d){
   var a=d.suggestions||[];document.getElementById("sugs").innerHTML=a.length?a.map(function(s){
-   var dt=new Date((s.created||0)*1000).toLocaleString();
-   return '<div class=sg><div class=m>'+dt+' &#183; '+esc(s.contact)+' &#183; '+esc(s.status)+'</div><div class=t>'+esc(s.text)+'</div>'+
-    (s.status!=="done"?'<button class=done onclick=mark('+s.id+')>Mark done</button>':'')+'</div>';}).join(""):'<div class=muted>No suggestions yet.</div>';
+   var dt=new Date((s.created||0)*1000).toLocaleString(),bug=s.category==="bug",b=[];
+   function btn(lbl,st,sz){b.push('<button class=done data-i='+s.id+' data-s='+st+' data-z='+(sz||"")+' onclick=markB(this)>'+lbl+'</button>');}
+   if(bug){ if(s.status==="new") btn("Mark fixed","done"); }
+   else if(s.status==="new"){ btn("Approve","open","small"); btn("Approve as big","open","big"); btn("Reject","rejected"); btn("Already done","duplicate"); }
+   else if(s.status==="open"){ btn("Mark built","built"); btn(s.size==="big"?"Make small":"Make big","open",s.size==="big"?"small":"big"); btn("Hide","rejected"); }
+   return '<div class=sg><div class=m>'+dt+' &#183; '+esc(s.category||"other")+(bug?'':' &#183; '+esc(s.size||"small")+' &#183; &#128077; '+(s.votes||0))+
+    ' &#183; '+esc(s.status)+' &#183; '+esc(s.contact)+'</div><div class=t>'+esc(s.text)+'</div>'+b.join(" ")+'</div>';}).join(""):'<div class=muted>No suggestions yet.</div>';
  });
 }
-function mark(id){fetch("/admin/suggestion",{method:"POST",headers:Object.assign({"Content-Type":"application/json"},H()),body:JSON.stringify({id:id,status:"done"})}).then(loadApp);}
+function markB(e){mark(e.dataset.i,e.dataset.s,e.dataset.z);}
+function mark(id,st,sz){fetch("/admin/suggestion",{method:"POST",headers:Object.assign({"Content-Type":"application/json"},H()),body:JSON.stringify({id:id,status:st||"done",size:sz||null})}).then(loadApp);}
 function loadLic(){
  fetch("/admin/list",{headers:H()}).then(function(r){return r.json()}).then(function(d){
   var rows=(d.licenses||[]).map(function(l){

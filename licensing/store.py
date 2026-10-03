@@ -122,6 +122,34 @@ def _init(c):
         c.execute("ALTER TABLE partners ADD COLUMN reward_until INTEGER")
     except sqlite3.OperationalError:
         pass  # already exists
+    # Ideas board: suggestions gain a category, a size tag and votes.
+    # status: new (awaiting owner review) -> open (public, votable) -> built
+    #         | rejected.  Bugs stay private: new -> done.  Older 'done' rows were
+    #         never reviewed for the public board, so they stay private too.
+    for col, ddl in (("category", "TEXT DEFAULT 'other'"),
+                     ("size", "TEXT DEFAULT 'small'"),
+                     ("license_key", "TEXT"),
+                     ("built_at", "INTEGER")):
+        try:
+            c.execute("ALTER TABLE suggestions ADD COLUMN %s %s" % (col, ddl))
+        except sqlite3.OperationalError:
+            pass
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS suggestion_votes (
+            sid          INTEGER,
+            license_key  TEXT,
+            created      INTEGER,
+            PRIMARY KEY (sid, license_key)
+        )""")
+    # one-off in-app messages to a subscriber ("already built", "we built it")
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS app_notices (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            license_key  TEXT,
+            text         TEXT,
+            created      INTEGER,
+            seen         INTEGER DEFAULT 0
+        )""")
     c.commit()
 
 
@@ -309,31 +337,141 @@ def add_subscriber(telegram_id):
         c.commit()
 
 
-def add_suggestion(contact, text):
+IDEA_CATEGORIES = ("signals", "charts", "alerts", "quiz", "bug", "other")
+
+
+def add_suggestion(contact, text, category="other", license_key=""):
+    """Store a suggestion; the sender's own vote counts as the first. Returns id."""
+    category = category if category in IDEA_CATEGORIES else "other"
     with _LOCK:
         c = _conn()
-        c.execute("INSERT INTO suggestions (contact, text, status, created) VALUES (?,?, 'new', ?)",
-                  (contact or "", text, now()))
+        cur = c.execute("INSERT INTO suggestions (contact, text, status, created, category, license_key) "
+                        "VALUES (?,?, 'new', ?, ?, ?)",
+                        (contact or "", text, now(), category, license_key or ""))
+        sid = cur.lastrowid
+        if license_key and category != "bug":
+            c.execute("INSERT OR IGNORE INTO suggestion_votes (sid, license_key, created) VALUES (?,?,?)",
+                      (sid, license_key, now()))
         c.commit()
+        return sid
+
+
+_VOTES_SQL = "(SELECT COUNT(*) FROM suggestion_votes v WHERE v.sid=s.id)"
 
 
 def list_suggestions(limit=200, status=None):
     with _LOCK:
         c = _conn()
+        sql = "SELECT s.*, %s AS votes FROM suggestions s" % _VOTES_SQL
         if status:
-            rows = c.execute("SELECT * FROM suggestions WHERE status=? ORDER BY created DESC LIMIT ?",
+            rows = c.execute(sql + " WHERE s.status=? ORDER BY s.created DESC LIMIT ?",
                              (status, limit)).fetchall()
         else:
-            rows = c.execute("SELECT * FROM suggestions ORDER BY created DESC LIMIT ?",
-                             (limit,)).fetchall()
+            rows = c.execute(sql + " ORDER BY s.created DESC LIMIT ?", (limit,)).fetchall()
         return [dict(r) for r in rows]
 
 
-def set_suggestion_status(sid, status):
+def get_suggestion(sid):
+    with _LOCK:
+        r = _conn().execute("SELECT s.*, %s AS votes FROM suggestions s WHERE s.id=?" % _VOTES_SQL,
+                            (int(sid),)).fetchone()
+        return dict(r) if r else None
+
+
+def set_suggestion_status(sid, status, size=None):
     with _LOCK:
         c = _conn()
-        c.execute("UPDATE suggestions SET status=? WHERE id=?", (status, int(sid)))
+        if status == "built":
+            c.execute("UPDATE suggestions SET status=?, built_at=? WHERE id=?", (status, now(), int(sid)))
+        elif status:
+            c.execute("UPDATE suggestions SET status=? WHERE id=?", (status, int(sid)))
+        if size in ("small", "big"):
+            c.execute("UPDATE suggestions SET size=? WHERE id=?", (size, int(sid)))
         c.commit()
+
+
+def public_ideas(license_key="", built_days=365):
+    """What every subscriber sees: approved ideas with live vote counts, plus
+    recently built ones. Never names, never bugs, never unreviewed ideas."""
+    cutoff = now() - built_days * 86400
+    with _LOCK:
+        rows = _conn().execute(
+            "SELECT s.id, s.text, s.category, s.size, s.status, s.built_at, %s AS votes, "
+            "EXISTS(SELECT 1 FROM suggestion_votes v WHERE v.sid=s.id AND v.license_key=?) AS mine "
+            "FROM suggestions s WHERE s.category!='bug' AND "
+            "(s.status='open' OR (s.status='built' AND s.built_at>=?)) "
+            "ORDER BY votes DESC, s.created ASC" % _VOTES_SQL,
+            (license_key or "", cutoff)).fetchall()
+    out = []
+    for r in rows:
+        d = dict(r)
+        d["mine"] = bool(d["mine"])
+        out.append(d)
+    return out
+
+
+def toggle_vote(sid, license_key):
+    """One vote per subscriber per idea; tapping again takes it back.
+    Returns (ok, voted, count)."""
+    with _LOCK:
+        c = _conn()
+        r = c.execute("SELECT status, category FROM suggestions WHERE id=?", (int(sid),)).fetchone()
+        if not r or r["status"] != "open" or r["category"] == "bug":
+            return False, False, 0
+        had = c.execute("SELECT 1 FROM suggestion_votes WHERE sid=? AND license_key=?",
+                        (int(sid), license_key)).fetchone()
+        if had:
+            c.execute("DELETE FROM suggestion_votes WHERE sid=? AND license_key=?", (int(sid), license_key))
+        else:
+            c.execute("INSERT INTO suggestion_votes (sid, license_key, created) VALUES (?,?,?)",
+                      (int(sid), license_key, now()))
+        c.commit()
+        n = c.execute("SELECT COUNT(*) FROM suggestion_votes WHERE sid=?", (int(sid),)).fetchone()[0]
+        return True, not had, n
+
+
+def idea_voters(sid):
+    with _LOCK:
+        rows = _conn().execute("SELECT license_key FROM suggestion_votes WHERE sid=?", (int(sid),)).fetchall()
+        return [r["license_key"] for r in rows]
+
+
+def add_notice(license_key, text):
+    if not license_key:
+        return
+    with _LOCK:
+        c = _conn()
+        c.execute("INSERT INTO app_notices (license_key, text, created) VALUES (?,?,?)",
+                  (license_key, text, now()))
+        c.commit()
+
+
+def pop_notices(license_key):
+    """Unseen in-app messages for this subscriber; marks them seen."""
+    with _LOCK:
+        c = _conn()
+        rows = c.execute("SELECT id, text FROM app_notices WHERE license_key=? AND seen=0 ORDER BY id",
+                         (license_key,)).fetchall()
+        if rows:
+            c.execute("UPDATE app_notices SET seen=1 WHERE license_key=? AND seen=0", (license_key,))
+            c.commit()
+        return [r["text"] for r in rows]
+
+
+def open_bugs():
+    with _LOCK:
+        rows = _conn().execute("SELECT * FROM suggestions WHERE category='bug' AND status='new' "
+                               "ORDER BY created ASC").fetchall()
+        return [dict(r) for r in rows]
+
+
+def top_ideas(size, limit=5):
+    with _LOCK:
+        rows = _conn().execute(
+            "SELECT s.id, s.text, s.category, %s AS votes FROM suggestions s "
+            "WHERE s.status='open' AND s.category!='bug' AND COALESCE(s.size,'small')=? "
+            "ORDER BY votes DESC, s.created ASC LIMIT ?" % _VOTES_SQL, (size, limit)).fetchall()
+        return [dict(r) for r in rows]
 
 
 def app_stats(active_days=7):

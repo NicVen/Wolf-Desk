@@ -12,12 +12,14 @@ import urllib.request
 from . import config
 
 
-def _telegram(chat_id, text):
+def _telegram(chat_id, text, button=None):
     if not config.LICENSE_BOT_TOKEN or not chat_id:
         return
     url = "https://api.telegram.org/bot%s/sendMessage" % config.LICENSE_BOT_TOKEN
-    data = urllib.parse.urlencode({
-        "chat_id": chat_id, "text": text, "disable_web_page_preview": "true"}).encode()
+    fields = {"chat_id": chat_id, "text": text, "disable_web_page_preview": "true"}
+    if button:   # (label, url) -> one tappable button under the message
+        fields["reply_markup"] = json.dumps({"inline_keyboard": [[{"text": button[0], "url": button[1]}]]})
+    data = urllib.parse.urlencode(fields).encode()
     try:
         urllib.request.urlopen(urllib.request.Request(url, data=data), timeout=15).read()
     except Exception as e:  # noqa: BLE001
@@ -41,3 +43,12 @@ def admin(text):
         _telegram(config.LICENSE_ADMIN_CHAT, "[STAALWAG licensing] " + text)
     else:
         _log("admin notice: %s" % text)
+
+
+def updates(text, button=None):
+    """The owner's dedicated updates channel (falls back to the admin chat)."""
+    chat = config.UPDATES_CHAT or config.LICENSE_ADMIN_CHAT
+    if chat:
+        _telegram(chat, text, button)
+    else:
+        _log("updates notice: %s" % text)

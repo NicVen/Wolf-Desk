@@ -54,6 +54,9 @@ information out of Claude has been painful. Fix that by how you communicate.
   (Claude's container can't SSH). App user is `wolf`; if a pull fails on
   permissions: `sudo chown -R wolf:wolf /opt/wolf-desk` then pull.
   Deploy = `cd /opt/wolf-desk && sudo -u wolf git pull && sudo systemctl restart wolf-desk staalwag-licensing`
+  **Auto-ship** (once `deploy/autoship-setup.sh` has been run): a timer ships
+  whatever is merged into the live branch within 5 min, rolls back + Telegrams
+  Nic if it breaks. So "merge the PR" = "it's live".
 - **serve.py** (port 8777) host-routes: `staalwag.com`→site, `wolf.*`→WOLF desk,
   `app.*`→the app; also `/store` (storefront), `/proof` (track record).
 - **licensing service** (port 8790, localhost-only, behind Caddy): products/prices
@@ -77,6 +80,18 @@ information out of Claude has been painful. Fix that by how you communicate.
 - **Brand:** STAALWAG steel logo = the app ICON everywhere (Play icon slot +
   phone home-screen). The chrome double-chevron appears ONLY in Play Store promo
   images (feature graphic + screenshots), never as the icon.
+- **Ideas board / update rhythm (runs itself — Nic has no time for pings):**
+  users send ideas (with a category) or private bug reports in the app. Clean
+  ideas go straight on the public board (abuse auto-rejected); repeats of an
+  open idea become a vote, repeats of a built one get "already in the app".
+  Everyone votes 👍 (counts public, names never). Nic gets ONE Telegram message
+  a week (Monday): bugs to fix + (every 2nd week, from `RELEASE_ANCHOR`) the
+  top-voted ideas; big ideas ship on the 1st. Auto-ship only messages on
+  failure. HQ → App: mark built (voters get "you asked, we built it"), hide.
+  With the "STAALWAG Updates" channel set up (deploy/updates-channel-setup.sh),
+  a Monday routine reads `GET /digest`, builds the fixes/ideas as a PR into the
+  live branch, and `POST /ready` puts a "✅ Review & approve" button in the
+  channel; Nic merging = approval = live in 5 min. The app never depends on it.
 - **Status (Oct 2026):** v1 submitted to Play closed testing; needs 12 testers
   for 14 days (free tester-swap app, e.g. TheClosedTest) before production access.
   Opt-in link appears once Google approves the closed-test release.
