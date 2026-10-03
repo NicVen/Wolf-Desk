@@ -575,6 +575,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, _read("icon-192.png", b""), "image/png"); return
         if path == "/icon-512.png":
             self._send(200, _read("icon-512.png", b""), "image/png"); return
+        if path == "/sc-icon-192.png":   # STAALCALIBUR app icon (chrome chevron)
+            self._send(200, _read("sc-icon-192.png", b""), "image/png"); return
+        if path == "/sc-icon-512.png":
+            self._send(200, _read("sc-icon-512.png", b""), "image/png"); return
         if path == "/manifest.json":
             self._send(200, _read("manifest.json", b"{}"),
                        "application/manifest+json"); return
