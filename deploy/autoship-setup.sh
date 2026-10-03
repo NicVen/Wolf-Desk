@@ -8,4 +8,4 @@ systemctl restart wolf-desk staalwag-licensing
 systemctl enable --now autoship.timer
 echo
 echo "Auto-ship is ON. Anything merged into the live branch goes live within 5 minutes."
-echo "You'll get a Telegram message for every update (and if one is rolled back)."
+echo "You only get a Telegram message if an update fails and is rolled back."

@@ -84,7 +84,4 @@ restart_all
 healthy || fail "app didn't come back up"
 
 rm -f "$STATE/bad"
-MSG=$(git_app log -1 --format=%s "$NEW")
-VER=$(python3 -c 'import json;print(json.load(open("'"$REPO"'/dashboard/appversion.json"))["version"])' 2>/dev/null || echo "?")
-tg "✅ Live: ${MSG} (app v${VER})"
-log "done"
+log "live: $(git_app log -1 --format=%s "$NEW")"   # success stays quiet; only problems message the owner

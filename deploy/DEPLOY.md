@@ -122,7 +122,7 @@ cd /opt/wolf-desk && sudo -u wolf git pull && sudo bash deploy/autoship-setup.sh
 
 From then on, anything merged into the live branch is live (site + app) within
 5 minutes. `deploy/autoship.sh` pulls, compile-checks, restarts and health-checks;
-if the app doesn't come back it rolls back by itself and Telegrams you (it uses
+successful updates stay quiet; if the app doesn't come back it rolls back by itself and Telegrams you (it uses
 `LICENSE_BOT_TOKEN` / `LICENSE_ADMIN_CHAT` from `/etc/staalwag-licensing.env`).
 Check it: `systemctl list-timers autoship.timer` · log: `journalctl -u autoship -n 30`.
 

@@ -406,7 +406,7 @@ function renderIdeas(d){
     (built.length? '<div class="sec">Built ✅ — you asked, we built it</div>'+built.map(function(x){
       return '<div class="idea built"><div class="tx"><span class="tg">'+esc(cat(x.category))+'</span><br>'+esc(x.text)+'</div><div class="vote on" style="text-align:center">✅ '+(+x.votes)+'</div></div>';
     }).join("") : '')+
-    '<p class="muted" style="margin-top:14px">New ideas appear here once reviewed. Names are never shown.</p>'+
+    '<p class="muted" style="margin-top:14px">Names are never shown. The most-voted ideas get built first.</p>'+
     '<button class="btn ghost" style="margin-top:6px" onclick="openSuggest(\'bug\')">🐞 Report a bug (private)</button>';
   box.innerHTML=h;
 }
@@ -425,7 +425,7 @@ function openSuggest(mode){
     IDEA_CATS.map(function(c){ return '<div class="chip'+(c[0]===SG_CAT?' on':'')+'" data-c="'+c[0]+'" onclick="pickCat(this)">'+c[1]+'</div>'; }).join("")+'</div>';
   var body='<p class="muted" style="font-size:13px;margin-top:0">'+(bug
       ?'Something broken? Tell us what happened and where. Bug reports are private and fixed in the weekly update.'
-      :'Got an idea to make the app better? Once reviewed it goes on the Ideas board, where everyone can vote for it.')+
+      :'Got an idea to make the app better? It goes on the Ideas board, where everyone can vote for it.')+
     ' Please keep it respectful; abusive or foul messages are auto-rejected and never reach us.</p>'+chips+
     '<textarea id="sgText" rows="5" placeholder="'+(bug?'What went wrong…':'Your idea…')+'" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);font-size:14px;font-family:inherit;resize:vertical"></textarea>'+
     '<div id="sgDup"></div>'+
@@ -467,7 +467,11 @@ function sendSuggest(){
   var b=el("sgBtn"), label=b.textContent; b.disabled=true; b.textContent="Sending…"; el("sgErr").textContent="";
   fetch(PAY+"/suggest",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({key:K(),text:t,category:SG_CAT})}).then(function(r){ return r.json(); }).then(function(d){
-    if(d&&d.ok){ closeSheet(); toast(d.bug?"Thanks! Bug sent — fixes ship weekly.":"Thanks! It'll appear on the board once reviewed."); }
+    if(d&&d.ok){ closeSheet();
+      if(d.dup==="built") toast("Good news — that's already in the app ✅");
+      else if(d.dup==="open") toast("Already on the board — we counted your vote 👍");
+      else toast(d.bug?"Thanks! Bug sent — fixes ship weekly.":"Thanks! Your idea is on the board.");
+      IDEAS=null; }
     else { el("sgErr").textContent=(d&&d.reason)||"Couldn't submit — try again."; b.disabled=false; b.textContent=label; }
   }).catch(function(){ el("sgErr").textContent="Network error — try again."; b.disabled=false; b.textContent=label; });
 }

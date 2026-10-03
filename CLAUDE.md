@@ -80,11 +80,14 @@ information out of Claude has been painful. Fix that by how you communicate.
 - **Brand:** STAALWAG steel logo = the app ICON everywhere (Play icon slot +
   phone home-screen). The chrome double-chevron appears ONLY in Play Store promo
   images (feature graphic + screenshots), never as the icon.
-- **Ideas board / update rhythm:** users send ideas (with a category) or private
-  bug reports in the app; Nic approves ideas from a one-tap Telegram link, then
-  everyone votes 👍 (counts are public, names never). Bugs ship weekly (bug list
-  every Monday), small ideas every 2 weeks from `RELEASE_ANCHOR` (top-5 sent the
-  Monday before), big ideas on the 1st of the month. Mark ideas built in HQ → App.
+- **Ideas board / update rhythm (runs itself — Nic has no time for pings):**
+  users send ideas (with a category) or private bug reports in the app. Clean
+  ideas go straight on the public board (abuse auto-rejected); repeats of an
+  open idea become a vote, repeats of a built one get "already in the app".
+  Everyone votes 👍 (counts public, names never). Nic gets ONE Telegram message
+  a week (Monday): bugs to fix + (every 2nd week, from `RELEASE_ANCHOR`) the
+  top-voted ideas; big ideas ship on the 1st. Auto-ship only messages on
+  failure. HQ → App: mark built (voters get "you asked, we built it"), hide.
 - **Status (Oct 2026):** v1 submitted to Play closed testing; needs 12 testers
   for 14 days (free tester-swap app, e.g. TheClosedTest) before production access.
   Opt-in link appears once Google approves the closed-test release.

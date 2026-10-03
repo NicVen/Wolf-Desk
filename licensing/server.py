@@ -13,10 +13,9 @@ Run:  python -m licensing.server     (BIND_ADDR/PORT from env; sits behind Caddy
 """
 import calendar
 import datetime
-import hashlib
-import hmac
 import json
 import os
+import re
 import secrets
 import shutil
 import subprocess
@@ -315,34 +314,6 @@ def _fmt_day(d):
     return "%d %s" % (d.day, d.strftime("%b"))
 
 
-REVIEW_ACTS = {
-    "approve":     ("Put it on the board (small update)", "open", "small"),
-    "approve_big": ("Put it on the board (big update)", "open", "big"),
-    "reject":      ("Reject it (never shown)", "rejected", None),
-    "built":       ("Mark it built", "built", None),
-    "duplicate":   ("Mark it already done (tell the sender)", "duplicate", None),
-    "fixed":       ("Mark the bug fixed", "done", None),
-}
-
-
-def _review_sig(sid, act):
-    key = (config.ADMIN_TOKEN or "").encode()
-    return hmac.new(key, ("%s:%s" % (sid, act)).encode(), hashlib.sha256).hexdigest()[:20]
-
-
-def review_link(sid, act):
-    return "%s/review?id=%s&act=%s&sig=%s" % (config.PUBLIC_BASE_URL, sid, act, _review_sig(sid, act))
-
-
-def _review_links(sid, acts):
-    if not config.ADMIN_TOKEN:
-        return ""
-    labels = {"approve": "✅ Approve", "approve_big": "✅ Approve as BIG",
-              "reject": "❌ Reject", "built": "🏁 Built", "fixed": "🛠 Fixed",
-              "duplicate": "🔁 Already done"}
-    return "\n" + "\n".join("%s: %s" % (labels[a], review_link(sid, a)) for a in acts)
-
-
 def apply_idea_status(sid, status, size=None):
     """Set an idea's status and tell the right people in the app:
     built -> everyone who voted; duplicate -> the person who sent it."""
@@ -359,44 +330,66 @@ def apply_idea_status(sid, status, size=None):
                          "👍 Good news: “%s” is already in the app. See Built ✅ on the Ideas board." % short)
 
 
-def send_bug_digest():
+_STOP = set("the and for with please add can you app would like have that this make more should "
+             "could when what from into also want need".split())
+
+
+def _words(t):
+    return {w[:-1] if w.endswith("s") else w
+            for w in re.findall(r"[a-z0-9]+", (t or "").lower()) if len(w) > 2 and w not in _STOP}
+
+
+def similar_idea(text, threshold=0.6):
+    """Plain word-overlap match (same rule the app uses while typing) against
+    ideas on the board. Returns the best match or None. No AI involved."""
+    a, best, score = _words(text), None, 0.0
+    if not a:
+        return None
+    for x in store.public_ideas():
+        b = _words(x["text"])
+        if b:
+            v = len(a & b) / min(len(a), len(b))
+            if v > score:
+                best, score = x, v
+    return best if score >= threshold else None
+
+
+def _idea_lines(rows):
+    return ["%d. [%s] %s — 👍 %d" % (i, CAT_LABELS.get(x["category"], "Other"), x["text"][:120], x["votes"])
+            for i, x in enumerate(rows, 1)]
+
+
+def send_weekly_digest(include_ideas):
+    """The ONE message the owner gets each week (Monday). Bugs every week; the
+    top-voted ideas only in the week of a 2-weekly update."""
     bugs = store.open_bugs()
-    if not bugs:
-        return notify.admin("🐞 Monday bug check: no open bug reports. 👍")
-    lines = ["🐞 Monday bug list (%d) — these go in this week's fix:" % len(bugs)]
-    for b in bugs[:15]:
-        lines.append("\n• %s%s" % (b["text"][:160], _review_links(b["id"], ["fixed"])))
-    notify.admin("\n".join(lines))
-
-
-def send_ideas_digest():
-    small, big = store.top_ideas("small", 5), store.top_ideas("big", 3)
-    lines = ["💡 Top ideas for the %s update — pick which to build:" % _fmt_day(next_release())]
-    if small:
-        for i, x in enumerate(small, 1):
-            lines.append("%d. [%s] %s — 👍 %d" % (i, CAT_LABELS.get(x["category"], "Other"), x["text"][:120], x["votes"]))
+    lines = ["📋 STAALCALIBUR weekly — forward this to your developer to get it built."]
+    if bugs:
+        lines.append("\n🐞 Fix this week (%d bug report%s):" % (len(bugs), "" if len(bugs) == 1 else "s"))
+        lines += ["• %s" % b["text"][:160] for b in bugs[:15]]
     else:
-        lines.append("(no small ideas on the board yet)")
-    if big:
-        lines.append("\nBig ideas for %s:" % _fmt_day(next_big_release()))
-        for i, x in enumerate(big, 1):
-            lines.append("%d. [%s] %s — 👍 %d" % (i, CAT_LABELS.get(x["category"], "Other"), x["text"][:120], x["votes"]))
+        lines.append("\n🐞 No open bug reports.")
+    if include_ideas:
+        small, big = store.top_ideas("small", 5), store.top_ideas("big", 3)
+        lines.append("\n💡 Build for the %s update (most votes first):" % _fmt_day(next_release()))
+        lines += _idea_lines(small) or ["(no ideas on the board yet)"]
+        if big:
+            lines.append("\n🏗 Big ideas for %s:" % _fmt_day(next_big_release()))
+            lines += _idea_lines(big)
+    lines.append("\nNothing to do yourself. Hide anything odd in HQ → App.")
     notify.admin("\n".join(lines))
 
 
 def run_digests(now_dt=None):
-    """Called from the sweeper. Monday after DIGEST_HOUR_UTC: bug list every
-    week; top ideas only in the week of a small release. Once per day each."""
+    """Called from the sweeper. Mondays after DIGEST_HOUR_UTC, once per day."""
     n = now_dt or datetime.datetime.utcnow()
     if n.weekday() != 0 or n.hour < config.DIGEST_HOUR_UTC:
         return
     today = n.date().isoformat()
-    if store.meta_get("digest_bugs_last") != today:
-        store.meta_set("digest_bugs_last", today)
-        send_bug_digest()
-    if (next_release(n.date()) - n.date()).days <= 6 and store.meta_get("digest_ideas_last") != today:
-        store.meta_set("digest_ideas_last", today)
-        send_ideas_digest()
+    if store.meta_get("digest_last") == today:
+        return
+    store.meta_set("digest_last", today)
+    send_weekly_digest(include_ideas=(next_release(n.date()) - n.date()).days <= 6)
 
 
 # ---------------------------------------------------------------------------
@@ -498,8 +491,6 @@ class H(BaseHTTPRequestHandler):
             self._ideas(one("key"))
         elif u.path == "/notices":
             self._notices(one("key"))
-        elif u.path == "/review":
-            self._review(one("id"), one("act"), one("sig"), confirm=False)
         elif u.path == "/admin/list":
             self._admin_list()
         elif u.path == "/admin/app_stats":
@@ -563,10 +554,6 @@ class H(BaseHTTPRequestHandler):
             self._suggest()
         elif u.path == "/ideas/vote":
             self._ideas_vote()
-        elif u.path == "/review":
-            q = urllib.parse.parse_qs(u.query)
-            one = lambda k: (q.get(k) or [""])[0]
-            self._review(one("id"), one("act"), one("sig"), confirm=True)
         elif u.path == "/quiz/answer":
             self._quiz_answer()
         elif u.path == "/admin/suggestion":
@@ -968,9 +955,12 @@ class H(BaseHTTPRequestHandler):
         self._send(200, announce_quiz_winner(period, reward))
 
     def _suggest(self):
-        """A subscriber submits an app suggestion or bug. Screened for abusive
-        content before it is ever stored or shown to the admin. Ideas only reach
-        the public board after the owner approves them; bugs never do."""
+        """A subscriber submits an app idea or bug. Screened for abusive content
+        before it is ever stored. Runs itself, no owner taps needed:
+          - bug  -> stored privately, listed in the Monday message
+          - idea matching one already built -> sender is told it's already there
+          - idea matching one on the board  -> counted as a vote for that one
+          - new idea -> straight onto the public board"""
         d = json.loads(self._body() or b"{}")
         key = d.get("key", "")
         text = (d.get("text") or "").strip()
@@ -984,13 +974,19 @@ class H(BaseHTTPRequestHandler):
         if not ok:
             # never stored, never shown to admin — the user gets the notice.
             return self._send(200, {"ok": False, "reason": reason})
-        sid = store.add_suggestion(lic.get("contact") or key, text, category, key)
         if category == "bug":
-            notify.admin("🐞 bug report: %s\n(goes in Monday's bug list)%s" % (text[:300], _review_links(sid, ["fixed"])))
-        else:
-            notify.admin("💡 new idea [%s]: %s%s" % (CAT_LABELS[category], text[:300],
-                                                     _review_links(sid, ["approve", "approve_big", "reject", "duplicate"])))
-        self._send(200, {"ok": True, "bug": category == "bug"})
+            store.add_suggestion(lic.get("contact") or key, text, category, key)
+            return self._send(200, {"ok": True, "bug": True})
+        match = similar_idea(text)
+        if match and match["status"] == "built":
+            return self._send(200, {"ok": True, "dup": "built", "text": match["text"]})
+        if match:
+            if key not in store.idea_voters(match["id"]):
+                store.toggle_vote(match["id"], key)
+            return self._send(200, {"ok": True, "dup": "open", "text": match["text"]})
+        sid = store.add_suggestion(lic.get("contact") or key, text, category, key)
+        store.set_suggestion_status(sid, "open", "small")
+        self._send(200, {"ok": True})
 
     def _ideas_lic(self, key):
         lic = store.get(key) if key else None
@@ -1021,29 +1017,6 @@ class H(BaseHTTPRequestHandler):
         if not ok:
             return self._send(200, {"ok": False, "reason": "That idea isn't open for votes."})
         self._send(200, {"ok": True, "voted": voted, "votes": n})
-
-    def _review(self, sid, act, sig, confirm):
-        """One-tap review from the owner's Telegram ping. The link is signed with
-        ADMIN_TOKEN; opening it shows a confirm button (so link previews can't
-        act), and the button POSTs back here to apply it."""
-        page = lambda body: self._send(200, "<!doctype html><meta name=viewport content='width=device-width,initial-scale=1'>"
-                                       "<body style='font-family:system-ui;background:#0a0e15;color:#e7edf3;padding:24px;max-width:520px;margin:auto'>"
-                                       + body, "text/html; charset=utf-8")
-        if not (config.ADMIN_TOKEN and act in REVIEW_ACTS and sid.isdigit()
-                and hmac.compare_digest(sig or "", _review_sig(sid, act))):
-            return self._send(403, "<h3>Link not valid.</h3>", "text/html")
-        s = store.get_suggestion(sid)
-        if not s:
-            return page("<h3>That suggestion no longer exists.</h3>")
-        label, status, size = REVIEW_ACTS[act]
-        esc = lambda t: (t or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-        quote = "<p style='background:#131a26;border-radius:12px;padding:14px'>%s</p>" % esc(s["text"])
-        if not confirm:
-            return page("<h3>%s?</h3>%s<form method=post><button style='width:100%%;padding:14px;border:0;"
-                        "border-radius:12px;background:#9fc3ff;font-weight:800;font-size:16px'>%s</button></form>"
-                        % (esc(label), quote, esc(label)))
-        apply_idea_status(sid, status, size)
-        page("<h3>Done ✅</h3>%s<p>%s.</p>" % (quote, esc(label)))
 
     def _player_ok(self, lic):
         if not lic or lic["status"] == "revoked":
@@ -1486,7 +1459,7 @@ function loadApp(){
    function btn(lbl,st,sz){b.push('<button class=done data-i='+s.id+' data-s='+st+' data-z='+(sz||"")+' onclick=markB(this)>'+lbl+'</button>');}
    if(bug){ if(s.status==="new") btn("Mark fixed","done"); }
    else if(s.status==="new"){ btn("Approve","open","small"); btn("Approve as big","open","big"); btn("Reject","rejected"); btn("Already done","duplicate"); }
-   else if(s.status==="open"){ btn("Mark built","built"); btn(s.size==="big"?"Make small":"Make big","open",s.size==="big"?"small":"big"); }
+   else if(s.status==="open"){ btn("Mark built","built"); btn(s.size==="big"?"Make small":"Make big","open",s.size==="big"?"small":"big"); btn("Hide","rejected"); }
    return '<div class=sg><div class=m>'+dt+' &#183; '+esc(s.category||"other")+(bug?'':' &#183; '+esc(s.size||"small")+' &#183; &#128077; '+(s.votes||0))+
     ' &#183; '+esc(s.status)+' &#183; '+esc(s.contact)+'</div><div class=t>'+esc(s.text)+'</div>'+b.join(" ")+'</div>';}).join(""):'<div class=muted>No suggestions yet.</div>';
  });
