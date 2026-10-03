@@ -428,9 +428,34 @@ function openSuggest(mode){
       :'Got an idea to make the app better? Once reviewed it goes on the Ideas board, where everyone can vote for it.')+
     ' Please keep it respectful; abusive or foul messages are auto-rejected and never reach us.</p>'+chips+
     '<textarea id="sgText" rows="5" placeholder="'+(bug?'What went wrong…':'Your idea…')+'" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);font-size:14px;font-family:inherit;resize:vertical"></textarea>'+
+    '<div id="sgDup"></div>'+
     '<div id="sgErr" class="err" style="min-height:20px;margin:6px 0"></div>'+
     '<button class="btn" id="sgBtn" onclick="sendSuggest()">'+(bug?'Send bug report':'Send idea')+'</button>';
   openSheet(bug?"Report a bug":"Suggest an idea",bug?"Private · fixed weekly":"Help shape the app",bug?"🐞":"💡",body);
+  if(!bug){
+    if(!IDEAS) loadIdeas();
+    var ta=el("sgText"), tm; ta.oninput=function(){ clearTimeout(tm); tm=setTimeout(checkDup,350); };
+  }
+}
+// Plain word-overlap match against the board (no AI): catches "already built"
+// and "already on the board" before a repeat is ever sent.
+var STOP={"the":1,"and":1,"for":1,"with":1,"please":1,"add":1,"can":1,"you":1,"app":1,"would":1,"like":1,"have":1,"that":1,"this":1,"make":1,"more":1,"should":1,"could":1,"when":1,"what":1,"from":1,"into":1,"also":1,"want":1,"need":1};
+function _words(t){ var o={}; (String(t).toLowerCase().match(/[a-z0-9]+/g)||[]).forEach(function(w){
+  if(w.length>2 && !STOP[w]) o[w.replace(/s$/,"")]=1; }); return o; }
+function _sim(a,b){ var A=_words(a),B=_words(b),n=0,na=0,nb=0,k;
+  for(k in A){ na++; if(B[k]) n++; } for(k in B) nb++;
+  return (na&&nb)? n/Math.min(na,nb) : 0; }
+function checkDup(){
+  var box=el("sgDup"); if(!box) return;
+  var t=(el("sgText").value||"").trim(), best=null, bs=0;
+  if(t.length>=8 && IDEAS) IDEAS.ideas.forEach(function(x){ var v=_sim(t,x.text); if(v>bs){ bs=v; best=x; } });
+  if(!best || bs<0.6){ box.innerHTML=""; return; }
+  box.innerHTML='<div class="nextup" style="margin-top:8px">'+(best.status==="built"
+    ? '✅ <b>Already built:</b> “'+esc(best.text)+'”. Tap Update in the app if you don’t see it yet.'
+    : '💡 <b>Already on the board:</b> “'+esc(best.text)+'” · 👍 '+(+best.votes)+
+      (best.mine?'<br><span class="muted">You already voted for this one.</span>'
+        :'<br><button class="vote" style="margin-top:8px;width:100%" onclick="voteIdea('+(+best.id)+',this)">👍 Vote for it instead</button>'))+
+    '</div>';
 }
 function pickCat(c){
   SG_CAT=c.getAttribute("data-c");
@@ -531,6 +556,18 @@ function showHome(){
   }).join("");
   if(DATA) renderHome(); else loadClass();
   loadRef();
+  loadNotices();
+}
+// one-off messages from us: "already built", "you asked, we built it"
+function loadNotices(){
+  if(el("sheet")||el("upd")) return;   // try again next open rather than lose it
+  fetch(PAY+"/notices?key="+encodeURIComponent(K())+"&_="+Date.now(),{cache:"no-store"})
+    .then(function(r){ return r.json(); }).then(function(d){
+      if(!d||!d.notices||!d.notices.length||el("sheet")||el("upd")) return;
+      openSheet("Message from STAALWAG","About your idea","💬",
+        d.notices.map(function(t){ return '<p>'+esc(t)+'</p>'; }).join("")+
+        '<button class="btn" onclick="openIdeas()">Open the Ideas board</button>');
+    }).catch(function(){});
 }
 // ---------- refer & earn ----------
 var REFLINK="";

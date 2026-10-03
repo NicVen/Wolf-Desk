@@ -141,6 +141,15 @@ def _init(c):
             created      INTEGER,
             PRIMARY KEY (sid, license_key)
         )""")
+    # one-off in-app messages to a subscriber ("already built", "we built it")
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS app_notices (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            license_key  TEXT,
+            text         TEXT,
+            created      INTEGER,
+            seen         INTEGER DEFAULT 0
+        )""")
     c.commit()
 
 
@@ -381,7 +390,7 @@ def set_suggestion_status(sid, status, size=None):
         c.commit()
 
 
-def public_ideas(license_key="", built_days=60):
+def public_ideas(license_key="", built_days=365):
     """What every subscriber sees: approved ideas with live vote counts, plus
     recently built ones. Never names, never bugs, never unreviewed ideas."""
     cutoff = now() - built_days * 86400
@@ -419,6 +428,34 @@ def toggle_vote(sid, license_key):
         c.commit()
         n = c.execute("SELECT COUNT(*) FROM suggestion_votes WHERE sid=?", (int(sid),)).fetchone()[0]
         return True, not had, n
+
+
+def idea_voters(sid):
+    with _LOCK:
+        rows = _conn().execute("SELECT license_key FROM suggestion_votes WHERE sid=?", (int(sid),)).fetchall()
+        return [r["license_key"] for r in rows]
+
+
+def add_notice(license_key, text):
+    if not license_key:
+        return
+    with _LOCK:
+        c = _conn()
+        c.execute("INSERT INTO app_notices (license_key, text, created) VALUES (?,?,?)",
+                  (license_key, text, now()))
+        c.commit()
+
+
+def pop_notices(license_key):
+    """Unseen in-app messages for this subscriber; marks them seen."""
+    with _LOCK:
+        c = _conn()
+        rows = c.execute("SELECT id, text FROM app_notices WHERE license_key=? AND seen=0 ORDER BY id",
+                         (license_key,)).fetchall()
+        if rows:
+            c.execute("UPDATE app_notices SET seen=1 WHERE license_key=? AND seen=0", (license_key,))
+            c.commit()
+        return [r["text"] for r in rows]
 
 
 def open_bugs():

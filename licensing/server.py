@@ -320,6 +320,7 @@ REVIEW_ACTS = {
     "approve_big": ("Put it on the board (big update)", "open", "big"),
     "reject":      ("Reject it (never shown)", "rejected", None),
     "built":       ("Mark it built", "built", None),
+    "duplicate":   ("Mark it already done (tell the sender)", "duplicate", None),
     "fixed":       ("Mark the bug fixed", "done", None),
 }
 
@@ -337,8 +338,25 @@ def _review_links(sid, acts):
     if not config.ADMIN_TOKEN:
         return ""
     labels = {"approve": "✅ Approve", "approve_big": "✅ Approve as BIG",
-              "reject": "❌ Reject", "built": "🏁 Built", "fixed": "🛠 Fixed"}
+              "reject": "❌ Reject", "built": "🏁 Built", "fixed": "🛠 Fixed",
+              "duplicate": "🔁 Already done"}
     return "\n" + "\n".join("%s: %s" % (labels[a], review_link(sid, a)) for a in acts)
+
+
+def apply_idea_status(sid, status, size=None):
+    """Set an idea's status and tell the right people in the app:
+    built -> everyone who voted; duplicate -> the person who sent it."""
+    before = store.get_suggestion(sid)
+    store.set_suggestion_status(sid, status, size)
+    if not before or before["status"] == status:
+        return
+    short = before["text"] if len(before["text"]) <= 80 else before["text"][:77] + "…"
+    if status == "built":
+        for k in store.idea_voters(sid):
+            store.add_notice(k, "🎉 You asked, we built it: “%s”. Update the app to get it." % short)
+    elif status == "duplicate":
+        store.add_notice(before.get("license_key"),
+                         "👍 Good news: “%s” is already in the app. See Built ✅ on the Ideas board." % short)
 
 
 def send_bug_digest():
@@ -478,6 +496,8 @@ class H(BaseHTTPRequestHandler):
             self._quiz(one("key"))
         elif u.path == "/ideas":
             self._ideas(one("key"))
+        elif u.path == "/notices":
+            self._notices(one("key"))
         elif u.path == "/review":
             self._review(one("id"), one("act"), one("sig"), confirm=False)
         elif u.path == "/admin/list":
@@ -969,7 +989,7 @@ class H(BaseHTTPRequestHandler):
             notify.admin("🐞 bug report: %s\n(goes in Monday's bug list)%s" % (text[:300], _review_links(sid, ["fixed"])))
         else:
             notify.admin("💡 new idea [%s]: %s%s" % (CAT_LABELS[category], text[:300],
-                                                     _review_links(sid, ["approve", "approve_big", "reject"])))
+                                                     _review_links(sid, ["approve", "approve_big", "reject", "duplicate"])))
         self._send(200, {"ok": True, "bug": category == "bug"})
 
     def _ideas_lic(self, key):
@@ -983,6 +1003,11 @@ class H(BaseHTTPRequestHandler):
                          "next_update": next_release().isoformat(),
                          "next_big_update": next_big_release().isoformat(),
                          "categories": CAT_LABELS})
+
+    def _notices(self, key):
+        if not self._ideas_lic(key):
+            return self._send(200, {"ok": False, "notices": []})
+        self._send(200, {"ok": True, "notices": store.pop_notices(key)})
 
     def _ideas_vote(self):
         d = json.loads(self._body() or b"{}")
@@ -1017,7 +1042,7 @@ class H(BaseHTTPRequestHandler):
             return page("<h3>%s?</h3>%s<form method=post><button style='width:100%%;padding:14px;border:0;"
                         "border-radius:12px;background:#9fc3ff;font-weight:800;font-size:16px'>%s</button></form>"
                         % (esc(label), quote, esc(label)))
-        store.set_suggestion_status(sid, status, size)
+        apply_idea_status(sid, status, size)
         page("<h3>Done ✅</h3>%s<p>%s.</p>" % (quote, esc(label)))
 
     def _player_ok(self, lic):
@@ -1145,7 +1170,7 @@ class H(BaseHTTPRequestHandler):
         if not self._admin_ok():
             return self._send(403, {"error": "forbidden"})
         d = json.loads(self._body() or b"{}")
-        store.set_suggestion_status(d.get("id"), d.get("status", "done"), d.get("size"))
+        apply_idea_status(d.get("id"), d.get("status", "done"), d.get("size"))
         self._send(200, {"ok": True})
 
     def _admin_daily_plan(self):
@@ -1460,7 +1485,7 @@ function loadApp(){
    var dt=new Date((s.created||0)*1000).toLocaleString(),bug=s.category==="bug",b=[];
    function btn(lbl,st,sz){b.push('<button class=done data-i='+s.id+' data-s='+st+' data-z='+(sz||"")+' onclick=markB(this)>'+lbl+'</button>');}
    if(bug){ if(s.status==="new") btn("Mark fixed","done"); }
-   else if(s.status==="new"){ btn("Approve","open","small"); btn("Approve as big","open","big"); btn("Reject","rejected"); }
+   else if(s.status==="new"){ btn("Approve","open","small"); btn("Approve as big","open","big"); btn("Reject","rejected"); btn("Already done","duplicate"); }
    else if(s.status==="open"){ btn("Mark built","built"); btn(s.size==="big"?"Make small":"Make big","open",s.size==="big"?"small":"big"); }
    return '<div class=sg><div class=m>'+dt+' &#183; '+esc(s.category||"other")+(bug?'':' &#183; '+esc(s.size||"small")+' &#183; &#128077; '+(s.votes||0))+
     ' &#183; '+esc(s.status)+' &#183; '+esc(s.contact)+'</div><div class=t>'+esc(s.text)+'</div>'+b.join(" ")+'</div>';}).join(""):'<div class=muted>No suggestions yet.</div>';
