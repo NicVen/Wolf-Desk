@@ -88,6 +88,21 @@ restart_all
 healthy || fail "app didn't come back up"
 
 rm -f "$STATE/bad"
+# Weekly builds tag their commits "Ideas-Built: 3, 7" / "Bugs-Fixed: 2". Once
+# live, mark them on the Ideas board (voters get "you asked, we built it").
+ADMIN=$(envval ADMIN_TOKEN)
+mark() {   # mark <status> <ids...>
+    local st=$1 id; shift
+    for id in "$@"; do
+        curl -s -m 10 -X POST http://127.0.0.1:8790/admin/suggestion -H "X-Admin-Token: $ADMIN" \
+            -H "Content-Type: application/json" -d "{\"id\": $id, \"status\": \"$st\"}" >/dev/null || true
+    done
+}
+if [ -n "$ADMIN" ]; then
+    BODY=$(git_app log --format=%B "$OLD..$NEW")
+    mark built $(echo "$BODY" | sed -n 's/^Ideas-Built:[[:space:]]*//p' | tr -c '0-9\n' ' ')
+    mark done  $(echo "$BODY" | sed -n 's/^Bugs-Fixed:[[:space:]]*//p'  | tr -c '0-9\n' ' ')
+fi
 MSG=$(git_app log -1 --format=%s "$NEW")
 log "live: $MSG"
 # Success is only announced in the dedicated updates channel (confirms an
