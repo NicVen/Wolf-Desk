@@ -75,22 +75,26 @@ def create_checkout(price_usd, order_id, description):
 
 
 def capture_order(paypal_order_id):
-    """Capture an approved order. Returns (our_order_id, ok, err)."""
+    """Capture an approved order. Returns (our_order_id, capture_id, ok, err).
+    capture_id is the same id the PAYMENT.CAPTURE.COMPLETED webhook carries,
+    so both paths dedupe on one key."""
     if not config.paypal_enabled():
-        return None, False, "paypal not configured"
+        return None, None, False, "paypal not configured"
     try:
         tok = _token()
         d = _api("/v2/checkout/orders/%s/capture" % urllib.parse.quote(paypal_order_id),
                  "POST", token=tok, body="{}")
         status = d.get("status")
         our_id = ""
+        capture_id = ""
         for pu in d.get("purchase_units", []):
             our_id = pu.get("custom_id") or our_id
             for cap in (pu.get("payments", {}) or {}).get("captures", []):
                 our_id = cap.get("custom_id") or our_id
-        return our_id, (status == "COMPLETED"), None
+                capture_id = str(cap.get("id") or "") or capture_id
+        return our_id, capture_id, (status == "COMPLETED"), None
     except Exception as e:  # noqa: BLE001
-        return None, False, str(e)
+        return None, None, False, str(e)
 
 
 def verify_webhook(headers, raw_body):
