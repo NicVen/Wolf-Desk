@@ -539,10 +539,12 @@ class H(BaseHTTPRequestHandler):
         """Buyer came back from PayPal — capture the order and activate."""
         if not paypal_order_id:
             return self._send(400, "<h2>Missing PayPal order.</h2>", "text/html")
-        our_id, ok, err = paypal.capture_order(paypal_order_id)
+        our_id, capture_id, ok, err = paypal.capture_order(paypal_order_id)
         if ok and our_id:
-            if not store.payment_seen(paypal_order_id):
-                apply_payment(our_id, paypal_order_id)
+            # Dedupe on the capture id: the webhook for this same payment uses it too.
+            pay_id = capture_id or paypal_order_id
+            if not store.payment_seen(pay_id):
+                apply_payment(our_id, pay_id)
             return self._send(200, "<h2>Thank you — your activation key is on its way.</h2>",
                               "text/html")
         notify.admin("paypal capture not completed for %s: %s" % (paypal_order_id, err or ok))
