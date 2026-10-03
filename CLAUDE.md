@@ -45,7 +45,8 @@ information out of Claude has been painful. Fix that by how you communicate.
   anything pushed to a repo. Chat only.
 - **Marking convention:** ✗ / X on something = *delete it*. A circle = *question or
   change it* — never delete a circled item.
-- **Secrets** (`.env`, `WOLF_PASS`, `ADMIN_TOKEN`, telegram tokens) stay out of git.
+- **Secrets** (`.env`, `WOLF_PASS`, `ADMIN_TOKEN`, telegram/PayPal tokens) stay
+  out of git.
 
 ## Infra cheat-sheet (so you don't re-derive it)
 
@@ -63,8 +64,22 @@ information out of Claude has been painful. Fix that by how you communicate.
   (`npm exec paperclipai run`, hosts the DB on :54329). Yahoo prices work on the
   PC, are BLOCKED from Claude's cloud container.
 - **The store:** `staalwag.com/store` — free 7-day trial → $14.99/mo (launch promo,
-  reg $25). Crypto pay live; card off until Stripe keys added. Partner banner kit
-  at `/store/banners.html`. Partner rewards = no stacking (one window at a time).
+  reg $25). Crypto + PayPal pay live; card off until Stripe keys added. Partner
+  banner kit at `/store/banners.html`. Partner rewards = no stacking (one window
+  at a time).
+
+## STAALCALIBUR app (key fact for updates)
+
+- The Android app is a **TWA — a thin shell wrapping the live website.** Feature/
+  content changes = deploy the site; they go live in the installed app instantly,
+  **NO Play Store update.** Only touch Play Console for icon/name changes or
+  Google's yearly target-API bump.
+- **Brand:** STAALWAG steel logo = the app ICON everywhere (Play icon slot +
+  phone home-screen). The chrome double-chevron appears ONLY in Play Store promo
+  images (feature graphic + screenshots), never as the icon.
+- **Status (Oct 2026):** v1 submitted to Play closed testing; needs 12 testers
+  for 14 days (free tester-swap app, e.g. TheClosedTest) before production access.
+  Opt-in link appears once Google approves the closed-test release.
 
 ## Dev/branch
 
