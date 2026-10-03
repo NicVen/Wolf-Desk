@@ -54,6 +54,9 @@ information out of Claude has been painful. Fix that by how you communicate.
   (Claude's container can't SSH). App user is `wolf`; if a pull fails on
   permissions: `sudo chown -R wolf:wolf /opt/wolf-desk` then pull.
   Deploy = `cd /opt/wolf-desk && sudo -u wolf git pull && sudo systemctl restart wolf-desk staalwag-licensing`
+  **Auto-ship** (once `deploy/autoship-setup.sh` has been run): a timer ships
+  whatever is merged into the live branch within 5 min, rolls back + Telegrams
+  Nic if it breaks. So "merge the PR" = "it's live".
 - **serve.py** (port 8777) host-routes: `staalwag.com`→site, `wolf.*`→WOLF desk,
   `app.*`→the app; also `/store` (storefront), `/proof` (track record).
 - **licensing service** (port 8790, localhost-only, behind Caddy): products/prices
@@ -77,6 +80,11 @@ information out of Claude has been painful. Fix that by how you communicate.
 - **Brand:** STAALWAG steel logo = the app ICON everywhere (Play icon slot +
   phone home-screen). The chrome double-chevron appears ONLY in Play Store promo
   images (feature graphic + screenshots), never as the icon.
+- **Ideas board / update rhythm:** users send ideas (with a category) or private
+  bug reports in the app; Nic approves ideas from a one-tap Telegram link, then
+  everyone votes 👍 (counts are public, names never). Bugs ship weekly (bug list
+  every Monday), small ideas every 2 weeks from `RELEASE_ANCHOR` (top-5 sent the
+  Monday before), big ideas on the 1st of the month. Mark ideas built in HQ → App.
 - **Status (Oct 2026):** v1 submitted to Play closed testing; needs 12 testers
   for 14 days (free tester-swap app, e.g. TheClosedTest) before production access.
   Opt-in link appears once Google approves the closed-test release.

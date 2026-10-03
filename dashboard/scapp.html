@@ -156,6 +156,17 @@
   .sheet .x{float:right;background:var(--card);border:1px solid var(--line);color:var(--chrome);
     border-radius:10px;padding:6px 12px;font-weight:800;cursor:pointer}
   .hidden{display:none}
+  /* ideas board */
+  .idea{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:11px 12px;margin:8px 0}
+  .idea .tx{flex:1;font-size:14px;line-height:1.45;color:var(--fg)}
+  .idea .tg{display:inline-block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--steel);
+    border:1px solid var(--line);border-radius:999px;padding:1px 7px;margin-bottom:4px}
+  .vote{min-width:58px;padding:8px 6px;border:1px solid var(--line);border-radius:10px;background:var(--card2);
+    color:var(--steel);font-weight:800;font-size:14px;cursor:pointer}
+  .vote.on{background:var(--chrome);color:#0a0e15;border-color:var(--chrome)}
+  .idea.built .tx{color:var(--chrome)}
+  .nextup{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--chrome);margin:8px 0}
 </style>
 </head>
 <body>
@@ -363,22 +374,77 @@ function openSheet(title,sub,val,body){
   document.body.appendChild(m);
 }
 function closeSheet(){ var m=el("sheet"); if(m&&m.parentNode) m.parentNode.removeChild(m); }
-function openSuggest(){
-  var body='<p class="muted" style="font-size:13px;margin-top:0">Got an idea to make the app better? Tell us — we read every one. Please keep it respectful; abusive or foul messages are auto-rejected and never reach us.</p>'+
-    '<textarea id="sgText" rows="5" placeholder="Your suggestion…" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);font-size:14px;font-family:inherit;resize:vertical"></textarea>'+
+// ---------- ideas board: suggest, vote, see what got built ----------
+var IDEA_CATS=[["signals","Signals"],["charts","Charts"],["alerts","Alerts"],["quiz","Quiz"],["other","Other"]];
+var SG_CAT="other", IDEAS=null;
+function _day(iso){ var d=new Date(iso+"T00:00:00Z"); return d.getUTCDate()+" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()]; }
+function loadIdeas(cb){
+  fetch(PAY+"/ideas?key="+encodeURIComponent(K())+"&_="+Date.now(),{cache:"no-store"})
+    .then(function(r){ return r.json(); }).then(function(d){ if(d&&d.ok) IDEAS=d; cb&&cb(d); })
+    .catch(function(){ cb&&cb(null); });
+}
+function openIdeas(){
+  openSheet("Ideas board","Vote on what we build next","💡",'<p class="muted">Loading…</p>');
+  loadIdeas(renderIdeas);
+}
+function renderIdeas(d){
+  var m=el("sheet"); if(!m) return;
+  var box=m.querySelector(".sheet");
+  if(!d||!d.ok){ box.innerHTML='<button class="x" onclick="closeSheet()">Close</button><h3>Ideas board</h3><p class="err">'+esc((d&&d.reason)||"Couldn't load — try again.")+'</p>'; return; }
+  var open=d.ideas.filter(function(x){ return x.status==="open"; });
+  var built=d.ideas.filter(function(x){ return x.status==="built"; });
+  var cat=function(c){ return (d.categories&&d.categories[c])||"Other"; };
+  var h='<button class="x" onclick="closeSheet()">Close</button>'+
+    '<div class="sub">Vote on what we build next</div><h3>Ideas board</h3>'+
+    '<div class="nextup">📅 Next update: <b>'+_day(d.next_update)+'</b> · Big features: <b>'+_day(d.next_big_update)+'</b><br><span class="muted">Bug fixes ship every week.</span></div>'+
+    '<button class="btn" onclick="openSuggest()">💡 Suggest an idea</button>'+
+    '<div class="sec">Open ideas · tap 👍 to vote</div>'+
+    (open.length? open.map(function(x){
+      return '<div class="idea"><div class="tx"><span class="tg">'+esc(cat(x.category))+(x.size==="big"?' · big':'')+'</span><br>'+esc(x.text)+'</div>'+
+        '<button class="vote'+(x.mine?' on':'')+'" onclick="voteIdea('+(+x.id)+',this)">👍 '+(+x.votes)+'</button></div>';
+    }).join("") : '<p class="muted">No open ideas yet — be the first.</p>')+
+    (built.length? '<div class="sec">Built ✅ — you asked, we built it</div>'+built.map(function(x){
+      return '<div class="idea built"><div class="tx"><span class="tg">'+esc(cat(x.category))+'</span><br>'+esc(x.text)+'</div><div class="vote on" style="text-align:center">✅ '+(+x.votes)+'</div></div>';
+    }).join("") : '')+
+    '<p class="muted" style="margin-top:14px">New ideas appear here once reviewed. Names are never shown.</p>'+
+    '<button class="btn ghost" style="margin-top:6px" onclick="openSuggest(\'bug\')">🐞 Report a bug (private)</button>';
+  box.innerHTML=h;
+}
+function voteIdea(id,b){
+  b.disabled=true;
+  fetch(PAY+"/ideas/vote",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({key:K(),id:id})}).then(function(r){ return r.json(); }).then(function(d){
+    b.disabled=false;
+    if(d&&d.ok){ b.className="vote"+(d.voted?" on":""); b.textContent="👍 "+d.votes; }
+    else toast((d&&d.reason)||"Couldn't vote — try again.");
+  }).catch(function(){ b.disabled=false; toast("Network error — try again."); });
+}
+function openSuggest(mode){
+  var bug=mode==="bug"; SG_CAT=bug?"bug":"other";
+  var chips=bug?'':'<div class="sec" style="margin-top:4px">What is it about?</div><div class="chips" id="sgCats" style="flex-wrap:wrap">'+
+    IDEA_CATS.map(function(c){ return '<div class="chip'+(c[0]===SG_CAT?' on':'')+'" data-c="'+c[0]+'" onclick="pickCat(this)">'+c[1]+'</div>'; }).join("")+'</div>';
+  var body='<p class="muted" style="font-size:13px;margin-top:0">'+(bug
+      ?'Something broken? Tell us what happened and where. Bug reports are private and fixed in the weekly update.'
+      :'Got an idea to make the app better? Once reviewed it goes on the Ideas board, where everyone can vote for it.')+
+    ' Please keep it respectful; abusive or foul messages are auto-rejected and never reach us.</p>'+chips+
+    '<textarea id="sgText" rows="5" placeholder="'+(bug?'What went wrong…':'Your idea…')+'" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);font-size:14px;font-family:inherit;resize:vertical"></textarea>'+
     '<div id="sgErr" class="err" style="min-height:20px;margin:6px 0"></div>'+
-    '<button class="btn" id="sgBtn" onclick="sendSuggest()">Send suggestion</button>';
-  openSheet("Suggest an improvement","Help shape the app","💡",body);
+    '<button class="btn" id="sgBtn" onclick="sendSuggest()">'+(bug?'Send bug report':'Send idea')+'</button>';
+  openSheet(bug?"Report a bug":"Suggest an idea",bug?"Private · fixed weekly":"Help shape the app",bug?"🐞":"💡",body);
+}
+function pickCat(c){
+  SG_CAT=c.getAttribute("data-c");
+  var all=el("sgCats").children; for(var i=0;i<all.length;i++) all[i].className="chip"+(all[i]===c?" on":"");
 }
 function sendSuggest(){
   var t=(el("sgText").value||"").trim();
   if(t.length<6){ el("sgErr").textContent="Please add a little more detail."; return; }
-  var b=el("sgBtn"); b.disabled=true; b.textContent="Sending…"; el("sgErr").textContent="";
+  var b=el("sgBtn"), label=b.textContent; b.disabled=true; b.textContent="Sending…"; el("sgErr").textContent="";
   fetch(PAY+"/suggest",{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({key:K(),text:t})}).then(function(r){ return r.json(); }).then(function(d){
-    if(d&&d.ok){ closeSheet(); toast("Thanks! Your suggestion was sent."); }
-    else { el("sgErr").textContent=(d&&d.reason)||"Couldn't submit — try again."; b.disabled=false; b.textContent="Send suggestion"; }
-  }).catch(function(){ el("sgErr").textContent="Network error — try again."; b.disabled=false; b.textContent="Send suggestion"; });
+    body:JSON.stringify({key:K(),text:t,category:SG_CAT})}).then(function(r){ return r.json(); }).then(function(d){
+    if(d&&d.ok){ closeSheet(); toast(d.bug?"Thanks! Bug sent — fixes ship weekly.":"Thanks! It'll appear on the board once reviewed."); }
+    else { el("sgErr").textContent=(d&&d.reason)||"Couldn't submit — try again."; b.disabled=false; b.textContent=label; }
+  }).catch(function(){ el("sgErr").textContent="Network error — try again."; b.disabled=false; b.textContent=label; });
 }
 function showOutlook(){
   var o=CO; if(!o||!o.outlook) return;
@@ -459,7 +525,7 @@ function showHome(){
   el("main").innerHTML = '<div id="refbox"></div>'+
     '<button class="btn" style="margin:2px 0 12px" onclick="openQuiz()">🧠 Daily Trader Quiz — win monthly</button>'+
     '<div class="chips" id="chips"></div><div id="list"></div>'+
-    '<button class="btn ghost" style="margin-top:18px" onclick="openSuggest()">💡 Suggest an improvement</button>';
+    '<button class="btn ghost" style="margin-top:18px" onclick="openIdeas()">💡 Ideas board — suggest &amp; vote</button>';
   el("chips").innerHTML = CLASSES.map(function(c){
     return '<div class="chip'+(c[0]===CUR?' on':'')+'" onclick="pick(\''+c[0]+'\')">'+c[1]+'</div>';
   }).join("");
@@ -746,10 +812,19 @@ function showUpdate(d){
     '<div class="sub">'+esc(typeLabel)+' · v'+esc(d.version)+(d.date?(' · '+esc(d.date)):'')+'</div>'+
     '<h3>'+esc(d.title||"A new version is ready")+'</h3>'+
     (notes?('<ul class="upd">'+notes+'</ul>'):'')+
+    '<div id="updAsked"></div>'+
     '<button class="btn" id="updBtn" onclick="doUpdate()">Update now</button>'+
     '<button class="btn ghost" style="margin-top:8px" onclick="snoozeUpdate()">Later</button>'+
     '</div>';
   document.body.appendChild(m);
+  // "You asked, we built it": ideas from the board shipped in the last 30 days.
+  loadIdeas(function(x){
+    var box=el("updAsked"); if(!box||!x||!x.ok) return;
+    var cut=Date.now()/1000-30*86400;
+    var b=x.ideas.filter(function(i){ return i.status==="built" && (i.built_at||0)>=cut; });
+    if(b.length) box.innerHTML='<div class="sec">You asked, we built it</div><ul class="upd">'+
+      b.map(function(i){ return '<li>'+esc(i.text)+' <span class="muted">· 👍 '+(+i.votes)+'</span></li>'; }).join("")+'</ul>';
+  });
 }
 function snoozeUpdate(){ updSnoozed=true; var m=el("upd"); if(m&&m.parentNode) m.parentNode.removeChild(m); }
 

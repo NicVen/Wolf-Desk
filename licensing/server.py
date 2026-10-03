@@ -13,6 +13,8 @@ Run:  python -m licensing.server     (BIND_ADDR/PORT from env; sits behind Caddy
 """
 import calendar
 import datetime
+import hashlib
+import hmac
 import json
 import os
 import secrets
@@ -283,6 +285,103 @@ def check_access(lic):
 
 
 # ---------------------------------------------------------------------------
+# Ideas board: release rhythm, one-tap review links, owner digests
+# ---------------------------------------------------------------------------
+CAT_LABELS = {"signals": "Signals", "charts": "Charts", "alerts": "Alerts",
+              "quiz": "Quiz", "bug": "Bug", "other": "Other"}
+
+
+def next_release(today=None):
+    """Next biweekly small-update date (on or after today)."""
+    today = today or datetime.datetime.utcnow().date()
+    try:
+        anchor = datetime.date.fromisoformat(config.RELEASE_ANCHOR)
+    except ValueError:
+        anchor = today
+    if today <= anchor:
+        return anchor
+    return anchor + datetime.timedelta(days=-(-(today - anchor).days // 14) * 14)
+
+
+def next_big_release(today=None):
+    """Big updates ship on the 1st of the month."""
+    today = today or datetime.datetime.utcnow().date()
+    if today.day == 1:
+        return today
+    return (today.replace(day=28) + datetime.timedelta(days=4)).replace(day=1)
+
+
+def _fmt_day(d):
+    return "%d %s" % (d.day, d.strftime("%b"))
+
+
+REVIEW_ACTS = {
+    "approve":     ("Put it on the board (small update)", "open", "small"),
+    "approve_big": ("Put it on the board (big update)", "open", "big"),
+    "reject":      ("Reject it (never shown)", "rejected", None),
+    "built":       ("Mark it built", "built", None),
+    "fixed":       ("Mark the bug fixed", "done", None),
+}
+
+
+def _review_sig(sid, act):
+    key = (config.ADMIN_TOKEN or "").encode()
+    return hmac.new(key, ("%s:%s" % (sid, act)).encode(), hashlib.sha256).hexdigest()[:20]
+
+
+def review_link(sid, act):
+    return "%s/review?id=%s&act=%s&sig=%s" % (config.PUBLIC_BASE_URL, sid, act, _review_sig(sid, act))
+
+
+def _review_links(sid, acts):
+    if not config.ADMIN_TOKEN:
+        return ""
+    labels = {"approve": "✅ Approve", "approve_big": "✅ Approve as BIG",
+              "reject": "❌ Reject", "built": "🏁 Built", "fixed": "🛠 Fixed"}
+    return "\n" + "\n".join("%s: %s" % (labels[a], review_link(sid, a)) for a in acts)
+
+
+def send_bug_digest():
+    bugs = store.open_bugs()
+    if not bugs:
+        return notify.admin("🐞 Monday bug check: no open bug reports. 👍")
+    lines = ["🐞 Monday bug list (%d) — these go in this week's fix:" % len(bugs)]
+    for b in bugs[:15]:
+        lines.append("\n• %s%s" % (b["text"][:160], _review_links(b["id"], ["fixed"])))
+    notify.admin("\n".join(lines))
+
+
+def send_ideas_digest():
+    small, big = store.top_ideas("small", 5), store.top_ideas("big", 3)
+    lines = ["💡 Top ideas for the %s update — pick which to build:" % _fmt_day(next_release())]
+    if small:
+        for i, x in enumerate(small, 1):
+            lines.append("%d. [%s] %s — 👍 %d" % (i, CAT_LABELS.get(x["category"], "Other"), x["text"][:120], x["votes"]))
+    else:
+        lines.append("(no small ideas on the board yet)")
+    if big:
+        lines.append("\nBig ideas for %s:" % _fmt_day(next_big_release()))
+        for i, x in enumerate(big, 1):
+            lines.append("%d. [%s] %s — 👍 %d" % (i, CAT_LABELS.get(x["category"], "Other"), x["text"][:120], x["votes"]))
+    notify.admin("\n".join(lines))
+
+
+def run_digests(now_dt=None):
+    """Called from the sweeper. Monday after DIGEST_HOUR_UTC: bug list every
+    week; top ideas only in the week of a small release. Once per day each."""
+    n = now_dt or datetime.datetime.utcnow()
+    if n.weekday() != 0 or n.hour < config.DIGEST_HOUR_UTC:
+        return
+    today = n.date().isoformat()
+    if store.meta_get("digest_bugs_last") != today:
+        store.meta_set("digest_bugs_last", today)
+        send_bug_digest()
+    if (next_release(n.date()) - n.date()).days <= 6 and store.meta_get("digest_ideas_last") != today:
+        store.meta_set("digest_ideas_last", today)
+        send_ideas_digest()
+
+
+# ---------------------------------------------------------------------------
 # background sweeper: pre-expiry reminders, lapse -> past_due, revoke after grace
 # ---------------------------------------------------------------------------
 def sweeper():
@@ -322,6 +421,7 @@ def sweeper():
                     except Exception as e:  # noqa: BLE001
                         notify.admin("auto quiz-winner error: %s" % e)
                     store.meta_set("quiz_winner_last", prev)   # mark done either way
+            run_digests()
         except Exception as e:  # noqa: BLE001
             notify.admin("sweeper error: %s" % e)
         time.sleep(60)
@@ -376,6 +476,10 @@ class H(BaseHTTPRequestHandler):
             self._reflink(one("key"))
         elif u.path == "/quiz":
             self._quiz(one("key"))
+        elif u.path == "/ideas":
+            self._ideas(one("key"))
+        elif u.path == "/review":
+            self._review(one("id"), one("act"), one("sig"), confirm=False)
         elif u.path == "/admin/list":
             self._admin_list()
         elif u.path == "/admin/app_stats":
@@ -437,6 +541,12 @@ class H(BaseHTTPRequestHandler):
             self._admin_quiz_winner()
         elif u.path == "/suggest":
             self._suggest()
+        elif u.path == "/ideas/vote":
+            self._ideas_vote()
+        elif u.path == "/review":
+            q = urllib.parse.parse_qs(u.query)
+            one = lambda k: (q.get(k) or [""])[0]
+            self._review(one("id"), one("act"), one("sig"), confirm=True)
         elif u.path == "/quiz/answer":
             self._quiz_answer()
         elif u.path == "/admin/suggestion":
@@ -838,11 +948,15 @@ class H(BaseHTTPRequestHandler):
         self._send(200, announce_quiz_winner(period, reward))
 
     def _suggest(self):
-        """A subscriber submits an app suggestion. Screened for abusive content
-        before it is ever stored or shown to the admin."""
+        """A subscriber submits an app suggestion or bug. Screened for abusive
+        content before it is ever stored or shown to the admin. Ideas only reach
+        the public board after the owner approves them; bugs never do."""
         d = json.loads(self._body() or b"{}")
         key = d.get("key", "")
         text = (d.get("text") or "").strip()
+        category = (d.get("category") or "other").lower()
+        if category not in CAT_LABELS:
+            category = "other"
         lic = store.get(key)
         if not lic or lic["status"] == "revoked":
             return self._send(200, {"ok": False, "reason": "You need an active app key to send a suggestion."})
@@ -850,9 +964,61 @@ class H(BaseHTTPRequestHandler):
         if not ok:
             # never stored, never shown to admin — the user gets the notice.
             return self._send(200, {"ok": False, "reason": reason})
-        store.add_suggestion(lic.get("contact") or key, text)
-        notify.admin("💡 new app suggestion: %s" % text[:160])
-        self._send(200, {"ok": True})
+        sid = store.add_suggestion(lic.get("contact") or key, text, category, key)
+        if category == "bug":
+            notify.admin("🐞 bug report: %s\n(goes in Monday's bug list)%s" % (text[:300], _review_links(sid, ["fixed"])))
+        else:
+            notify.admin("💡 new idea [%s]: %s%s" % (CAT_LABELS[category], text[:300],
+                                                     _review_links(sid, ["approve", "approve_big", "reject"])))
+        self._send(200, {"ok": True, "bug": category == "bug"})
+
+    def _ideas_lic(self, key):
+        lic = store.get(key) if key else None
+        return lic if lic and lic["status"] != "revoked" else None
+
+    def _ideas(self, key):
+        if not self._ideas_lic(key):
+            return self._send(200, {"ok": False, "reason": "You need an active app key to see the ideas board."})
+        self._send(200, {"ok": True, "ideas": store.public_ideas(key),
+                         "next_update": next_release().isoformat(),
+                         "next_big_update": next_big_release().isoformat(),
+                         "categories": CAT_LABELS})
+
+    def _ideas_vote(self):
+        d = json.loads(self._body() or b"{}")
+        key = d.get("key", "")
+        if not self._ideas_lic(key):
+            return self._send(200, {"ok": False, "reason": "You need an active app key to vote."})
+        try:
+            ok, voted, n = store.toggle_vote(int(d.get("id")), key)
+        except (TypeError, ValueError):
+            ok, voted, n = False, False, 0
+        if not ok:
+            return self._send(200, {"ok": False, "reason": "That idea isn't open for votes."})
+        self._send(200, {"ok": True, "voted": voted, "votes": n})
+
+    def _review(self, sid, act, sig, confirm):
+        """One-tap review from the owner's Telegram ping. The link is signed with
+        ADMIN_TOKEN; opening it shows a confirm button (so link previews can't
+        act), and the button POSTs back here to apply it."""
+        page = lambda body: self._send(200, "<!doctype html><meta name=viewport content='width=device-width,initial-scale=1'>"
+                                       "<body style='font-family:system-ui;background:#0a0e15;color:#e7edf3;padding:24px;max-width:520px;margin:auto'>"
+                                       + body, "text/html; charset=utf-8")
+        if not (config.ADMIN_TOKEN and act in REVIEW_ACTS and sid.isdigit()
+                and hmac.compare_digest(sig or "", _review_sig(sid, act))):
+            return self._send(403, "<h3>Link not valid.</h3>", "text/html")
+        s = store.get_suggestion(sid)
+        if not s:
+            return page("<h3>That suggestion no longer exists.</h3>")
+        label, status, size = REVIEW_ACTS[act]
+        esc = lambda t: (t or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        quote = "<p style='background:#131a26;border-radius:12px;padding:14px'>%s</p>" % esc(s["text"])
+        if not confirm:
+            return page("<h3>%s?</h3>%s<form method=post><button style='width:100%%;padding:14px;border:0;"
+                        "border-radius:12px;background:#9fc3ff;font-weight:800;font-size:16px'>%s</button></form>"
+                        % (esc(label), quote, esc(label)))
+        store.set_suggestion_status(sid, status, size)
+        page("<h3>Done ✅</h3>%s<p>%s.</p>" % (quote, esc(label)))
 
     def _player_ok(self, lic):
         if not lic or lic["status"] == "revoked":
@@ -979,7 +1145,7 @@ class H(BaseHTTPRequestHandler):
         if not self._admin_ok():
             return self._send(403, {"error": "forbidden"})
         d = json.loads(self._body() or b"{}")
-        store.set_suggestion_status(d.get("id"), d.get("status", "done"))
+        store.set_suggestion_status(d.get("id"), d.get("status", "done"), d.get("size"))
         self._send(200, {"ok": True})
 
     def _admin_daily_plan(self):
@@ -1291,12 +1457,17 @@ function loadApp(){
  });
  fetch("/admin/suggestions",{headers:H()}).then(function(r){return r.json()}).then(function(d){
   var a=d.suggestions||[];document.getElementById("sugs").innerHTML=a.length?a.map(function(s){
-   var dt=new Date((s.created||0)*1000).toLocaleString();
-   return '<div class=sg><div class=m>'+dt+' &#183; '+esc(s.contact)+' &#183; '+esc(s.status)+'</div><div class=t>'+esc(s.text)+'</div>'+
-    (s.status!=="done"?'<button class=done onclick=mark('+s.id+')>Mark done</button>':'')+'</div>';}).join(""):'<div class=muted>No suggestions yet.</div>';
+   var dt=new Date((s.created||0)*1000).toLocaleString(),bug=s.category==="bug",b=[];
+   function btn(lbl,st,sz){b.push('<button class=done data-i='+s.id+' data-s='+st+' data-z='+(sz||"")+' onclick=markB(this)>'+lbl+'</button>');}
+   if(bug){ if(s.status==="new") btn("Mark fixed","done"); }
+   else if(s.status==="new"){ btn("Approve","open","small"); btn("Approve as big","open","big"); btn("Reject","rejected"); }
+   else if(s.status==="open"){ btn("Mark built","built"); btn(s.size==="big"?"Make small":"Make big","open",s.size==="big"?"small":"big"); }
+   return '<div class=sg><div class=m>'+dt+' &#183; '+esc(s.category||"other")+(bug?'':' &#183; '+esc(s.size||"small")+' &#183; &#128077; '+(s.votes||0))+
+    ' &#183; '+esc(s.status)+' &#183; '+esc(s.contact)+'</div><div class=t>'+esc(s.text)+'</div>'+b.join(" ")+'</div>';}).join(""):'<div class=muted>No suggestions yet.</div>';
  });
 }
-function mark(id){fetch("/admin/suggestion",{method:"POST",headers:Object.assign({"Content-Type":"application/json"},H()),body:JSON.stringify({id:id,status:"done"})}).then(loadApp);}
+function markB(e){mark(e.dataset.i,e.dataset.s,e.dataset.z);}
+function mark(id,st,sz){fetch("/admin/suggestion",{method:"POST",headers:Object.assign({"Content-Type":"application/json"},H()),body:JSON.stringify({id:id,status:st||"done",size:sz||null})}).then(loadApp);}
 function loadLic(){
  fetch("/admin/list",{headers:H()}).then(function(r){return r.json()}).then(function(d){
   var rows=(d.licenses||[]).map(function(l){

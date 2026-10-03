@@ -70,6 +70,12 @@ SITE_URL = os.environ.get("SITE_URL", "https://staalwag.com").rstrip("/")
 # --- Trader Quiz monthly winner (auto-announced on the 1st) ---
 QUIZ_AUTO_WINNER = os.environ.get("QUIZ_AUTO_WINNER", "1") not in ("0", "false", "False", "")
 QUIZ_REWARD = os.environ.get("QUIZ_REWARD", "1 month free VIP — we'll be in touch to set it up")
+# --- App update rhythm (shown on the in-app Ideas board + drives the digests) ---
+# Bugs: fixed weekly (bug list every Monday). Small ideas: every 2 weeks, counted
+# from RELEASE_ANCHOR (top ideas sent the Monday before). Big ideas: the 1st of
+# each month.
+RELEASE_ANCHOR = os.environ.get("RELEASE_ANCHOR", "2026-10-17")
+DIGEST_HOUR_UTC = _int("DIGEST_HOUR_UTC", 7)
 TOKEN_TTL_HOURS = _int("TOKEN_TTL_HOURS", 6)  # how long a rolling token is trusted offline
 RENEW_NOTICE_DAYS = _int("RENEW_NOTICE_DAYS", 3)  # warn client this many days before expiry
 

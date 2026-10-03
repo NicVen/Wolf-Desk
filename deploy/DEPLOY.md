@@ -112,11 +112,25 @@ puller there — it pulls `GET /markov.json` and writes the gate files into MT5'
 2. Set once (so it's remembered): `setx WOLF_HOST "https://178.104.88.38.sslip.io"` and `setx WOLF_PASS "your-key"`
 3. In each EA, keep the Markov gate ON; Gold uses `markov_regime.txt`, others use `markov_<SYMBOL>.txt`.
 
-## Updating the server later
+## Updating the server later — auto-ship (hands-off)
+
+Turn it on once:
+
+```bash
+cd /opt/wolf-desk && sudo -u wolf git pull && sudo bash deploy/autoship-setup.sh
+```
+
+From then on, anything merged into the live branch is live (site + app) within
+5 minutes. `deploy/autoship.sh` pulls, compile-checks, restarts and health-checks;
+if the app doesn't come back it rolls back by itself and Telegrams you (it uses
+`LICENSE_BOT_TOKEN` / `LICENSE_ADMIN_CHAT` from `/etc/staalwag-licensing.env`).
+Check it: `systemctl list-timers autoship.timer` · log: `journalctl -u autoship -n 30`.
+
+Manual update (still works any time):
 
 ```bash
 cd /opt/wolf-desk && sudo -u wolf git pull
-systemctl restart wolf-desk
+systemctl restart wolf-desk staalwag-licensing
 ```
 
 ## Swapping in a real domain later
