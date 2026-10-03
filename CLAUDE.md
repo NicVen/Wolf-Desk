@@ -88,7 +88,8 @@ information out of Claude has been painful. Fix that by how you communicate.
   a week (Monday): bugs to fix + (every 2nd week, from `RELEASE_ANCHOR`) the
   top-voted ideas; big ideas ship on the 1st. Auto-ship only messages on
   failure. HQ → App: mark built (voters get "you asked, we built it"), hide.
-  With the "STAALWAG Updates" channel set up (deploy/updates-channel-setup.sh),
+  With the "STAALWAG Updates" channel set up (deploy/updates-channel-setup.sh;
+  its own bot UPDATES_BOT_TOKEN — never mixed with signal/licensing bots),
   a Monday routine reads `GET /digest`, builds the fixes/ideas as a PR into the
   live branch, and `POST /ready` puts a "✅ Review & approve" button in the
   channel; Nic merging = approval = live in 5 min. The app never depends on it.

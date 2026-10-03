@@ -138,11 +138,14 @@ systemctl restart wolf-desk staalwag-licensing
 One private Telegram channel gets the weekly bug/idea list, the "✅ Review &
 approve" button when the Monday build is ready, and "✅ Live" once merged.
 
-1. Telegram → New Channel → name it `STAALWAG Updates` → Private.
-2. Channel → Administrators → Add admin → your licensing bot.
+1. Telegram → @BotFather → `/newbot` → name it e.g. `STAALWAG Updates Bot`.
+   Keep the token it gives you (you paste it on the server in step 4, never in a chat).
+   This bot is ONLY for app updates — separate from the signal and licensing bots.
+2. Telegram → New Channel → name it `STAALWAG Updates` → Private →
+   Administrators → Add admin → the new bot.
 3. Post `hi` in the channel.
 4. On the VPS: `cd /opt/wolf-desk && sudo -u wolf git pull && sudo bash deploy/updates-channel-setup.sh`
-   It prints a `DIGEST_TOKEN=...` line for the cloud environment that runs the
+   It asks for the bot token, then prints a `DIGEST_TOKEN=...` line for the cloud environment that runs the
    Monday build (that environment must also allow the host `pay.staalwag.com`).
 
 The token can only read the weekly list (`GET /digest`) and post a link to a PR

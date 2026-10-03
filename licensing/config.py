@@ -89,6 +89,7 @@ HQ_UNITS = os.environ.get("HQ_UNITS", "caddy wolf-desk staalwag-licensing staalw
 LICENSE_BOT_TOKEN = os.environ.get("LICENSE_BOT_TOKEN", "")  # Telegram bot for client notices
 LICENSE_ADMIN_CHAT = os.environ.get("LICENSE_ADMIN_CHAT", "")  # your own chat id for copies
 UPDATES_CHAT = os.environ.get("UPDATES_CHAT", "")  # private "STAALWAG Updates" channel (deploy/updates-channel-setup.sh)
+UPDATES_BOT_TOKEN = os.environ.get("UPDATES_BOT_TOKEN", "")  # its own bot, separate from signals + licensing
 # Read/post token for the automated Monday build (GET /digest, POST /ready). Can
 # only read the weekly bug/idea list and post a "ready to approve" link to a PR
 # in the Wolf-Desk repo — nothing else. Blank = both endpoints off.
