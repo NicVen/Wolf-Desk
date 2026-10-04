@@ -79,6 +79,9 @@ setup_desk() {
     # Gold: the new rule (breakout + trend + daily trend) owns the channel since
     # 2026-10-04 (Nic: "switch now"). The old rule lost over 2 years (PF 0.86).
     [ "$NAME" = staalwag-desk ] && setkey "$ENV" CHANNEL_RULE new
+    # VELDRIN: new signals paused 2026-10-04 (Nic: "Pause it") until a rule
+    # passes the strategy lab. Open trades are still managed to their close.
+    [ "$NAME" = veldrin-desk ] && setkey "$ENV" PAUSED true
 
     # Gold paper test of the candidate rule -> Nic's own chat (same chat as the
     # Markov paper test), never the channel. Unused while CHANNEL_RULE=new.

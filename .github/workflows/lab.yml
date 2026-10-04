@@ -24,3 +24,15 @@ jobs:
       - name: VELDRIN (6 FX pairs)
         working-directory: lab
         run: python run.py fx | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: VELDRIN - big-money flows (CFTC positioning, futures volume)
+        working-directory: lab
+        run: python run.py flows | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Gold - big-money flows (CFTC positioning, futures volume)
+        working-directory: lab
+        run: python run.py gold-flows | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: VELDRIN - carry trade (interest-rate differentials)
+        working-directory: lab
+        run: python carry.py | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Published edges (gold overnight, FOMC day, own hours, dollar carry, momentum)
+        working-directory: lab
+        run: python research.py | tee -a "$GITHUB_STEP_SUMMARY"
