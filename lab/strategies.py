@@ -407,6 +407,40 @@ def make_cot(cot_rows, sign, who="lev", fade=True, window=156, hi=0.9, lo=0.1,
     return make
 
 
+def with_cot_filter(make, cot_rows, who="lev", window=156, crowded=0.9):
+    """Wrap a rule: skip a long when that group's net long is in its top 10%
+    of the past 3 years (everyone is already in), and a short when it's in the
+    bottom 10%. Uses only reports already released at the trade's entry."""
+    col = 1 if who == "lev" else 2
+
+    def make2(bars):
+        inner = make(bars)
+
+        def s(bars, i):
+            o = inner(bars, i)
+            if o is None or i + 1 >= len(bars):
+                return o
+            known = bars[i + 1]["t"]
+            k = -1
+            lo, hi = 0, len(cot_rows)
+            while lo < hi:
+                mid = (lo + hi) // 2
+                if cot_rows[mid][0] <= known:
+                    lo = mid + 1
+                else:
+                    hi = mid
+            k = lo - 1
+            if k < window:
+                return o
+            past = sorted(r[col] for r in cot_rows[k - window:k])
+            rank = sum(p < cot_rows[k][col] for p in past) / len(past)
+            if (o.direction > 0 and rank >= crowded) or (o.direction < 0 and rank <= 1 - crowded):
+                return None
+            return o
+        return s
+    return make2
+
+
 def make_volume_spike(bars, mult=3.0, body_atr=1.0, follow=True, stop_atr=2.0, hold=6):
     """Futures volume surge: an hour with 3x the usual volume AND a big candle
     means real money arrived. follow=True rides it for 6h, False fades it."""

@@ -24,9 +24,18 @@ def bars(sym: str, interval: str = "60m", rng: str = "730d") -> list[dict]:
 
 
 COT_URL = "https://www.cftc.gov/files/dea/history/fut_fin_txt_{year}.zip"
+# Commodities (gold) are in the Disaggregated report: managed money = the
+# hedge funds, producer/merchant = miners and refiners (the hedgers).
+COT_DISAGG_URL = "https://www.cftc.gov/files/dea/history/fut_disagg_txt_{year}.zip"
+COLS = {
+    "fin": (("Lev_Money_Positions_Long_All", "Lev_Money_Positions_Short_All"),
+            ("Asset_Mgr_Positions_Long_All", "Asset_Mgr_Positions_Short_All")),
+    "disagg": (("M_Money_Positions_Long_All", "M_Money_Positions_Short_All"),
+               ("Prod_Merc_Positions_Long_All", "Prod_Merc_Positions_Short_All")),
+}
 
 
-def cot(market_prefix: str, years) -> list[tuple]:
+def cot(market_prefix: str, years, report: str = "fin") -> list[tuple]:
     """CFTC Traders in Financial Futures, weekly, free. Returns
     [(release_ts, lev_net_pct_oi, am_net_pct_oi)] oldest first for the market
     whose name starts with market_prefix (e.g. "EURO FX"). Positions are as of
@@ -38,7 +47,8 @@ def cot(market_prefix: str, years) -> list[tuple]:
     from datetime import datetime, timedelta, timezone
     rows = []
     for y in years:
-        req = urllib.request.Request(COT_URL.format(year=y), headers={"User-Agent": "Mozilla/5.0"})
+        url = (COT_URL if report == "fin" else COT_DISAGG_URL).format(year=y)
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         try:
             raw = urllib.request.urlopen(req, timeout=60).read()
         except Exception as e:
@@ -54,10 +64,9 @@ def cot(market_prefix: str, years) -> list[tuple]:
                 try:
                     d = datetime.strptime(r["Report_Date_as_YYYY-MM-DD"][:10], "%Y-%m-%d")
                     oi = float(r["Open_Interest_All"])
-                    lev = (float(r["Lev_Money_Positions_Long_All"]) -
-                           float(r["Lev_Money_Positions_Short_All"])) / oi
-                    am = (float(r["Asset_Mgr_Positions_Long_All"]) -
-                          float(r["Asset_Mgr_Positions_Short_All"])) / oi
+                    (l1, s1), (l2, s2) = COLS[report]
+                    lev = (float(r[l1]) - float(r[s1])) / oi
+                    am = (float(r[l2]) - float(r[s2])) / oi
                 except (KeyError, ValueError, ZeroDivisionError):
                     continue
                 rel = (d + timedelta(days=3, hours=21)).replace(tzinfo=timezone.utc).timestamp()

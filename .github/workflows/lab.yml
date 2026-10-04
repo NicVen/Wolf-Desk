@@ -27,3 +27,6 @@ jobs:
       - name: VELDRIN - big-money flows (CFTC positioning, futures volume)
         working-directory: lab
         run: python run.py flows | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Gold - big-money flows (CFTC positioning, futures volume)
+        working-directory: lab
+        run: python run.py gold-flows | tee -a "$GITHUB_STEP_SUMMARY"

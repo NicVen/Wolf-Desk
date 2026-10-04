@@ -217,7 +217,37 @@ def flows():
                        h[-1]["c"] * 0.00011) for s, h in fut.items() if h])
 
 
+def gold_flows():
+    """Gold: hedge-fund (managed money) and miner (producer/merchant) positions
+    from the CFTC Disaggregated report since 2010, plus COMEX volume surges."""
+    from datetime import datetime
+    years = range(2010, datetime.utcnow().year + 1)
+    d = data.bars("GC=F", "1d", "20y")
+    c = data.cot("GOLD - COMMODITY EXCHANGE", years, report="disagg")
+    h = data.bars("GC=F", "60m", "730d")
+    print(f"(gold: {len(c)} weekly reports, {len(d)} daily bars, {len(h)} hourly bars)")
+    print("\n## Gold: where the big money is\n")
+    print("| rule | trades | per month | win | PF | PF 1st half | PF 2nd half | PF last 6m (n) | PF longs (n) | PF shorts (n) | total R | worst drawdown R | luck PF (95%) | verdict | detail |")
+    print("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+    cost = MARKETS["gold"][1]
+    for who, label in (("lev", "hedge funds"), ("am", "miners/refiners")):
+        for fade in (True, False):
+            pooled(f"positioning: {'fade' if fade else 'follow'} {label} at extremes",
+                   [("GC", d, strategies.make_cot(c, 1, who, fade), cost)])
+    for follow in (True, False):
+        pooled(f"futures volume surge: {'follow' if follow else 'fade'}",
+               [("GC", h, (lambda fo: lambda b: strategies.make_volume_spike(b, follow=fo))(follow), cost)])
+    # the live channel rule, only when the big money agrees
+    trend = strategies.daily_trend(d)
+    live = strategies.with_daily_trend(strategies.make_donchian, trend)
+    for who, label in (("lev", "hedge funds"), ("am", "miners")):
+        pooled(f"live Gold rule, skip when {label} are crowded the same way",
+               [("GC", h, strategies.with_cot_filter(live, c, who), cost)])
+
+
 def main():
+    if sys.argv[1:2] == ["gold-flows"]:
+        return gold_flows()
     if sys.argv[1:2] == ["fx"]:
         return fx()
     if sys.argv[1:2] == ["flows"]:
