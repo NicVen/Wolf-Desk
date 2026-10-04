@@ -103,6 +103,10 @@ information out of Claude has been painful. Fix that by how you communicate.
 - **Status (Oct 2026):** v1 submitted to Play closed testing; needs 12 testers
   for 14 days (free tester-swap app, e.g. TheClosedTest) before production access.
   Opt-in link appears once Google approves the closed-test release.
+  Tester sign-up page: `staalwag.com/testers` (Gmail + live x/12 bar; admin
+  pinged per sign-up; `GET /admin/testers` on the licensing service gives the
+  comma list to paste into Play Console). Set `PLAY_OPTIN_URL` in
+  /etc/staalwag-licensing.env once the opt-in link exists.
 
 ## Dev/branch
 

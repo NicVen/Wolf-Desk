@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>STAALCALIBUR Testers</title>
+<meta name="description" content="Help launch the STAALCALIBUR app on Google Play. Leave your Gmail, install the test version, keep it 14 days." />
+<meta property="og:title" content="Help launch STAALCALIBUR on Google Play" />
+<meta property="og:description" content="We need 12 Android testers for 14 days. Leave your Gmail and get early access." />
+<meta property="og:image" content="/og.png" />
+<meta name="theme-color" content="#0a0e15" />
+<link rel="icon" href="/favicon-32.png" />
+<style>
+  :root{
+    --bg:#0a0e15; --card:#131a26; --line:#1e2a3a; --fg:#e7edf3; --mut:#7d8a9c;
+    --steel:#8aa0b4; --chrome:#c7d2dd; --accent:#6ea8fe; --accent2:#43d6a3; --bad:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);line-height:1.5;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  a{color:var(--accent)}
+  .wrap{max-width:560px;margin:0 auto;padding:32px 16px 48px}
+  .logo{display:block;width:72px;height:72px;margin:0 auto 14px;border-radius:16px}
+  .pill{display:inline-block;padding:4px 12px;border:1px solid var(--line);border-radius:999px;
+    color:var(--steel);font-size:12px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700}
+  h1{font-size:26px;line-height:1.2;margin:12px 0 8px}
+  .lead{color:var(--chrome);margin:0 0 22px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin:0 0 16px}
+  .bar{height:12px;background:#0c121c;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:var(--accent2);transition:width .6s}
+  .count{display:flex;justify-content:space-between;font-weight:700;margin:0 0 8px}
+  .count span{color:var(--mut);font-weight:600}
+  ol{padding-left:20px;margin:0}
+  ol li{margin:0 0 10px}
+  label{display:block;font-weight:700;margin:0 0 6px}
+  input{width:100%;font-size:16px;padding:13px 14px;border-radius:12px;border:1px solid var(--line);
+    background:#0c121c;color:var(--fg);margin:0 0 12px}
+  .btn{display:block;width:100%;text-align:center;padding:15px;border:0;border-radius:14px;
+    background:var(--accent);color:#04122b;font-size:16px;font-weight:800;cursor:pointer;text-decoration:none}
+  .btn.green{background:var(--accent2);color:#04231a}
+  .btn:disabled{opacity:.6;cursor:wait}
+  .msg{margin:12px 0 0;font-weight:600;min-height:1.5em}
+  .ok{color:var(--accent2)} .err{color:var(--bad)}
+  .reward{border-color:#2c4a3e;color:var(--chrome)}
+  .small{color:var(--mut);font-size:13px}
+  #optin{display:none}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <img class="logo" src="/icon-192.png" alt="STAALWAG" />
+  <div style="text-align:center"><span class="pill">Android beta</span></div>
+  <h1 style="text-align:center">Help launch STAALCALIBUR on Google Play</h1>
+  <p class="lead" style="text-align:center">Google lets a new app go public only after 12 people
+    have tested it for 14 days. Be one of them and get the app first.</p>
+
+  <section class="card">
+    <div class="count"><div><b id="n">0</b> of <b id="goal">12</b> testers</div><span id="left"></span></div>
+    <div class="bar"><i id="fill"></i></div>
+  </section>
+
+  <section class="card reward" id="rewardbox" hidden><b>Thank you:</b> <span id="reward"></span></section>
+
+  <section class="card">
+    <ol>
+      <li><b>Leave the Gmail</b> you use on your Android phone. Google only lets listed accounts in.</li>
+      <li><b>Join the test</b> with the link that appears here once you're added, then install from Play.</li>
+      <li><b>Keep it installed for 14 days</b> and open it now and then. That's all.</li>
+    </ol>
+  </section>
+
+  <section class="card" id="optin">
+    <p style="margin:0 0 12px">You're on the list. Join the test, then install the app from Google Play:</p>
+    <a class="btn green" id="optlink" href="#" target="_blank" rel="noopener">Join the test on Google Play</a>
+  </section>
+
+  <section class="card" id="formcard">
+    <form id="f">
+      <label for="email">Your Gmail address</label>
+      <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="you@gmail.com" required />
+      <label for="tg">Telegram username <span class="small">(optional, so we can thank you)</span></label>
+      <input id="tg" type="text" placeholder="@yourname" />
+      <button class="btn" id="go" type="submit">Count me in</button>
+      <div class="msg" id="msg" role="status"></div>
+    </form>
+  </section>
+
+  <p class="small" style="text-align:center">Android only. We use your Gmail just to let you into the test.
+    <a href="/privacy">Privacy</a> · <a href="/store">STAALCALIBUR</a></p>
+</main>
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  function show(d){
+    if(!d) return;
+    var goal = d.goal || 12, n = Math.min(d.count || 0, goal);
+    $("n").textContent = d.count || 0; $("goal").textContent = goal;
+    $("fill").style.width = (100 * n / goal) + "%";
+    $("left").textContent = n >= goal ? "Goal reached, thank you!" : (goal - n) + " to go";
+    if(d.reward){ $("reward").textContent = d.reward; $("rewardbox").hidden = false; }
+    if(d.optin_url){ $("optlink").href = d.optin_url; }
+  }
+  function load(){
+    fetch("/app/testers").then(function(r){ return r.json(); }).then(show).catch(function(){});
+  }
+  load();
+  $("f").addEventListener("submit", function(e){
+    e.preventDefault();
+    var email = $("email").value.trim(), msg = $("msg");
+    if(!/@(gmail|googlemail)\.com$/i.test(email)){
+      msg.className = "msg err"; msg.textContent = "Please use a Gmail address (the one on your Android phone)."; return;
+    }
+    $("go").disabled = true; msg.className = "msg"; msg.textContent = "Adding you…";
+    fetch("/app/testers", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({email: email, telegram: $("tg").value.trim()})})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        $("go").disabled = false;
+        if(d.error){ msg.className = "msg err";
+          msg.textContent = d.error === "gmail_required" ? "Please use a Gmail address." : "Something went wrong. Please try again."; return; }
+        msg.className = "msg ok";
+        msg.textContent = d.new ? "You're in! Thank you." : "You're already on the list. Thank you!";
+        show(d);
+        if(d.optin_url){ $("optin").style.display = "block"; }
+        else { msg.textContent += " The install link appears on this page once Google opens the test, so check back soon."; }
+      })
+      .catch(function(){ $("go").disabled = false; msg.className = "msg err"; msg.textContent = "Couldn't reach the server. Please try again."; });
+  });
+})();
+</script>
+</body>
+</html>
