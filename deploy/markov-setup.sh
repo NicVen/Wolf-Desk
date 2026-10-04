@@ -42,8 +42,8 @@ for u in json.load(sys.stdin).get("result", []):
         if c: seen[c["id"]] = c.get("title") or c.get("username") or c.get("first_name")
 for i, t in seen.items(): print("   %s   %s" % (i, t))
 if not seen: print("   (none yet - add the bot as admin, post a message, run this again)")'
-    read -r -p "Paste the channel id from the list (starts with -100): " CHAT
-    [ -n "$CHAT" ] || die "no channel id"
+    read -r -p "Paste the number from the list (channel: starts with -100; your own chat: no minus): " CHAT
+    case "$CHAT" in -[0-9]*|[0-9]*) ;; *) die "that is not a number from the list - run this again" ;; esac
     cat > "$ENV" <<CONF
 TELEGRAM_BOT_TOKEN=$TOKEN
 TELEGRAM_CHAT_ID=$CHAT
