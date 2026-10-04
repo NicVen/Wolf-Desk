@@ -1,0 +1,9 @@
+node_modules/
+signals-store.json
+.dashboard-profile/
+.env
+open-calls.json
+cache/
+research/cache/
+research/adaptive_signals.json
+research/backtest_trades.json

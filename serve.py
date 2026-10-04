@@ -618,6 +618,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 body = _read(os.path.join("data", "proof.json"), b"{}")
             self._send(200, body, "application/json"); return
 
+        # Markov 18-pair bot's own record (every call + its result), proxied from
+        # the bot on this server so HQ and /proof can read it over HTTPS.
+        if path in ("/markov/signals.json", "/markov/scan.json", "/markov/health"):
+            base = os.environ.get("MARKOV_URL", "http://127.0.0.1:8783")
+            try:
+                with urllib.request.urlopen(base + path[len("/markov"):], timeout=8) as r:
+                    body = r.read()
+                self._send(200, body, "application/json"); return
+            except Exception as e:
+                self._send(503, json.dumps({"ok": False, "error": "markov bot not reachable: %s" % e}),
+                           "application/json"); return
+
         # Tracked link: count the click, then redirect to the real destination.
         if path == "/l":
             key = q.get("c", ["site"])[0]

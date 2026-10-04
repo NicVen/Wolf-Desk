@@ -1,0 +1,2235 @@
+{
+  "generated": "2026-07-26T08:17:09.282Z",
+  "disclaimer": "IMPORTANT FOR BUYERS/RENTERS: These backtest results include transaction-cost estimates for OUR feed/broker (FN) ONLY. They do NOT reflect the spread, commission, or slippage of YOUR broker, which will differ and can materially change results. Keep your own broker's costs in mind. Past performance is not indicative of future results. This is a signal tool, not financial advice, and no returns are guaranteed.",
+  "config": {
+    "WIN_1H": 500,
+    "COOLDOWN_BARS": 4,
+    "RANGE_1H": "730d",
+    "COST_MULT": 1,
+    "costs_pips": {
+      "EURUSD": 1.5,
+      "GBPUSD": 1.5,
+      "USDJPY": 1.5,
+      "USDCHF": 1.6,
+      "AUDUSD": 1.6,
+      "NZDUSD": 1.8,
+      "USDCAD": 1.7,
+      "GBPJPY": 2.5,
+      "EURJPY": 2,
+      "EURGBP": 1.8,
+      "XAUUSD": 5,
+      "XAGUSD": 30,
+      "USOIL": 5,
+      "NAS100": 3,
+      "SPX500": 3,
+      "US30": 6,
+      "BTCUSD": 40,
+      "ETHUSD": 30
+    }
+  },
+  "split": {
+    "splitDate": "2025-08-15",
+    "note": "TRAIN = first half by time, TEST = second half (out-of-sample)"
+  },
+  "holds": {
+    "6": {
+      "net": {
+        "trades": 5299,
+        "wins": 2534,
+        "winRate": 47.8,
+        "sumR": 35.58,
+        "avgR": 0.007,
+        "pf": 1.03,
+        "maxDD": 31.14
+      },
+      "gross": {
+        "trades": 5299,
+        "wins": 2713,
+        "winRate": 51.2,
+        "sumR": 261.28,
+        "avgR": 0.049,
+        "pf": 1.25,
+        "maxDD": 16.78
+      },
+      "flippedNet": {
+        "trades": 5299,
+        "wins": 2286,
+        "winRate": 43.1,
+        "sumR": -455.62,
+        "avgR": -0.086,
+        "pf": 0.67,
+        "maxDD": 467.82
+      },
+      "train": {
+        "trades": 2648,
+        "wins": 1281,
+        "winRate": 48.4,
+        "sumR": 29.39,
+        "avgR": 0.011,
+        "pf": 1.05,
+        "maxDD": 31.14
+      },
+      "test": {
+        "trades": 2651,
+        "wins": 1253,
+        "winRate": 47.3,
+        "sumR": 6.19,
+        "avgR": 0.002,
+        "pf": 1.01,
+        "maxDD": 24.65
+      },
+      "perPair": {
+        "EURUSD": {
+          "all": {
+            "trades": 277,
+            "wins": 108,
+            "winRate": 39,
+            "sumR": -33.95,
+            "avgR": -0.123,
+            "pf": 0.6,
+            "maxDD": 41.87
+          },
+          "train": {
+            "trades": 142,
+            "wins": 62,
+            "winRate": 43.7,
+            "sumR": -11.61,
+            "avgR": -0.082,
+            "pf": 0.68,
+            "maxDD": 18.44
+          },
+          "test": {
+            "trades": 135,
+            "wins": 46,
+            "winRate": 34.1,
+            "sumR": -22.34,
+            "avgR": -0.165,
+            "pf": 0.54,
+            "maxDD": 24.91
+          },
+          "gross": {
+            "trades": 277,
+            "wins": 120,
+            "winRate": 43.3,
+            "sumR": -20.97,
+            "avgR": -0.076,
+            "pf": 0.72,
+            "maxDD": 29.65
+          }
+        },
+        "GBPUSD": {
+          "all": {
+            "trades": 255,
+            "wins": 116,
+            "winRate": 45.5,
+            "sumR": -7.68,
+            "avgR": -0.03,
+            "pf": 0.87,
+            "maxDD": 13.93
+          },
+          "train": {
+            "trades": 122,
+            "wins": 60,
+            "winRate": 49.2,
+            "sumR": -1.84,
+            "avgR": -0.015,
+            "pf": 0.94,
+            "maxDD": 8.19
+          },
+          "test": {
+            "trades": 133,
+            "wins": 56,
+            "winRate": 42.1,
+            "sumR": -5.84,
+            "avgR": -0.044,
+            "pf": 0.81,
+            "maxDD": 11
+          },
+          "gross": {
+            "trades": 255,
+            "wins": 124,
+            "winRate": 48.6,
+            "sumR": 1.32,
+            "avgR": 0.005,
+            "pf": 1.02,
+            "maxDD": 9.17
+          }
+        },
+        "USDJPY": {
+          "all": {
+            "trades": 289,
+            "wins": 151,
+            "winRate": 52.2,
+            "sumR": -1.27,
+            "avgR": -0.004,
+            "pf": 0.98,
+            "maxDD": 16.13
+          },
+          "train": {
+            "trades": 134,
+            "wins": 66,
+            "winRate": 49.3,
+            "sumR": -4.11,
+            "avgR": -0.031,
+            "pf": 0.87,
+            "maxDD": 11.8
+          },
+          "test": {
+            "trades": 155,
+            "wins": 85,
+            "winRate": 54.8,
+            "sumR": 2.83,
+            "avgR": 0.018,
+            "pf": 1.1,
+            "maxDD": 6.98
+          },
+          "gross": {
+            "trades": 289,
+            "wins": 154,
+            "winRate": 53.3,
+            "sumR": 5.35,
+            "avgR": 0.019,
+            "pf": 1.09,
+            "maxDD": 14.17
+          }
+        },
+        "USDCHF": {
+          "all": {
+            "trades": 256,
+            "wins": 117,
+            "winRate": 45.7,
+            "sumR": 4.88,
+            "avgR": 0.019,
+            "pf": 1.09,
+            "maxDD": 7.22
+          },
+          "train": {
+            "trades": 108,
+            "wins": 49,
+            "winRate": 45.4,
+            "sumR": 4.78,
+            "avgR": 0.044,
+            "pf": 1.21,
+            "maxDD": 7.22
+          },
+          "test": {
+            "trades": 148,
+            "wins": 68,
+            "winRate": 45.9,
+            "sumR": 0.1,
+            "avgR": 0.001,
+            "pf": 1,
+            "maxDD": 6.37
+          },
+          "gross": {
+            "trades": 256,
+            "wins": 125,
+            "winRate": 48.8,
+            "sumR": 18.72,
+            "avgR": 0.073,
+            "pf": 1.37,
+            "maxDD": 5.52
+          }
+        },
+        "AUDUSD": {
+          "all": {
+            "trades": 275,
+            "wins": 137,
+            "winRate": 49.8,
+            "sumR": -2.11,
+            "avgR": -0.008,
+            "pf": 0.97,
+            "maxDD": 14.33
+          },
+          "train": {
+            "trades": 116,
+            "wins": 67,
+            "winRate": 57.8,
+            "sumR": 9.99,
+            "avgR": 0.086,
+            "pf": 1.39,
+            "maxDD": 5.42
+          },
+          "test": {
+            "trades": 159,
+            "wins": 70,
+            "winRate": 44,
+            "sumR": -12.1,
+            "avgR": -0.076,
+            "pf": 0.74,
+            "maxDD": 12.96
+          },
+          "gross": {
+            "trades": 275,
+            "wins": 149,
+            "winRate": 54.2,
+            "sumR": 15.61,
+            "avgR": 0.057,
+            "pf": 1.25,
+            "maxDD": 7.47
+          }
+        },
+        "NZDUSD": {
+          "all": {
+            "trades": 242,
+            "wins": 105,
+            "winRate": 43.4,
+            "sumR": -7.69,
+            "avgR": -0.032,
+            "pf": 0.88,
+            "maxDD": 16.26
+          },
+          "train": {
+            "trades": 136,
+            "wins": 62,
+            "winRate": 45.6,
+            "sumR": -2.7,
+            "avgR": -0.02,
+            "pf": 0.93,
+            "maxDD": 11.87
+          },
+          "test": {
+            "trades": 106,
+            "wins": 43,
+            "winRate": 40.6,
+            "sumR": -4.99,
+            "avgR": -0.047,
+            "pf": 0.79,
+            "maxDD": 7.6
+          },
+          "gross": {
+            "trades": 242,
+            "wins": 125,
+            "winRate": 51.7,
+            "sumR": 10.34,
+            "avgR": 0.043,
+            "pf": 1.2,
+            "maxDD": 9.41
+          }
+        },
+        "USDCAD": {
+          "all": {
+            "trades": 296,
+            "wins": 131,
+            "winRate": 44.3,
+            "sumR": -17.02,
+            "avgR": -0.057,
+            "pf": 0.71,
+            "maxDD": 20.91
+          },
+          "train": {
+            "trades": 165,
+            "wins": 86,
+            "winRate": 52.1,
+            "sumR": 0.25,
+            "avgR": 0.001,
+            "pf": 1.01,
+            "maxDD": 4.57
+          },
+          "test": {
+            "trades": 131,
+            "wins": 45,
+            "winRate": 34.4,
+            "sumR": -17.26,
+            "avgR": -0.132,
+            "pf": 0.45,
+            "maxDD": 18.42
+          },
+          "gross": {
+            "trades": 296,
+            "wins": 139,
+            "winRate": 47,
+            "sumR": -5.62,
+            "avgR": -0.019,
+            "pf": 0.89,
+            "maxDD": 15.41
+          }
+        },
+        "GBPJPY": {
+          "all": {
+            "trades": 281,
+            "wins": 136,
+            "winRate": 48.4,
+            "sumR": 0.41,
+            "avgR": 0.001,
+            "pf": 1.01,
+            "maxDD": 7.59
+          },
+          "train": {
+            "trades": 138,
+            "wins": 64,
+            "winRate": 46.4,
+            "sumR": 1.1,
+            "avgR": 0.008,
+            "pf": 1.04,
+            "maxDD": 7.35
+          },
+          "test": {
+            "trades": 143,
+            "wins": 72,
+            "winRate": 50.3,
+            "sumR": -0.69,
+            "avgR": -0.005,
+            "pf": 0.98,
+            "maxDD": 4.67
+          },
+          "gross": {
+            "trades": 281,
+            "wins": 144,
+            "winRate": 51.2,
+            "sumR": 9.34,
+            "avgR": 0.033,
+            "pf": 1.17,
+            "maxDD": 6.3
+          }
+        },
+        "EURJPY": {
+          "all": {
+            "trades": 267,
+            "wins": 132,
+            "winRate": 49.4,
+            "sumR": -0.35,
+            "avgR": -0.001,
+            "pf": 0.99,
+            "maxDD": 9.32
+          },
+          "train": {
+            "trades": 116,
+            "wins": 58,
+            "winRate": 50,
+            "sumR": -7.78,
+            "avgR": -0.067,
+            "pf": 0.75,
+            "maxDD": 9.32
+          },
+          "test": {
+            "trades": 151,
+            "wins": 74,
+            "winRate": 49,
+            "sumR": 7.43,
+            "avgR": 0.049,
+            "pf": 1.29,
+            "maxDD": 4.14
+          },
+          "gross": {
+            "trades": 267,
+            "wins": 137,
+            "winRate": 51.3,
+            "sumR": 8.21,
+            "avgR": 0.031,
+            "pf": 1.16,
+            "maxDD": 8.31
+          }
+        },
+        "EURGBP": {
+          "all": {
+            "trades": 314,
+            "wins": 117,
+            "winRate": 37.3,
+            "sumR": -27.19,
+            "avgR": -0.087,
+            "pf": 0.65,
+            "maxDD": 32.12
+          },
+          "train": {
+            "trades": 151,
+            "wins": 56,
+            "winRate": 37.1,
+            "sumR": -9.93,
+            "avgR": -0.066,
+            "pf": 0.71,
+            "maxDD": 14.87
+          },
+          "test": {
+            "trades": 163,
+            "wins": 61,
+            "winRate": 37.4,
+            "sumR": -17.25,
+            "avgR": -0.106,
+            "pf": 0.6,
+            "maxDD": 22.72
+          },
+          "gross": {
+            "trades": 314,
+            "wins": 152,
+            "winRate": 48.4,
+            "sumR": 2.51,
+            "avgR": 0.008,
+            "pf": 1.04,
+            "maxDD": 11.09
+          }
+        },
+        "XAUUSD": {
+          "all": {
+            "trades": 282,
+            "wins": 141,
+            "winRate": 50,
+            "sumR": 6.44,
+            "avgR": 0.023,
+            "pf": 1.12,
+            "maxDD": 9.85
+          },
+          "train": {
+            "trades": 164,
+            "wins": 81,
+            "winRate": 49.4,
+            "sumR": 11.98,
+            "avgR": 0.073,
+            "pf": 1.43,
+            "maxDD": 3.99
+          },
+          "test": {
+            "trades": 118,
+            "wins": 60,
+            "winRate": 50.8,
+            "sumR": -5.54,
+            "avgR": -0.047,
+            "pf": 0.8,
+            "maxDD": 9.85
+          },
+          "gross": {
+            "trades": 282,
+            "wins": 141,
+            "winRate": 50,
+            "sumR": 10.74,
+            "avgR": 0.038,
+            "pf": 1.2,
+            "maxDD": 9.45
+          }
+        },
+        "XAGUSD": {
+          "all": {
+            "trades": 291,
+            "wins": 141,
+            "winRate": 48.5,
+            "sumR": 15.13,
+            "avgR": 0.052,
+            "pf": 1.26,
+            "maxDD": 10.83
+          },
+          "train": {
+            "trades": 206,
+            "wins": 88,
+            "winRate": 42.7,
+            "sumR": 3.19,
+            "avgR": 0.015,
+            "pf": 1.07,
+            "maxDD": 10.83
+          },
+          "test": {
+            "trades": 85,
+            "wins": 53,
+            "winRate": 62.4,
+            "sumR": 11.94,
+            "avgR": 0.14,
+            "pf": 2.01,
+            "maxDD": 3.58
+          },
+          "gross": {
+            "trades": 291,
+            "wins": 155,
+            "winRate": 53.3,
+            "sumR": 31.67,
+            "avgR": 0.109,
+            "pf": 1.62,
+            "maxDD": 6.43
+          }
+        },
+        "USOIL": {
+          "all": {
+            "trades": 290,
+            "wins": 151,
+            "winRate": 52.1,
+            "sumR": 21.3,
+            "avgR": 0.073,
+            "pf": 1.37,
+            "maxDD": 7.86
+          },
+          "train": {
+            "trades": 134,
+            "wins": 69,
+            "winRate": 51.5,
+            "sumR": -2.52,
+            "avgR": -0.019,
+            "pf": 0.91,
+            "maxDD": 7.86
+          },
+          "test": {
+            "trades": 156,
+            "wins": 82,
+            "winRate": 52.6,
+            "sumR": 23.82,
+            "avgR": 0.153,
+            "pf": 1.81,
+            "maxDD": 5.49
+          },
+          "gross": {
+            "trades": 290,
+            "wins": 162,
+            "winRate": 55.9,
+            "sumR": 35.76,
+            "avgR": 0.123,
+            "pf": 1.7,
+            "maxDD": 5.94
+          }
+        },
+        "NAS100": {
+          "all": {
+            "trades": 278,
+            "wins": 148,
+            "winRate": 53.2,
+            "sumR": 17,
+            "avgR": 0.061,
+            "pf": 1.35,
+            "maxDD": 9.15
+          },
+          "train": {
+            "trades": 151,
+            "wins": 86,
+            "winRate": 57,
+            "sumR": 18.05,
+            "avgR": 0.12,
+            "pf": 1.86,
+            "maxDD": 5.71
+          },
+          "test": {
+            "trades": 127,
+            "wins": 62,
+            "winRate": 48.8,
+            "sumR": -1.05,
+            "avgR": -0.008,
+            "pf": 0.96,
+            "maxDD": 9.15
+          },
+          "gross": {
+            "trades": 278,
+            "wins": 149,
+            "winRate": 53.6,
+            "sumR": 20.85,
+            "avgR": 0.075,
+            "pf": 1.45,
+            "maxDD": 8.19
+          }
+        },
+        "SPX500": {
+          "all": {
+            "trades": 276,
+            "wins": 142,
+            "winRate": 51.4,
+            "sumR": 15.47,
+            "avgR": 0.056,
+            "pf": 1.29,
+            "maxDD": 9.26
+          },
+          "train": {
+            "trades": 95,
+            "wins": 45,
+            "winRate": 47.4,
+            "sumR": 7.34,
+            "avgR": 0.077,
+            "pf": 1.47,
+            "maxDD": 5.51
+          },
+          "test": {
+            "trades": 181,
+            "wins": 97,
+            "winRate": 53.6,
+            "sumR": 8.13,
+            "avgR": 0.045,
+            "pf": 1.21,
+            "maxDD": 9.26
+          },
+          "gross": {
+            "trades": 276,
+            "wins": 147,
+            "winRate": 53.3,
+            "sumR": 20.34,
+            "avgR": 0.074,
+            "pf": 1.39,
+            "maxDD": 7.47
+          }
+        },
+        "US30": {
+          "all": {
+            "trades": 226,
+            "wins": 105,
+            "winRate": 46.5,
+            "sumR": 11.06,
+            "avgR": 0.049,
+            "pf": 1.23,
+            "maxDD": 10.98
+          },
+          "train": {
+            "trades": 129,
+            "wins": 55,
+            "winRate": 42.6,
+            "sumR": -4.43,
+            "avgR": -0.034,
+            "pf": 0.85,
+            "maxDD": 10.98
+          },
+          "test": {
+            "trades": 97,
+            "wins": 50,
+            "winRate": 51.5,
+            "sumR": 15.49,
+            "avgR": 0.16,
+            "pf": 1.83,
+            "maxDD": 3.81
+          },
+          "gross": {
+            "trades": 226,
+            "wins": 109,
+            "winRate": 48.2,
+            "sumR": 16.46,
+            "avgR": 0.073,
+            "pf": 1.36,
+            "maxDD": 8.89
+          }
+        },
+        "BTCUSD": {
+          "all": {
+            "trades": 512,
+            "wins": 258,
+            "winRate": 50.4,
+            "sumR": 20.16,
+            "avgR": 0.039,
+            "pf": 1.21,
+            "maxDD": 8.17
+          },
+          "train": {
+            "trades": 224,
+            "wins": 118,
+            "winRate": 52.7,
+            "sumR": 18.93,
+            "avgR": 0.084,
+            "pf": 1.51,
+            "maxDD": 4.26
+          },
+          "test": {
+            "trades": 288,
+            "wins": 140,
+            "winRate": 48.6,
+            "sumR": 1.23,
+            "avgR": 0.004,
+            "pf": 1.02,
+            "maxDD": 8.17
+          },
+          "gross": {
+            "trades": 512,
+            "wins": 265,
+            "winRate": 51.8,
+            "sumR": 37.31,
+            "avgR": 0.073,
+            "pf": 1.42,
+            "maxDD": 5.52
+          }
+        },
+        "ETHUSD": {
+          "all": {
+            "trades": 392,
+            "wins": 198,
+            "winRate": 50.5,
+            "sumR": 20.99,
+            "avgR": 0.054,
+            "pf": 1.25,
+            "maxDD": 15.98
+          },
+          "train": {
+            "trades": 217,
+            "wins": 109,
+            "winRate": 50.2,
+            "sumR": -1.28,
+            "avgR": -0.006,
+            "pf": 0.97,
+            "maxDD": 15.98
+          },
+          "test": {
+            "trades": 175,
+            "wins": 89,
+            "winRate": 50.9,
+            "sumR": 22.27,
+            "avgR": 0.127,
+            "pf": 1.59,
+            "maxDD": 5.71
+          },
+          "gross": {
+            "trades": 392,
+            "wins": 216,
+            "winRate": 55.1,
+            "sumR": 43.34,
+            "avgR": 0.111,
+            "pf": 1.58,
+            "maxDD": 11.36
+          }
+        }
+      }
+    },
+    "12": {
+      "net": {
+        "trades": 5299,
+        "wins": 2590,
+        "winRate": 48.9,
+        "sumR": 199.65,
+        "avgR": 0.038,
+        "pf": 1.13,
+        "maxDD": 46.69
+      },
+      "gross": {
+        "trades": 5299,
+        "wins": 2703,
+        "winRate": 51,
+        "sumR": 425.36,
+        "avgR": 0.08,
+        "pf": 1.3,
+        "maxDD": 35.78
+      },
+      "flippedNet": {
+        "trades": 5299,
+        "wins": 2209,
+        "winRate": 41.7,
+        "sumR": -583.1,
+        "avgR": -0.11,
+        "pf": 0.69,
+        "maxDD": 603.25
+      },
+      "train": {
+        "trades": 2648,
+        "wins": 1305,
+        "winRate": 49.3,
+        "sumR": 134.91,
+        "avgR": 0.051,
+        "pf": 1.18,
+        "maxDD": 34.74
+      },
+      "test": {
+        "trades": 2651,
+        "wins": 1285,
+        "winRate": 48.5,
+        "sumR": 64.74,
+        "avgR": 0.024,
+        "pf": 1.08,
+        "maxDD": 46.69
+      },
+      "perPair": {
+        "EURUSD": {
+          "all": {
+            "trades": 277,
+            "wins": 108,
+            "winRate": 39,
+            "sumR": -45.31,
+            "avgR": -0.164,
+            "pf": 0.6,
+            "maxDD": 56.06
+          },
+          "train": {
+            "trades": 142,
+            "wins": 59,
+            "winRate": 41.5,
+            "sumR": -16.1,
+            "avgR": -0.113,
+            "pf": 0.67,
+            "maxDD": 25.8
+          },
+          "test": {
+            "trades": 135,
+            "wins": 49,
+            "winRate": 36.3,
+            "sumR": -29.21,
+            "avgR": -0.216,
+            "pf": 0.56,
+            "maxDD": 32.01
+          },
+          "gross": {
+            "trades": 277,
+            "wins": 115,
+            "winRate": 41.5,
+            "sumR": -32.33,
+            "avgR": -0.117,
+            "pf": 0.7,
+            "maxDD": 43.83
+          }
+        },
+        "GBPUSD": {
+          "all": {
+            "trades": 255,
+            "wins": 116,
+            "winRate": 45.5,
+            "sumR": -11.94,
+            "avgR": -0.047,
+            "pf": 0.85,
+            "maxDD": 19.66
+          },
+          "train": {
+            "trades": 122,
+            "wins": 57,
+            "winRate": 46.7,
+            "sumR": -4.32,
+            "avgR": -0.035,
+            "pf": 0.89,
+            "maxDD": 12.79
+          },
+          "test": {
+            "trades": 133,
+            "wins": 59,
+            "winRate": 44.4,
+            "sumR": -7.62,
+            "avgR": -0.057,
+            "pf": 0.82,
+            "maxDD": 14.77
+          },
+          "gross": {
+            "trades": 255,
+            "wins": 120,
+            "winRate": 47.1,
+            "sumR": -2.94,
+            "avgR": -0.012,
+            "pf": 0.96,
+            "maxDD": 13.34
+          }
+        },
+        "USDJPY": {
+          "all": {
+            "trades": 289,
+            "wins": 140,
+            "winRate": 48.4,
+            "sumR": -2.5,
+            "avgR": -0.009,
+            "pf": 0.97,
+            "maxDD": 22.26
+          },
+          "train": {
+            "trades": 134,
+            "wins": 56,
+            "winRate": 41.8,
+            "sumR": -4.96,
+            "avgR": -0.037,
+            "pf": 0.89,
+            "maxDD": 13.69
+          },
+          "test": {
+            "trades": 155,
+            "wins": 84,
+            "winRate": 54.2,
+            "sumR": 2.46,
+            "avgR": 0.016,
+            "pf": 1.07,
+            "maxDD": 11.14
+          },
+          "gross": {
+            "trades": 289,
+            "wins": 143,
+            "winRate": 49.5,
+            "sumR": 4.13,
+            "avgR": 0.014,
+            "pf": 1.05,
+            "maxDD": 20.13
+          }
+        },
+        "USDCHF": {
+          "all": {
+            "trades": 256,
+            "wins": 128,
+            "winRate": 50,
+            "sumR": 15.35,
+            "avgR": 0.06,
+            "pf": 1.21,
+            "maxDD": 8.08
+          },
+          "train": {
+            "trades": 108,
+            "wins": 54,
+            "winRate": 50,
+            "sumR": 12.26,
+            "avgR": 0.113,
+            "pf": 1.46,
+            "maxDD": 7.93
+          },
+          "test": {
+            "trades": 148,
+            "wins": 74,
+            "winRate": 50,
+            "sumR": 3.09,
+            "avgR": 0.021,
+            "pf": 1.07,
+            "maxDD": 8.08
+          },
+          "gross": {
+            "trades": 256,
+            "wins": 137,
+            "winRate": 53.5,
+            "sumR": 29.2,
+            "avgR": 0.114,
+            "pf": 1.44,
+            "maxDD": 7.31
+          }
+        },
+        "AUDUSD": {
+          "all": {
+            "trades": 275,
+            "wins": 142,
+            "winRate": 51.6,
+            "sumR": 9.1,
+            "avgR": 0.033,
+            "pf": 1.1,
+            "maxDD": 17.02
+          },
+          "train": {
+            "trades": 116,
+            "wins": 69,
+            "winRate": 59.5,
+            "sumR": 17.57,
+            "avgR": 0.151,
+            "pf": 1.53,
+            "maxDD": 9.63
+          },
+          "test": {
+            "trades": 159,
+            "wins": 73,
+            "winRate": 45.9,
+            "sumR": -8.46,
+            "avgR": -0.053,
+            "pf": 0.86,
+            "maxDD": 17.02
+          },
+          "gross": {
+            "trades": 275,
+            "wins": 146,
+            "winRate": 53.1,
+            "sumR": 26.82,
+            "avgR": 0.098,
+            "pf": 1.32,
+            "maxDD": 13.64
+          }
+        },
+        "NZDUSD": {
+          "all": {
+            "trades": 242,
+            "wins": 114,
+            "winRate": 47.1,
+            "sumR": 8.26,
+            "avgR": 0.034,
+            "pf": 1.11,
+            "maxDD": 10.05
+          },
+          "train": {
+            "trades": 136,
+            "wins": 66,
+            "winRate": 48.5,
+            "sumR": 6.04,
+            "avgR": 0.044,
+            "pf": 1.12,
+            "maxDD": 9.07
+          },
+          "test": {
+            "trades": 106,
+            "wins": 48,
+            "winRate": 45.3,
+            "sumR": 2.22,
+            "avgR": 0.021,
+            "pf": 1.07,
+            "maxDD": 6.61
+          },
+          "gross": {
+            "trades": 242,
+            "wins": 119,
+            "winRate": 49.2,
+            "sumR": 26.28,
+            "avgR": 0.109,
+            "pf": 1.38,
+            "maxDD": 7.99
+          }
+        },
+        "USDCAD": {
+          "all": {
+            "trades": 296,
+            "wins": 132,
+            "winRate": 44.6,
+            "sumR": -12.29,
+            "avgR": -0.042,
+            "pf": 0.85,
+            "maxDD": 24.77
+          },
+          "train": {
+            "trades": 165,
+            "wins": 83,
+            "winRate": 50.3,
+            "sumR": 6.45,
+            "avgR": 0.039,
+            "pf": 1.17,
+            "maxDD": 6.65
+          },
+          "test": {
+            "trades": 131,
+            "wins": 49,
+            "winRate": 37.4,
+            "sumR": -18.74,
+            "avgR": -0.143,
+            "pf": 0.58,
+            "maxDD": 20.21
+          },
+          "gross": {
+            "trades": 296,
+            "wins": 140,
+            "winRate": 47.3,
+            "sumR": -0.89,
+            "avgR": -0.003,
+            "pf": 0.99,
+            "maxDD": 19.58
+          }
+        },
+        "GBPJPY": {
+          "all": {
+            "trades": 281,
+            "wins": 132,
+            "winRate": 47,
+            "sumR": 6.22,
+            "avgR": 0.022,
+            "pf": 1.08,
+            "maxDD": 9.3
+          },
+          "train": {
+            "trades": 138,
+            "wins": 66,
+            "winRate": 47.8,
+            "sumR": 8.39,
+            "avgR": 0.061,
+            "pf": 1.24,
+            "maxDD": 9.17
+          },
+          "test": {
+            "trades": 143,
+            "wins": 66,
+            "winRate": 46.2,
+            "sumR": -2.17,
+            "avgR": -0.015,
+            "pf": 0.95,
+            "maxDD": 9.3
+          },
+          "gross": {
+            "trades": 281,
+            "wins": 140,
+            "winRate": 49.8,
+            "sumR": 15.15,
+            "avgR": 0.054,
+            "pf": 1.2,
+            "maxDD": 8.02
+          }
+        },
+        "EURJPY": {
+          "all": {
+            "trades": 267,
+            "wins": 122,
+            "winRate": 45.7,
+            "sumR": -6.09,
+            "avgR": -0.023,
+            "pf": 0.92,
+            "maxDD": 17.41
+          },
+          "train": {
+            "trades": 116,
+            "wins": 48,
+            "winRate": 41.4,
+            "sumR": -16.67,
+            "avgR": -0.144,
+            "pf": 0.62,
+            "maxDD": 16.9
+          },
+          "test": {
+            "trades": 151,
+            "wins": 74,
+            "winRate": 49,
+            "sumR": 10.58,
+            "avgR": 0.07,
+            "pf": 1.29,
+            "maxDD": 5.84
+          },
+          "gross": {
+            "trades": 267,
+            "wins": 127,
+            "winRate": 47.6,
+            "sumR": 2.48,
+            "avgR": 0.009,
+            "pf": 1.03,
+            "maxDD": 15.55
+          }
+        },
+        "EURGBP": {
+          "all": {
+            "trades": 314,
+            "wins": 130,
+            "winRate": 41.4,
+            "sumR": -30.06,
+            "avgR": -0.096,
+            "pf": 0.7,
+            "maxDD": 34.44
+          },
+          "train": {
+            "trades": 151,
+            "wins": 61,
+            "winRate": 40.4,
+            "sumR": -10.98,
+            "avgR": -0.073,
+            "pf": 0.75,
+            "maxDD": 17.6
+          },
+          "test": {
+            "trades": 163,
+            "wins": 69,
+            "winRate": 42.3,
+            "sumR": -19.08,
+            "avgR": -0.117,
+            "pf": 0.67,
+            "maxDD": 29.25
+          },
+          "gross": {
+            "trades": 314,
+            "wins": 151,
+            "winRate": 48.1,
+            "sumR": -0.37,
+            "avgR": -0.001,
+            "pf": 1,
+            "maxDD": 18.59
+          }
+        },
+        "XAUUSD": {
+          "all": {
+            "trades": 282,
+            "wins": 133,
+            "winRate": 47.2,
+            "sumR": 18.82,
+            "avgR": 0.067,
+            "pf": 1.25,
+            "maxDD": 11.3
+          },
+          "train": {
+            "trades": 164,
+            "wins": 81,
+            "winRate": 49.4,
+            "sumR": 22.18,
+            "avgR": 0.135,
+            "pf": 1.58,
+            "maxDD": 5.35
+          },
+          "test": {
+            "trades": 118,
+            "wins": 52,
+            "winRate": 44.1,
+            "sumR": -3.36,
+            "avgR": -0.028,
+            "pf": 0.91,
+            "maxDD": 11.3
+          },
+          "gross": {
+            "trades": 282,
+            "wins": 133,
+            "winRate": 47.2,
+            "sumR": 23.12,
+            "avgR": 0.082,
+            "pf": 1.32,
+            "maxDD": 11.17
+          }
+        },
+        "XAGUSD": {
+          "all": {
+            "trades": 291,
+            "wins": 159,
+            "winRate": 54.6,
+            "sumR": 27.22,
+            "avgR": 0.094,
+            "pf": 1.36,
+            "maxDD": 17.42
+          },
+          "train": {
+            "trades": 206,
+            "wins": 102,
+            "winRate": 49.5,
+            "sumR": 12.49,
+            "avgR": 0.061,
+            "pf": 1.21,
+            "maxDD": 17.42
+          },
+          "test": {
+            "trades": 85,
+            "wins": 57,
+            "winRate": 67.1,
+            "sumR": 14.74,
+            "avgR": 0.173,
+            "pf": 1.89,
+            "maxDD": 4.32
+          },
+          "gross": {
+            "trades": 291,
+            "wins": 166,
+            "winRate": 57,
+            "sumR": 43.76,
+            "avgR": 0.15,
+            "pf": 1.63,
+            "maxDD": 13.02
+          }
+        },
+        "USOIL": {
+          "all": {
+            "trades": 290,
+            "wins": 152,
+            "winRate": 52.4,
+            "sumR": 27.38,
+            "avgR": 0.094,
+            "pf": 1.34,
+            "maxDD": 17.85
+          },
+          "train": {
+            "trades": 134,
+            "wins": 60,
+            "winRate": 44.8,
+            "sumR": -4.63,
+            "avgR": -0.035,
+            "pf": 0.89,
+            "maxDD": 17.85
+          },
+          "test": {
+            "trades": 156,
+            "wins": 92,
+            "winRate": 59,
+            "sumR": 32.01,
+            "avgR": 0.205,
+            "pf": 1.89,
+            "maxDD": 6.24
+          },
+          "gross": {
+            "trades": 290,
+            "wins": 155,
+            "winRate": 53.4,
+            "sumR": 41.85,
+            "avgR": 0.144,
+            "pf": 1.58,
+            "maxDD": 11.88
+          }
+        },
+        "NAS100": {
+          "all": {
+            "trades": 278,
+            "wins": 151,
+            "winRate": 54.3,
+            "sumR": 36.31,
+            "avgR": 0.131,
+            "pf": 1.56,
+            "maxDD": 12.05
+          },
+          "train": {
+            "trades": 151,
+            "wins": 87,
+            "winRate": 57.6,
+            "sumR": 30.27,
+            "avgR": 0.2,
+            "pf": 2.03,
+            "maxDD": 8.05
+          },
+          "test": {
+            "trades": 127,
+            "wins": 64,
+            "winRate": 50.4,
+            "sumR": 6.04,
+            "avgR": 0.048,
+            "pf": 1.17,
+            "maxDD": 12.05
+          },
+          "gross": {
+            "trades": 278,
+            "wins": 154,
+            "winRate": 55.4,
+            "sumR": 40.16,
+            "avgR": 0.144,
+            "pf": 1.64,
+            "maxDD": 11.09
+          }
+        },
+        "SPX500": {
+          "all": {
+            "trades": 276,
+            "wins": 143,
+            "winRate": 51.8,
+            "sumR": 21.18,
+            "avgR": 0.077,
+            "pf": 1.29,
+            "maxDD": 14.5
+          },
+          "train": {
+            "trades": 95,
+            "wins": 48,
+            "winRate": 50.5,
+            "sumR": 8.58,
+            "avgR": 0.09,
+            "pf": 1.4,
+            "maxDD": 7.8
+          },
+          "test": {
+            "trades": 181,
+            "wins": 95,
+            "winRate": 52.5,
+            "sumR": 12.6,
+            "avgR": 0.07,
+            "pf": 1.25,
+            "maxDD": 14.5
+          },
+          "gross": {
+            "trades": 276,
+            "wins": 146,
+            "winRate": 52.9,
+            "sumR": 26.05,
+            "avgR": 0.094,
+            "pf": 1.37,
+            "maxDD": 12.08
+          }
+        },
+        "US30": {
+          "all": {
+            "trades": 226,
+            "wins": 117,
+            "winRate": 51.8,
+            "sumR": 30.26,
+            "avgR": 0.134,
+            "pf": 1.5,
+            "maxDD": 10.55
+          },
+          "train": {
+            "trades": 129,
+            "wins": 59,
+            "winRate": 45.7,
+            "sumR": 0.85,
+            "avgR": 0.007,
+            "pf": 1.02,
+            "maxDD": 10.55
+          },
+          "test": {
+            "trades": 97,
+            "wins": 58,
+            "winRate": 59.8,
+            "sumR": 29.41,
+            "avgR": 0.303,
+            "pf": 2.52,
+            "maxDD": 3.66
+          },
+          "gross": {
+            "trades": 226,
+            "wins": 118,
+            "winRate": 52.2,
+            "sumR": 35.66,
+            "avgR": 0.158,
+            "pf": 1.62,
+            "maxDD": 9.29
+          }
+        },
+        "BTCUSD": {
+          "all": {
+            "trades": 512,
+            "wins": 263,
+            "winRate": 51.4,
+            "sumR": 54.43,
+            "avgR": 0.106,
+            "pf": 1.43,
+            "maxDD": 13.96
+          },
+          "train": {
+            "trades": 224,
+            "wins": 132,
+            "winRate": 58.9,
+            "sumR": 46.38,
+            "avgR": 0.207,
+            "pf": 2.07,
+            "maxDD": 8.63
+          },
+          "test": {
+            "trades": 288,
+            "wins": 131,
+            "winRate": 45.5,
+            "sumR": 8.06,
+            "avgR": 0.028,
+            "pf": 1.1,
+            "maxDD": 13.96
+          },
+          "gross": {
+            "trades": 512,
+            "wins": 274,
+            "winRate": 53.5,
+            "sumR": 71.58,
+            "avgR": 0.14,
+            "pf": 1.61,
+            "maxDD": 11.26
+          }
+        },
+        "ETHUSD": {
+          "all": {
+            "trades": 392,
+            "wins": 208,
+            "winRate": 53.1,
+            "sumR": 53.3,
+            "avgR": 0.136,
+            "pf": 1.48,
+            "maxDD": 13.51
+          },
+          "train": {
+            "trades": 217,
+            "wins": 117,
+            "winRate": 53.9,
+            "sumR": 21.12,
+            "avgR": 0.097,
+            "pf": 1.34,
+            "maxDD": 13.51
+          },
+          "test": {
+            "trades": 175,
+            "wins": 91,
+            "winRate": 52,
+            "sumR": 32.18,
+            "avgR": 0.184,
+            "pf": 1.66,
+            "maxDD": 9.53
+          },
+          "gross": {
+            "trades": 392,
+            "wins": 219,
+            "winRate": 55.9,
+            "sumR": 75.65,
+            "avgR": 0.193,
+            "pf": 1.75,
+            "maxDD": 10.87
+          }
+        }
+      }
+    },
+    "24": {
+      "net": {
+        "trades": 5299,
+        "wins": 2533,
+        "winRate": 47.8,
+        "sumR": 378.97,
+        "avgR": 0.072,
+        "pf": 1.19,
+        "maxDD": 64.99
+      },
+      "gross": {
+        "trades": 5299,
+        "wins": 2606,
+        "winRate": 49.2,
+        "sumR": 604.68,
+        "avgR": 0.114,
+        "pf": 1.32,
+        "maxDD": 51.72
+      },
+      "flippedNet": {
+        "trades": 5299,
+        "wins": 2096,
+        "winRate": 39.6,
+        "sumR": -695.21,
+        "avgR": -0.131,
+        "pf": 0.71,
+        "maxDD": 746.34
+      },
+      "train": {
+        "trades": 2648,
+        "wins": 1297,
+        "winRate": 49,
+        "sumR": 291.13,
+        "avgR": 0.11,
+        "pf": 1.31,
+        "maxDD": 52.31
+      },
+      "test": {
+        "trades": 2651,
+        "wins": 1236,
+        "winRate": 46.6,
+        "sumR": 87.85,
+        "avgR": 0.033,
+        "pf": 1.08,
+        "maxDD": 64.99
+      },
+      "perPair": {
+        "EURUSD": {
+          "all": {
+            "trades": 277,
+            "wins": 101,
+            "winRate": 36.5,
+            "sumR": -54.31,
+            "avgR": -0.196,
+            "pf": 0.62,
+            "maxDD": 67.62
+          },
+          "train": {
+            "trades": 142,
+            "wins": 53,
+            "winRate": 37.3,
+            "sumR": -20.82,
+            "avgR": -0.147,
+            "pf": 0.68,
+            "maxDD": 38.15
+          },
+          "test": {
+            "trades": 135,
+            "wins": 48,
+            "winRate": 35.6,
+            "sumR": -33.49,
+            "avgR": -0.248,
+            "pf": 0.57,
+            "maxDD": 36.29
+          },
+          "gross": {
+            "trades": 277,
+            "wins": 102,
+            "winRate": 36.8,
+            "sumR": -41.34,
+            "avgR": -0.149,
+            "pf": 0.69,
+            "maxDD": 55.4
+          }
+        },
+        "GBPUSD": {
+          "all": {
+            "trades": 255,
+            "wins": 102,
+            "winRate": 40,
+            "sumR": -5.58,
+            "avgR": -0.022,
+            "pf": 0.95,
+            "maxDD": 21.58
+          },
+          "train": {
+            "trades": 122,
+            "wins": 57,
+            "winRate": 46.7,
+            "sumR": 1.03,
+            "avgR": 0.008,
+            "pf": 1.02,
+            "maxDD": 17.53
+          },
+          "test": {
+            "trades": 133,
+            "wins": 45,
+            "winRate": 33.8,
+            "sumR": -6.61,
+            "avgR": -0.05,
+            "pf": 0.88,
+            "maxDD": 21.58
+          },
+          "gross": {
+            "trades": 255,
+            "wins": 104,
+            "winRate": 40.8,
+            "sumR": 3.42,
+            "avgR": 0.013,
+            "pf": 1.04,
+            "maxDD": 19.85
+          }
+        },
+        "USDJPY": {
+          "all": {
+            "trades": 289,
+            "wins": 143,
+            "winRate": 49.5,
+            "sumR": -5.67,
+            "avgR": -0.02,
+            "pf": 0.95,
+            "maxDD": 34.11
+          },
+          "train": {
+            "trades": 134,
+            "wins": 50,
+            "winRate": 37.3,
+            "sumR": -15.53,
+            "avgR": -0.116,
+            "pf": 0.74,
+            "maxDD": 23.3
+          },
+          "test": {
+            "trades": 155,
+            "wins": 93,
+            "winRate": 60,
+            "sumR": 9.86,
+            "avgR": 0.064,
+            "pf": 1.21,
+            "maxDD": 15.59
+          },
+          "gross": {
+            "trades": 289,
+            "wins": 146,
+            "winRate": 50.5,
+            "sumR": 0.96,
+            "avgR": 0.003,
+            "pf": 1.01,
+            "maxDD": 31.23
+          }
+        },
+        "USDCHF": {
+          "all": {
+            "trades": 256,
+            "wins": 121,
+            "winRate": 47.3,
+            "sumR": 25.38,
+            "avgR": 0.099,
+            "pf": 1.26,
+            "maxDD": 15.92
+          },
+          "train": {
+            "trades": 108,
+            "wins": 55,
+            "winRate": 50.9,
+            "sumR": 28.45,
+            "avgR": 0.263,
+            "pf": 1.87,
+            "maxDD": 9.54
+          },
+          "test": {
+            "trades": 148,
+            "wins": 66,
+            "winRate": 44.6,
+            "sumR": -3.06,
+            "avgR": -0.021,
+            "pf": 0.95,
+            "maxDD": 15.92
+          },
+          "gross": {
+            "trades": 256,
+            "wins": 125,
+            "winRate": 48.8,
+            "sumR": 39.23,
+            "avgR": 0.153,
+            "pf": 1.44,
+            "maxDD": 11.51
+          }
+        },
+        "AUDUSD": {
+          "all": {
+            "trades": 275,
+            "wins": 131,
+            "winRate": 47.6,
+            "sumR": 23.21,
+            "avgR": 0.084,
+            "pf": 1.2,
+            "maxDD": 21.57
+          },
+          "train": {
+            "trades": 116,
+            "wins": 65,
+            "winRate": 56,
+            "sumR": 33.11,
+            "avgR": 0.285,
+            "pf": 1.8,
+            "maxDD": 12.37
+          },
+          "test": {
+            "trades": 159,
+            "wins": 66,
+            "winRate": 41.5,
+            "sumR": -9.9,
+            "avgR": -0.062,
+            "pf": 0.87,
+            "maxDD": 21.57
+          },
+          "gross": {
+            "trades": 275,
+            "wins": 134,
+            "winRate": 48.7,
+            "sumR": 40.93,
+            "avgR": 0.149,
+            "pf": 1.38,
+            "maxDD": 18.76
+          }
+        },
+        "NZDUSD": {
+          "all": {
+            "trades": 242,
+            "wins": 112,
+            "winRate": 46.3,
+            "sumR": 22.9,
+            "avgR": 0.095,
+            "pf": 1.25,
+            "maxDD": 15.41
+          },
+          "train": {
+            "trades": 136,
+            "wins": 67,
+            "winRate": 49.3,
+            "sumR": 21.39,
+            "avgR": 0.157,
+            "pf": 1.37,
+            "maxDD": 12.17
+          },
+          "test": {
+            "trades": 106,
+            "wins": 45,
+            "winRate": 42.5,
+            "sumR": 1.51,
+            "avgR": 0.014,
+            "pf": 1.04,
+            "maxDD": 7.28
+          },
+          "gross": {
+            "trades": 242,
+            "wins": 117,
+            "winRate": 48.3,
+            "sumR": 40.93,
+            "avgR": 0.169,
+            "pf": 1.49,
+            "maxDD": 12.52
+          }
+        },
+        "USDCAD": {
+          "all": {
+            "trades": 296,
+            "wins": 140,
+            "winRate": 47.3,
+            "sumR": 12.15,
+            "avgR": 0.041,
+            "pf": 1.12,
+            "maxDD": 31.34
+          },
+          "train": {
+            "trades": 165,
+            "wins": 86,
+            "winRate": 52.1,
+            "sumR": 30.89,
+            "avgR": 0.187,
+            "pf": 1.69,
+            "maxDD": 10.36
+          },
+          "test": {
+            "trades": 131,
+            "wins": 54,
+            "winRate": 41.2,
+            "sumR": -18.74,
+            "avgR": -0.143,
+            "pf": 0.68,
+            "maxDD": 28.05
+          },
+          "gross": {
+            "trades": 296,
+            "wins": 145,
+            "winRate": 49,
+            "sumR": 23.55,
+            "avgR": 0.08,
+            "pf": 1.24,
+            "maxDD": 26.14
+          }
+        },
+        "GBPJPY": {
+          "all": {
+            "trades": 281,
+            "wins": 137,
+            "winRate": 48.8,
+            "sumR": 20.45,
+            "avgR": 0.073,
+            "pf": 1.2,
+            "maxDD": 13.8
+          },
+          "train": {
+            "trades": 138,
+            "wins": 67,
+            "winRate": 48.6,
+            "sumR": 16.83,
+            "avgR": 0.122,
+            "pf": 1.37,
+            "maxDD": 13.08
+          },
+          "test": {
+            "trades": 143,
+            "wins": 70,
+            "winRate": 49,
+            "sumR": 3.62,
+            "avgR": 0.025,
+            "pf": 1.06,
+            "maxDD": 13.8
+          },
+          "gross": {
+            "trades": 281,
+            "wins": 138,
+            "winRate": 49.1,
+            "sumR": 29.39,
+            "avgR": 0.105,
+            "pf": 1.3,
+            "maxDD": 12.04
+          }
+        },
+        "EURJPY": {
+          "all": {
+            "trades": 267,
+            "wins": 114,
+            "winRate": 42.7,
+            "sumR": -4.42,
+            "avgR": -0.017,
+            "pf": 0.96,
+            "maxDD": 24.65
+          },
+          "train": {
+            "trades": 116,
+            "wins": 43,
+            "winRate": 37.1,
+            "sumR": -24.65,
+            "avgR": -0.213,
+            "pf": 0.58,
+            "maxDD": 24.65
+          },
+          "test": {
+            "trades": 151,
+            "wins": 71,
+            "winRate": 47,
+            "sumR": 20.23,
+            "avgR": 0.134,
+            "pf": 1.43,
+            "maxDD": 8.09
+          },
+          "gross": {
+            "trades": 267,
+            "wins": 117,
+            "winRate": 43.8,
+            "sumR": 4.14,
+            "avgR": 0.016,
+            "pf": 1.04,
+            "maxDD": 21.29
+          }
+        },
+        "EURGBP": {
+          "all": {
+            "trades": 314,
+            "wins": 129,
+            "winRate": 41.1,
+            "sumR": -24.95,
+            "avgR": -0.079,
+            "pf": 0.81,
+            "maxDD": 37.97
+          },
+          "train": {
+            "trades": 151,
+            "wins": 56,
+            "winRate": 37.1,
+            "sumR": -4.74,
+            "avgR": -0.031,
+            "pf": 0.92,
+            "maxDD": 23.17
+          },
+          "test": {
+            "trades": 163,
+            "wins": 73,
+            "winRate": 44.8,
+            "sumR": -20.22,
+            "avgR": -0.124,
+            "pf": 0.72,
+            "maxDD": 37.97
+          },
+          "gross": {
+            "trades": 314,
+            "wins": 149,
+            "winRate": 47.5,
+            "sumR": 4.74,
+            "avgR": 0.015,
+            "pf": 1.04,
+            "maxDD": 30.12
+          }
+        },
+        "XAUUSD": {
+          "all": {
+            "trades": 282,
+            "wins": 132,
+            "winRate": 46.8,
+            "sumR": 20.51,
+            "avgR": 0.073,
+            "pf": 1.2,
+            "maxDD": 16.93
+          },
+          "train": {
+            "trades": 164,
+            "wins": 80,
+            "winRate": 48.8,
+            "sumR": 24.45,
+            "avgR": 0.149,
+            "pf": 1.44,
+            "maxDD": 6.44
+          },
+          "test": {
+            "trades": 118,
+            "wins": 52,
+            "winRate": 44.1,
+            "sumR": -3.94,
+            "avgR": -0.033,
+            "pf": 0.91,
+            "maxDD": 16.93
+          },
+          "gross": {
+            "trades": 282,
+            "wins": 132,
+            "winRate": 46.8,
+            "sumR": 24.81,
+            "avgR": 0.088,
+            "pf": 1.25,
+            "maxDD": 16.39
+          }
+        },
+        "XAGUSD": {
+          "all": {
+            "trades": 291,
+            "wins": 155,
+            "winRate": 53.3,
+            "sumR": 52.53,
+            "avgR": 0.181,
+            "pf": 1.54,
+            "maxDD": 12.73
+          },
+          "train": {
+            "trades": 206,
+            "wins": 101,
+            "winRate": 49,
+            "sumR": 36.57,
+            "avgR": 0.178,
+            "pf": 1.5,
+            "maxDD": 12.73
+          },
+          "test": {
+            "trades": 85,
+            "wins": 54,
+            "winRate": 63.5,
+            "sumR": 15.96,
+            "avgR": 0.188,
+            "pf": 1.67,
+            "maxDD": 6.28
+          },
+          "gross": {
+            "trades": 291,
+            "wins": 167,
+            "winRate": 57.4,
+            "sumR": 69.06,
+            "avgR": 0.237,
+            "pf": 1.77,
+            "maxDD": 10.77
+          }
+        },
+        "USOIL": {
+          "all": {
+            "trades": 290,
+            "wins": 159,
+            "winRate": 54.8,
+            "sumR": 47.24,
+            "avgR": 0.163,
+            "pf": 1.47,
+            "maxDD": 20.44
+          },
+          "train": {
+            "trades": 134,
+            "wins": 63,
+            "winRate": 47,
+            "sumR": -0.5,
+            "avgR": -0.004,
+            "pf": 0.99,
+            "maxDD": 20.44
+          },
+          "test": {
+            "trades": 156,
+            "wins": 96,
+            "winRate": 61.5,
+            "sumR": 47.74,
+            "avgR": 0.306,
+            "pf": 2.1,
+            "maxDD": 7.05
+          },
+          "gross": {
+            "trades": 290,
+            "wins": 161,
+            "winRate": 55.5,
+            "sumR": 61.7,
+            "avgR": 0.213,
+            "pf": 1.66,
+            "maxDD": 18.51
+          }
+        },
+        "NAS100": {
+          "all": {
+            "trades": 278,
+            "wins": 150,
+            "winRate": 54,
+            "sumR": 29.39,
+            "avgR": 0.106,
+            "pf": 1.31,
+            "maxDD": 16
+          },
+          "train": {
+            "trades": 151,
+            "wins": 93,
+            "winRate": 61.6,
+            "sumR": 34.4,
+            "avgR": 0.228,
+            "pf": 1.81,
+            "maxDD": 8.22
+          },
+          "test": {
+            "trades": 127,
+            "wins": 57,
+            "winRate": 44.9,
+            "sumR": -5.01,
+            "avgR": -0.039,
+            "pf": 0.9,
+            "maxDD": 16
+          },
+          "gross": {
+            "trades": 278,
+            "wins": 151,
+            "winRate": 54.3,
+            "sumR": 33.24,
+            "avgR": 0.12,
+            "pf": 1.36,
+            "maxDD": 15.06
+          }
+        },
+        "SPX500": {
+          "all": {
+            "trades": 276,
+            "wins": 140,
+            "winRate": 50.7,
+            "sumR": 25.91,
+            "avgR": 0.094,
+            "pf": 1.25,
+            "maxDD": 21.82
+          },
+          "train": {
+            "trades": 95,
+            "wins": 53,
+            "winRate": 55.8,
+            "sumR": 20.02,
+            "avgR": 0.211,
+            "pf": 1.77,
+            "maxDD": 9.8
+          },
+          "test": {
+            "trades": 181,
+            "wins": 87,
+            "winRate": 48.1,
+            "sumR": 5.88,
+            "avgR": 0.033,
+            "pf": 1.08,
+            "maxDD": 21.82
+          },
+          "gross": {
+            "trades": 276,
+            "wins": 141,
+            "winRate": 51.1,
+            "sumR": 30.77,
+            "avgR": 0.112,
+            "pf": 1.3,
+            "maxDD": 19.34
+          }
+        },
+        "US30": {
+          "all": {
+            "trades": 226,
+            "wins": 112,
+            "winRate": 49.6,
+            "sumR": 46.24,
+            "avgR": 0.205,
+            "pf": 1.57,
+            "maxDD": 14.53
+          },
+          "train": {
+            "trades": 129,
+            "wins": 57,
+            "winRate": 44.2,
+            "sumR": 3.3,
+            "avgR": 0.026,
+            "pf": 1.06,
+            "maxDD": 14.53
+          },
+          "test": {
+            "trades": 97,
+            "wins": 55,
+            "winRate": 56.7,
+            "sumR": 42.94,
+            "avgR": 0.443,
+            "pf": 2.55,
+            "maxDD": 4.76
+          },
+          "gross": {
+            "trades": 226,
+            "wins": 112,
+            "winRate": 49.6,
+            "sumR": 51.64,
+            "avgR": 0.229,
+            "pf": 1.66,
+            "maxDD": 13.69
+          }
+        },
+        "BTCUSD": {
+          "all": {
+            "trades": 512,
+            "wins": 253,
+            "winRate": 49.4,
+            "sumR": 87.75,
+            "avgR": 0.171,
+            "pf": 1.52,
+            "maxDD": 19
+          },
+          "train": {
+            "trades": 224,
+            "wins": 132,
+            "winRate": 58.9,
+            "sumR": 72.69,
+            "avgR": 0.325,
+            "pf": 2.29,
+            "maxDD": 12.22
+          },
+          "test": {
+            "trades": 288,
+            "wins": 121,
+            "winRate": 42,
+            "sumR": 15.06,
+            "avgR": 0.052,
+            "pf": 1.13,
+            "maxDD": 19
+          },
+          "gross": {
+            "trades": 512,
+            "wins": 257,
+            "winRate": 50.2,
+            "sumR": 104.9,
+            "avgR": 0.205,
+            "pf": 1.66,
+            "maxDD": 16.01
+          }
+        },
+        "ETHUSD": {
+          "all": {
+            "trades": 392,
+            "wins": 202,
+            "winRate": 51.5,
+            "sumR": 60.25,
+            "avgR": 0.154,
+            "pf": 1.42,
+            "maxDD": 12.43
+          },
+          "train": {
+            "trades": 217,
+            "wins": 119,
+            "winRate": 54.8,
+            "sumR": 34.24,
+            "avgR": 0.158,
+            "pf": 1.47,
+            "maxDD": 12.43
+          },
+          "test": {
+            "trades": 175,
+            "wins": 83,
+            "winRate": 47.4,
+            "sumR": 26.01,
+            "avgR": 0.149,
+            "pf": 1.37,
+            "maxDD": 12.15
+          },
+          "gross": {
+            "trades": 392,
+            "wins": 208,
+            "winRate": 53.1,
+            "sumR": 82.6,
+            "avgR": 0.211,
+            "pf": 1.63,
+            "maxDD": 11.65
+          }
+        }
+      }
+    }
+  }
+}

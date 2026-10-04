@@ -49,7 +49,11 @@ healthy() {
     return 1
 }
 
-restart_all() { systemctl restart $SERVICES; }
+restart_all() {
+    systemctl restart $SERVICES
+    # Markov bot (deploy/markov-setup.sh): restarted only if it is installed and running.
+    systemctl try-restart markov-bot 2>/dev/null || true
+}
 
 BRANCH=$(git_app rev-parse --abbrev-ref HEAD) || { log "not a git checkout"; exit 1; }
 git_app fetch -q origin "$BRANCH" || { log "fetch failed (network?)"; exit 0; }
@@ -82,6 +86,13 @@ fail() {
 
 if git_app diff --quiet "$OLD" "$NEW" -- requirements.txt; then :; else
     as_app "$REPO/.venv/bin/pip" install -q -r "$REPO/requirements.txt" || fail "installing requirements"
+fi
+if command -v node >/dev/null && [ -d "$REPO/markov/node_modules" ]; then
+    if ! git_app diff --quiet "$OLD" "$NEW" -- markov/package-lock.json; then
+        as_app sh -c "cd '$REPO/markov' && npm ci --omit=dev --silent" || fail "installing Markov bot packages"
+    fi
+    as_app sh -c "cd '$REPO/markov' && node --check server.js && timeout 120 node --test" >/dev/null 2>&1 \
+        || fail "Markov bot tests failed"
 fi
 as_app "$REPO/.venv/bin/python" -m compileall -q "$REPO/serve.py" "$REPO/licensing" "$REPO/compiler" >/dev/null \
     || fail "code doesn't compile"

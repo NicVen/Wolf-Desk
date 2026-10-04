@@ -1,0 +1,32 @@
+{
+  "generated": "2026-08-18T10:50:10",
+  "engine": "STAALWAG Signal Engine v2",
+  "principle": "emits only OOS-validated edges; no unproven signals, ever",
+  "edges_registered": [
+    {
+      "id": "xauusd-donchian55",
+      "status": "PROVEN",
+      "weight": 1.0,
+      "validation": {
+        "full_exp_r": 0.62,
+        "oos_exp_r": 0.27,
+        "years_positive": "5/5",
+        "psr": 1.0,
+        "trades": 189
+      }
+    },
+    {
+      "id": "gbpjpy-boll2.5",
+      "status": "MARGINAL (probation)",
+      "weight": 0.5,
+      "validation": {
+        "full_exp_r": 0.42,
+        "oos_exp_r": 0.15,
+        "years_positive": "3/5",
+        "psr": 1.0,
+        "trades": 89
+      }
+    }
+  ],
+  "live_signals": []
+}

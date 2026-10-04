@@ -203,15 +203,18 @@ def build_snapshot():
                     + ("" if conclusive else " — building sample"),
         })
 
-    # 3) Raw Markov scanner -- the unfiltered firehose. Shown honestly, parked:
-    #    it is research signal, not a traded desk, and the win rate says so.
+    # 3) Markov 18-pair -- posted FREE to subscribers on Telegram, so it is a
+    #    signal desk, not research. Scored one call per trade idea (re-posts of
+    #    an open call are folded in by HQ signals.py), in R.
     ss = scanner.get("stats") or {}
     if ss.get("closed"):
+        exp = _num(ss.get("expectancy_r"))
         desks.append({
-            "name": "Markov signal bot (raw scanner)", "status": "parked",
-            "provenance": "shadow", "trades": int(ss.get("closed") or 0),
+            "name": "Markov 18-pair — free signals", "status": "proving",
+            "provenance": "live", "trades": int(ss.get("closed") or 0),
             "win_rate": _num(ss.get("win_rate")), "pf": None, "net_usd": None,
-            "note": "unfiltered scanner output — research only, never traded",
+            "note": "free Telegram signals, scored on real price, one call per trade idea"
+                    + (" — %sR net (%sR per call)" % (ss.get("net_r"), exp) if exp is not None else ""),
         })
 
     # 4) Signal Engine v2 ("My Trading Bot") -- forward paper track, scored on

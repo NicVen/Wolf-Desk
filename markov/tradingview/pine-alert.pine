@@ -1,0 +1,35 @@
+// ── Claude Trading Bot — TradingView Alert Template ──────────────────────
+// Add this to any Pine Script strategy or indicator.
+// Set the alert webhook URL to your Railway deployment URL + /webhook
+
+//@version=5
+indicator("Claude Trading Alerts", overlay=true)
+
+// Inputs
+ema50  = ta.ema(close, 50)
+ema200 = ta.ema(close, 200)
+rsi14  = ta.rsi(close, 14)
+[macdLine, signalLine, histLine] = ta.macd(close, 12, 26, 9)
+
+trend = close > ema50 and ema50 > ema200 ? "Uptrend" :
+        close < ema50 and ema50 < ema200 ? "Downtrend" : "Ranging"
+
+// Alert conditions
+bullSignal = ta.crossover(rsi14, 30) or ta.crossover(close, ema50)
+bearSignal = ta.crossunder(rsi14, 70) or ta.crossunder(close, ema50)
+
+// Alert message — sent as JSON to your Railway webhook
+alertMsg = '{"symbol":"' + syminfo.ticker +
+           '","timeframe":"' + timeframe.period +
+           '","price":' + str.tostring(close) +
+           ',"rsi":' + str.tostring(math.round(rsi14, 2)) +
+           ',"ema50":' + str.tostring(math.round(ema50, 5)) +
+           ',"ema200":' + str.tostring(math.round(ema200, 5)) +
+           ',"macd_hist":' + str.tostring(math.round(histLine, 6)) +
+           ',"trend":"' + trend +
+           '","signal":"{{strategy.order.action}}"}'
+
+if bullSignal
+    alert(alertMsg, alert.freq_once_per_bar_close)
+if bearSignal
+    alert(alertMsg, alert.freq_once_per_bar_close)

@@ -1,0 +1,17 @@
+{
+  "name": "markov-claude-bot",
+  "version": "3.0.0",
+  "description": "Claude Trading Bot with Markov Regime Model \u2014 Railway deployment",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
