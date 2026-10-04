@@ -100,7 +100,7 @@ def load():
     px, rates = {}, {}
     for c, (sym, sign, sid, _) in CCY.items():
         try:
-            b = data.bars(sym, "1d", "max")
+            b = data.bars(sym, "1d", "20y")  # "max" silently gives monthly bars
             r = fred(sid)
         except Exception as e:
             print(f"(skipped {c}: {e})")
