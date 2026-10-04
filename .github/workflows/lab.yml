@@ -33,3 +33,6 @@ jobs:
       - name: VELDRIN - carry trade (interest-rate differentials)
         working-directory: lab
         run: python carry.py | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Published edges (gold overnight, FOMC day, own hours, dollar carry, momentum)
+        working-directory: lab
+        run: python research.py | tee -a "$GITHUB_STEP_SUMMARY"
