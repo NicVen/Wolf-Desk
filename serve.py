@@ -256,6 +256,12 @@ WOLF_IMG = os.environ.get("WOLF_IMG", "https://wolf-desk-production.up.railway.a
 import sqlite3
 CLICK_DB = os.environ.get("GROWTH_DB", os.path.join(HERE, "growth.db"))
 _SITE = os.environ.get("WOLF_URL", "https://wolf-desk-production.up.railway.app").rstrip("/")
+# Signal desks on this server (deploy/desks-setup.sh). Public path -> desk.
+DESK_TRACK = {
+    "/desks/gold/track_record.json": os.environ.get("GOLD_DESK_URL", "http://127.0.0.1:8781"),
+    "/desks/fx/track_record.json":   os.environ.get("FX_DESK_URL", "http://127.0.0.1:8782"),
+}
+
 LINK_DEST = {
     "gold": _SITE,   # STAALWAG channel taps  -> live board (funnel to join)
     "fx":   _SITE,   # VELDRIN channel taps   -> live board
@@ -628,6 +634,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send(200, body, "application/json"); return
             except Exception as e:
                 self._send(503, json.dumps({"ok": False, "error": "markov bot not reachable: %s" % e}),
+                           "application/json"); return
+
+        # Gold and VELDRIN desks' records (results only, never the live signal),
+        # proxied from the desks on this server so HQ can read them over HTTPS.
+        if path in DESK_TRACK:
+            try:
+                with urllib.request.urlopen(DESK_TRACK[path] + "/track_record.json", timeout=8) as r:
+                    body = r.read()
+                self._send(200, body, "application/json"); return
+            except Exception as e:
+                self._send(503, json.dumps({"ok": False, "error": "desk not reachable: %s" % e}),
                            "application/json"); return
 
         # Tracked link: count the click, then redirect to the real destination.
