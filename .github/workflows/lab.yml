@@ -1,0 +1,23 @@
+name: Strategy lab
+
+# Backtests the signal rules on free Yahoo history. Runs when lab/ changes,
+# weekly, or by hand. Read the scorecard in the job log / summary.
+on:
+  push:
+    paths: ["lab/**", ".github/workflows/lab.yml"]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+
+jobs:
+  lab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Gold
+        working-directory: lab
+        run: python run.py gold | tee -a "$GITHUB_STEP_SUMMARY"
