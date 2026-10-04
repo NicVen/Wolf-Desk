@@ -369,6 +369,64 @@ def make_month_end(bars, min_n=60, t_min=2.0, stop_atr=3.0):
     return s
 
 
+def make_cot(cot_rows, sign, who="lev", fade=True, window=156, hi=0.9, lo=0.1,
+             stop_atr=3.0, hold=5):
+    """Big-player positioning (CFTC weekly report), daily bars, walk-forward.
+    who: "lev" = hedge funds (leveraged money), "am" = asset managers.
+    Each new report: rank this week's net position against the past 3 years.
+    Crowded (top 10%) / empty (bottom 10%): fade=True trades against the
+    crowd (crowded trades unwind), fade=False goes with it.
+    sign: +1 when the pair rises with the currency (EURUSD), -1 when it falls
+    (USDJPY: yen futures long = USDJPY down)."""
+    col = 1 if who == "lev" else 2
+
+    def make(bars):
+        used = {"k": -1}
+
+        def s(bars, i):
+            if i < 60 or i + 1 >= len(bars):
+                return None
+            known = bars[i + 1]["t"]          # we enter at the next bar's open
+            k = used["k"]
+            while k + 1 < len(cot_rows) and cot_rows[k + 1][0] <= known:
+                k += 1
+            if k == used["k"]:
+                return None                   # no new report since last look
+            used["k"] = k
+            if k < window:
+                return None
+            past = sorted(r[col] for r in cot_rows[k - window:k])
+            x = cot_rows[k][col]
+            rank = sum(p < x for p in past) / len(past)
+            if lo < rank < hi:
+                return None
+            crowd = 1 if rank >= hi else -1   # crowd long / short the currency
+            d = (-crowd if fade else crowd) * sign
+            return Order(d, stop_atr * _atr(bars, i), 0, hold)
+        return s
+    return make
+
+
+def make_volume_spike(bars, mult=3.0, body_atr=1.0, follow=True, stop_atr=2.0, hold=6):
+    """Futures volume surge: an hour with 3x the usual volume AND a big candle
+    means real money arrived. follow=True rides it for 6h, False fades it."""
+    v = [b.get("v", 0) for b in bars]
+
+    def s(bars, i):
+        if i < 220:
+            return None
+        base = sum(v[i - 20:i]) / 20
+        if base <= 0 or v[i] < mult * base:
+            return None
+        body = bars[i]["c"] - bars[i]["o"]
+        atr = _atr(bars, i)
+        if abs(body) < body_atr * atr:
+            return None
+        d = 1 if body > 0 else -1
+        return Order(d if follow else -d, stop_atr * atr, 0, hold)
+    return s
+
+
 HOURLY = {
     "current (live rule)": make_current,
     "breakout + trend": make_donchian,

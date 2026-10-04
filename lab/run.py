@@ -140,9 +140,88 @@ def fx():
               f"{'PASS' if ok else 'no'} | {'; '.join(per)} |")
 
 
+FLOWS = {   # pair: (CFTC market name, +1/-1 vs the currency, CME future, cost as share of price)
+    "EURUSD=X": ("EURO FX", 1, "6E=F"), "GBPUSD=X": ("BRITISH POUND", 1, "6B=F"),
+    "USDJPY=X": ("JAPANESE YEN", -1, "6J=F"), "AUDUSD=X": ("AUSTRALIAN DOLLAR", 1, "6A=F"),
+    "USDCAD=X": ("CANADIAN DOLLAR", -1, "6C=F"), "USDCHF=X": ("SWISS FRANC", -1, "6S=F"),
+}
+
+
+def pooled(name, items):
+    """items: [(label, bars, make, cost)]. One pooled scorecard line."""
+    allt, per, days, ends, lucks = [], [], 0, [], [[] for _ in range(LUCK_RUNS // 4)]
+    for label, h, make, cost in items:
+        if len(h) < 300:
+            per.append(f"{label} n/a")
+            continue
+        tr = engine.run(h, make(h), cost)
+        mid_t = h[len(h) // 2]["t"]
+        for t in tr:
+            t["half"] = 0 if t["t"] < mid_t else 1
+        allt += tr
+        per.append(f"{label} {engine.stats(tr, 1)['pf']} ({len(tr)})")
+        days = max(days, (h[-1]["t"] - h[0]["t"]) / 86400)
+        ends.append(h[-1]["t"])
+        for k in range(len(lucks)):
+            sh = shuffled(h, k)
+            for b, o in zip(sh, h):
+                b["v"] = o.get("v", 0)
+            lucks[k] += engine.run(sh, make(sh), cost)
+    if not allt:
+        print(f"| {name} | 0 | | | | | | | | | | | | no data | {'; '.join(per)} |")
+        return
+    allt.sort(key=lambda t: t["t"])
+    a = [t for t in allt if t["half"] == 0]
+    b = [t for t in allt if t["half"] == 1]
+    last = [t for t in allt if t["t"] >= max(ends) - 180 * 86400]
+    st, sa, sb, sl = (engine.stats(allt, days), engine.stats(a, days / 2),
+                      engine.stats(b, days / 2), engine.stats(last, 180))
+    lpf = sorted(engine.stats(x, 1)["pf"] for x in lucks)[-1]
+    ok = sa["pf"] >= 1.3 and sb["pf"] >= 1.3 and st["n"] >= 30 and st["pf"] > lpf
+    lg = engine.stats([t for t in allt if t["dir"] > 0], days)
+    shs = engine.stats([t for t in allt if t["dir"] < 0], days)
+    print(f"| {name} | {st['n']} | {st['per_month']} | {st['win']}% | {st['pf']} | "
+          f"{sa['pf']} | {sb['pf']} | {sl['pf']} ({sl['n']}) | {lg['pf']} ({lg['n']}) | "
+          f"{shs['pf']} ({shs['n']}) | {st['total_r']:+} | {st['max_dd_r']} | {lpf} | "
+          f"{'PASS' if ok else 'no'} | {'; '.join(per)} |")
+
+
+def flows():
+    """Where the big money is: CFTC positioning (weekly, since 2010, daily bars)
+    and CME currency-futures volume surges (1h, 2 years)."""
+    from datetime import datetime
+    years = range(2010, datetime.utcnow().year + 1)
+    daily, cots, fut = {}, {}, {}
+    for sym, (mkt, sign, f) in FLOWS.items():
+        try:
+            daily[sym] = data.bars(sym, "1d", "20y")
+            cots[sym] = data.cot(mkt, years)
+            print(f"({sym}: {len(cots[sym])} weekly reports)")
+        except Exception as e:
+            print(f"(skipped {sym} COT: {e})")
+        try:
+            fut[sym] = data.bars(f, "60m", "730d")
+        except Exception as e:
+            print(f"(skipped {f}: {e})")
+    print("\n## VELDRIN pairs: where the big money is\n")
+    print("| rule | trades | per month | win | PF | PF 1st half | PF 2nd half | PF last 6m (n) | PF longs (n) | PF shorts (n) | total R | worst drawdown R | luck PF (95%) | verdict | PF per pair (n) |")
+    print("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+    for who, label in (("lev", "hedge funds"), ("am", "asset managers")):
+        for fade in (True, False):
+            name = f"positioning: {'fade' if fade else 'follow'} {label} at extremes"
+            pooled(name, [(s[:6], daily[s], strategies.make_cot(cots[s], FLOWS[s][1], who, fade), FX[s])
+                          for s in daily if cots.get(s)])
+    for follow in (True, False):
+        name = f"futures volume surge: {'follow' if follow else 'fade'}"
+        pooled(name, [(FLOWS[s][2], h, (lambda fo: lambda b: strategies.make_volume_spike(b, follow=fo))(follow),
+                       h[-1]["c"] * 0.00011) for s, h in fut.items() if h])
+
+
 def main():
     if sys.argv[1:2] == ["fx"]:
         return fx()
+    if sys.argv[1:2] == ["flows"]:
+        return flows()
     key = sys.argv[1] if len(sys.argv) > 1 else "gold"
     sym, cost = MARKETS.get(key, (key, float(sys.argv[2]) if len(sys.argv) > 2 else 0))
     print(f"## {key} ({sym}), cost {cost} per trade\n")

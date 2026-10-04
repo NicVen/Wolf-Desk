@@ -24,3 +24,6 @@ jobs:
       - name: VELDRIN (6 FX pairs)
         working-directory: lab
         run: python run.py fx | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: VELDRIN - big-money flows (CFTC positioning, futures volume)
+        working-directory: lab
+        run: python run.py flows | tee -a "$GITHUB_STEP_SUMMARY"
