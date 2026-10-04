@@ -1,0 +1,295 @@
+//@version=6
+indicator("Markov 2.0 Regime Gate", overlay=true, max_bars_back=2000)
+
+// ===================================================================
+// Markov 2.0 - corrected. Stride-sampled transition matrix (FIX 1),
+// label sanity readout (FIX 2), explicit FILTER verdict (FIX 3).
+// Use as gate over any strategy: trade only when gate open.
+// ===================================================================
+
+// ===================================================================
+// WHAT THIS IS:  a FILTER. It tells you when the regime is with you.
+// WHAT IT IS NOT: an entry system. It never says "buy here".
+// You bring the setup; this only says ALLOWED or STAND ASIDE.
+// If you have no strategy of your own, this tool cannot help you.
+// ===================================================================
+
+gM = "Markov 2.0 (Daily)"
+i_window = input.int  (20,   "Window / Stride (bars)",  minval=5,  maxval=60,  group=gM)
+i_auto   = input.bool (true, "Auto threshold for this market", group=gM, tooltip="Picks the Bull/Bear threshold from the instrument type. A single fixed % is wrong on most markets: 3% on an FX pair almost never happens, so the model sees no Bear regimes and its matrix becomes fiction. Turn off only if you know what you are doing.")
+i_thr    = input.float(3.0,  "  ...or set it manually %", minval=0.5, maxval=10.0, step=0.5, group=gM, tooltip="Used only when Auto is off. Gold 3, SPY 5, FX 1, BTC 8")
+i_blocks = input.int  (50,   "Blocks in Matrix",        minval=12, maxval=80,  group=gM, tooltip="50 blocks x 20 bars = 1000 daily bars of history")
+i_gate   = input.float(0.10, "Gate Threshold",          minval=0.0, maxval=0.5, step=0.05, group=gM, tooltip="|signal| must exceed this for LONG/SHORT allowed")
+
+gUI = "Display"
+i_tbl  = input.bool(true, "Panel",             group=gUI)
+i_bg   = input.bool(true, "Regime Background", group=gUI)
+i_help = input.bool(true, "Show 'how to use' rows", group=gUI)
+
+// Threshold that actually fits the instrument. A 20-day move of 3% is routine
+// for gold and near-impossible for EURUSD -- using one number everywhere is how
+// you end up with an all-prior matrix that looks confident and knows nothing.
+_autoThr = syminfo.type == "forex"  ? 1.0 :
+           syminfo.type == "crypto" ? 8.0 :
+           syminfo.type == "index"  ? 5.0 :
+           syminfo.type == "stock"  ? 5.0 :
+           str.contains(syminfo.ticker, "XAU") ? 3.0 : 3.0
+_thrPct = i_auto ? _autoThr : i_thr
+_thr    = _thrPct / 100.0
+
+// ---- Daily regime label + stride matrix, computed on D timeframe ----
+f_markov2() =>
+    cumRet = close / close[i_window] - 1.0
+    reg    = cumRet >= _thr ? 2 : cumRet <= -_thr ? 0 : 1   // 0=Bear 1=Side 2=Bull
+    max_bars_back(reg, 1800)
+
+    // FIX 1: stride sampling - labels every i_window bars, non-overlapping
+    // Laplace 0.5 smoothing so empty rows stay sane
+    float c00 = 0.5
+    float c01 = 0.5
+    float c02 = 0.5
+    float c10 = 0.5
+    float c11 = 0.5
+    float c12 = 0.5
+    float c20 = 0.5
+    float c21 = 0.5
+    float c22 = 0.5
+    int used = 0
+    for k = 0 to i_blocks - 1
+        idxCur  = k * i_window
+        idxPrev = (k + 1) * i_window
+        c = reg[idxCur]
+        p = reg[idxPrev]
+        if not na(c) and not na(p)
+            used += 1
+            if p == 0
+                if c == 0
+                    c00 += 1.0
+                else if c == 1
+                    c01 += 1.0
+                else
+                    c02 += 1.0
+            else if p == 1
+                if c == 0
+                    c10 += 1.0
+                else if c == 1
+                    c11 += 1.0
+                else
+                    c12 += 1.0
+            else
+                if c == 0
+                    c20 += 1.0
+                else if c == 1
+                    c21 += 1.0
+                else
+                    c22 += 1.0
+
+    r0 = c00 + c01 + c02
+    r1 = c10 + c11 + c12
+    r2 = c20 + c21 + c22
+    p00 = c00 / r0
+    p01 = c01 / r0
+    p02 = c02 / r0
+    p10 = c10 / r1
+    p11 = c11 / r1
+    p12 = c12 / r1
+    p20 = c20 / r2
+    p21 = c21 / r2
+    p22 = c22 / r2
+
+    // LEGACY diagonal (overlapping, daily steps) for the honesty comparison
+    float l00 = 0.5
+    float l11 = 0.5
+    float l22 = 0.5
+    float l0t = 1.5
+    float l1t = 1.5
+    float l2t = 1.5
+    for k = 0 to math.min(i_blocks * i_window - 2, 1500)
+        c = reg[k]
+        p = reg[k + 1]
+        if not na(c) and not na(p)
+            if p == 0
+                l0t += 1.0
+                if c == 0
+                    l00 += 1.0
+            else if p == 1
+                l1t += 1.0
+                if c == 1
+                    l11 += 1.0
+            else
+                l2t += 1.0
+                if c == 2
+                    l22 += 1.0
+
+    // signal from current regime row: P(bull) - P(bear)
+    sig = reg == 0 ? p02 - p00 : reg == 1 ? p12 - p10 : p22 - p20
+
+    // Real observations per row (strip the 3 x 0.5 Laplace prior). A row with
+    // zero real samples still prints a tidy 33/33/33 -- that is the prior
+    // showing through, not knowledge, and it must be labelled as such.
+    n0 = r0 - 1.5
+    n1 = r1 - 1.5
+    n2 = r2 - 1.5
+
+    [reg, sig, used, p00, p01, p02, p10, p11, p12, p20, p21, p22, l00 / l0t, l11 / l1t, l22 / l2t, cumRet, n0, n1, n2]
+
+[dReg, dSig, dUsed, m00, m01, m02, m10, m11, m12, m20, m21, m22, lg0, lg1, lg2, dCum, dN0, dN1, dN2] = request.security(syminfo.tickerid, "D", f_markov2(), lookahead=barmerge.lookahead_off)
+
+isBull = dReg == 2
+isBear = dReg == 0
+isSide = dReg == 1
+
+// Row backing the CURRENT verdict. If that row has no real samples the verdict
+// is built on the prior alone and is worth nothing.
+curN     = isBull ? dN2 : isBear ? dN0 : dN1
+thinData = curN < 5
+noData   = curN < 1
+
+gateLong  = dSig >  i_gate and not noData
+gateShort = dSig < -i_gate and not noData
+// NOTE: kept on one line. Pine reads a continuation indented by a multiple of
+// four spaces as a new block, not a continued expression.
+gateLbl   = noData ? "NO DATA - DO NOT USE" : gateLong ? "LONG ALLOWED" : gateShort ? "SHORT ALLOWED" : "FLAT - STAND ASIDE"
+
+// Stickiness of the state we are in. "LONG ALLOWED" while the model also says
+// 87% chance of staying sideways is technically true and practically a trap,
+// so say the quiet part on the panel.
+curStick = isBull ? m22 : isBear ? m00 : m11
+chopWarn = isSide and curStick >= 0.60
+
+// FIX 2: label sanity readout - current label vs its own cum return
+labelSane = (isBull and dCum >= _thr) or (isBear and dCum <= -_thr) or (isSide and dCum > -_thr and dCum < _thr)
+
+// ---- Visuals ----
+bgcolor(i_bg and gateLong ? color.new(color.green, 90) : i_bg and gateShort ? color.new(color.red, 90) : i_bg ? color.new(color.gray, 94) : na, title="Gate BG")
+
+if i_tbl and barstate.islast
+    bgc  = color.new(#0B0F0D, 5)
+    hdr  = color.new(#1A2620, 0)
+    dim  = color.new(#8A8F9A, 0)
+    wht  = color.white
+    grn  = color.new(#3FDE7E, 0)
+    red  = color.new(#C57F86, 0)
+    bull = color.new(#84BBA1, 0)
+    bear = color.new(#C57F86, 0)
+    sidc = color.new(#A4ABB7, 0)
+
+    t = table.new(position.top_left, 4, 20, bgcolor=bgc, border_width=1, border_color=color.new(color.gray, 70), frame_width=1, frame_color=color.new(#3FDE7E, 60))
+
+    table.cell(t, 0, 0, "MARKOV 2.0 GATE", text_color=grn, bgcolor=hdr, text_size=size.small)
+    table.cell(t, 1, 0, "FILTER ONLY", text_color=color.new(#D4A017, 0), bgcolor=hdr, text_size=size.small)
+    table.cell(t, 2, 0, "thr", text_color=dim, bgcolor=hdr, text_size=size.small)
+    table.cell(t, 3, 0, str.tostring(_thrPct, "#.#") + "%" + (i_auto ? " auto" : ""), text_color=wht, bgcolor=hdr, text_size=size.small)
+
+    regLbl = isBull ? "Bull" : isBear ? "Bear" : "Sideways"
+    regClr = isBull ? bull : isBear ? bear : sidc
+    table.cell(t, 0, 1, "STATE",  text_color=dim, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 1, 1, regLbl,   text_color=regClr, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 2, 1, "20d RET",text_color=dim, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 3, 1, str.tostring(math.round(dCum * 100, 1)) + "%", text_color=dCum > 0 ? bull : bear, bgcolor=bgc, text_size=size.small)
+
+    sigClr = dSig > 0.1 ? bull : dSig < -0.1 ? bear : dim
+    table.cell(t, 0, 2, "SIGNAL", text_color=dim, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 1, 2, (dSig >= 0 ? "+" : "") + str.tostring(math.round(dSig, 2)), text_color=sigClr, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 0, 3, "VERDICT", text_color=dim, bgcolor=bgc, text_size=size.small)
+    vClr = noData ? red : gateLong ? grn : gateShort ? red : dim
+    table.cell(t, 1, 3, gateLbl,  text_color=vClr, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 2, 3, "BLOCKS", text_color=dim, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 3, 3, str.tostring(dUsed), text_color=wht, bgcolor=bgc, text_size=size.small)
+
+    // Honesty rows: say when the verdict is thin or the market is chopping.
+    warnTxt = noData   ? "This regime has NEVER occurred at " + str.tostring(_thrPct, "#.#") + "% - verdict is guesswork" :
+              thinData ? "Only " + str.tostring(math.round(curN)) + " samples back this row - treat as weak" :
+              chopWarn ? "Sideways is " + str.tostring(math.round(curStick * 100)) + "% sticky - expect chop, not trend" : ""
+    if warnTxt != ""
+        table.cell(t, 0, 4, "⚠ CAUTION", text_color=color.new(#D4A017, 0), bgcolor=bgc, text_size=size.small)
+        table.cell(t, 1, 4, warnTxt, text_color=color.new(#D4A017, 0), bgcolor=bgc, text_size=size.small)
+        table.cell(t, 2, 4, "", bgcolor=bgc)
+        table.cell(t, 3, 4, "", bgcolor=bgc)
+
+    saneClr = labelSane ? grn : red
+    table.cell(t, 0, 5, "LABEL CHECK", text_color=dim, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 1, 5, labelSane ? "PASS" : "FAIL", text_color=saneClr, bgcolor=bgc, text_size=size.small)
+
+    // STRIDE matrix
+    table.cell(t, 0, 6, "STRIDE MATRIX (honest)", text_color=grn, bgcolor=hdr, text_size=size.small)
+    table.cell(t, 1, 6, "Bear", text_color=bear, bgcolor=hdr, text_size=size.small)
+    table.cell(t, 2, 6, "Side", text_color=sidc, bgcolor=hdr, text_size=size.small)
+    table.cell(t, 3, 6, "Bull", text_color=bull, bgcolor=hdr, text_size=size.small)
+
+    table.cell(t, 0, 7, "Bear >", text_color=bear, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 1, 7, str.tostring(math.round(m00 * 100, 0)) + "%", text_color=wht, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 2, 7, str.tostring(math.round(m01 * 100, 0)) + "%", text_color=wht, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 3, 7, str.tostring(math.round(m02 * 100, 0)) + "%", text_color=wht, bgcolor=bgc, text_size=size.small)
+
+    table.cell(t, 0, 8, "Side >", text_color=sidc, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 1, 8, str.tostring(math.round(m10 * 100, 0)) + "%", text_color=wht, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 2, 8, str.tostring(math.round(m11 * 100, 0)) + "%", text_color=wht, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 3, 8, str.tostring(math.round(m12 * 100, 0)) + "%", text_color=wht, bgcolor=bgc, text_size=size.small)
+
+    table.cell(t, 0, 9, "Bull >", text_color=bull, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 1, 9, str.tostring(math.round(m20 * 100, 0)) + "%", text_color=wht, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 2, 9, str.tostring(math.round(m21 * 100, 0)) + "%", text_color=wht, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 3, 9, str.tostring(math.round(m22 * 100, 0)) + "%", text_color=wht, bgcolor=bgc, text_size=size.small)
+
+    // Legacy vs stride diagonal
+    table.cell(t, 0, 10, "STICKINESS", text_color=grn, bgcolor=hdr, text_size=size.small)
+    table.cell(t, 1, 10, "Bear", text_color=bear, bgcolor=hdr, text_size=size.small)
+    table.cell(t, 2, 10, "Side", text_color=sidc, bgcolor=hdr, text_size=size.small)
+    table.cell(t, 3, 10, "Bull", text_color=bull, bgcolor=hdr, text_size=size.small)
+
+    table.cell(t, 0, 11, "legacy (fake)", text_color=dim, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 1, 11, str.tostring(math.round(lg0 * 100, 0)) + "%", text_color=dim, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 2, 11, str.tostring(math.round(lg1 * 100, 0)) + "%", text_color=dim, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 3, 11, str.tostring(math.round(lg2 * 100, 0)) + "%", text_color=dim, bgcolor=bgc, text_size=size.small)
+
+    table.cell(t, 0, 12, "stride (true)", text_color=wht, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 1, 12, str.tostring(math.round(m00 * 100, 0)) + "%", text_color=wht, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 2, 12, str.tostring(math.round(m11 * 100, 0)) + "%", text_color=wht, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 3, 12, str.tostring(math.round(m22 * 100, 0)) + "%", text_color=wht, bgcolor=bgc, text_size=size.small)
+
+    table.cell(t, 0, 13, "Only stride matrix honest.", text_color=dim, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 1, 13, "", bgcolor=bgc)
+    table.cell(t, 2, 13, "", bgcolor=bgc)
+    table.cell(t, 3, 13, "", bgcolor=bgc)
+    table.cell(t, 0, 14, "Gate rechecks every D bar.", text_color=dim, bgcolor=bgc, text_size=size.small)
+    table.cell(t, 1, 14, "", bgcolor=bgc)
+    table.cell(t, 2, 14, "", bgcolor=bgc)
+    table.cell(t, 3, 14, "", bgcolor=bgc)
+
+    // HOW TO USE -- on the chart, not in a manual nobody reads. This is the
+    // difference between a tool a strategy trader can use and a green light a
+    // beginner misreads as a buy signal.
+    if i_help
+        table.cell(t, 0, 15, "HOW TO USE", text_color=grn, bgcolor=hdr, text_size=size.small)
+        table.cell(t, 1, 15, "it filters YOUR setups", text_color=dim, bgcolor=hdr, text_size=size.small)
+        table.cell(t, 2, 15, "", bgcolor=hdr)
+        table.cell(t, 3, 15, "", bgcolor=hdr)
+
+        table.cell(t, 0, 16, "1.", text_color=dim, bgcolor=bgc, text_size=size.small)
+        table.cell(t, 1, 16, "ALLOWED = take your own setup as normal", text_color=wht, bgcolor=bgc, text_size=size.small)
+        table.cell(t, 2, 16, "", bgcolor=bgc)
+        table.cell(t, 3, 16, "", bgcolor=bgc)
+
+        table.cell(t, 0, 17, "2.", text_color=dim, bgcolor=bgc, text_size=size.small)
+        table.cell(t, 1, 17, "STAND ASIDE = skip it, no trade today", text_color=wht, bgcolor=bgc, text_size=size.small)
+        table.cell(t, 2, 17, "", bgcolor=bgc)
+        table.cell(t, 3, 17, "", bgcolor=bgc)
+
+        table.cell(t, 0, 18, "3.", text_color=dim, bgcolor=bgc, text_size=size.small)
+        table.cell(t, 1, 18, "Your entry, stop and target stay YOURS", text_color=wht, bgcolor=bgc, text_size=size.small)
+        table.cell(t, 2, 18, "", bgcolor=bgc)
+        table.cell(t, 3, 18, "", bgcolor=bgc)
+
+        table.cell(t, 0, 19, "NOT a signal tool.", text_color=color.new(#D4A017, 0), bgcolor=bgc, text_size=size.small)
+        table.cell(t, 1, 19, "It never tells you where to enter or exit.", text_color=color.new(#D4A017, 0), bgcolor=bgc, text_size=size.small)
+        table.cell(t, 2, 19, "", bgcolor=bgc)
+        table.cell(t, 3, 19, "", bgcolor=bgc)
+
+// Alerts on gate change. Worded so it can never be mistaken for an entry call.
+gateState = gateLong ? 1 : gateShort ? -1 : 0
+if gateState != gateState[1] and barstate.isconfirmed
+    alert("Markov 2.0 FILTER changed: " + gateLbl + " | " + syminfo.ticker +
+          " | signal " + str.tostring(math.round(dSig, 2)) +
+          " | this is permission for YOUR setups, not an entry signal",
+          alert.freq_once_per_bar_close)

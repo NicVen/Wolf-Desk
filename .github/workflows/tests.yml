@@ -16,3 +16,12 @@ jobs:
         with:
           python-version: "3.11"
       - run: python -m unittest discover -s tests -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Markov bot tests
+        working-directory: markov
+        run: |
+          npm ci --silent
+          node --check server.js
+          node --test

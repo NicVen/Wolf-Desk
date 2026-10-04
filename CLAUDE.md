@@ -66,6 +66,10 @@ information out of Claude has been painful. Fix that by how you communicate.
   Its EA results go on /proof labelled "demo account", never "live"/"real"
   (`proof_labels.py` enforces it server-side; `EA_ACCOUNT_TYPE=live` in
   push_proof.py only for a real-money account).
+- **Markov 18-pair bot** lives in `markov/` (Node). VPS service `markov-bot`
+  (port 8783, `/etc/markov-bot.env`, one-time `deploy/markov-setup.sh`); record
+  at `staalwag.com/markov/signals.json`. One post per idea, 6xATR stop, 2R,
+  12h time-stop, results posted. Tests: `cd markov && npm test`.
 - **licensing service** (port 8790, localhost-only, behind Caddy): products/prices
   in `licensing/config.py`; admin endpoints need `X-Admin-Token` (in
   `/etc/staalwag-licensing.env`).

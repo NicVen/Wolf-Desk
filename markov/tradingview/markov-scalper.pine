@@ -1,0 +1,500 @@
+//@version=6
+strategy("Markov Regime Scalper v3.0",
+     overlay            = true,
+     default_qty_type   = strategy.percent_of_equity,
+     default_qty_value  = 2,
+     commission_type    = strategy.commission.percent,
+     commission_value   = 0.04,
+     slippage           = 2,
+     pyramiding         = 0,
+     calc_on_every_tick = true,
+     max_bars_back      = 500)
+
+// ===================================================================
+// INPUTS
+// ===================================================================
+gM = "Markov Regime (Daily)"
+i_look   = input.int   (20,   "Lookback bars",         minval=5,  maxval=200,  group=gM)
+i_mThr   = input.float (0.5,  "Bull/Bear Threshold %", minval=0.1, maxval=5.0, step=0.1, group=gM)
+i_conv   = input.float (0.25, "Min Conviction",        minval=0.0, maxval=0.95, step=0.05, group=gM)
+i_minBar = input.int   (2,    "Min Days in Regime",    minval=1,  maxval=30,   group=gM)
+
+gE = "Entry"
+i_mode   = input.string("Refined", "Entry Mode", options=["Aggressive","Refined","Conservative"], group=gE,
+     tooltip="Aggressive = Regime + EMA trend only. Refined = + Stoch + candle. Conservative = all filters required.")
+i_emaF   = input.int   (8,    "Fast EMA",      group=gE, minval=3,  maxval=50)
+i_emaS   = input.int   (21,   "Slow EMA",      group=gE, minval=5,  maxval=200)
+i_stochK = input.int   (5,    "Stoch K",       group=gE, minval=3,  maxval=30)
+i_stochD = input.int   (3,    "Stoch D",       group=gE, minval=1,  maxval=10)
+i_stochS = input.int   (3,    "Stoch Smooth",  group=gE, minval=1,  maxval=10)
+i_stochOB= input.float (75,   "Stoch OB",      group=gE, minval=60, maxval=95)
+i_stochOS= input.float (25,   "Stoch OS",      group=gE, minval=5,  maxval=40)
+i_adxL   = input.int   (14,   "ADX Length",    group=gE)
+i_adxMin = input.float (18,   "ADX Minimum",   group=gE, minval=10, maxval=50)
+i_useVWAP= input.bool  (true, "VWAP Filter",   group=gE)
+i_useAtExp=input.bool  (false,"ATR Expansion", group=gE, tooltip="Only trade when current ATR > average ATR (expanding volatility)")
+i_useCndl= input.bool  (true, "Candle Confirm",group=gE, tooltip="Close must be in the direction of trade (close > open for longs)")
+
+gS = "Session Filter"
+i_useSession = input.bool  (false,"Filter by Session",  group=gS)
+i_sesStart   = input.int   (8,   "Start Hour (UTC)",   group=gS, minval=0, maxval=23)
+i_sesEnd     = input.int   (17,  "End Hour (UTC)",     group=gS, minval=0, maxval=23)
+
+gR = "Risk Management"
+i_atrL   = input.int   (14,  "ATR Length",     group=gR)
+i_slM    = input.float (1.0, "ATR x Stop",     group=gR, step=0.1, tooltip="Tighter for scalping. 1.0-1.5 recommended.")
+i_tp1M   = input.float (1.5, "ATR x TP1",      group=gR, step=0.1)
+i_tp2M   = input.float (2.5, "ATR x TP2",      group=gR, step=0.1)
+i_tp1pct = input.int   (50,  "% Exit at TP1",  group=gR, minval=25, maxval=75)
+i_moveBE = input.bool  (true,"Move SL to BE after TP1", group=gR)
+i_useTO  = input.bool  (true, "Bar Timeout",   group=gR)
+i_toBar  = input.int   (20,  "Exit After N Bars", group=gR, minval=5, maxval=100, tooltip="Close trade if no TP hit after this many bars. On 5M = 20 bars = 100 mins.")
+
+gD = "Direction"
+i_dir  = input.string("Long + Short", "Direction",   options=["Long Only","Short Only","Long + Short"], group=gD)
+i_side = input.string("Close",        "On Sideways", options=["Close","Hold"],                          group=gD)
+
+gUI = "Display"
+i_tbl    = input.bool(true,  "Info Panel",        group=gUI)
+i_lines  = input.bool(true,  "SL / TP Lines",     group=gUI)
+i_labels = input.bool(true,  "Signal Labels",     group=gUI)
+i_bg     = input.bool(true,  "Regime Background", group=gUI)
+i_showVW = input.bool(true,  "Show VWAP",         group=gUI)
+
+// ===================================================================
+// INDICATORS
+// ===================================================================
+atr      = ta.atr(i_atrL)
+atrAvg   = ta.sma(atr, 20)
+atrExp   = atr > atrAvg                          // ATR expanding = volatile
+
+emaFast  = ta.ema(close, i_emaF)
+emaSlow  = ta.ema(close, i_emaS)
+
+stochRaw = ta.stoch(close, high, low, i_stochK)
+stochK   = ta.sma(stochRaw, i_stochS)
+stochD   = ta.sma(stochK, i_stochD)
+
+[_dp,_dm, adx] = ta.dmi(i_adxL, i_adxL)
+[_ml,_sl, hist]= ta.macd(close, 12, 26, 9)
+
+vwap     = ta.vwap(hlc3)
+
+rsi      = ta.rsi(close, 14)                     // kept for display only
+volAvg   = ta.sma(volume, 20)
+volSpike = volume > volAvg * 1.2
+
+// Session filter
+_utcHour = hour(time, "UTC")
+inSession = not i_useSession or (_utcHour >= i_sesStart and _utcHour < i_sesEnd)
+
+// ===================================================================
+// MARKOV REGIME  (daily timeframe)
+// ===================================================================
+_thr = i_mThr / 100.0
+
+f_regime() =>
+    ret    = math.log(close / close[1])
+    avgRet = ta.sma(ret, i_look)
+    reg    = avgRet > _thr ? 1 : avgRet < -_thr ? -1 : 0
+    max_bars_back(reg, 120)
+
+    streak = 0
+    for i = 0 to 49
+        if reg[i] == reg[0]
+            streak += 1
+        else
+            break
+
+    float bb   = 0.5
+    float bSd  = 0.5
+    float bBr  = 0.5
+    float sdB  = 0.5
+    float sdSd = 0.5
+    float sdBr = 0.5
+    float brB  = 0.5
+    float brSd = 0.5
+    float brBr = 0.5
+
+    for i = 0 to 98
+        p = reg[i + 1]
+        c = reg[i]
+        if not na(p) and not na(c)
+            if p == 1
+                if c == 1
+                    bb += 1.0
+                else if c == 0
+                    bSd += 1.0
+                else
+                    bBr += 1.0
+            else if p == 0
+                if c == 1
+                    sdB += 1.0
+                else if c == 0
+                    sdSd += 1.0
+                else
+                    sdBr += 1.0
+            else
+                if c == 1
+                    brB += 1.0
+                else if c == 0
+                    brSd += 1.0
+                else
+                    brBr += 1.0
+
+    bTot  = bb   + bSd  + bBr
+    sdTot = sdB  + sdSd + sdBr
+    brTot = brB  + brSd + brBr
+
+    pBull   = reg ==  1 ? bb  / bTot  : reg == 0 ? sdB  / sdTot : brB  / brTot
+    pBear   = reg ==  1 ? bBr / bTot  : reg == 0 ? sdBr / sdTot : brBr / brTot
+    persist = reg ==  1 ? bb  / bTot  : reg == 0 ? sdSd / sdTot : brBr / brTot
+    conv    = pBull - pBear
+
+    [reg, streak, conv, persist, pBull, pBear]
+
+[dReg, dStreak, dConv, dPersist, dPBull, dPBear] = request.security(syminfo.tickerid, "D", f_regime(), lookahead=barmerge.lookahead_off)
+
+// ===================================================================
+// REGIME GATES
+// ===================================================================
+isBull   = dReg ==  1
+isBear   = dReg == -1
+isSide   = dReg ==  0
+convOK   = math.abs(dConv) >= i_conv
+streakOK = dStreak >= i_minBar
+bullOK   = isBull and convOK and streakOK
+bearOK   = isBear and convOK and streakOK
+
+// ===================================================================
+// ENTRY FILTERS  (tiered by mode)
+// ===================================================================
+canLong  = i_dir != "Short Only"
+canShort = i_dir != "Long Only"
+isFlat   = strategy.position_size == 0
+
+// Trend: fast/slow EMA alignment
+trendL = emaFast > emaSlow
+trendS = emaFast < emaSlow
+
+// Price above/below fast EMA
+priceOK_L = close > emaFast
+priceOK_S = close < emaFast
+
+// Stochastic: not overbought for longs, not oversold for shorts
+// Also require K rising (momentum in our direction)
+stochOK_L = stochK < i_stochOB and stochK > i_stochOS and stochK > stochK[1]
+stochOK_S = stochK > i_stochOS and stochK < i_stochOB and stochK < stochK[1]
+
+// VWAP alignment
+vwapOK_L  = not i_useVWAP or close > vwap
+vwapOK_S  = not i_useVWAP or close < vwap
+
+// Candle direction (momentum bar)
+candleOK_L = not i_useCndl or close > open
+candleOK_S = not i_useCndl or close < open
+
+// ADX
+adxOK = adx >= i_adxMin
+
+// ATR expansion
+atrOK = not i_useAtExp or atrExp
+
+// Session
+sesOK = inSession
+
+// === AGGRESSIVE: Regime + EMA trend + price side only ===
+aggL = bullOK and trendL and priceOK_L and sesOK
+aggS = bearOK and trendS and priceOK_S and sesOK
+
+// === REFINED: + Stoch + candle + VWAP ===
+refL = aggL and stochOK_L and candleOK_L and vwapOK_L and atrOK
+refS = aggS and stochOK_S and candleOK_S and vwapOK_S and atrOK
+
+// === CONSERVATIVE: + ADX ===
+conL = refL and adxOK
+conS = refS and adxOK
+
+longEntry  = canLong  and isFlat and (i_mode == "Aggressive" ? aggL : i_mode == "Refined" ? refL : conL)
+shortEntry = canShort and isFlat and (i_mode == "Aggressive" ? aggS : i_mode == "Refined" ? refS : conS)
+closeAll   = isSide and i_side == "Close" and not isFlat
+
+// ===================================================================
+// LEVELS
+// ===================================================================
+var float ep_  = na
+var float sl_  = na
+var float tp1_ = na
+var float tp2_ = na
+
+if longEntry
+    ep_  := close
+    sl_  := close - atr * i_slM
+    tp1_ := close + atr * i_tp1M
+    tp2_ := close + atr * i_tp2M
+
+if shortEntry
+    ep_  := close
+    sl_  := close + atr * i_slM
+    tp1_ := close - atr * i_tp1M
+    tp2_ := close - atr * i_tp2M
+
+if strategy.position_size == 0
+    ep_  := na
+    sl_  := na
+    tp1_ := na
+    tp2_ := na
+
+_rr = na(sl_) or na(tp2_) or na(ep_) ? 0.0 :
+      strategy.position_size > 0 ? (tp2_ - ep_) / math.max(ep_ - sl_, 0.0001) :
+      strategy.position_size < 0 ? (ep_ - tp2_) / math.max(sl_ - ep_, 0.0001) : 0.0
+
+// ===================================================================
+// PARTIAL EXIT + BREAK-EVEN TRACKING
+// ===================================================================
+var bool tp1HitL = false
+var bool tp1HitS = false
+var int  barsIn  = 0
+
+// Count bars in trade
+if strategy.position_size != 0
+    barsIn += 1
+else
+    barsIn := 0
+
+// Detect TP1 partial fill (position reduced but not closed)
+if strategy.position_size > 0 and strategy.position_size < strategy.position_size[1] and not na(ep_)
+    tp1HitL := true
+if strategy.position_size < 0 and strategy.position_size > strategy.position_size[1] and not na(ep_)
+    tp1HitS := true
+
+// Reset on flat / new entry
+if strategy.position_size == 0
+    tp1HitL := false
+    tp1HitS := false
+if longEntry
+    tp1HitL := false
+if shortEntry
+    tp1HitS := false
+
+// Dynamic stop: original → BE after TP1
+dynSL_L = (tp1HitL and i_moveBE) ? ep_ : sl_
+dynSL_S = (tp1HitS and i_moveBE) ? ep_ : sl_
+
+// ===================================================================
+// ALERT MESSAGES
+// ===================================================================
+_reg  = isBull ? "Bull" : isBear ? "Bear" : "Sideways"
+_cv   = str.tostring(math.round(dConv,    2))
+_ps   = str.tostring(math.round(dPersist, 2))
+_rs   = str.tostring(math.round(rsi,  1))
+_ax   = str.tostring(math.round(adx,  1))
+_px   = str.tostring(close)
+_lsl  = str.tostring(math.round_to_mintick(close - atr * i_slM))
+_ltp1 = str.tostring(math.round_to_mintick(close + atr * i_tp1M))
+_ltp2 = str.tostring(math.round_to_mintick(close + atr * i_tp2M))
+_ssl  = str.tostring(math.round_to_mintick(close + atr * i_slM))
+_stp1 = str.tostring(math.round_to_mintick(close - atr * i_tp1M))
+_stp2 = str.tostring(math.round_to_mintick(close - atr * i_tp2M))
+
+_lMsg = '{"sym":"' + syminfo.ticker + '","tf":"' + timeframe.period + '","dir":"BUY","price":' + _px + ',"sl":' + _lsl + ',"tp1":' + _ltp1 + ',"tp2":' + _ltp2 + ',"rsi":' + _rs + ',"adx":' + _ax + ',"regime":"' + _reg + '","conv":' + _cv + ',"persist":' + _ps + '}'
+_sMsg = '{"sym":"' + syminfo.ticker + '","tf":"' + timeframe.period + '","dir":"SELL","price":' + _px + ',"sl":' + _ssl + ',"tp1":' + _stp1 + ',"tp2":' + _stp2 + ',"rsi":' + _rs + ',"adx":' + _ax + ',"regime":"' + _reg + '","conv":' + _cv + ',"persist":' + _ps + '}'
+
+// ===================================================================
+// ORDERS
+// ===================================================================
+if longEntry
+    strategy.entry("Long",  strategy.long,  alert_message=_lMsg)
+if shortEntry
+    strategy.entry("Short", strategy.short, alert_message=_sMsg)
+
+// Partial exit: 50% at TP1, remainder with dynamic SL (→ BE after TP1) and TP2
+if strategy.position_size > 0
+    strategy.exit("L.TP1", "Long",  qty_percent=i_tp1pct, limit=tp1_, stop=sl_)
+    strategy.exit("L.TP2", "Long",  qty_percent=100,       limit=tp2_, stop=dynSL_L)
+
+if strategy.position_size < 0
+    strategy.exit("S.TP1", "Short", qty_percent=i_tp1pct, limit=tp1_, stop=sl_)
+    strategy.exit("S.TP2", "Short", qty_percent=100,       limit=tp2_, stop=dynSL_S)
+
+// Sideways close
+if closeAll
+    strategy.close_all(comment="Sideways")
+
+// Timeout close
+if i_useTO and barsIn >= i_toBar and strategy.position_size != 0
+    strategy.close_all(comment="Timeout")
+
+// ===================================================================
+// VISUALS — Background
+// ===================================================================
+bgcolor(i_bg and isBull ? color.new(color.green, 88) : i_bg and isBear ? color.new(color.red, 88) : na, title="Regime BG")
+
+// ===================================================================
+// VISUALS — Lines
+// ===================================================================
+plot(emaFast, "EMA Fast", color.new(color.yellow,  30), linewidth=1)
+plot(emaSlow, "EMA Slow", color.new(color.orange,  50), linewidth=1)
+plot(i_showVW ? vwap : na, "VWAP", color.new(color.aqua, 20), linewidth=2, style=plot.style_line)
+
+inPos = strategy.position_size != 0
+plot(i_lines and inPos ? sl_    : na, "Stop", color.new(color.red,    0), style=plot.style_linebr, linewidth=1)
+plot(i_lines and inPos ? tp1_   : na, "TP1",  color.new(color.lime,  20), style=plot.style_linebr, linewidth=1)
+plot(i_lines and inPos ? tp2_   : na, "TP2",  color.new(color.green,  0), style=plot.style_linebr, linewidth=2)
+plot(i_lines and inPos and (tp1HitL or tp1HitS) ? ep_ : na, "BE", color.new(color.yellow, 0), style=plot.style_linebr, linewidth=1)
+
+// ===================================================================
+// VISUALS — Signal arrows + labels
+// ===================================================================
+plotshape(longEntry,  "Long",  shape.triangleup,   location.belowbar, color.new(#3FDE7E, 0), size=size.normal)
+plotshape(shortEntry, "Short", shape.triangledown, location.abovebar, color.new(#C57F86, 0), size=size.normal)
+
+if i_labels and longEntry
+    label.new(bar_index, low - atr * 0.8,
+         "LONG  " + syminfo.ticker + "  [" + i_mode + "]\n" +
+         "Entry  " + str.tostring(math.round_to_mintick(close)) + "\n" +
+         "Stop   " + _lsl + "  (-" + str.tostring(math.round(atr * i_slM, 2)) + ")\n" +
+         "TP1    " + _ltp1 + "  (+" + str.tostring(math.round(atr * i_tp1M, 2)) + ")\n" +
+         "TP2    " + _ltp2 + "  (+" + str.tostring(math.round(atr * i_tp2M, 2)) + ")\n" +
+         "R:R    1:" + str.tostring(math.round(_rr, 1)) + "\n" +
+         "Stoch  " + str.tostring(math.round(stochK, 1)) + "  ADX " + str.tostring(math.round(adx, 1)) + "\n" +
+         "Regime " + _reg + "  Conv " + _cv,
+         color=color.new(#3FDE7E, 10), textcolor=color.white,
+         style=label.style_label_up, size=size.normal)
+
+if i_labels and shortEntry
+    label.new(bar_index, high + atr * 0.8,
+         "SHORT  " + syminfo.ticker + "  [" + i_mode + "]\n" +
+         "Entry  " + str.tostring(math.round_to_mintick(close)) + "\n" +
+         "Stop   " + _ssl + "  (+" + str.tostring(math.round(atr * i_slM, 2)) + ")\n" +
+         "TP1    " + _stp1 + "  (-" + str.tostring(math.round(atr * i_tp1M, 2)) + ")\n" +
+         "TP2    " + _stp2 + "  (-" + str.tostring(math.round(atr * i_tp2M, 2)) + ")\n" +
+         "R:R    1:" + str.tostring(math.round(_rr, 1)) + "\n" +
+         "Stoch  " + str.tostring(math.round(stochK, 1)) + "  ADX " + str.tostring(math.round(adx, 1)) + "\n" +
+         "Regime " + _reg + "  Conv " + _cv,
+         color=color.new(#C57F86, 10), textcolor=color.white,
+         style=label.style_label_down, size=size.normal)
+
+// ===================================================================
+// INFO PANEL
+// ===================================================================
+if i_tbl and barstate.islast
+    bg   = color.new(#0B0F0D,  5)
+    hdr  = color.new(#1A2620,  0)
+    dim  = color.new(#8A8F9A,  0)
+    wht  = color.white
+    grn  = color.new(#3FDE7E,  0)
+    red  = color.new(#C57F86,  0)
+    bull = color.new(#84BBA1,  0)
+    bear = color.new(#C57F86,  0)
+    side = color.new(#A4ABB7,  0)
+    ylw  = color.new(color.yellow, 0)
+
+    t = table.new(position.top_right, 2, 27,
+         bgcolor=bg, border_width=1, border_color=color.new(color.gray, 70),
+         frame_width=1, frame_color=color.new(#3FDE7E, 60))
+
+    // --- REGIME ---
+    table.cell(t, 0, 0, "REGIME",       text_color=grn,  bgcolor=hdr, text_size=size.small)
+    table.cell(t, 1, 0, "",             text_color=grn,  bgcolor=hdr, text_size=size.small)
+    regLbl = isBull ? "Bull  ^" : isBear ? "Bear  v" : "Sideways"
+    regClr = isBull ? bull : isBear ? bear : side
+    table.cell(t, 0, 1, "STATE",        text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 1, regLbl,         text_color=regClr, bgcolor=bg, text_size=size.small)
+    cVal = (dConv >= 0 ? "+" : "") + str.tostring(math.round(dConv, 2))
+    cClr = dConv > 0.3 ? bull : dConv < -0.3 ? bear : dim
+    table.cell(t, 0, 2, "CONVICTION",   text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 2, cVal,           text_color=cClr, bgcolor=bg,  text_size=size.small)
+    table.cell(t, 0, 3, "STREAK",       text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 3, str.tostring(dStreak) + " days", text_color=wht, bgcolor=bg, text_size=size.small)
+    table.cell(t, 0, 4, "PERSISTENCE",  text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 4, str.tostring(math.round(dPersist * 100, 0)) + "%", text_color=dPersist > 0.7 ? grn : wht, bgcolor=bg, text_size=size.small)
+    table.cell(t, 0, 5, "P(BULL)",      text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 5, str.tostring(math.round(dPBull * 100, 1)) + "%", text_color=bull, bgcolor=bg, text_size=size.small)
+    table.cell(t, 0, 6, "P(BEAR)",      text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 6, str.tostring(math.round(dPBear * 100, 1)) + "%", text_color=bear, bgcolor=bg, text_size=size.small)
+
+    // --- INDICATORS ---
+    table.cell(t, 0, 7, "INDICATORS",   text_color=grn,  bgcolor=hdr, text_size=size.small)
+    table.cell(t, 1, 7, "",             text_color=grn,  bgcolor=hdr, text_size=size.small)
+
+    stClr = stochK < i_stochOS ? grn : stochK > i_stochOB ? red : wht
+    stLbl = stochK < i_stochOS ? "OS " : stochK > i_stochOB ? "OB " : ""
+    table.cell(t, 0, 8, "STOCH K",      text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 8, str.tostring(math.round(stochK, 1)) + "  " + stLbl + (stochK > stochK[1] ? "^" : "v"), text_color=stClr, bgcolor=bg, text_size=size.small)
+
+    adxClr = adx >= i_adxMin ? grn : color.new(color.gray, 30)
+    table.cell(t, 0, 9, "ADX",          text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 9, str.tostring(math.round(adx, 1)) + (adx >= i_adxMin ? " OK" : " LOW"), text_color=adxClr, bgcolor=bg, text_size=size.small)
+
+    emaClr = emaFast > emaSlow ? bull : bear
+    emaLbl = emaFast > emaSlow ? "BULL CROSS" : "BEAR CROSS"
+    table.cell(t, 0, 10, "EMA TREND",   text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 10, emaLbl,        text_color=emaClr, bgcolor=bg, text_size=size.small)
+
+    vwapClr = close > vwap ? bull : bear
+    vwapLbl = close > vwap ? "ABOVE" : "BELOW"
+    table.cell(t, 0, 11, "VWAP",        text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 11, vwapLbl,       text_color=vwapClr, bgcolor=bg, text_size=size.small)
+
+    macdClr = hist > 0 ? bull : bear
+    table.cell(t, 0, 12, "MACD",        text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 12, hist > 0 ? "BULL" : "BEAR", text_color=macdClr, bgcolor=bg, text_size=size.small)
+
+    atrClr = atrExp ? grn : dim
+    table.cell(t, 0, 13, "VOLATILITY",  text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 13, atrExp ? "EXPANDING" : "NORMAL", text_color=atrClr, bgcolor=bg, text_size=size.small)
+
+    sesClr = inSession ? grn : red
+    table.cell(t, 0, 14, "SESSION",     text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 14, inSession ? "ACTIVE" : "CLOSED", text_color=sesClr, bgcolor=bg, text_size=size.small)
+
+    // --- SIGNAL ---
+    table.cell(t, 0, 15, "SIGNAL  [" + i_mode + "]", text_color=grn, bgcolor=hdr, text_size=size.small)
+    table.cell(t, 1, 15, "",            text_color=grn,  bgcolor=hdr, text_size=size.small)
+
+    sigLbl = strategy.position_size > 0 ? "LONG" : strategy.position_size < 0 ? "SHORT" : longEntry ? "ENTERING" : shortEntry ? "ENTERING" : "FLAT"
+    sigClr = strategy.position_size > 0 or longEntry ? bull : strategy.position_size < 0 or shortEntry ? bear : dim
+    table.cell(t, 0, 16, "POSITION",    text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 16, sigLbl,        text_color=sigClr, bgcolor=bg, text_size=size.small)
+
+    beStr  = (tp1HitL or tp1HitS) ? "YES - SL moved" : "NO"
+    beClr  = (tp1HitL or tp1HitS) ? grn : dim
+    table.cell(t, 0, 17, "TP1 HIT / BE",text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 17, beStr,          text_color=beClr, bgcolor=bg, text_size=size.small)
+
+    barStr = strategy.position_size != 0 ? str.tostring(barsIn) + " / " + str.tostring(i_toBar) : "-"
+    barClr = barsIn >= i_toBar * 0.8 ? ylw : dim
+    table.cell(t, 0, 18, "BAR COUNT",   text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 18, barStr,         text_color=barClr, bgcolor=bg, text_size=size.small)
+
+    epStr  = na(ep_)  ? "-" : str.tostring(math.round_to_mintick(ep_))
+    slStr  = na(sl_)  ? "-" : str.tostring(math.round_to_mintick(sl_))
+    tp1Str = na(tp1_) ? "-" : str.tostring(math.round_to_mintick(tp1_))
+    tp2Str = na(tp2_) ? "-" : str.tostring(math.round_to_mintick(tp2_))
+    rrStr  = _rr == 0.0 ? "-" : "1:" + str.tostring(math.round(_rr, 1))
+    table.cell(t, 0, 19, "ENTRY",       text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 19, epStr,          text_color=wht,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 0, 20, "STOP",        text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 20, slStr,          text_color=red,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 0, 21, "TP1  (" + str.tostring(i_tp1pct) + "%)", text_color=dim, bgcolor=bg, text_size=size.small)
+    table.cell(t, 1, 21, tp1Str,         text_color=bull, bgcolor=bg,  text_size=size.small)
+    table.cell(t, 0, 22, "TP2",         text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 22, tp2Str,         text_color=grn,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 0, 23, "R:R",         text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 23, rrStr,          text_color=_rr >= 1.5 ? grn : wht, bgcolor=bg, text_size=size.small)
+
+    // --- PERFORMANCE ---
+    table.cell(t, 0, 24, "PERFORMANCE", text_color=grn,  bgcolor=hdr, text_size=size.small)
+    table.cell(t, 1, 24, "",            text_color=grn,  bgcolor=hdr, text_size=size.small)
+    _wins   = strategy.wintrades
+    _loss   = strategy.losstrades
+    _tot    = _wins + _loss
+    _wr     = _tot > 0 ? math.round(_wins / _tot * 100, 0) : 0
+    _pf     = strategy.grossloss != 0 ? math.round(strategy.grossprofit / math.abs(strategy.grossloss), 2) : 0.0
+    _pnl    = strategy.netprofit
+    _pnlClr = _pnl >= 0 ? grn : red
+    table.cell(t, 0, 25, "NET P&L",     text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 25, (_pnl >= 0 ? "+" : "") + str.tostring(math.round(_pnl, 0)), text_color=_pnlClr, bgcolor=bg, text_size=size.small)
+    table.cell(t, 0, 26, "WIN / PF",    text_color=dim,  bgcolor=bg,  text_size=size.small)
+    table.cell(t, 1, 26, str.tostring(_wr) + "%  |  " + str.tostring(_pf) + "x", text_color=_wr >= 50 ? grn : wht, bgcolor=bg, text_size=size.small)

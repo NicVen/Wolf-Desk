@@ -1,0 +1,634 @@
+{
+  "generated": "2026-07-26T08:34:53.447Z",
+  "bestFixed": {
+    "label": "k=6 hold=24",
+    "n": 4258,
+    "wr": 51.5,
+    "pf": 1.22,
+    "sum": 200.4,
+    "avg": 0.0471,
+    "dd": 31.6,
+    "ret2dd": 6.35
+  },
+  "bestAdaptive": {
+    "label": "win3m pf",
+    "stats": {
+      "n": 4258,
+      "wr": 51.6,
+      "pf": 1.27,
+      "sum": 320.1,
+      "avg": 0.0752,
+      "dd": 50.2,
+      "ret2dd": 6.38
+    },
+    "picks": [
+      {
+        "month": "2025-03",
+        "k": 8,
+        "hold": 48,
+        "activePairs": "all",
+        "blockN": 326,
+        "blockSum": 2.7
+      },
+      {
+        "month": "2025-04",
+        "k": 8,
+        "hold": 48,
+        "activePairs": "all",
+        "blockN": 152,
+        "blockSum": -6.1
+      },
+      {
+        "month": "2025-05",
+        "k": 8,
+        "hold": 48,
+        "activePairs": "all",
+        "blockN": 321,
+        "blockSum": 34.4
+      },
+      {
+        "month": "2025-06",
+        "k": 6,
+        "hold": 48,
+        "activePairs": "all",
+        "blockN": 246,
+        "blockSum": 92.1
+      },
+      {
+        "month": "2025-07",
+        "k": 8,
+        "hold": 48,
+        "activePairs": "all",
+        "blockN": 357,
+        "blockSum": -0.6
+      },
+      {
+        "month": "2025-08",
+        "k": 8,
+        "hold": 48,
+        "activePairs": "all",
+        "blockN": 339,
+        "blockSum": 1.5
+      },
+      {
+        "month": "2025-09",
+        "k": 8,
+        "hold": 48,
+        "activePairs": "all",
+        "blockN": 233,
+        "blockSum": 30.9
+      },
+      {
+        "month": "2025-10",
+        "k": 3,
+        "hold": 48,
+        "activePairs": "all",
+        "blockN": 240,
+        "blockSum": 77.7
+      },
+      {
+        "month": "2025-11",
+        "k": 4,
+        "hold": 48,
+        "activePairs": "all",
+        "blockN": 226,
+        "blockSum": 58.6
+      },
+      {
+        "month": "2025-12",
+        "k": 4,
+        "hold": 48,
+        "activePairs": "all",
+        "blockN": 255,
+        "blockSum": 30.6
+      },
+      {
+        "month": "2026-01",
+        "k": 4,
+        "hold": 48,
+        "activePairs": "all",
+        "blockN": 169,
+        "blockSum": 37.3
+      },
+      {
+        "month": "2026-02",
+        "k": 8,
+        "hold": 48,
+        "activePairs": "all",
+        "blockN": 219,
+        "blockSum": -3.3
+      },
+      {
+        "month": "2026-03",
+        "k": 6,
+        "hold": 12,
+        "activePairs": "all",
+        "blockN": 182,
+        "blockSum": -0.3
+      },
+      {
+        "month": "2026-04",
+        "k": 8,
+        "hold": 6,
+        "activePairs": "all",
+        "blockN": 272,
+        "blockSum": -0.5
+      },
+      {
+        "month": "2026-05",
+        "k": 3,
+        "hold": 12,
+        "activePairs": "all",
+        "blockN": 247,
+        "blockSum": 6.4
+      },
+      {
+        "month": "2026-06",
+        "k": 2,
+        "hold": 24,
+        "activePairs": "all",
+        "blockN": 238,
+        "blockSum": -13.8
+      },
+      {
+        "month": "2026-07",
+        "k": 8,
+        "hold": 48,
+        "activePairs": "all",
+        "blockN": 236,
+        "blockSum": -27.5
+      }
+    ]
+  },
+  "allFixed": [
+    {
+      "label": "k=6 hold=24",
+      "n": 4258,
+      "wr": 51.5,
+      "pf": 1.22,
+      "sum": 200.4,
+      "avg": 0.0471,
+      "dd": 31.6,
+      "ret2dd": 6.35
+    },
+    {
+      "label": "k=4 hold=24",
+      "n": 4258,
+      "wr": 50.3,
+      "pf": 1.19,
+      "sum": 256.2,
+      "avg": 0.0602,
+      "dd": 46.8,
+      "ret2dd": 5.48
+    },
+    {
+      "label": "k=4 hold=12",
+      "n": 4258,
+      "wr": 50.4,
+      "pf": 1.16,
+      "sum": 154.6,
+      "avg": 0.0363,
+      "dd": 29.1,
+      "ret2dd": 5.32
+    },
+    {
+      "label": "k=6 hold=12",
+      "n": 4258,
+      "wr": 50.8,
+      "pf": 1.17,
+      "sum": 111.5,
+      "avg": 0.0262,
+      "dd": 21.4,
+      "ret2dd": 5.22
+    },
+    {
+      "label": "k=8 hold=24",
+      "n": 4258,
+      "wr": 51.6,
+      "pf": 1.19,
+      "sum": 135.5,
+      "avg": 0.0318,
+      "dd": 28.1,
+      "ret2dd": 4.83
+    },
+    {
+      "label": "k=8 hold=12",
+      "n": 4258,
+      "wr": 50.8,
+      "pf": 1.15,
+      "sum": 74.9,
+      "avg": 0.0176,
+      "dd": 16,
+      "ret2dd": 4.67
+    },
+    {
+      "label": "k=8 hold=48",
+      "n": 4258,
+      "wr": 53.6,
+      "pf": 1.26,
+      "sum": 248.1,
+      "avg": 0.0583,
+      "dd": 53.7,
+      "ret2dd": 4.62
+    },
+    {
+      "label": "k=4 hold=48",
+      "n": 4258,
+      "wr": 49,
+      "pf": 1.22,
+      "sum": 383.8,
+      "avg": 0.0901,
+      "dd": 90.5,
+      "ret2dd": 4.24
+    },
+    {
+      "label": "k=6 hold=48",
+      "n": 4258,
+      "wr": 52.4,
+      "pf": 1.23,
+      "sum": 291.6,
+      "avg": 0.0685,
+      "dd": 69.3,
+      "ret2dd": 4.21
+    },
+    {
+      "label": "k=3 hold=24",
+      "n": 4258,
+      "wr": 48,
+      "pf": 1.14,
+      "sum": 244.9,
+      "avg": 0.0575,
+      "dd": 68.2,
+      "ret2dd": 3.59
+    },
+    {
+      "label": "k=3 hold=12",
+      "n": 4258,
+      "wr": 49.3,
+      "pf": 1.12,
+      "sum": 152,
+      "avg": 0.0357,
+      "dd": 43.1,
+      "ret2dd": 3.53
+    },
+    {
+      "label": "k=3 hold=48",
+      "n": 4258,
+      "wr": 45.1,
+      "pf": 1.16,
+      "sum": 353.4,
+      "avg": 0.083,
+      "dd": 108.2,
+      "ret2dd": 3.26
+    },
+    {
+      "label": "k=2 hold=48",
+      "n": 4258,
+      "wr": 39.1,
+      "pf": 1.06,
+      "sum": 161.3,
+      "avg": 0.0379,
+      "dd": 106.3,
+      "ret2dd": 1.52
+    },
+    {
+      "label": "k=2 hold=24",
+      "n": 4258,
+      "wr": 42.7,
+      "pf": 1.06,
+      "sum": 135.2,
+      "avg": 0.0318,
+      "dd": 102.3,
+      "ret2dd": 1.32
+    },
+    {
+      "label": "k=2 hold=12",
+      "n": 4258,
+      "wr": 46.1,
+      "pf": 1.04,
+      "sum": 67.8,
+      "avg": 0.0159,
+      "dd": 67.6,
+      "ret2dd": 1
+    },
+    {
+      "label": "k=4 hold=6",
+      "n": 4258,
+      "wr": 48.3,
+      "pf": 1.04,
+      "sum": 25.1,
+      "avg": 0.0059,
+      "dd": 27.6,
+      "ret2dd": 0.91
+    },
+    {
+      "label": "k=6 hold=6",
+      "n": 4258,
+      "wr": 48.4,
+      "pf": 1.04,
+      "sum": 18,
+      "avg": 0.0042,
+      "dd": 19.9,
+      "ret2dd": 0.9
+    },
+    {
+      "label": "k=8 hold=6",
+      "n": 4258,
+      "wr": 48.4,
+      "pf": 1.04,
+      "sum": 12.7,
+      "avg": 0.003,
+      "dd": 15.1,
+      "ret2dd": 0.84
+    },
+    {
+      "label": "k=3 hold=6",
+      "n": 4258,
+      "wr": 47.8,
+      "pf": 1.01,
+      "sum": 10.7,
+      "avg": 0.0025,
+      "dd": 38.3,
+      "ret2dd": 0.28
+    },
+    {
+      "label": "k=2 hold=6",
+      "n": 4258,
+      "wr": 46.5,
+      "pf": 0.98,
+      "sum": -22.2,
+      "avg": -0.0052,
+      "dd": 70.7,
+      "ret2dd": -0.31
+    },
+    {
+      "label": "k=3 hold=3",
+      "n": 4258,
+      "wr": 45.7,
+      "pf": 0.88,
+      "sum": -86,
+      "avg": -0.0202,
+      "dd": 93.1,
+      "ret2dd": -0.92
+    },
+    {
+      "label": "k=4 hold=3",
+      "n": 4258,
+      "wr": 45.9,
+      "pf": 0.89,
+      "sum": -59.4,
+      "avg": -0.0139,
+      "dd": 64.3,
+      "ret2dd": -0.92
+    },
+    {
+      "label": "k=2 hold=3",
+      "n": 4258,
+      "wr": 45.3,
+      "pf": 0.87,
+      "sum": -130.5,
+      "avg": -0.0306,
+      "dd": 138.6,
+      "ret2dd": -0.94
+    },
+    {
+      "label": "k=6 hold=3",
+      "n": 4258,
+      "wr": 45.9,
+      "pf": 0.88,
+      "sum": -42.5,
+      "avg": -0.01,
+      "dd": 45.4,
+      "ret2dd": -0.94
+    },
+    {
+      "label": "k=8 hold=3",
+      "n": 4258,
+      "wr": 45.9,
+      "pf": 0.88,
+      "sum": -33.3,
+      "avg": -0.0078,
+      "dd": 35.2,
+      "ret2dd": -0.95
+    }
+  ],
+  "allAdaptive": [
+    {
+      "label": "win3m pf",
+      "stats": {
+        "n": 4258,
+        "wr": 51.6,
+        "pf": 1.27,
+        "sum": 320.1,
+        "avg": 0.0752,
+        "dd": 50.2,
+        "ret2dd": 6.38
+      }
+    },
+    {
+      "label": "win3m pf +gate",
+      "stats": {
+        "n": 2972,
+        "wr": 52.3,
+        "pf": 1.32,
+        "sum": 268.5,
+        "avg": 0.0903,
+        "dd": 47.6,
+        "ret2dd": 5.64
+      }
+    },
+    {
+      "label": "win12m pf +gate",
+      "stats": {
+        "n": 3354,
+        "wr": 53.3,
+        "pf": 1.26,
+        "sum": 205.9,
+        "avg": 0.0614,
+        "dd": 46.5,
+        "ret2dd": 4.43
+      }
+    },
+    {
+      "label": "win12m pf",
+      "stats": {
+        "n": 4258,
+        "wr": 53.1,
+        "pf": 1.24,
+        "sum": 237.3,
+        "avg": 0.0557,
+        "dd": 53.7,
+        "ret2dd": 4.42
+      }
+    },
+    {
+      "label": "win3m ret2dd",
+      "stats": {
+        "n": 4258,
+        "wr": 49.7,
+        "pf": 1.2,
+        "sum": 282.8,
+        "avg": 0.0664,
+        "dd": 76.3,
+        "ret2dd": 3.71
+      }
+    },
+    {
+      "label": "win3m ret2dd +gate",
+      "stats": {
+        "n": 3125,
+        "wr": 50.5,
+        "pf": 1.22,
+        "sum": 237.6,
+        "avg": 0.076,
+        "dd": 64.9,
+        "ret2dd": 3.66
+      }
+    },
+    {
+      "label": "win6m sum +gate",
+      "stats": {
+        "n": 3117,
+        "wr": 47.5,
+        "pf": 1.19,
+        "sum": 280,
+        "avg": 0.0898,
+        "dd": 84,
+        "ret2dd": 3.33
+      }
+    },
+    {
+      "label": "win12m sum +gate",
+      "stats": {
+        "n": 3095,
+        "wr": 46.1,
+        "pf": 1.21,
+        "sum": 307.7,
+        "avg": 0.0994,
+        "dd": 93.3,
+        "ret2dd": 3.3
+      }
+    },
+    {
+      "label": "win6m pf",
+      "stats": {
+        "n": 4258,
+        "wr": 51.1,
+        "pf": 1.24,
+        "sum": 268.9,
+        "avg": 0.0631,
+        "dd": 90.5,
+        "ret2dd": 2.97
+      }
+    },
+    {
+      "label": "win3m sum",
+      "stats": {
+        "n": 4258,
+        "wr": 48.1,
+        "pf": 1.17,
+        "sum": 320.6,
+        "avg": 0.0753,
+        "dd": 109.9,
+        "ret2dd": 2.92
+      }
+    },
+    {
+      "label": "win6m pf +gate",
+      "stats": {
+        "n": 3247,
+        "wr": 51.1,
+        "pf": 1.23,
+        "sum": 209.9,
+        "avg": 0.0646,
+        "dd": 72,
+        "ret2dd": 2.92
+      }
+    },
+    {
+      "label": "win6m ret2dd +gate",
+      "stats": {
+        "n": 3248,
+        "wr": 49.9,
+        "pf": 1.23,
+        "sum": 240,
+        "avg": 0.0739,
+        "dd": 87.7,
+        "ret2dd": 2.74
+      }
+    },
+    {
+      "label": "win6m ret2dd",
+      "stats": {
+        "n": 4258,
+        "wr": 49.5,
+        "pf": 1.2,
+        "sum": 263.3,
+        "avg": 0.0618,
+        "dd": 99.8,
+        "ret2dd": 2.64
+      }
+    },
+    {
+      "label": "win12m sum",
+      "stats": {
+        "n": 4258,
+        "wr": 44.7,
+        "pf": 1.13,
+        "sum": 285.2,
+        "avg": 0.067,
+        "dd": 113.7,
+        "ret2dd": 2.51
+      }
+    },
+    {
+      "label": "win3m sum +gate",
+      "stats": {
+        "n": 3017,
+        "wr": 48.2,
+        "pf": 1.19,
+        "sum": 256.8,
+        "avg": 0.0851,
+        "dd": 105.8,
+        "ret2dd": 2.43
+      }
+    },
+    {
+      "label": "win6m sum",
+      "stats": {
+        "n": 4258,
+        "wr": 45.7,
+        "pf": 1.1,
+        "sum": 204.9,
+        "avg": 0.0481,
+        "dd": 141.4,
+        "ret2dd": 1.45
+      }
+    },
+    {
+      "label": "win12m ret2dd",
+      "stats": {
+        "n": 4258,
+        "wr": 49.8,
+        "pf": 1.07,
+        "sum": 83,
+        "avg": 0.0195,
+        "dd": 79.7,
+        "ret2dd": 1.04
+      }
+    },
+    {
+      "label": "win12m ret2dd +gate",
+      "stats": {
+        "n": 3342,
+        "wr": 50.1,
+        "pf": 1.08,
+        "sum": 72,
+        "avg": 0.0215,
+        "dd": 76.6,
+        "ret2dd": 0.94
+      }
+    }
+  ],
+  "verdict": "ADAPTIVE WINS on return/drawdown."
+}
