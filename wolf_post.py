@@ -137,8 +137,8 @@ def compose(brand, sections, vip, trackkey="site"):
         L.append(f"👉 <a href=\"{vip}\">Join</a>")
     else:
         # No VIP yet: draw with transparency, not a promise we can't back
-        L.append("We post our read every day and log every call publicly —")
-        L.append("<b>follow to watch the track record build in the open.</b>")
+        L.append("We post our read every day. Every desk's results, wins and")
+        L.append("<b>losses, are on our public track record.</b>")
     # tracked CTA -> counts clicks via the WOLF server's /l endpoint
     L.append(f'📈 <a href="{WOLF_URL}/l?c={trackkey}">Open the live board →</a>')
     L.append("")

@@ -42,17 +42,17 @@ STATUSES = ("prospect", "contacted", "agreed", "posted", "dead")
 
 COPY = {
   "gold": ["🐺 STAALWAG — daily gold & indices intel. Scored BUY/SELL reads "
-           "with full case files, every call logged in the open. Free channel:",
+           "with full case files and a public track record. Free channel:",
            "Gold traders: one desk, one clear daily read — trend, Markov "
            "regime, catalyst, verdict. Track record builds publicly. 🐺 Free:",
            "XAUUSD moving and you want a second opinion with the reasoning "
-           "shown? STAALWAG posts a scored gold read every day, logged live. 🐺 Free:"],
+           "shown? STAALWAG posts a scored gold read every day, reasoning shown. 🐺 Free:"],
   "fx":   ["🐺 STAALWAG · VELDRIN FX desk — majors & JPY crosses read daily: "
-           "score, regime, case file. Every call logged, no cherry-picking. Free:",
+           "score, regime, case file. Wins and losses on a public record. Free:",
            "Your FX second opinion: daily BUY/SELL reads with the full "
-           "reasoning, not just signals. 🐺 Watch the record build live. Free:",
-           "Tired of signal channels that hide their losses? STAALWAG logs "
-           "every FX call in the open — scored, explained, daily. 🐺 Free:"],
+           "reasoning, not just signals. 🐺 Public track record. Free:",
+           "Tired of signal channels that hide their losses? STAALWAG "
+           "publishes its losses too — scored, explained, daily. 🐺 Free:"],
   "all":  ["🐺 STAALWAG — gold, FX, indices & stocks. Daily intel reads, "
            "public track record, full case files. Free:",
            "One desk for the whole tape: daily scored reads on gold, FX, "

@@ -61,7 +61,11 @@ def _this_week():
 
 
 def week_stats(outcomes):
-    """(n, wins, losses, net_pips) for outcomes closed in the current ISO week."""
+    """(n, wins, losses, net_pips) for outcomes closed in the current ISO week.
+
+    Only real pip values are summed. An outcome without `pips` still counts as
+    a win/loss but adds nothing to the pip total: adding its USD P&L here would
+    publish dollars as pips."""
     wk = _this_week()
     n = w = l = 0
     pips = 0.0
@@ -69,7 +73,8 @@ def week_stats(outcomes):
         if _iso_week(o.get("ts")) != wk:
             continue
         n += 1
-        pips += float(o.get("pips") if o.get("pips") is not None else (o.get("pnl_usd") or 0) or 0)
+        if o.get("pips") is not None:
+            pips += float(o["pips"])
         res = (o.get("result") or "").upper()
         if res == "WIN":
             w += 1
@@ -146,7 +151,7 @@ def compose_progress(brand, trackkey):
     today = datetime.datetime.utcnow().strftime("%d %b %Y")
     L = [W.FIRM, brand, W.BY, W.TAGLINE, "━━━━━━━━━━━━━━",
          f"📊 <b>WEEKLY PROGRESS</b> · {today}", "",
-         "<i>How the week is tracking so far — every call logged in the open.</i>", ""]
+         "<i>How the week is tracking so far — every closed signal counted, wins and losses.</i>", ""]
     # firm-wide pips this week across the pip desks
     fn = fw = fl = 0
     fp = 0.0
@@ -175,7 +180,7 @@ def _finish(L, vip, trackkey):
         L.append("Full case files + exact levels + management → <b>VIP</b>.")
         L.append(f'👉 <a href="{vip}">Join</a>')
     else:
-        L.append("We log every call publicly — <b>follow the record build in the open.</b>")
+        L.append("Wins and losses for every desk → <b>our public track record.</b>")
     L.append(f'📈 <a href="{W.WOLF_URL}/l?c={trackkey}">Open the live board →</a>')
     L.append("")
     L.append("━━━━━━━━━━━━━━")

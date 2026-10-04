@@ -126,11 +126,11 @@ def ping_admins(text):
 AD_COPY = {
     "gold": ("🐺 <b>THE WOLF — Gold &amp; Commodities Intel</b>\n\n"
              "Daily BUY/SELL reads with scores, Markov market regime and full "
-             "case files — and every call logged <b>publicly</b>. Watch the "
-             "track record build in the open.\n\n🥇 Free daily gold reads:"),
+             "case files — with every desk's wins and losses on a "
+             "<b>public</b> track record.\n\n🥇 Free daily gold reads:"),
     "fx":   ("🐺 <b>THE WOLF — FX Intel Desk</b>\n\n"
              "Daily FX reads across majors &amp; JPY crosses — scores, regime, "
-             "case files. Every call logged <b>publicly</b>, no cherry-picking.\n\n"
+             "case files. Wins and losses on a <b>public</b> track record.\n\n"
              "💱 Free daily FX reads:"),
     "all":  ("🐺 <b>THE WOLF — Intraday Intel Desk</b>\n\n"
              "Gold, FX, indices &amp; stocks — daily BUY/SELL reads with scores "
