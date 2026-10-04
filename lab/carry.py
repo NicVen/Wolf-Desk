@@ -7,7 +7,7 @@ collect the difference every day. Rebalanced once a month.
 
 Honest costs: spread on every position every month (no netting), plus a broker
 swap markup of 1% a year taken off the interest on BOTH sides. Interest rates
-are the OECD 3-month interbank rates from FRED (free, no key); a month's rate
+are central-bank policy rates from the BIS (free, no key; FRED as backup); a month's rate
 is only used from the next month on. Pass bar (monthly returns): profit factor
 >= 1.3 in both halves, at least 60 months, and better than picking currencies
 at random (luck).
@@ -42,14 +42,41 @@ SWAP_MARKUP = 1.0      # % a year the broker keeps on each side
 LEGS = 3               # long top 3, short bottom 3
 TREND_DAYS = 63        # about 3 months
 LUCK_RUNS = 20
+AREA = {USD_RATE: "US", "IR3TIB01EZM156N": "XM", "IR3TIB01GBM156N": "GB",
+        "IR3TIB01JPM156N": "JP", "IR3TIB01AUM156N": "AU", "IR3TIB01NZM156N": "NZ",
+        "IR3TIB01CAM156N": "CA", "IR3TIB01CHM156N": "CH", "IR3TIB01NOM156N": "NO",
+        "IR3TIB01SEM156N": "SE", "IR3TIB01MXM156N": "MX", "IR3TIB01ZAM156N": "ZA"}
+
+
+BIS = ("https://stats.bis.org/api/v1/data/WS_CBPOL/M.{area}/all?format=csv",
+       "https://stats.bis.org/api/v2/data/dataflow/BIS/WS_CBPOL/1.0/M.{area}?format=csv")
+
+
+def _csv(url):
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    return urllib.request.urlopen(req, timeout=45).read().decode()
 
 
 def fred(sid):
-    """{(year, month): rate %} for one FRED series."""
-    req = urllib.request.Request(FRED.format(sid=sid), headers={"User-Agent": "Mozilla/5.0"})
-    text = urllib.request.urlopen(req, timeout=30).read().decode()
+    """{(year, month): rate %}. Central-bank policy rates from the BIS (free, no
+    key) first, then the OECD 3-month rate from FRED if the BIS is down."""
+    area = AREA[sid]
+    for url in BIS:
+        try:
+            rows = list(csv.DictReader(io.StringIO(_csv(url.format(area=area)))))
+            out = {}
+            for r in rows:
+                try:
+                    d, v = r["TIME_PERIOD"], float(r["OBS_VALUE"])
+                except (KeyError, ValueError, TypeError):
+                    continue
+                out[(int(d[:4]), int(d[5:7]))] = v
+            if out:
+                return out
+        except Exception as e:
+            print(f"(BIS {area}: {e})")
     out = {}
-    for row in list(csv.reader(io.StringIO(text)))[1:]:
+    for row in list(csv.reader(io.StringIO(_csv(FRED.format(sid=sid)))))[1:]:
         try:
             d, v = row[0], float(row[1])
         except (IndexError, ValueError):
