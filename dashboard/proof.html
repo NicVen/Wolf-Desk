@@ -121,6 +121,7 @@ function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){retur
 function provBadge(p){
   p=(p||"").toLowerCase();
   if(p==="live")     return '<span class="badge b-live">live</span>';
+  if(p==="demo")     return '<span class="badge b-back" title="Results from a demo trading account, not real money">demo account</span>';
   if(p==="backtest") return '<span class="badge b-back">backtest</span>';
   if(p==="shadow")   return '<span class="badge b-shadow">shadow</span>';
   return "";

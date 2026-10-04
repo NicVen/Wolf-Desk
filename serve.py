@@ -40,6 +40,7 @@ sys.path.insert(0, HERE)
 import run                      # noqa
 import watchdog
 import atomicio
+import proof_labels
 from scout.news import headlines
 
 PORT        = int(os.environ.get("PORT", "8777"))
@@ -486,6 +487,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 if not isinstance(data, dict):
                     raise ValueError("proof payload must be a JSON object")
                 data.setdefault("generated", time.strftime("%Y-%m-%dT%H:%M", time.gmtime()))
+                proof_labels.label_demo(data)
                 atomicio.write_json(os.path.join("data", "proof.json"), data)
                 self._send(200, json.dumps({"ok": True}))
             except Exception as e:
@@ -607,8 +609,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, _read(os.path.join("dashboard", "proof.html")),
                        "text/html; charset=utf-8"); return
         if path == "/proof.json":
-            self._send(200, _read(os.path.join("data", "proof.json"), b"{}"),
-                       "application/json"); return
+            # Relabel on read too, so a record pushed before the demo labels
+            # existed is still shown honestly.
+            try:
+                data = json.loads(_read(os.path.join("data", "proof.json"), b"{}") or b"{}")
+                body = json.dumps(proof_labels.label_demo(data))
+            except Exception:
+                body = _read(os.path.join("data", "proof.json"), b"{}")
+            self._send(200, body, "application/json"); return
 
         # Tracked link: count the click, then redirect to the real destination.
         if path == "/l":

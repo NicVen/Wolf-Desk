@@ -62,6 +62,10 @@ information out of Claude has been painful. Fix that by how you communicate.
   them green: `python -m unittest discover -s tests`.
 - **serve.py** (port 8777) host-routes: `staalwag.com`→site, `wolf.*`→WOLF desk,
   `app.*`→the app; also `/store` (storefront), `/proof` (track record).
+- **Track record honesty:** MT5 account 109223212 is a MetaQuotes **demo** account.
+  Its EA results go on /proof labelled "demo account", never "live"/"real"
+  (`proof_labels.py` enforces it server-side; `EA_ACCOUNT_TYPE=live` in
+  push_proof.py only for a real-money account).
 - **licensing service** (port 8790, localhost-only, behind Caddy): products/prices
   in `licensing/config.py`; admin endpoints need `X-Admin-Token` (in
   `/etc/staalwag-licensing.env`).

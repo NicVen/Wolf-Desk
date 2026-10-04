@@ -13,6 +13,9 @@ Environment (set once with `setx`, or edit the defaults below):
   WOLF_PASS         your admin key (same one the WOLF desk uses)   [required]
   HQ_DIR            folder holding the *_view.json (default: this script's dir)
   GOLD_PROVENANCE   how to label a featured Gold EA number: live | backtest
+  EA_ACCOUNT_TYPE   demo | live -- what the MT5 account in ea_results.json is
+                    (default demo: 109223212 is a MetaQuotes-Demo account).
+                    Set to live ONLY for a real-money account.
                     (only used if you opt to feature it; off by default)
 
 Run:  python push_proof.py
@@ -165,22 +168,24 @@ def build_snapshot():
 
     desks = []
 
-    # 1) REAL EA fills, per product -- the actual executed money record.
+    # 1) EA fills, per product. Labelled demo unless the account is real money.
     acct, win = ea.get("account"), ea.get("window_days")
+    ea_prov = "live" if os.environ.get("EA_ACCOUNT_TYPE", "demo").lower() == "live" else "demo"
+    fills = "real EA fills" if ea_prov == "live" else "EA fills on a demo account"
     for p in (ea.get("products") or []):
         n, wr, pf, net = _stats(p.get("outcomes") or [])
         if n == 0:
             desks.append({"name": p.get("product"), "status": "parked",
-                          "provenance": "live", "trades": 0, "win_rate": None,
+                          "provenance": ea_prov, "trades": 0, "win_rate": None,
                           "pf": None, "net_usd": 0,
-                          "note": "live EA — no fills in the window"})
+                          "note": "%s EA — no fills in the window, account %s" % (ea_prov, acct)})
             continue
         proven = net > 0 and pf and pf >= 1.3 and n >= 30
         desks.append({
             "name": p.get("product"), "status": "proven" if proven else "proving",
-            "provenance": "live", "trades": n, "win_rate": wr, "pf": pf,
+            "provenance": ea_prov, "trades": n, "win_rate": wr, "pf": pf,
             "net_usd": net,
-            "note": "real EA fills — account %s, last %sd" % (acct, win),
+            "note": "%s — account %s, last %sd" % (fills, acct, win),
         })
 
     # 2) Banked dispatched signals (the Telegram desks), scored on real price.
@@ -229,14 +234,16 @@ def build_snapshot():
     # Proven first, then by biggest net.
     desks.sort(key=lambda x: (x["status"] != "proven", -((x["net_usd"] or 0))))
 
-    # Headline: the strongest genuinely-proven record (real fills win over signals).
+    # Headline: the strongest genuinely-proven record (EA fills win over signals).
     headline = None
     proven_rows = [d for d in desks if d["status"] == "proven"]
     if proven_rows:
         h = proven_rows[0]
         headline = {"name": h["name"], "provenance": h["provenance"], "pf": h["pf"],
                     "net_usd": h["net_usd"], "trades": h["trades"],
-                    "win_rate": h["win_rate"], "note": "the anchor — real executed record"}
+                    "win_rate": h["win_rate"],
+                    "note": ("the anchor — demo forward-test (EA fills on a demo account)"
+                             if h["provenance"] == "demo" else "the anchor — real executed record")}
 
     # Research desk (shadow -- scored, never traded).
     ro = research.get("overall") or {}

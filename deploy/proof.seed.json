@@ -18,23 +18,23 @@
  ],
  "headline": {
   "name": "STAALWAG Gold",
-  "provenance": "live",
+  "provenance": "demo",
   "pf": 4.34,
   "net_usd": 3839.92,
   "trades": 192,
   "win_rate": 55.2,
-  "note": "the anchor \u2014 real executed record"
+  "note": "the anchor \u2014 demo forward-test (EA fills on a demo account)"
  },
  "desks": [
   {
    "name": "STAALWAG Gold",
    "status": "proven",
-   "provenance": "live",
+   "provenance": "demo",
    "trades": 192,
    "win_rate": 55.2,
    "pf": 4.34,
    "net_usd": 3839.92,
-   "note": "real EA fills \u2014 account 109223212, last 180d"
+   "note": "EA fills on a demo account \u2014 account 109223212, last 180d"
   },
   {
    "name": "STAALWAG Gold \u2014 signals",
@@ -49,12 +49,12 @@
   {
    "name": "STAALWAG Crypto",
    "status": "parked",
-   "provenance": "live",
+   "provenance": "demo",
    "trades": 0,
    "win_rate": null,
    "pf": null,
    "net_usd": 0,
-   "note": "live EA \u2014 no fills in the window"
+   "note": "demo EA \u2014 no fills in the window"
   },
   {
    "name": "Markov signal bot (raw scanner)",
@@ -89,42 +89,42 @@
   {
    "name": "JAGTER bridge (py)",
    "status": "proving",
-   "provenance": "live",
+   "provenance": "demo",
    "trades": 22,
    "win_rate": 31.8,
    "pf": 0.68,
    "net_usd": -30.49,
-   "note": "real EA fills \u2014 account 109223212, last 180d"
+   "note": "EA fills on a demo account \u2014 account 109223212, last 180d"
   },
   {
    "name": "STAALWAG FX",
    "status": "proving",
-   "provenance": "live",
+   "provenance": "demo",
    "trades": 70,
    "win_rate": 50.0,
    "pf": 0.62,
    "net_usd": -41.51,
-   "note": "real EA fills \u2014 account 109223212, last 180d"
+   "note": "EA fills on a demo account \u2014 account 109223212, last 180d"
   },
   {
    "name": "STAALWAG PROP",
    "status": "proving",
-   "provenance": "live",
+   "provenance": "demo",
    "trades": 156,
    "win_rate": 66.7,
    "pf": 0.74,
    "net_usd": -199.17,
-   "note": "real EA fills \u2014 account 109223212, last 180d"
+   "note": "EA fills on a demo account \u2014 account 109223212, last 180d"
   },
   {
    "name": "STAALWAG SNYPER",
    "status": "proving",
-   "provenance": "live",
+   "provenance": "demo",
    "trades": 194,
    "win_rate": 43.8,
    "pf": 0.73,
    "net_usd": -270.31,
-   "note": "real EA fills \u2014 account 109223212, last 180d"
+   "note": "EA fills on a demo account \u2014 account 109223212, last 180d"
   }
  ],
  "research": {

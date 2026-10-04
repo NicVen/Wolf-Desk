@@ -248,15 +248,15 @@
   fetch("/proof.json").then(function(r){ return r.json(); }).then(function(d){
     var h=d&&d.headline;
     if(!h){ empty(); return; }
-    var live=(d.desks||[]).filter(function(x){ return x.provenance==="live"; }).length;
-    if(nameEl) nameEl.textContent=h.name;
+    var all=(d.desks||[]).length;
+    if(nameEl) nameEl.textContent=h.name+(h.provenance==="demo"?" · demo account":"");
     if(pnlEl&&typeof h.net_usd==="number"){ pnlEl.textContent=money(h.net_usd); pnlEl.style.color=h.net_usd>=0?"#3ecf8e":"#ff5b5b"; }
     if(typeof h.win_rate==="number"){
       if(dialEl) dialEl.textContent=Math.round(h.win_rate)+"%";
       if(arcEl) arcEl.setAttribute("stroke-dasharray", h.win_rate.toFixed(1)+" 100");
     }
     if(metaEl) metaEl.textContent=(h.trades||0)+" trades · profit factor "+(h.pf==null?"—":h.pf)+
-      " · "+live+" live desks on the record";
+      " · "+all+" desks on the record";
   }).catch(empty);
 })();
 </script>
