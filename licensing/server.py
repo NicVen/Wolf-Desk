@@ -25,7 +25,7 @@ import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from . import cardpay, config, moderation, nowpayments, notify, paypal, quiz, store, tokens
+from . import backup, cardpay, config, moderation, nowpayments, notify, paypal, quiz, store, tokens
 
 
 def _today():
@@ -454,6 +454,10 @@ def sweeper():
             run_digests()
         except Exception as e:  # noqa: BLE001
             notify.admin("sweeper error: %s" % e)
+        try:
+            backup.maybe_daily()      # own try: a sweeper bug must not stop backups
+        except Exception as e:  # noqa: BLE001
+            notify.admin("backup error: %s" % e)
         time.sleep(60)
 
 

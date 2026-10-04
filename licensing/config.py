@@ -88,6 +88,10 @@ HQ_UNITS = os.environ.get("HQ_UNITS", "caddy wolf-desk staalwag-licensing staalw
 # --- notifications (optional) ---
 LICENSE_BOT_TOKEN = os.environ.get("LICENSE_BOT_TOKEN", "")  # Telegram bot for client notices
 LICENSE_ADMIN_CHAT = os.environ.get("LICENSE_ADMIN_CHAT", "")  # your own chat id for copies
+# Nightly off-server backup of licenses.db, sent as a file by the licensing bot
+# (licensing/backup.py). Defaults to the owner's admin chat. Hour is UTC.
+BACKUP_CHAT = os.environ.get("BACKUP_CHAT", "") or LICENSE_ADMIN_CHAT
+BACKUP_HOUR_UTC = _int("BACKUP_HOUR_UTC", 2)
 UPDATES_CHAT = os.environ.get("UPDATES_CHAT", "")  # private "STAALWAG Updates" channel (deploy/updates-channel-setup.sh)
 UPDATES_BOT_TOKEN = os.environ.get("UPDATES_BOT_TOKEN", "")  # its own bot, separate from signals + licensing
 # Read/post token for the automated Monday build (GET /digest, POST /ready). Can

@@ -65,6 +65,8 @@ information out of Claude has been painful. Fix that by how you communicate.
 - **licensing service** (port 8790, localhost-only, behind Caddy): products/prices
   in `licensing/config.py`; admin endpoints need `X-Admin-Token` (in
   `/etc/staalwag-licensing.env`).
+  Nightly backup: the licensing bot sends `licenses-<date>.db.gz` to the admin
+  Telegram chat (licensing/backup.py, restore steps at its top).
 - **The PC** (almost always on) runs the trading desk: `node task-runner.js`
   (the "daemon" window — fires plans every 4h + auto-publishes) and Paperclip
   (`npm exec paperclipai run`, hosts the DB on :54329). Yahoo prices work on the

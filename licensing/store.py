@@ -632,6 +632,11 @@ def quiz_rank(license_key, period):
     return None, total
 
 
+def count_licenses():
+    with _LOCK:
+        return _conn().execute("SELECT COUNT(*) FROM licenses").fetchone()[0]
+
+
 def meta_get(k, default=None):
     with _LOCK:
         r = _conn().execute("SELECT v FROM meta WHERE k=?", (k,)).fetchone()
