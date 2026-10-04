@@ -76,8 +76,12 @@ setup_desk() {
     case "$LEDGER" in ""|/tmp/*|/data/*) setkey "$ENV" LEDGER_PATH "$DATA/${NAME%-desk}.db" ;; esac
     grep -q "^CYCLE_SECONDS=" "$ENV" || echo "CYCLE_SECONDS=$CYCLE" >> "$ENV"
 
+    # Gold: the new rule (breakout + trend + daily trend) owns the channel since
+    # 2026-10-04 (Nic: "switch now"). The old rule lost over 2 years (PF 0.86).
+    [ "$NAME" = staalwag-desk ] && setkey "$ENV" CHANNEL_RULE new
+
     # Gold paper test of the candidate rule -> Nic's own chat (same chat as the
-    # Markov paper test), never the channel.
+    # Markov paper test), never the channel. Unused while CHANNEL_RULE=new.
     if [ "$NAME" = staalwag-desk ]; then
         local ME; ME=$(sed -n 's/^TELEGRAM_CHAT_ID=//p' /etc/markov-bot.env 2>/dev/null | tail -1)
         case "$ME" in
