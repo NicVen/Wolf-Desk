@@ -12,7 +12,7 @@ on:
 jobs:
   lab:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -36,3 +36,6 @@ jobs:
       - name: Published edges (gold overnight, FOMC day, own hours, dollar carry, momentum)
         working-directory: lab
         run: python research.py | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Prop-firm market scan (every rule on every market)
+        working-directory: lab
+        run: python scan.py | tee -a "$GITHUB_STEP_SUMMARY"
