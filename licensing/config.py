@@ -152,5 +152,12 @@ PRODUCTS = {
 }
 
 
+# Nothing but the App is for sale until it has a proven public record (Nic,
+# 4 Oct 2026). Locked products can't be bought or trialled; keys already issued
+# (Nic's own testing) keep working. To open one: remove it from LOCKED.
+LOCKED = {c for c in PRODUCTS if c != "APP"}
+LOCKED_NOTE = "In testing - not for sale until it passes its public track-record test."
+
+
 def product(code):
     return PRODUCTS.get((code or "").upper())

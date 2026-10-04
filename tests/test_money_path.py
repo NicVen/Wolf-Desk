@@ -148,6 +148,14 @@ class MoneyPath(unittest.TestCase):
         return self.req("GET", "/verify?key=%s&product=%s&account=acc1" % (key, product))[1]
 
     # ---- crypto (NOWPayments) ----
+    def test_only_the_app_is_for_sale(self):
+        for code in ("SIG_GOLD", "SIG_VELDRIN", "GOLD", "VIP"):
+            status, res = self.req("POST", "/checkout",
+                                   {"product": code, "contact": "buyer@example.com", "method": "crypto"})
+            self.assertEqual(status, 400, code)
+            self.assertIn("In testing", res["error"])
+        self.assertTrue(self.checkout("crypto"))       # the App still sells
+
     def test_crypto_pays_once_and_unlocks(self):
         key = self.checkout("crypto")
         self.assertEqual(self.invoices[-1]["price"], APP_PRICE)

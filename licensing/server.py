@@ -79,6 +79,8 @@ def price_for(code, contact):
     p = config.product(code)
     if not p:
         return 0, "unknown product"
+    if code.upper() in config.LOCKED:
+        return 0, config.LOCKED_NOTE
     if p.get("free"):
         return 0, "This is free — just Subscribe on the desk."
     if p.get("tbd"):
