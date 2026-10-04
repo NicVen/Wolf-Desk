@@ -96,6 +96,9 @@ def score(bars, make, cost):
             "month_pct": round(s["total_r"] * 0.5 / months, 2)}
 
 
+DAILY = {}
+
+
 def main():
     rows = []
     for name, (sym, pct) in MARKETS.items():
@@ -105,10 +108,13 @@ def main():
         except Exception as e:
             print(f"(skipped {name}: {e})")
             continue
+        h = [b for b in h if b["l"] > 0]      # WTI went negative in April 2020
+        d = [b for b in d if b["l"] > 0]
         if len(h) < 1000:
             print(f"(skipped {name}: only {len(h)} hourly bars)")
             continue
         cost_h, cost_d = h[-1]["c"] * pct, d[-1]["c"] * pct
+        DAILY[name] = (d, cost_d)
         trend = strategies.daily_trend(d)
         rules = dict(HOURLY)
         for k in WITH_TREND:
@@ -136,6 +142,14 @@ def main():
     for m, rule, r in passed:
         print(f"| {m} | {rule} | {r['n']} | {r['pm']} | {r['win']}% | {r['pf']} | {r['a']} | {r['b']} | "
               f"{r['l6']} ({r['ln']}) | {r['dd']} | {r['dd'] * 0.5:.1f}% | {r['month_pct']:+}% | {r['luck']} |")
+    print("\n## One portfolio: daily trend on EVERY non-FX market at once (no picking)\n")
+    print("| portfolio | trades | per month | win | PF | PF 1st half | PF 2nd half | PF last 6m (n) | PF longs (n) | PF shorts (n) | total R | worst drawdown R | luck PF (95%) | verdict | PF per market (n) |")
+    print("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+    nonfx = [m for m in DAILY if not any(c in m for c in ("USD", "JPY", "GBP", "CAD")) or m in ("XAUUSD gold", "XAGUSD silver", "XPTUSD platinum", "BTCUSD", "ETHUSD", "SOLUSD", "XRPUSD")]
+    run.pooled("daily trend, all metals + energy + indices + crypto",
+               [(m.split()[0], DAILY[m][0], strategies.make_trend_daily, DAILY[m][1]) for m in nonfx])
+    run.pooled("daily trend, all FX pairs",
+               [(m, DAILY[m][0], strategies.make_trend_daily, DAILY[m][1]) for m in DAILY if m not in nonfx])
     print("\n## Best rule per market (pass or not)\n")
     print("| market | best rule | trades | PF | PF 1st half | PF 2nd half | PF last 6m (n) | verdict |")
     print("|---|---|---|---|---|---|---|---|")
