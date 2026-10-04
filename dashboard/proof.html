@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STAALWAG — Track Record</title>
+<meta name="description" content="STAALWAG's honest, append-only trading track record. Scored on real price, never edited.">
+<style>
+  :root{
+    --bg:#0a0e15; --panel:#111826; --line:#1e2a3d; --txt:#cdd6df; --mut:#7f8ea3;
+    --steel:#5b6b82; --gold:#d4af37; --green:#3ecf8e; --red:#ff5c6c; --amber:#e6b450;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;line-height:1.5}
+  .wrap{max-width:960px;margin:0 auto;padding:24px 16px 64px}
+  header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .brand{font-weight:800;letter-spacing:1px;font-size:22px}
+  .brand .a{color:var(--gold)}
+  .sub{color:var(--mut);font-size:13px}
+  .asof{color:var(--steel);font-size:12px;margin-left:auto}
+  h2{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--steel);
+    margin:34px 0 10px;font-weight:700}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .planhdr{display:flex;align-items:center;gap:14px;margin:34px 0 10px}
+  #getplans{background:var(--gold);color:#0a0e15;border:0;font-weight:800;letter-spacing:1px;
+    padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px}
+  #getplans:hover{filter:brightness(1.08)}
+  #getplans:disabled{opacity:.6;cursor:wait}
+  .planset{padding:14px 0;border-bottom:1px solid var(--line)}
+  .planset:first-child{padding-top:0}
+  .planset:last-child{border-bottom:0;padding-bottom:0}
+  /* headline */
+  .hero{display:flex;flex-wrap:wrap;align-items:flex-end;gap:22px}
+  .hero .name{font-size:20px;font-weight:800}
+  .hero .stat{display:flex;flex-direction:column}
+  .hero .stat b{font-size:26px;font-weight:800;line-height:1.1}
+  .hero .stat span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1px}
+  .pos{color:var(--green)} .neg{color:var(--red)}
+  /* badges */
+  .badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.8px;
+    padding:3px 8px;border-radius:999px;text-transform:uppercase;vertical-align:middle}
+  .b-live{background:rgba(62,207,142,.15);color:var(--green);border:1px solid rgba(62,207,142,.4)}
+  .b-back{background:rgba(230,180,80,.13);color:var(--amber);border:1px solid rgba(230,180,80,.4)}
+  .b-shadow{background:rgba(123,146,180,.13);color:#9db0c9;border:1px solid rgba(123,146,180,.4)}
+  .b-proven{background:rgba(62,207,142,.15);color:var(--green);border:1px solid rgba(62,207,142,.4)}
+  .b-proving{background:rgba(230,180,80,.13);color:var(--amber);border:1px solid rgba(230,180,80,.4)}
+  .b-parked{background:rgba(123,146,180,.10);color:var(--steel);border:1px solid rgba(123,146,180,.3)}
+  /* honesty box */
+  .rules{list-style:none;margin:0;padding:0}
+  .rules li{padding:7px 0 7px 24px;position:relative;font-size:13.5px;color:var(--txt);border-bottom:1px solid var(--line)}
+  .rules li:last-child{border-bottom:0}
+  .rules li:before{content:"\2713";position:absolute;left:0;color:var(--green);font-weight:800}
+  /* table */
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{text-align:left;color:var(--steel);font-weight:700;font-size:11px;letter-spacing:.8px;
+    text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--line)}
+  td{padding:11px 10px;border-bottom:1px solid var(--line)}
+  tr:last-child td{border-bottom:0}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .desk-name{font-weight:700}
+  .desk-note{color:var(--mut);font-size:12px}
+  .win{color:var(--green)} .loss{color:var(--red)}
+  .disclaimer{margin-top:32px;padding:14px 16px;border:1px dashed var(--line);border-radius:10px;
+    color:var(--mut);font-size:12.5px}
+  .muted{color:var(--mut)}
+  .empty{color:var(--steel);padding:16px;text-align:center;font-size:13px}
+  a{color:var(--gold)}
+  @media (max-width:560px){ .hero{gap:16px} .hero .stat b{font-size:22px} .asof{width:100%;margin-left:0} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">STAALWAG <span class="a">Track Record</span></div>
+    <div class="asof" id="asof">loading…</div>
+  </header>
+  <div class="sub"><span style="color:var(--gold);font-style:italic">Proven, not promised.</span>&nbsp; Every result scored on real price and banked once — append-only, never edited. This is the honest record, wins and losses.</div>
+
+  <a href="/store" style="display:block;margin:14px 0 4px;text-decoration:none;background:linear-gradient(100deg,#101a2b,#12233a);border:1px solid #2a3c58;border-radius:12px;padding:13px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <span style="flex:1;min-width:200px;color:#e7edf3;font-weight:700;font-size:14px">📱 Like what the desk calls? Get the same reads on your phone — <span style="color:#e6b450">free 7-day trial</span>, then $9.99/mo <span style="color:#7d8a9c;text-decoration:line-through">$25</span>.</span>
+    <span style="background:#43d6a3;color:#04231a;font-weight:800;font-size:13.5px;padding:10px 18px;border-radius:9px;white-space:nowrap">Get the app →</span>
+  </a>
+
+  <div class="planhdr"><h2 style="margin:0">Today's plan</h2><button id="getplans" onclick="loadProof(this)">GET PLANS</button><span id="planmsg" class="muted" style="font-size:12px"></span></div>
+  <div class="card" id="plan"><div class="empty">—</div></div>
+
+  <h2>The anchor</h2>
+  <div class="card hero" id="hero"><div class="empty">Loading…</div></div>
+
+  <h2>How every result is scored</h2>
+  <div class="card">
+    <ul class="rules" id="rules"></ul>
+  </div>
+
+  <h2>Desks</h2>
+  <div class="card"><div id="desks"><div class="empty">Loading…</div></div></div>
+
+  <h2>Research desk — shadow calls</h2>
+  <div class="card"><div id="research"><div class="empty">—</div></div></div>
+
+  <div class="disclaimer" id="disclaimer">
+    Signals, not financial advice. Past performance does not guarantee future results.
+  </div>
+</div>
+
+<script>
+"use strict";
+var DEFAULT_RULES = [
+  "Scored on real market price, not on anyone's execution.",
+  "Fills use the worst edge of the entry zone — the realistic fill, never the flattering one.",
+  "When one bar touches both stop and target, it is counted as a LOSS.",
+  "Unfilled setups are shown separately, never quietly counted as wins.",
+  "Append-only: once a result is banked it is never re-derived, edited, or deleted."
+];
+function n(v){ return (v===null||v===undefined||v==="")? null : Number(v); }
+function money(v){ v=n(v); if(v===null) return "—"; return (v<0?"-$":"$")+Math.abs(v).toLocaleString(undefined,{maximumFractionDigits:0}); }
+function pct(v){ v=n(v); return v===null? "—" : v.toFixed(1)+"%"; }
+function pf(v){ v=n(v); return v===null? "—" : v.toFixed(2); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+function provBadge(p){
+  p=(p||"").toLowerCase();
+  if(p==="live")     return '<span class="badge b-live">live</span>';
+  if(p==="backtest") return '<span class="badge b-back">backtest</span>';
+  if(p==="shadow")   return '<span class="badge b-shadow">shadow</span>';
+  return "";
+}
+function statusBadge(s){
+  s=(s||"").toLowerCase();
+  if(s==="proven")  return '<span class="badge b-proven">proven</span>';
+  if(s==="proving") return '<span class="badge b-proving">in proving</span>';
+  if(s==="parked")  return '<span class="badge b-parked">parked</span>';
+  return '<span class="badge b-parked">'+esc(s)+'</span>';
+}
+
+function planRow(k,v){ return v ? '<tr><td class="muted" style="width:110px">'+k+'</td><td>'+esc(v)+'</td></tr>' : ""; }
+function freshnessBanner(pub){
+  if(!pub) return "";
+  var t = Date.parse(pub); if(isNaN(t)) return "";
+  var min = (Date.now()-t)/60000;
+  var ago = min<60 ? Math.max(0,Math.round(min))+" min" : (min/60).toFixed(1)+" h";
+  if(min>240){ // older than 4h
+    return '<div style="background:rgba(230,180,80,.13);border:1px solid rgba(230,180,80,.4);color:var(--amber);border-radius:8px;padding:9px 12px;margin-bottom:12px;font-size:13px;font-weight:700">⏳ EXPIRED — this plan is '+ago+' old. A fresh one is due (the desk refreshes every 4h).</div>';
+  }
+  return '<div style="background:rgba(62,207,142,.12);border:1px solid rgba(62,207,142,.35);color:var(--green);border-radius:8px;padding:9px 12px;margin-bottom:12px;font-size:13px;font-weight:700">🟢 FRESH — published '+ago+' ago.</div>';
+}
+
+function render(d){
+  document.getElementById("asof").textContent =
+    d.generated ? ("as of " + esc(String(d.generated).replace("T"," ").slice(0,16)) + " · updates daily") : "";
+
+  // today's plan(s) — the desk's full slate (gold + FX + crypto)
+  var plans = d.plans || (d.plan ? [d.plan] : []);
+  var pc = document.getElementById("plan");
+  function onePlan(pl){
+    if(pl.stand_aside){
+      return '<div class="planset">'+
+        '<div style="font-size:16px;font-weight:800;color:var(--amber)">'+esc(pl.asset||"")+' — STAND ASIDE</div>'+
+        '<div class="muted" style="margin-top:4px">'+esc(pl.reason||"conditions not favourable")+'</div></div>';
+    }
+    var dir=(pl.bias||"").toUpperCase();
+    var dcls=(dir.indexOf("LONG")>=0||dir.indexOf("BUY")>=0)?"win":(dir.indexOf("SHORT")>=0||dir.indexOf("SELL")>=0?"loss":"muted");
+    return '<div class="planset">'+
+      '<div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:12px">'+
+        '<div style="font-size:18px;font-weight:800">'+esc(pl.asset||"")+' <span class="'+dcls+'">'+esc(dir||"—")+'</span></div>'+
+        (pl.rr?'<span class="muted">R:R '+esc(pl.rr)+'</span>':"")+
+      '</div>'+
+      '<table style="margin-top:8px"><tbody>'+
+        planRow("Entry",pl.entry)+planRow("Stop",pl.stop)+planRow("Target 1",pl.tp1)+planRow("Target 2",pl.tp2)+
+      '</tbody></table></div>';
+  }
+  if(plans.length){
+    var dt = (plans[0]&&plans[0].date) ? plans[0].date : "";
+    pc.innerHTML = freshnessBanner(d.published_at) + plans.map(onePlan).join("") +
+      (dt?'<div class="desk-note" style="margin-top:10px">'+esc(dt)+' · signals, not advice</div>':"");
+  } else {
+    pc.innerHTML = '<div class="empty">No plan published yet — check back before the London session.</div>';
+  }
+
+  // hero
+  var h = d.headline;
+  var hero = document.getElementById("hero");
+  if(h){
+    var netCls = n(h.net_usd)>=0 ? "pos":"neg";
+    hero.innerHTML =
+      '<div class="stat" style="min-width:150px">'+
+        '<div class="name">'+esc(h.name)+' '+provBadge(h.provenance)+'</div>'+
+        '<span class="muted" style="margin-top:4px">'+esc(h.note||"")+'</span>'+
+      '</div>'+
+      '<div class="stat"><b>'+pf(h.pf)+'</b><span>profit factor</span></div>'+
+      '<div class="stat"><b class="'+netCls+'">'+money(h.net_usd)+'</b><span>net</span></div>'+
+      '<div class="stat"><b>'+(n(h.trades)===null?"—":h.trades)+'</b><span>trades</span></div>'+
+      '<div class="stat"><b>'+pct(h.win_rate)+'</b><span>win rate</span></div>';
+  } else {
+    hero.innerHTML = '<div class="empty">No proven desk to feature yet — still building the record.</div>';
+  }
+
+  // rules
+  var rules = (d.rules && d.rules.length) ? d.rules : DEFAULT_RULES;
+  document.getElementById("rules").innerHTML = rules.map(function(r){return "<li>"+esc(r)+"</li>";}).join("");
+
+  // desks
+  var desks = d.desks||[];
+  var dt = document.getElementById("desks");
+  if(desks.length){
+    var rows = desks.map(function(x){
+      return "<tr>"+
+        '<td><span class="desk-name">'+esc(x.name)+'</span> '+statusBadge(x.status)+provBadge(x.provenance)+
+          (x.note?'<div class="desk-note">'+esc(x.note)+'</div>':"")+'</td>'+
+        '<td class="num">'+(n(x.trades)===null?"—":x.trades)+'</td>'+
+        '<td class="num">'+pct(x.win_rate)+'</td>'+
+        '<td class="num">'+pf(x.pf)+'</td>'+
+        '<td class="num '+(n(x.net_usd)>=0?"win":"loss")+'">'+(x.net_usd==null?"—":money(x.net_usd))+'</td>'+
+      "</tr>";
+    }).join("");
+    dt.innerHTML = '<table><thead><tr><th>Desk</th><th class="num">Trades</th><th class="num">Win rate</th><th class="num">PF</th><th class="num">Net</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  } else { dt.innerHTML = '<div class="empty">No desks reported yet.</div>'; }
+
+  // research
+  var r = d.research;
+  var rd = document.getElementById("research");
+  if(r){
+    rd.innerHTML =
+      '<div class="hero">'+
+        '<div class="stat"><b>'+(n(r.calls)===null?"—":r.calls)+'</b><span>calls</span></div>'+
+        '<div class="stat"><b>'+pct(r.accuracy)+'</b><span>accuracy</span></div>'+
+        '<div class="stat"><b>'+pf(r.pf)+'</b><span>profit factor</span></div>'+
+      '</div>'+
+      '<div class="desk-note" style="margin-top:10px">'+esc(r.note||"Shadow research — scored on real price, nothing is traded off it.")+'</div>';
+  } else { rd.innerHTML = '<div class="empty">—</div>'; }
+
+  if(d.disclaimer) document.getElementById("disclaimer").textContent = d.disclaimer;
+}
+
+function setPlanMsg(t){ var m=document.getElementById("planmsg"); if(m) m.textContent=t||""; }
+function loadProof(btn){
+  if(btn){ btn.disabled = true; btn.textContent = "LOADING…"; }
+  setPlanMsg("checking…");
+  return fetch("/proof.json",{cache:"no-store"})
+    .then(function(r){ if(!r.ok) throw new Error("no data"); return r.json(); })
+    .then(function(d){
+      render(d);
+      var plans = d.plans || (d.plan ? [d.plan] : []);
+      if(plans.length){
+        var when = (plans[0] && plans[0].date) ? plans[0].date : "";
+        setPlanMsg("✓ loaded" + (when ? " · " + when : ""));
+      } else {
+        setPlanMsg("no plans published yet");
+      }
+    })
+    .catch(function(){
+      document.getElementById("hero").innerHTML =
+        '<div class="empty">The track record has not been published yet. Check back soon.</div>';
+      document.getElementById("rules").innerHTML =
+        DEFAULT_RULES.map(function(r){return "<li>"+esc(r)+"</li>";}).join("");
+      document.getElementById("asof").textContent = "";
+      setPlanMsg("couldn't reach the server");
+    })
+    .then(function(){ if(btn){ btn.disabled = false; btn.textContent = "GET PLANS"; } });
+}
+loadProof();
+</script>
+</body>
+</html>

@@ -25,7 +25,7 @@ Routes:
   /news?name=Gold   live headlines on demand
 """
 import http.server, socketserver, json, os, sys, io, contextlib, threading, time
-import hashlib, hmac, base64
+import hashlib, hmac, base64, urllib.parse, urllib.request, urllib.error
 from urllib.parse import urlparse, parse_qs, urlencode
 
 try:
@@ -39,12 +39,17 @@ os.chdir(HERE)
 sys.path.insert(0, HERE)
 import run                      # noqa
 import watchdog
+import atomicio
 from scout.news import headlines
 
 PORT        = int(os.environ.get("PORT", "8777"))
+# Bind address. Default 0.0.0.0 (LAN/direct). Behind a reverse proxy (Caddy on
+# the VPS) set BIND_ADDR=127.0.0.1 so only the proxy — not the whole internet —
+# can reach the app port.
+BIND_ADDR   = os.environ.get("BIND_ADDR", "0.0.0.0")
 WOLF_PASS   = os.environ.get("WOLF_PASS", "")           # admin bypass only
 REFRESH_MIN = int(os.environ.get("REFRESH_MIN", "20"))
-CLASSES     = ("commodities", "fx", "indices", "stocks")
+CLASSES     = ("commodities", "fx", "indices", "stocks", "crypto")
 
 BOT_TOKEN    = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 BOT_USERNAME = os.environ.get("BOT_USERNAME", "Staalwag_wolf_Bot")
@@ -373,6 +378,65 @@ def _read(path, default=b"{}"):
         return default
 
 
+# --- STAALCALIBUR app: license check against the licensing service (localhost) ---
+_APP_LIC_CACHE = {}
+def _app_license_ok(key, dev):
+    """True if `key` is a live STAALCALIBUR App license. Verifies via the
+    licensing service on the same box; caches the answer for 5 min."""
+    if not key:
+        return False
+    now = time.time()
+    ck = key + "|" + (dev or "")
+    c = _APP_LIC_CACHE.get(ck)
+    if c and c[1] > now:
+        return c[0]
+    ok = False
+    try:
+        base = os.environ.get("LICENSING_URL", "http://127.0.0.1:8790")
+        url = (base + "/verify?product=APP&key=" + urllib.parse.quote(key) +
+               "&account=" + urllib.parse.quote(dev or "app") +
+               "&machine=" + urllib.parse.quote(dev or "app"))
+        with urllib.request.urlopen(url, timeout=6) as r:
+            ok = bool(json.loads(r.read().decode()).get("valid"))
+    except Exception:
+        ok = False
+    _APP_LIC_CACHE[ck] = (ok, now + 300)
+    return ok
+
+
+# --- Storefront proxy: same-origin bridge to the licensing service ------------
+# The public sales page (storefront/) calls these so the browser never talks to
+# the licensing box directly (no CORS, no exposed internal URL). Purely additive:
+# none of the existing app/site/desk routes are touched.
+def _lic_base():
+    return os.environ.get("LICENSING_URL", "http://127.0.0.1:8790")
+
+def _lic_get(path, timeout=6):
+    """GET the licensing service; return (dict, error_str)."""
+    try:
+        with urllib.request.urlopen(_lic_base() + path, timeout=timeout) as r:
+            return json.loads(r.read().decode()), None
+    except Exception as e:
+        return None, str(e)
+
+def _lic_post(path, payload, timeout=12):
+    """POST JSON to the licensing service; return (dict, error_str)."""
+    try:
+        body = json.dumps(payload or {}).encode("utf-8")
+        req = urllib.request.Request(_lic_base() + path, data=body,
+                                     headers={"Content-Type": "application/json"},
+                                     method="POST")
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read().decode()), None
+    except urllib.error.HTTPError as e:
+        try:
+            return json.loads(e.read().decode()), None   # forward the service's error JSON
+        except Exception:
+            return None, "http %s" % e.code
+    except Exception as e:
+        return None, str(e)
+
+
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *a): pass
 
@@ -406,6 +470,54 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if WOLF_PASS and part == ("wolf=%s" % WOLF_PASS):
                 return True
         return not (WOLF_PASS or BOT_TOKEN)   # fully open only if nothing configured
+
+    def do_POST(self):
+        u = urlparse(self.path); path = u.path; q = parse_qs(u.query)
+        # Admin ingest: the PC HQ publishes the public track record here.
+        # Key-gated (WOLF_PASS) so only the operator can update the proof wall.
+        if path == "/proof":
+            if not (WOLF_PASS and q.get("key", [""])[0] == WOLF_PASS):
+                self._send(403, b'{"error":"forbidden"}'); return
+            try:
+                ln = int(self.headers.get("Content-Length", "0") or "0")
+                if ln <= 0 or ln > 2_000_000:
+                    raise ValueError("empty or oversized body")
+                data = json.loads(self.rfile.read(ln).decode("utf-8"))
+                if not isinstance(data, dict):
+                    raise ValueError("proof payload must be a JSON object")
+                data.setdefault("generated", time.strftime("%Y-%m-%dT%H:%M", time.gmtime()))
+                atomicio.write_json(os.path.join("data", "proof.json"), data)
+                self._send(200, json.dumps({"ok": True}))
+            except Exception as e:
+                self._send(400, json.dumps({"error": str(e)}))
+            return
+
+        # ---- STOREFRONT proxy (same-origin bridge to licensing) --------------
+        if path in ("/app/trial", "/app/checkout"):
+            try:
+                ln = int(self.headers.get("Content-Length", "0") or "0")
+                payload = json.loads(self.rfile.read(ln).decode("utf-8")) if ln > 0 else {}
+                if not isinstance(payload, dict):
+                    raise ValueError("bad body")
+            except Exception:
+                self._send(400, json.dumps({"error": "bad request"})); return
+            if path == "/app/trial":
+                res, err = _lic_post("/trial", {"contact": payload.get("contact", ""),
+                                                "ref": payload.get("ref", "")})
+            else:
+                res, err = _lic_post("/checkout", {
+                    "product": "APP",
+                    "method": (payload.get("method") or "crypto"),
+                    "contact": payload.get("contact", ""),
+                    "ref": payload.get("ref", ""),
+                })
+            if res is None:
+                self._send(502, json.dumps({"error": "licensing unavailable", "detail": err}))
+            else:
+                self._send(200, json.dumps(res))
+            return
+
+        self._send(404, b'{"error":"not found"}')
 
     def do_GET(self):
         u = urlparse(self.path); path = u.path; q = parse_qs(u.query)
@@ -463,13 +575,37 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, _read("icon-192.png", b""), "image/png"); return
         if path == "/icon-512.png":
             self._send(200, _read("icon-512.png", b""), "image/png"); return
+        if path == "/sc-icon-192.png":   # STAALCALIBUR app icon (chrome chevron)
+            self._send(200, _read("sc-icon-192.png", b""), "image/png"); return
+        if path == "/sc-icon-512.png":
+            self._send(200, _read("sc-icon-512.png", b""), "image/png"); return
         if path == "/manifest.json":
             self._send(200, _read("manifest.json", b"{}"),
                        "application/manifest+json"); return
+        # Installable PWA companion (ungated shell; the page itself sends the
+        # WOLF_PASS as ?key= on its own data calls, so no secret lives here).
+        if path == "/app":
+            self._send(200, _read(os.path.join("dashboard", "app.html")),
+                       "text/html; charset=utf-8"); return
+        if path == "/app.webmanifest":
+            self._send(200, _read(os.path.join("dashboard", "app.webmanifest"), b"{}"),
+                       "application/manifest+json"); return
+        if path == "/sw.js":
+            self._send(200, _read(os.path.join("dashboard", "sw.js"), b""),
+                       "application/javascript; charset=utf-8"); return
         # Public brand landing page (ungated) — what STAALWAG is + Telegram CTAs.
         if path in ("/staalwag", "/about", "/home"):
             self._send(200, _read(os.path.join("dashboard", "landing.html")),
                        "text/html; charset=utf-8"); return
+
+        # Public track-record / proof page (ungated) — the honest record wall.
+        # Data (data/proof.json) is published by the PC HQ via POST /proof.
+        if path in ("/proof", "/track", "/track-record"):
+            self._send(200, _read(os.path.join("dashboard", "proof.html")),
+                       "text/html; charset=utf-8"); return
+        if path == "/proof.json":
+            self._send(200, _read(os.path.join("data", "proof.json"), b"{}"),
+                       "application/json"); return
 
         # Tracked link: count the click, then redirect to the real destination.
         if path == "/l":
@@ -493,6 +629,120 @@ class Handler(http.server.BaseHTTPRequestHandler):
             s = watchdog.status()
             self._send(200 if s["ok"] else 503, json.dumps(s)); return
 
+        # ---- Public marketing site (staalwag.com apex + www) ----
+        host = self.headers.get("Host", "").lower().split(":")[0]
+        if host in ("staalwag.com", "www.staalwag.com") and path in ("/", "/index.html"):
+            self._send(200, _read(os.path.join("dashboard", "site.html")),
+                       "text/html; charset=utf-8"); return
+        if path == "/site":   # reachable on any host for previewing the site
+            self._send(200, _read(os.path.join("dashboard", "site.html")),
+                       "text/html; charset=utf-8"); return
+        if path == "/og-staalwag.png":
+            self._send(200, _read(os.path.join("dashboard", "og-staalwag.png"), b""),
+                       "image/png"); return
+
+        # ---- STAALCALIBUR app (app.* subdomain, license-gated — not WOLF_PASS) ----
+        host = self.headers.get("Host", "")
+        if path == "/scapp.webmanifest":
+            self._send(200, _read(os.path.join("dashboard", "scapp.webmanifest"), b"{}"),
+                       "application/manifest+json"); return
+        if path == "/scsw.js":
+            self._send(200, _read(os.path.join("dashboard", "scsw.js"), b""),
+                       "application/javascript"); return
+        if path == "/appversion":
+            # Ungated changelog/version manifest for the in-app update prompt.
+            self._send(200, _read(os.path.join("dashboard", "appversion.json"),
+                                  b'{"version":"1.0.0","notes":[]}'),
+                       "application/json"); return
+        if path == "/.well-known/assetlinks.json":
+            # Digital Asset Links — lets the installed Android app (TWA) open the
+            # app full-screen with no browser bar. Paste the APK's fingerprint
+            # into dashboard/assetlinks.json (PWABuilder/Bubblewrap gives it).
+            self._send(200, _read(os.path.join("dashboard", "assetlinks.json"), b"[]"),
+                       "application/json"); return
+        if path in ("/staalcalibur.apk", "/app.apk"):
+            # The installable Android package. Drop the file at
+            # dashboard/staalcalibur.apk (built once via PWABuilder/Bubblewrap).
+            apk = _read(os.path.join("dashboard", "staalcalibur.apk"), b"")
+            if not apk:
+                self._send(404, "APK not published yet.", "text/plain"); return
+            self._send(200, apk, "application/vnd.android.package-archive"); return
+        if path in ("/download", "/get"):
+            self._send(200, _read(os.path.join("dashboard", "download.html"),
+                                  b"<h2>Download coming soon.</h2>"),
+                       "text/html; charset=utf-8"); return
+        if path == "/appdata":
+            key = q.get("key", [""])[0]; dev = q.get("dev", ["app"])[0]
+            if not _app_license_ok(key, dev):
+                self._send(403, b'{"error":"license"}'); return
+            self._send(200, _read(os.path.join("data", "opportunities_%s.json" % cls))); return
+        if host.startswith("app.") and path in ("/", "/index.html"):
+            self._send(200, _read(os.path.join("dashboard", "scapp.html")),
+                       "text/html; charset=utf-8"); return
+
+        # ---- STOREFRONT (isolated sales funnel; reachable on any host) --------
+        # Public advertising page + paid/trial download gate. Self-contained in
+        # the storefront/ folder; talks to the licensing service via the proxy
+        # routes below. Nothing here changes the existing app/site/desk behaviour.
+        if path.rstrip("/.") in ("/privacy", "/privacy-policy"):
+            self._send(200, _read(os.path.join("dashboard", "privacy.html"),
+                                  b"<h2>Privacy policy coming soon.</h2>"),
+                       "text/html; charset=utf-8"); return
+        if path.rstrip("/.") in ("/store", "/get-app", "/getapp"):
+            # tolerate trailing "/" or "." (browsers/autocomplete sometimes append one)
+            self._send(200, _read(os.path.join("storefront", "index.html"),
+                                  b"<h2>Storefront coming soon.</h2>"),
+                       "text/html; charset=utf-8"); return
+        if path.startswith("/store/"):
+            # static assets that live beside the sales page (images, etc.)
+            rel = path[len("/store/"):].split("?")[0].strip("/")
+            if rel and ".." not in rel:
+                fp = os.path.join("storefront", *rel.split("/"))
+                if os.path.isfile(fp):
+                    ext = os.path.splitext(rel)[1].lower()
+                    ct = {".png":"image/png",".jpg":"image/jpeg",".jpeg":"image/jpeg",
+                          ".webp":"image/webp",".svg":"image/svg+xml",".css":"text/css",
+                          ".js":"application/javascript",".ico":"image/x-icon",
+                          ".json":"application/json"}.get(ext, "application/octet-stream")
+                    self._send(200, _read(fp, b""), ct); return
+            self._send(404, b"not found", "text/plain"); return
+        if path == "/app/pricing":
+            # Price + trial length + which pay rails are live (single source of
+            # truth: licensing/config.py). Falls back to sane defaults offline.
+            data, _err = _lic_get("/pricing")
+            if not data:
+                data = {"price": 25, "trial_days": 7, "crypto": True, "card": False}
+            self._send(200, json.dumps(data)); return
+        if path == "/app/get":
+            # Gated download: only a valid license (trial OR paid) gets the APK.
+            key = q.get("key", [""])[0]; dev = q.get("dev", ["app"])[0]
+            if not _app_license_ok(key, dev):
+                self._send(403, b"Your key isn't active. Start a free trial or buy at /store", "text/plain"); return
+            apk = _read(os.path.join("dashboard", "staalcalibur.apk"), b"")
+            if not apk:
+                self._send(404, "APK not published yet.", "text/plain"); return
+            self._send(200, apk, "application/vnd.android.package-archive"); return
+
+        # WOLF desk intel — free for all to view. VIP-only items are locked on the
+        # page itself, not by gating these read endpoints.
+        if path == "/data":
+            self._send(200, _read(os.path.join("data", "opportunities_%s.json" % cls))); return
+        if path == "/refresh":
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    run.main(only=cls)
+                self._send(200, _read(os.path.join("data", "opportunities_%s.json" % cls)))
+            except Exception as e:
+                self._send(500, json.dumps({"error": str(e)}))
+            return
+        if path == "/news":
+            try:
+                news, tilt = headlines(q.get("name", [""])[0])
+                self._send(200, json.dumps({"news": news, "tilt": tilt}))
+            except Exception as e:
+                self._send(200, json.dumps({"news": [], "tilt": "no news", "error": str(e)}))
+            return
+
         ok = self._authed(q)
 
         # Explicit member login gate (landing "member" button points here).
@@ -502,6 +752,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
             auth_url = "%s://%s/auth" % (scheme, host) if host else "/auth"
             page = LOGIN.replace("__BOT__", BOT_USERNAME).replace("__AUTHURL__", auth_url)
             self._send(200, page, "text/html; charset=utf-8"); return
+
+        # WOLF Intraday Intel Desk on its own subdomain: a free, public page for
+        # everyone (VIP-only items are locked on the page itself).
+        if self.headers.get("Host", "").lower().startswith("wolf.") and path in ("/", "/index.html"):
+            cookie = None
+            if WOLF_PASS and q.get("key", [""])[0] == WOLF_PASS:
+                cookie = "wolf=%s; Path=/; Max-Age=2592000; HttpOnly" % WOLF_PASS
+            self._send(200, _read(os.path.join("dashboard", "index.html")),
+                       "text/html; charset=utf-8", cookie); return
 
         if path in ("/", "/index.html"):
             if not ok:
@@ -520,28 +779,21 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if not ok:
             self._send(401, b'{"error":"auth required"}'); return
 
-        if path == "/data":
-            self._send(200, _read(os.path.join("data", f"opportunities_{cls}.json")))
-        elif path == "/refresh":
+        if path == "/markov.json":
+            # Latest Markov regime summary, for the PC-side MT5 bridge (pc_bridge.py).
             try:
-                with contextlib.redirect_stdout(io.StringIO()):
-                    run.main(only=cls)
-                self._send(200, _read(os.path.join("data", f"opportunities_{cls}.json")))
+                import markov_export
+                mkpath = os.path.join(markov_export.out_dir(), "markov_regime.json")
+                self._send(200, _read(mkpath, b'{"instruments":[]}'))
             except Exception as e:
-                self._send(500, json.dumps({"error": str(e)}))
-        elif path == "/news":
-            try:
-                news, tilt = headlines(q.get("name", [""])[0])
-                self._send(200, json.dumps({"news": news, "tilt": tilt}))
-            except Exception as e:
-                self._send(200, json.dumps({"news": [], "tilt": "no news", "error": str(e)}))
+                self._send(200, json.dumps({"instruments": [], "error": str(e)}))
         else:
             self._send(404, b'{"error":"not found"}')
 
 
 if __name__ == "__main__":
     gate = "Telegram-VIP" if BOT_TOKEN else ("WOLF_PASS" if WOLF_PASS else "OPEN")
-    print(f"WOLF dashboard -> port {PORT}  (gate: {gate}, auto-refresh: {REFRESH_MIN}m)")
+    print(f"WOLF dashboard -> {BIND_ADDR}:{PORT}  (gate: {gate}, auto-refresh: {REFRESH_MIN}m)")
     if REFRESH_MIN > 0:
         watchdog.register_thread("refresh", refresh_loop)
     # Run the VIP login bot in-process (no separate worker service needed).
@@ -565,7 +817,7 @@ if __name__ == "__main__":
     class Server(socketserver.ThreadingTCPServer):
         allow_reuse_address = True
         daemon_threads = True
-    with Server(("0.0.0.0", PORT), Handler) as httpd:
+    with Server((BIND_ADDR, PORT), Handler) as httpd:
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:

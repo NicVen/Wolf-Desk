@@ -1,0 +1,18 @@
+[Unit]
+Description=VELDRIN Desk (FX signal worker + track endpoint)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=wolf
+WorkingDirectory=/opt/veldrin-desk
+EnvironmentFile=/etc/veldrin-desk.env
+ExecStart=/opt/veldrin-desk/.venv/bin/python -m desk.serve
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VELDRIN - Systematic FX Signals</title>
+<style>
+  body { font-family: Georgia, serif; max-width: 720px; margin: 40px auto; padding: 0 20px; color: #222; line-height: 1.6; }
+  h1 { font-size: 1.8em; border-bottom: 2px solid #222; padding-bottom: 8px; }
+  h2 { font-size: 1.2em; margin-top: 2em; }
+  table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+  th, td { border: 1px solid #999; padding: 6px 10px; text-align: left; font-size: 0.95em; }
+  th { background: #eee; }
+  .note { color: #555; font-size: 0.9em; }
+  a.btn { display: inline-block; background: #222; color: #fff; padding: 10px 18px; text-decoration: none; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<h1>VELDRIN</h1>
+<p>Signals from a systematic FX desk with published results.</p>
+
+<h2>What this is</h2>
+<p>A machine-run forex signal pipeline on a fixed schedule. Every signal passes a
+mandatory quality check before it is sent: data freshness, price-level sanity,
+regime agreement, duplicate guard, component heartbeat. If the desk is unhealthy
+you get a fault notice, not a fake signal.</p>
+
+<h2>What this is not</h2>
+<p>No income promises. No "quit your job" talk. Trading involves risk and losses
+happen on this desk too - they are in the track record below because the ledger is
+published as-is, append-only.</p>
+
+<h2>Track record</h2>
+<p class="note">Fed directly from the desk ledger
+(<a href="/track_record.json">/track_record.json</a>). Placeholder values until the
+live record begins.</p>
+<table>
+  <tr><th>Week</th><th>Trades</th><th>Win rate</th><th>Profit factor</th><th>Net pips</th><th>Max drawdown</th></tr>
+  <tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+</table>
+
+<h2>What a subscriber gets</h2>
+<ul>
+  <li>Every signal: pair, direction, entry, stop loss, take profit, regime state, confidence, timestamp (NZT), data-freshness check</li>
+  <li>The self-check report attached to each signal</li>
+  <li>A weekly performance summary from the same ledger shown above</li>
+  <li>Fixed risk discipline: 1% per trade, 2% daily stop, one position at a time - hard-coded, no overrides</li>
+</ul>
+
+<h2>The live signal feed</h2>
+<p class="note">The actionable signal (entry / SL / TP) is paid VIP content and is
+<strong>deliberately locked</strong>. <code>/latest_signal.json</code> returns
+<code>forbidden</code> unless the MT5 copier passes the private key - that is the
+gate working, not a fault. Subscribers receive signals through the Telegram channel
+below.</p>
+
+<h2>Price</h2>
+<p>USD $30-50 / month. Via the MQL5 Signals marketplace (MT5 copies trades to
+your account automatically) or the Telegram channel.</p>
+
+<h2>Disclaimer and terms of use</h2>
+<div style="border:1px solid #999; padding:10px 14px; max-height:220px; overflow-y:auto; font-size:0.9em; background:#fafafa;">
+  <p><strong>You must accept these terms before receiving or using any signal.</strong></p>
+  <p>All signals and content are for <strong>educational and informational purposes
+  only</strong> and do not constitute financial, investment, or trading advice, nor a
+  recommendation to buy or sell any instrument.</p>
+  <p>The operator of VELDRIN is a private individual — <strong>not a financial
+  institution, registered financial advice provider, licensed broker, or legal
+  advisor</strong> in New Zealand or any other jurisdiction. No advisory or fiduciary
+  relationship is created.</p>
+  <p>Any trading decision is yours alone, made <strong>at your own discretion and your
+  own risk</strong>. You are solely responsible for suitability, position sizing,
+  execution, outcomes, and compliance in your jurisdiction.</p>
+  <p>Trading forex on margin carries high risk; you can lose some or all of
+  your capital. Past performance does not guarantee future results. Content is
+  provided "as is" without warranty.</p>
+  <p>To the maximum extent permitted by law, by accepting you <strong>release the
+  operator from any and all claims, damages, and losses</strong> arising from your use
+  of or reliance on the content. Liability, if any, is capped at one month of
+  subscription fees. Governing law: New Zealand. Full terms: DISCLAIMER.md.</p>
+</div>
+
+<p>
+  <label><input type="checkbox" id="accept"> I have read, understood, and accept
+  the disclaimer and terms of use above.</label>
+</p>
+
+<p><a class="btn" id="join" href="https://t.me/veldrinforex"
+      style="pointer-events:none; opacity:0.4;">Telegram channel</a></p>
+
+<script>
+document.getElementById('accept').addEventListener('change', function () {
+  var btn = document.getElementById('join');
+  btn.style.pointerEvents = this.checked ? 'auto' : 'none';
+  btn.style.opacity = this.checked ? '1' : '0.4';
+});
+</script>
+
+</body>
+</html>

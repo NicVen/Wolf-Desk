@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>STAALCALIBUR — Partner Banner Kit</title>
+<meta name="robots" content="noindex" />
+<style>
+  :root{--bg:#0a0e15;--card:#131a26;--line:#1e2a3a;--fg:#e7edf3;--mut:#7d8a9c;--steel:#8aa0b4;--gold:#e6b450;--green:#43d6a3;--accent:#6ea8fe}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.55;padding:28px 18px 80px}
+  .wrap{max-width:900px;margin:0 auto}
+  h1{font-size:26px;margin:0 0 6px}
+  .lead{color:var(--steel);margin:0 0 8px;max-width:640px}
+  .ref{background:#0e1622;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:18px 0 30px;font-size:13.5px;color:var(--mut)}
+  .ref input{background:#0b1220;border:1px solid var(--line);color:var(--fg);border-radius:7px;padding:7px 10px;font-size:13px;width:180px;margin:0 4px}
+  .ref b{color:var(--chrome,#c7d2dd)}
+  .block{margin:0 0 40px}
+  .block h2{font-size:15px;letter-spacing:1px;text-transform:uppercase;color:var(--gold);margin:0 0 4px}
+  .block .sz{color:var(--mut);font-size:12.5px;margin:0 0 12px}
+  .preview{background:
+      repeating-conic-gradient(#0d1420 0% 25%, #0b1018 0% 50%) 50% / 22px 22px;
+    border:1px solid var(--line);border-radius:12px;padding:22px;display:flex;justify-content:center;align-items:center;margin-bottom:12px;overflow:auto}
+  .codewrap{position:relative}
+  textarea{width:100%;height:120px;background:#0b1220;border:1px solid var(--line);color:#b9c6d6;border-radius:10px;padding:12px 12px 12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;resize:vertical}
+  .copy{position:absolute;top:10px;right:10px;background:var(--accent);color:#04122b;border:0;border-radius:8px;padding:8px 14px;font-weight:800;font-size:12.5px;cursor:pointer}
+  .copy.done{background:var(--green);color:#04231a}
+  .foot{color:var(--mut);font-size:12.5px;border-top:1px solid var(--line);padding-top:16px}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>STAALCALIBUR — Partner Banner Kit 🐺</h1>
+  <p class="lead">Ready-to-paste banners for anyone who'll put STAALCALIBUR on their site, blog, newsletter or Telegram channel. Each one links straight to the store and is built to make people <i>need</i> to click. Copy the code, paste it into the page — done.</p>
+
+  <div class="ref">
+    <b>Optional — track who sent the traffic.</b> Type a short tag for this partner and every banner's link updates automatically:
+    <input id="ref" value="partner" oninput="render()" placeholder="e.g. joesblog" />
+    <span id="reflink"></span>
+  </div>
+
+  <div id="out"></div>
+
+  <div class="foot">
+    Tip: the banners degrade gracefully — even on pages that strip animations, the colours, copy and button stay intact. All links open the store in a new tab.
+    Decision-support &amp; education only — no profit claims, so partners can run them cleanly.
+  </div>
+</div>
+
+<script>
+  var BASE = "https://staalwag.com/store";
+  function link(){ var r=(document.getElementById('ref').value||'').trim().replace(/[^a-zA-Z0-9_-]/g,''); return BASE + (r?("?ref="+r):""); }
+
+  // Each banner is a standalone, self-contained HTML string. {{URL}} is swapped
+  // for the tracked link. Scoped class names (swb-a/b/c) + unique keyframes so a
+  // banner never clashes with — or leaks into — the host page's styles.
+  var BANNERS = {
+"Curiosity strip — responsive, full width":
+'<!-- STAALCALIBUR banner -->\n'+
+'<a href="{{URL}}" target="_blank" rel="noopener" style="text-decoration:none;display:block">\n'+
+'  <div style="max-width:640px;margin:auto;background:linear-gradient(100deg,#0a0e15,#12233a);border:1px solid #2a3c58;border-radius:14px;padding:16px 20px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.45);text-align:center">\n'+
+'    <div style="color:#e6b450;font-weight:800;font-size:11px;letter-spacing:2.5px;text-transform:uppercase">⚡ Free 7-day trial · no card</div>\n'+
+'    <div style="color:#eef3f8;font-weight:800;font-size:22px;line-height:1.2;margin:6px 0 4px">What does the desk see that you don\'t?</div>\n'+
+'    <div style="color:#8aa0b4;font-size:13px;margin-bottom:14px">There\'s a 0–100 score that grades every setup before you risk a cent. Most traders never look. See yours.</div>\n'+
+'    <span style="display:inline-block;background:#43d6a3;color:#04231a;font-weight:800;font-size:15px;padding:12px 26px;border-radius:11px">Show me the number →</span>\n'+
+'  </div>\n'+
+'</a>',
+
+"Leaderboard — 728×90 (top/bottom of page)":
+'<!-- STAALCALIBUR banner -->\n'+
+'<a href="{{URL}}" target="_blank" rel="noopener" style="text-decoration:none;display:block">\n'+
+'  <div style="max-width:728px;margin:auto;background:linear-gradient(100deg,#0a0e15,#101a2b);border:1px solid #23324a;border-radius:14px;padding:14px 20px;display:flex;align-items:center;gap:18px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;box-shadow:0 10px 28px rgba(0,0,0,.4)">\n'+
+'    <div style="flex:1;min-width:0;text-align:left">\n'+
+'      <div style="color:#e6b450;font-weight:800;font-size:10.5px;letter-spacing:2px;text-transform:uppercase">STAALCALIBUR · Pre-trade intel</div>\n'+
+'      <div style="color:#eef3f8;font-weight:800;font-size:19px;line-height:1.2;margin-top:3px">Know the setup <span style="color:#6ea8fe">before</span> you risk a cent.</div>\n'+
+'      <div style="color:#8aa0b4;font-size:12.5px;margin-top:2px">The 0–100 score pros check first — free for 7 days, no card.</div>\n'+
+'    </div>\n'+
+'    <span style="background:#43d6a3;color:#04231a;font-weight:800;font-size:14px;padding:12px 20px;border-radius:10px;white-space:nowrap">Try it FREE →</span>\n'+
+'  </div>\n'+
+'</a>',
+
+"Card — 320×300 (sidebar / Telegram)":
+'<!-- STAALCALIBUR banner -->\n'+
+'<a href="{{URL}}" target="_blank" rel="noopener" style="text-decoration:none;display:block">\n'+
+'  <div style="max-width:320px;margin:auto;background:linear-gradient(180deg,#101a2b,#0a0e15);border:1px solid #2a3c58;border-radius:16px;padding:22px 20px;text-align:center;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;box-shadow:0 14px 34px rgba(0,0,0,.5)">\n'+
+'    <div style="color:#e6b450;font-weight:800;font-size:10.5px;letter-spacing:2.5px;text-transform:uppercase">STAALCALIBUR V13</div>\n'+
+'    <div style="font-size:58px;font-weight:900;color:#43d6a3;line-height:1;margin:10px 0 2px;text-shadow:0 0 22px rgba(67,214,163,.45)">82</div>\n'+
+'    <div style="color:#8aa0b4;font-size:10.5px;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Setup score · your next trade?</div>\n'+
+'    <div style="color:#eef3f8;font-weight:800;font-size:17px;line-height:1.25;margin-bottom:6px">Every trade already has a score.</div>\n'+
+'    <div style="color:#8aa0b4;font-size:12.5px;margin-bottom:16px">Do you know yours? Find out free for 7 days — no card.</div>\n'+
+'    <span style="display:block;background:#43d6a3;color:#04231a;font-weight:800;font-size:15px;padding:13px;border-radius:11px">Reveal my score →</span>\n'+
+'  </div>\n'+
+'</a>'
+  };
+
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+  function render(){
+    var url = link();
+    document.getElementById('reflink').innerHTML = '&nbsp;→ links to <b style="color:#c7d2dd">'+esc(url)+'</b>';
+    var out = document.getElementById('out'); out.innerHTML='';
+    Object.keys(BANNERS).forEach(function(title, i){
+      var code = BANNERS[title].replace(/\{\{URL\}\}/g, url);
+      var sizes = title.split('—')[1] || '';
+      var wrap = document.createElement('div'); wrap.className='block';
+      wrap.innerHTML =
+        '<h2>'+esc(title.split('—')[0].trim())+'</h2>'+
+        '<div class="sz">'+esc(sizes.trim())+'</div>'+
+        '<div class="preview">'+code+'</div>'+
+        '<div class="codewrap"><textarea readonly id="ta'+i+'">'+esc(code)+'</textarea>'+
+        '<button class="copy" onclick="cp('+i+',this)">Copy code</button></div>';
+      out.appendChild(wrap);
+    });
+  }
+  function cp(i,btn){
+    var ta=document.getElementById('ta'+i); ta.select();
+    try{ navigator.clipboard.writeText(ta.value); }catch(e){ document.execCommand('copy'); }
+    btn.textContent='Copied ✓'; btn.className='copy done';
+    setTimeout(function(){ btn.textContent='Copy code'; btn.className='copy'; },1600);
+  }
+  render();
+</script>
+</body>
+</html>

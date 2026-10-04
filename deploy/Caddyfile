@@ -1,0 +1,14 @@
+# WOLF Desk — Caddy reverse proxy with automatic HTTPS.
+#
+# The site address below is a FREE DNS name that resolves to your VPS IP
+# (178.104.88.38) via sslip.io, so Caddy can get a real Let's Encrypt cert with
+# no domain purchase. When you buy a real domain later, point its DNS A-record
+# at 178.104.88.38 and just replace this one line with your domain, then reload
+# Caddy (`sudo systemctl reload caddy`).
+#
+# Caddy listens on 80/443 (public); the app stays on 127.0.0.1:8777 (private).
+
+178.104.88.38.sslip.io {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8777
+}

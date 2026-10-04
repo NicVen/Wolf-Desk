@@ -1,0 +1,946 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0e15" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="manifest" href="/scapp.webmanifest" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<title>STAALCALIBUR</title>
+<style>
+  :root{--bg:#0a0e15;--card:#131a26;--card2:#18212f;--line:#1e2a3a;--fg:#e7edf3;
+    --mut:#7d8a9c;--steel:#8aa0b4;--chrome:#c7d2dd;--accent:#6ea8fe;
+    --buy:#2ecc71;--sell:#ff5b5b;--watch:#f2c14e;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding-bottom:env(safe-area-inset-bottom)}
+  .wrap{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+  header{position:sticky;top:0;z-index:10;background:rgba(10,14,21,.92);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);padding:14px 16px;display:flex;align-items:center;gap:10px}
+  .logo{font-weight:900;letter-spacing:2px;font-size:16px}
+  .logo .v{color:var(--steel);font-weight:700}
+  .sp{flex:1}
+  .ico{background:var(--card);border:1px solid var(--line);color:var(--chrome);border-radius:10px;
+    padding:8px 10px;font-size:13px;font-weight:700;cursor:pointer}
+  .ico.hasupd{background:var(--accent);color:#04122b;border-color:var(--accent);animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(110,168,254,.5)}50%{box-shadow:0 0 0 6px rgba(110,168,254,0)}}
+  .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);
+    background:var(--card2);border:1px solid var(--line);color:var(--fg);padding:10px 16px;border-radius:12px;
+    font-size:13px;z-index:60;opacity:0;transition:opacity .25s;max-width:90%;text-align:center;pointer-events:none}
+  main{flex:1;padding:14px 16px 40px}
+  /* gate */
+  .gate{min-height:80vh;display:flex;flex-direction:column;justify-content:center;gap:14px;text-align:center;padding:0 6px}
+  .gate h1{font-size:26px;letter-spacing:3px;font-weight:900;margin:0}
+  .gate .tag{color:var(--mut);font-size:13px;margin:-6px 0 8px}
+  input{width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--card);
+    color:var(--fg);font-size:16px;text-align:center;letter-spacing:1px}
+  .btn{width:100%;padding:14px;border:0;border-radius:12px;background:var(--accent);color:#04122b;
+    font-size:16px;font-weight:800;cursor:pointer}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--steel);font-weight:700}
+  .err{color:var(--sell);font-size:13px;min-height:18px}
+  .muted{color:var(--mut);font-size:12px;line-height:1.5}
+  /* class chips */
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;-webkit-overflow-scrolling:touch}
+  .chip{white-space:nowrap;padding:8px 14px;border:1px solid var(--line);border-radius:999px;
+    background:var(--card);color:var(--steel);font-size:13px;font-weight:700;cursor:pointer}
+  .chip.on{background:var(--chrome);color:#0a0e15;border-color:var(--chrome)}
+  /* list rows */
+  .row{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:12px 14px;margin:8px 0;cursor:pointer}
+  .row:active{background:var(--card2)}
+  .rk{width:26px;color:var(--mut);font-size:12px;font-weight:800;text-align:center}
+  .rname{flex:1;min-width:0}
+  .rname b{display:block;font-size:15px}
+  .rname span{color:var(--mut);font-size:11px}
+  .badge{font-size:11px;font-weight:800;padding:4px 8px;border-radius:8px}
+  .sc{font-size:20px;font-weight:900;min-width:44px;text-align:right}
+  /* verdict banner */
+  .verdict{border-radius:16px;padding:18px;text-align:center;margin:6px 0 14px}
+  .verdict .big{font-size:30px;font-weight:900;letter-spacing:1px}
+  .verdict .conv{font-size:13px;opacity:.9;margin-top:2px}
+  .kpis{display:flex;gap:8px;margin:12px 0}
+  .kpi{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+  .kpi .l{color:var(--mut);font-size:10px;letter-spacing:1px;text-transform:uppercase}
+  .kpi .v{font-size:15px;font-weight:800;margin-top:3px}
+  .sec{margin:16px 0 8px;color:var(--steel);font-size:12px;letter-spacing:2px;text-transform:uppercase}
+  .bar{display:flex;align-items:center;gap:8px;margin:6px 0}
+  .bar .bl{width:70px;color:var(--mut);font-size:12px}
+  .bt{flex:1;height:8px;background:var(--line);border-radius:6px;overflow:hidden}
+  .bt i{display:block;height:100%;background:var(--chrome)}
+  .chk{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .chk .m{width:22px;text-align:center}
+  .why{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:13px;
+    line-height:1.55;color:var(--chrome)}
+  .foot{color:var(--mut);font-size:10px;line-height:1.5;margin-top:22px;border-top:1px solid var(--line);padding-top:12px}
+  /* direction chart */
+  .chart{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 10px 8px;margin:4px 0}
+  .chart svg{display:block;width:100%;height:120px}
+  .chart .lg{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:8px;font-size:11px;color:var(--mut)}
+  .chart .lg i{display:inline-block;width:14px;height:0;border-top:2px solid;margin-right:5px;vertical-align:middle}
+  /* trader quiz */
+  .qhdr{display:flex;gap:8px;margin:2px 0 12px}
+  .qhdr>div{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px;text-align:center}
+  .qhdr .l{color:var(--mut);font-size:9.5px;letter-spacing:.5px;text-transform:uppercase}
+  .qhdr .v{font-size:16px;font-weight:900;margin-top:2px}
+  .qintro{color:var(--mut);font-size:12.5px;line-height:1.5;margin:0 0 14px}
+  .qcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+  .qnum{color:var(--steel);font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:800}
+  .qq{font-size:14.5px;font-weight:600;margin:7px 0 12px;line-height:1.45}
+  .qopt{border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin:7px 0;font-size:14px;
+    cursor:pointer;background:var(--bg)}
+  .qopt.sel{border-color:var(--accent);background:rgba(110,168,254,.14);color:#fff}
+  .qopt:active{background:var(--card2)}
+  .qdone{background:rgba(46,204,113,.12);border:1px solid var(--buy);border-radius:12px;padding:13px;
+    font-weight:700;text-align:center;margin:4px 0 10px}
+  .qres{position:relative;border:1px solid var(--line);border-radius:10px;margin:7px 0;overflow:hidden;
+    display:flex;align-items:center;padding:11px 12px;font-size:13.5px}
+  .qres .qbar{position:absolute;left:0;top:0;bottom:0;background:var(--line);z-index:0}
+  .qres.ok{border-color:var(--buy)} .qres.ok .qbar{background:rgba(46,204,113,.22)}
+  .qres.bad{border-color:var(--sell)} .qres.bad .qbar{background:rgba(255,91,91,.18)}
+  .qres .qlab{position:relative;z-index:1;flex:1}
+  .qres .qpct{position:relative;z-index:1;color:var(--mut);font-weight:700;font-size:12px;margin-left:8px}
+  .lbrow{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);
+    border-radius:10px;margin:6px 0;font-size:13.5px}
+  .lbrow.me{border-color:var(--accent);background:rgba(110,168,254,.1)}
+  .lbrow .rk{color:var(--mut);font-weight:800;width:34px}
+  .lbrow .aid{flex:1;font-weight:700;font-family:ui-monospace,Menlo,monospace}
+  .lbrow .pts{color:var(--steel);font-weight:800}
+  /* refer & earn card */
+  .refcard{background:linear-gradient(135deg,rgba(110,168,254,.16),rgba(46,204,113,.10));
+    border:1px solid var(--accent);border-radius:16px;padding:16px 16px 15px;margin:2px 0 14px}
+  .reftop{color:var(--accent);font-size:11px;letter-spacing:2px;font-weight:800}
+  .refbig{font-size:17px;font-weight:800;margin:6px 0 12px}
+  .refbig b{color:var(--buy)}
+  .refstats{display:flex;gap:10px;margin-bottom:12px}
+  .refstats>div{flex:1;background:rgba(10,14,21,.35);border:1px solid var(--line);border-radius:12px;
+    padding:9px;text-align:center}
+  .refstats b{display:block;font-size:22px;font-weight:900}
+  .refstats span{font-size:10.5px;color:var(--mut);letter-spacing:.5px}
+  .refnote{font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:12px}
+  .refnote.ok{color:var(--buy)}
+  .refbtn{padding:13px;font-size:15px}
+  /* today's outlook card */
+  .olcard{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:14px;padding:13px 14px;margin:2px 0 4px;cursor:pointer}
+  .olcard:active{border-color:var(--steel)}
+  .oltop{color:var(--steel);font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:800}
+  .olhead{font-size:15px;font-weight:800;margin:5px 0 3px}
+  .olcta{color:var(--accent);font-size:12px;font-weight:700}
+  /* timeframe switch */
+  .tfsw{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .tfb{background:var(--card);color:var(--steel);border:0;padding:5px 12px;font-size:12px;font-weight:800;
+    letter-spacing:1px;cursor:pointer}
+  .tfb.on{background:var(--chrome);color:#0a0e15}
+  .tfb:disabled{opacity:.35;cursor:not-allowed}
+  /* tappable tiles */
+  .kpi.tap{cursor:pointer}
+  .kpi.tap .i{display:block;float:right;color:var(--mut);font-size:11px;line-height:1;margin:-2px -2px 0 0}
+  .kpi.tap:active{background:var(--card2)}
+  /* info sheet */
+  .modal{position:fixed;inset:0;z-index:50;background:rgba(4,8,14,.72);display:flex;align-items:flex-end;justify-content:center}
+  .sheet{background:var(--card2);border:1px solid var(--line);border-top-left-radius:18px;border-top-right-radius:18px;
+    width:100%;max-width:520px;max-height:82vh;overflow:auto;padding:18px 18px calc(26px + env(safe-area-inset-bottom))}
+  .sheet .sub{color:var(--steel);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+  .sheet h3{margin:0 0 4px;font-size:19px}
+  .sheet .val{font-size:22px;font-weight:900;margin:2px 0 6px;color:var(--chrome)}
+  .sheet p{font-size:14px;line-height:1.6;color:var(--chrome);margin:10px 0}
+  .sheet ul.upd{margin:10px 0 16px;padding-left:18px}
+  .sheet ul.upd li{font-size:14px;line-height:1.55;color:var(--chrome);margin:7px 0}
+  .sheet a.hl{display:block;background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin:7px 0;text-decoration:none}
+  .sheet a.hl b{display:block;color:var(--fg);font-size:13px;line-height:1.4;font-weight:700}
+  .sheet a.hl span{display:block;color:var(--mut);font-size:11px;margin-top:3px}
+  .sheet .x{float:right;background:var(--card);border:1px solid var(--line);color:var(--chrome);
+    border-radius:10px;padding:6px 12px;font-weight:800;cursor:pointer}
+  .hidden{display:none}
+  /* ideas board */
+  .idea{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:11px 12px;margin:8px 0}
+  .idea .tx{flex:1;font-size:14px;line-height:1.45;color:var(--fg)}
+  .idea .tg{display:inline-block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--steel);
+    border:1px solid var(--line);border-radius:999px;padding:1px 7px;margin-bottom:4px}
+  .vote{min-width:58px;padding:8px 6px;border:1px solid var(--line);border-radius:10px;background:var(--card2);
+    color:var(--steel);font-weight:800;font-size:14px;cursor:pointer}
+  .vote.on{background:var(--chrome);color:#0a0e15;border-color:var(--chrome)}
+  .idea.built .tx{color:var(--chrome)}
+  .nextup{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--chrome);margin:8px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">STAALCALIBUR <span class="v">V13</span></div>
+    <div class="sp"></div>
+    <button class="ico" id="verBtn" onclick="manualCheck()" title="Check for updates">v·</button>
+    <button class="ico" id="refreshBtn" onclick="loadClass()" style="display:none">↻</button>
+    <button class="ico" id="homeBtn" onclick="showHome()" style="display:none">Home</button>
+  </header>
+  <main id="main"></main>
+</div>
+
+<script>
+var PAY = "https://pay.178.104.88.38.sslip.io";
+var CLASSES = [["commodities","Commodities"],["fx","FX"],["indices","Indices"],["stocks","Stocks"],["crypto","Crypto"]];
+var CUR = "commodities";
+var DATA = null;
+
+function K(){ try{return localStorage.getItem("sc_key")||"";}catch(e){return "";} }
+function DEV(){ try{ var d=localStorage.getItem("sc_dev"); if(!d){ d=(Date.now().toString(36)+Math.random().toString(36).slice(2,8)); localStorage.setItem("sc_dev",d);} return d; }catch(e){return "web";} }
+function el(id){ return document.getElementById(id); }
+function esc(s){ return (s==null?"":String(s)).replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+
+// ---------- verdict helpers ----------
+function verdictOf(o){ return (o.analysis && o.analysis.verdict) ? o.analysis.verdict.toUpperCase() : (o.score>=60?"BUY":o.score>=45?"WATCH":"SELL"); }
+function vColor(v){ return v==="BUY"?"var(--buy)":v==="SELL"?"var(--sell)":"var(--watch)"; }
+function scColor(s){ return s>=65?"var(--buy)":s>=50?"var(--watch)":"var(--sell)"; }
+function regState(reg){ return (reg && reg.state) ? String(reg.state).toUpperCase() : ""; }
+function valText(o){ return (o.validation && o.validation.label) ? String(o.validation.label) : ""; }
+var CO = null;   // opportunity currently on the consult screen (for info popups)
+var CP = null;   // trade plan for the current opportunity
+var CM = null;   // active-timeframe metrics for the current opportunity
+var CIDX = -1;   // index of the current opportunity (for re-render on TF switch)
+var TF = "1h";   // "1h" | "daily"
+
+// price formatting: more decimals for small-priced instruments
+function fmt(n){ if(n==null||!isFinite(n)) return "—"; var p=Math.abs(n);
+  var d = p>=100?2 : p>=1?4 : 6; return Number(n).toFixed(d); }
+
+// metrics for the active timeframe (1H is the row itself; Daily is o.daily)
+function tfMetrics(o){
+  if(TF==="daily" && o.daily){
+    var d=o.daily;
+    return {price:d.last, atr_pct:d.atr_pct, atr_abs:d.atr_abs, ma20:d.ma20, ma50:d.ma50,
+      mom20:d.mom20, above_ma20:d.above_ma20, above_ma50:d.above_ma50,
+      regime:d.regime, spark:d.spark, swing_lo:d.swing_lo, swing_hi:d.swing_hi, tf:"daily"};
+  }
+  return {price:o.price, atr_pct:o.atr_pct, atr_abs:o.atr_abs, ma20:o.ma20, ma50:o.ma50,
+    mom20:o.mom20, above_ma20:o.above_ma20, above_ma50:o.above_ma50,
+    regime:o.regime, spark:o.spark, swing_lo:o.swing_lo, swing_hi:o.swing_hi, tf:"1h"};
+}
+
+// ---------- trade plan (entry / stop / target) ----------
+// Stop is placed beyond the recent swing (structure) when that's sane; otherwise
+// it falls back to 1.5x ATR. Target is at 2R (1:2 reward-to-risk).
+function tradePlan(m, v){
+  var price=Number(m.price), atrp=Number(m.atr_pct);
+  if(!isFinite(price)||price<=0||!isFinite(atrp)||atrp<=0) return null;
+  if(v!=="BUY" && v!=="SELL") return null;          // WATCH = no trade yet
+  var atr = (isFinite(m.atr_abs) && m.atr_abs>0) ? Number(m.atr_abs) : price*atrp/100;
+  var rr=2, entry=price, buf=0.25*atr, sl, risk, basis="atr", swing=null;
+  if(v==="BUY"){
+    var swl=Number(m.swing_lo);
+    if(isFinite(swl) && swl>0 && swl<price){ sl=swl-buf; basis="structure"; swing=swl; }
+    else { sl=price-1.5*atr; }
+    risk=price-sl;
+    if(risk < 0.5*atr){ sl=price-1.5*atr; risk=price-sl; basis="atr"; swing=null; }   // too tight
+    else if(risk > 3.5*atr){ sl=price-1.5*atr; risk=price-sl; basis="atr"; swing=null; } // too far
+    var tp=price+rr*risk;
+  } else {
+    var swh=Number(m.swing_hi);
+    if(isFinite(swh) && swh>price){ sl=swh+buf; basis="structure"; swing=swh; }
+    else { sl=price+1.5*atr; }
+    risk=sl-price;
+    if(risk < 0.5*atr){ sl=price+1.5*atr; risk=sl-price; basis="atr"; swing=null; }
+    else if(risk > 3.5*atr){ sl=price+1.5*atr; risk=sl-price; basis="atr"; swing=null; }
+    var tp=price-rr*risk;
+  }
+  return {dir:v, entry:entry, sl:sl, tp:tp, atr:atr, risk:risk, rr:rr,
+          riskPct:risk/price*100, basis:basis, swing:swing};
+}
+
+// ---------- direction chart (inline SVG sparkline + trade levels) ----------
+function sparkSVG(m, plan){
+  var o=m;
+  var s=(o.spark||[]).filter(function(x){return typeof x==="number" && isFinite(x);});
+  if(s.length<2) return "";
+  var refs=[]; if(o.ma20!=null) refs.push(o.ma20); if(o.ma50!=null) refs.push(o.ma50);
+  if(plan){ refs.push(plan.entry, plan.sl, plan.tp); }   // keep levels in view
+  var all=s.concat(refs);
+  var lo=Math.min.apply(null,all), hi=Math.max.apply(null,all);
+  if(hi<=lo){ hi=lo+1; }
+  var pad=(hi-lo)*0.06; lo-=pad; hi+=pad;
+  var W=300,H=130,PL=4,PR=4,PT=8,PB=8;
+  function x(i){ return PL + i/(s.length-1)*(W-PL-PR); }
+  function y(v){ return PT + (1-(v-lo)/(hi-lo))*(H-PT-PB); }
+  var up = s[s.length-1] >= s[0];
+  var col = up? "var(--buy)":"var(--sell)";
+  var d="M"+x(0).toFixed(1)+" "+y(s[0]).toFixed(1);
+  for(var i=1;i<s.length;i++){ d+=" L"+x(i).toFixed(1)+" "+y(s[i]).toFixed(1); }
+  var area=d+" L"+x(s.length-1).toFixed(1)+" "+(H-PB)+" L"+x(0).toFixed(1)+" "+(H-PB)+" Z";
+  function refLine(vv,c,dash,w){ if(vv==null) return ""; var yy=y(vv).toFixed(1);
+    return '<line x1="'+PL+'" y1="'+yy+'" x2="'+(W-PR)+'" y2="'+yy+'" stroke="'+c+'" stroke-width="'+(w||1)+'" stroke-dasharray="'+dash+'" opacity=".85"/>'; }
+  var gid="g"+Math.random().toString(36).slice(2,7);
+  var levels="";
+  if(plan){
+    levels += refLine(plan.tp,"var(--buy)","5 3",1.4);
+    levels += refLine(plan.entry,"var(--steel)","1 0",1.4);
+    levels += refLine(plan.sl,"var(--sell)","5 3",1.4);
+  }
+  return '<div class="chart"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+
+    '<defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1">'+
+      '<stop offset="0" stop-color="'+col+'" stop-opacity=".28"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs>'+
+    '<path d="'+area+'" fill="url(#'+gid+')" stroke="none"/>'+
+    refLine(o.ma50,"var(--mut)","2 3")+refLine(o.ma20,"var(--steel)","4 2")+
+    levels+
+    '<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+
+    '<circle cx="'+x(s.length-1).toFixed(1)+'" cy="'+y(s[s.length-1]).toFixed(1)+'" r="3" fill="'+col+'"/>'+
+    '</svg>'+
+    '<div class="lg"><span><i style="border-color:'+col+'"></i>Price '+(up?"↑ up":"↓ down")+' ('+(m.tf==="daily"?"~1yr daily":"~1mo hourly")+')</span>'+
+      (o.ma20!=null?'<span><i style="border-color:var(--steel);border-top-style:dashed"></i>20-day</span>':'')+
+      (o.ma50!=null?'<span><i style="border-color:var(--mut);border-top-style:dotted"></i>50-day</span>':'')+
+      (plan?('<span><i style="border-color:var(--steel)"></i>Entry</span>'+
+             '<span><i style="border-color:var(--sell);border-top-style:dashed"></i>Stop</span>'+
+             '<span><i style="border-color:var(--buy);border-top-style:dashed"></i>Target</span>'):'')+
+    '</div></div>';
+}
+
+// ---------- tap-to-explain popups ----------
+function info(kind){
+  var o=CO; if(!o) return;
+  var a=o.analysis||{}, title, sub, val, body;
+  if(kind==="score"){
+    title="Score"; sub="0–100 opportunity read"; val=Math.round(o.score)+"/100";
+    var why=a.score_reasoning||"";
+    body="<p>What it is: a single 0–100 read that blends five factors — "+
+      "<b>catalyst</b> (news/fundamentals, /25), <b>trend</b> (price vs its moving averages, /25), "+
+      "<b>position</b> (where price sits in its range, /20), <b>supply</b> (supply/demand backdrop, /20) and "+
+      "<b>volatility fit</b> (is it moving enough to trade, /10). More of these lining up = a higher score.</p>"+
+      (why?("<p><b>Why "+esc(val)+":</b> "+esc(why)+"</p>"):"")+
+      "<p>Rule of thumb: 65+ is a strong setup, 50–64 worth watching, under 50 weak.</p>";
+  } else if(kind==="regime"){
+    var rg=(CM&&CM.regime)||{};
+    title="Regime ("+(TF==="daily"?"Daily":"1H")+")"; sub="Markov trend state"; val=regState(rg)||"—";
+    body="<p>What it is: the <b>Markov regime</b> — a mechanical read of whether recent price action is trending up "+
+      "(<b>BULL</b>), down (<b>BEAR</b>) or going sideways (<b>SIDE</b>), plus how <i>sticky</i> that state has been.</p>";
+    var bits=[];
+    if(rg.confidence) bits.push("confidence <b>"+esc(rg.confidence)+"</b>");
+    if(rg.n!=null) bits.push("<b>"+esc(rg.n)+"</b> sampled points");
+    if(rg.persist!=null) bits.push("it held this state <b>"+Math.round(rg.persist*100)+"%</b> of the time");
+    if(rg.next) bits.push("most likely next state <b>"+esc(String(rg.next).toUpperCase())+"</b>");
+    if(bits.length) body+="<p><b>Why "+esc(val)+":</b> "+bits.join(", ")+".</p>";
+    if(rg.vote===false) body+="<p>Note: too few samples to count toward the market-wide vote — treat this as a hint, not a confirmation.</p>";
+  } else if(kind==="entry"||kind==="sl"||kind==="tp"){
+    var p=CP; if(!p){ return; }
+    var tfw = TF==="daily" ? "daily" : "hourly";
+    var maw = TF==="daily" ? "50-day average" : "50-hour average";
+    var dirw = p.dir==="BUY" ? "long (buy)" : "short (sell)";
+    if(kind==="entry"){
+      title="Entry"; sub="Where the plan gets in"; val=fmt(p.entry);
+      body="<p>What it is: the price to open the trade, in the verdict's direction — this is a <b>"+esc(dirw)+"</b> setup.</p>"+
+        "<p><b>Why "+esc(val)+":</b> the current price is used as a market entry. For a tighter fill you can wait for a pullback toward the "+
+        "20-"+(TF==="daily"?"day":"hour")+" average"+((CM&&CM.ma20!=null)?(" ("+fmt(CM.ma20)+")"):"")+" before entering, but the plan below is measured from here.</p>";
+    } else if(kind==="sl"){
+      title="Stop loss (SL)"; sub="Where the idea is wrong"; val=fmt(p.sl);
+      body="<p>What it is: the exit that caps the loss if price goes the other way. Set it and don't move it against yourself.</p>";
+      if(p.basis==="structure"){
+        body+="<p><b>Why "+esc(val)+":</b> placed just beyond the recent <b>swing "+(p.dir==="BUY"?"low":"high")+"</b> "+
+          "("+fmt(p.swing)+") — the structural level price would have to break to prove the "+esc(dirw)+" idea wrong — "+
+          "with a small ATR buffer so a wick through it doesn't trigger you. That puts the stop ~<b>"+p.riskPct.toFixed(1)+"%</b> away.</p>";
+      } else {
+        body+="<p><b>Why "+esc(val)+":</b> no clean swing level was in range, so the stop falls back to <b>1.5× ATR</b> from entry — "+
+          "ATR (Average True Range) is this instrument's typical "+tfw+" range, here about "+fmt(p.atr)+" per bar — "+
+          "putting it ~<b>"+p.riskPct.toFixed(1)+"%</b> away, beyond ordinary noise.</p>";
+      }
+    } else {
+      title="Take profit (TP)"; sub="Where you bank it"; val=fmt(p.tp);
+      body="<p>What it is: the target to close the trade in profit.</p>"+
+        "<p><b>Why "+esc(val)+":</b> set at <b>"+p.rr+"R</b> — "+p.rr+"× the distance to your stop — a <b>1:"+p.rr+"</b> reward-to-risk trade. "+
+        "At that ratio you can be wrong more often than right and still come out ahead over many trades.</p>"+
+        "<p>The stop is your risk (1R); the target is "+p.rr+"R of reward.</p>";
+    }
+    openSheet(title,sub,val,body); return;
+  } else {
+    var vv=o.validation||{};
+    title="Validation"; sub="Real edge or noise?"; val=valText(o)||"—";
+    body="<p>What it is: a <b>Deflated Sharpe</b> check — does this instrument's edge, in the direction we're calling, look "+
+      "statistically <b>real</b> or likely just <b>noise</b>? It's deflated for how many instruments we test, so a lucky-looking chart doesn't fool it.</p>";
+    var vb=[];
+    if(vv.dsr!=null) vb.push("DSR <b>"+(Math.round(vv.dsr*100)/100)+"</b> (higher = more likely real)");
+    if(vv.n!=null) vb.push("<b>"+esc(vv.n)+"</b> bars tested");
+    if(vb.length) body+="<p><b>Why “"+esc(val)+"”:</b> "+vb.join(", ")+".</p>";
+    body+="<p>This is a quality label only — it never changes the score or the verdict.</p>";
+  }
+  openSheet(title,sub,val,body);
+}
+function openSheet(title,sub,val,body){
+  closeSheet();
+  var m=document.createElement("div"); m.className="modal"; m.id="sheet";
+  m.onclick=function(e){ if(e.target===m) closeSheet(); };
+  m.innerHTML='<div class="sheet"><button class="x" onclick="closeSheet()">Close</button>'+
+    '<div class="sub">'+esc(sub)+'</div><h3>'+esc(title)+'</h3><div class="val">'+esc(val)+'</div>'+body+'</div>';
+  document.body.appendChild(m);
+}
+function closeSheet(){ var m=el("sheet"); if(m&&m.parentNode) m.parentNode.removeChild(m); }
+// ---------- ideas board: suggest, vote, see what got built ----------
+var IDEA_CATS=[["signals","Signals"],["charts","Charts"],["alerts","Alerts"],["quiz","Quiz"],["other","Other"]];
+var SG_CAT="other", IDEAS=null;
+function _day(iso){ var d=new Date(iso+"T00:00:00Z"); return d.getUTCDate()+" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()]; }
+function loadIdeas(cb){
+  fetch(PAY+"/ideas?key="+encodeURIComponent(K())+"&_="+Date.now(),{cache:"no-store"})
+    .then(function(r){ return r.json(); }).then(function(d){ if(d&&d.ok) IDEAS=d; cb&&cb(d); })
+    .catch(function(){ cb&&cb(null); });
+}
+function openIdeas(){
+  openSheet("Ideas board","Vote on what we build next","💡",'<p class="muted">Loading…</p>');
+  loadIdeas(renderIdeas);
+}
+function renderIdeas(d){
+  var m=el("sheet"); if(!m) return;
+  var box=m.querySelector(".sheet");
+  if(!d||!d.ok){ box.innerHTML='<button class="x" onclick="closeSheet()">Close</button><h3>Ideas board</h3><p class="err">'+esc((d&&d.reason)||"Couldn't load — try again.")+'</p>'; return; }
+  var open=d.ideas.filter(function(x){ return x.status==="open"; });
+  var built=d.ideas.filter(function(x){ return x.status==="built"; });
+  var cat=function(c){ return (d.categories&&d.categories[c])||"Other"; };
+  var h='<button class="x" onclick="closeSheet()">Close</button>'+
+    '<div class="sub">Vote on what we build next</div><h3>Ideas board</h3>'+
+    '<div class="nextup">📅 Next update: <b>'+_day(d.next_update)+'</b> · Big features: <b>'+_day(d.next_big_update)+'</b><br><span class="muted">Bug fixes ship every week.</span></div>'+
+    '<button class="btn" onclick="openSuggest()">💡 Suggest an idea</button>'+
+    '<div class="sec">Open ideas · tap 👍 to vote</div>'+
+    (open.length? open.map(function(x){
+      return '<div class="idea"><div class="tx"><span class="tg">'+esc(cat(x.category))+(x.size==="big"?' · big':'')+'</span><br>'+esc(x.text)+'</div>'+
+        '<button class="vote'+(x.mine?' on':'')+'" onclick="voteIdea('+(+x.id)+',this)">👍 '+(+x.votes)+'</button></div>';
+    }).join("") : '<p class="muted">No open ideas yet — be the first.</p>')+
+    (built.length? '<div class="sec">Built ✅ — you asked, we built it</div>'+built.map(function(x){
+      return '<div class="idea built"><div class="tx"><span class="tg">'+esc(cat(x.category))+'</span><br>'+esc(x.text)+'</div><div class="vote on" style="text-align:center">✅ '+(+x.votes)+'</div></div>';
+    }).join("") : '')+
+    '<p class="muted" style="margin-top:14px">Names are never shown. The most-voted ideas get built first.</p>'+
+    '<button class="btn ghost" style="margin-top:6px" onclick="openSuggest(\'bug\')">🐞 Report a bug (private)</button>';
+  box.innerHTML=h;
+}
+function voteIdea(id,b){
+  b.disabled=true;
+  fetch(PAY+"/ideas/vote",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({key:K(),id:id})}).then(function(r){ return r.json(); }).then(function(d){
+    b.disabled=false;
+    if(d&&d.ok){ b.className="vote"+(d.voted?" on":""); b.textContent="👍 "+d.votes; }
+    else toast((d&&d.reason)||"Couldn't vote — try again.");
+  }).catch(function(){ b.disabled=false; toast("Network error — try again."); });
+}
+function openSuggest(mode){
+  var bug=mode==="bug"; SG_CAT=bug?"bug":"other";
+  var chips=bug?'':'<div class="sec" style="margin-top:4px">What is it about?</div><div class="chips" id="sgCats" style="flex-wrap:wrap">'+
+    IDEA_CATS.map(function(c){ return '<div class="chip'+(c[0]===SG_CAT?' on':'')+'" data-c="'+c[0]+'" onclick="pickCat(this)">'+c[1]+'</div>'; }).join("")+'</div>';
+  var body='<p class="muted" style="font-size:13px;margin-top:0">'+(bug
+      ?'Something broken? Tell us what happened and where. Bug reports are private and fixed in the weekly update.'
+      :'Got an idea to make the app better? It goes on the Ideas board, where everyone can vote for it.')+
+    ' Please keep it respectful; abusive or foul messages are auto-rejected and never reach us.</p>'+chips+
+    '<textarea id="sgText" rows="5" placeholder="'+(bug?'What went wrong…':'Your idea…')+'" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);font-size:14px;font-family:inherit;resize:vertical"></textarea>'+
+    '<div id="sgDup"></div>'+
+    '<div id="sgErr" class="err" style="min-height:20px;margin:6px 0"></div>'+
+    '<button class="btn" id="sgBtn" onclick="sendSuggest()">'+(bug?'Send bug report':'Send idea')+'</button>';
+  openSheet(bug?"Report a bug":"Suggest an idea",bug?"Private · fixed weekly":"Help shape the app",bug?"🐞":"💡",body);
+  if(!bug){
+    if(!IDEAS) loadIdeas();
+    var ta=el("sgText"), tm; ta.oninput=function(){ clearTimeout(tm); tm=setTimeout(checkDup,350); };
+  }
+}
+// Plain word-overlap match against the board (no AI): catches "already built"
+// and "already on the board" before a repeat is ever sent.
+var STOP={"the":1,"and":1,"for":1,"with":1,"please":1,"add":1,"can":1,"you":1,"app":1,"would":1,"like":1,"have":1,"that":1,"this":1,"make":1,"more":1,"should":1,"could":1,"when":1,"what":1,"from":1,"into":1,"also":1,"want":1,"need":1};
+function _words(t){ var o={}; (String(t).toLowerCase().match(/[a-z0-9]+/g)||[]).forEach(function(w){
+  if(w.length>2 && !STOP[w]) o[w.replace(/s$/,"")]=1; }); return o; }
+function _sim(a,b){ var A=_words(a),B=_words(b),n=0,na=0,nb=0,k;
+  for(k in A){ na++; if(B[k]) n++; } for(k in B) nb++;
+  return (na&&nb)? n/Math.min(na,nb) : 0; }
+function checkDup(){
+  var box=el("sgDup"); if(!box) return;
+  var t=(el("sgText").value||"").trim(), best=null, bs=0;
+  if(t.length>=8 && IDEAS) IDEAS.ideas.forEach(function(x){ var v=_sim(t,x.text); if(v>bs){ bs=v; best=x; } });
+  if(!best || bs<0.6){ box.innerHTML=""; return; }
+  box.innerHTML='<div class="nextup" style="margin-top:8px">'+(best.status==="built"
+    ? '✅ <b>Already built:</b> “'+esc(best.text)+'”. Tap Update in the app if you don’t see it yet.'
+    : '💡 <b>Already on the board:</b> “'+esc(best.text)+'” · 👍 '+(+best.votes)+
+      (best.mine?'<br><span class="muted">You already voted for this one.</span>'
+        :'<br><button class="vote" style="margin-top:8px;width:100%" onclick="voteIdea('+(+best.id)+',this)">👍 Vote for it instead</button>'))+
+    '</div>';
+}
+function pickCat(c){
+  SG_CAT=c.getAttribute("data-c");
+  var all=el("sgCats").children; for(var i=0;i<all.length;i++) all[i].className="chip"+(all[i]===c?" on":"");
+}
+function sendSuggest(){
+  var t=(el("sgText").value||"").trim();
+  if(t.length<6){ el("sgErr").textContent="Please add a little more detail."; return; }
+  var b=el("sgBtn"), label=b.textContent; b.disabled=true; b.textContent="Sending…"; el("sgErr").textContent="";
+  fetch(PAY+"/suggest",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({key:K(),text:t,category:SG_CAT})}).then(function(r){ return r.json(); }).then(function(d){
+    if(d&&d.ok){ closeSheet();
+      if(d.dup==="built") toast("Good news — that's already in the app ✅");
+      else if(d.dup==="open") toast("Already on the board — we counted your vote 👍");
+      else toast(d.bug?"Thanks! Bug sent — fixes ship weekly.":"Thanks! Your idea is on the board.");
+      IDEAS=null; }
+    else { el("sgErr").textContent=(d&&d.reason)||"Couldn't submit — try again."; b.disabled=false; b.textContent=label; }
+  }).catch(function(){ el("sgErr").textContent="Network error — try again."; b.disabled=false; b.textContent=label; });
+}
+function showOutlook(){
+  var o=CO; if(!o||!o.outlook) return;
+  var ol=o.outlook;
+  var infl=(ol.influences||[]).map(function(s){ return '<li>'+esc(s)+'</li>'; }).join("");
+  var heads=ol.headlines||[];
+  var hh = heads.length ? ('<div class="sec">Headlines'+(ol.news_tilt?(' · '+esc(ol.news_tilt)):'')+'</div>'+
+    heads.map(function(h){
+      return '<a class="hl" href="'+esc(h.link||"#")+'" target="_blank" rel="noopener">'+
+        '<b>'+esc(h.title||"")+'</b><span>'+esc(h.source||"")+(h.date?(' · '+esc(h.date)):'')+'</span></a>';
+    }).join("")) : '';
+  var body=
+    '<p><b>'+esc(ol.headline||"")+'</b></p>'+
+    (infl?('<div class="sec">What’s influencing it today</div><ul class="upd">'+infl+'</ul>'):'')+
+    '<div class="sec">Potential outcomes</div>'+
+    '<p style="color:var(--buy)">▲ '+esc(ol.bull_case||"")+'</p>'+
+    '<p style="color:var(--sell)">▼ '+esc(ol.bear_case||"")+'</p>'+
+    hh+
+    (ol.bottom_line?('<div class="sec">Bottom line</div><p>'+esc(ol.bottom_line)+'</p>'):'')+
+    '<p class="muted" style="font-size:11px;margin-top:14px">Mechanical read of the tape + fundamentals, with live headlines from Google News, as of '+esc(ol.as_of||"")+'. Educational — not financial advice.</p>';
+  openSheet("Daily outlook", o.name||"", ol.verdict||"", body);
+}
+function setTF(tf){
+  if(tf===TF) return;
+  if(tf==="daily" && !(CO&&CO.daily)) return;   // no daily data → ignore
+  TF=tf; try{ localStorage.setItem("sc_tf",tf); }catch(e){}
+  if(CIDX>=0) consult(CIDX);
+}
+
+// ---------- gate ----------
+function showGate(msg){
+  el("refreshBtn").style.display="none"; el("homeBtn").style.display="none";
+  el("main").innerHTML =
+    '<div class="gate">'+
+    '<h1>STAALCALIBUR</h1>'+
+    '<div class="tag">Pre-trade intel — check before you pull the trigger.</div>'+
+    '<input id="keyIn" placeholder="Enter your activation key" value="'+esc(K())+'" autocapitalize="characters" autocomplete="off">'+
+    '<div class="err" id="gErr">'+(msg?esc(msg):"")+'</div>'+
+    '<button class="btn" onclick="unlock()">Unlock</button>'+
+    // Google Play bans in-app links to outside payment, so hide the "get the app"
+    // link when running as the installed app (standalone). Web visitors still see it.
+    (((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone)
+       ? ''
+       : '<a class="btn ghost" href="https://staalwag.com/store" target="_blank" rel="noopener">Need a key? Get the app →</a>')+
+    '<div class="muted">Rental only. Your key is remembered on this device. Decision-support &amp; education only — not financial advice.</div>'+
+    '</div>';
+}
+function unlock(){
+  var k=(el("keyIn").value||"").trim();
+  if(!k){ el("gErr").textContent="Enter your activation key."; return; }
+  el("gErr").textContent="Checking…";
+  try{ localStorage.setItem("sc_key",k); }catch(e){}
+  loadClass(function(ok,reason){
+    if(ok){ showHome(); }
+    else { el("gErr") && (el("gErr").textContent = reason || "Key not valid or expired."); }
+  });
+}
+
+// ---------- data ----------
+function loadClass(cb){
+  var url = "/appdata?class="+CUR+"&key="+encodeURIComponent(K())+"&dev="+encodeURIComponent(DEV());
+  fetch(url).then(function(r){
+    if(r.status===403){ throw {code:403}; }
+    return r.text();
+  }).then(function(t){
+    DATA = t? JSON.parse(t) : {opportunities:[]};
+    if(cb) cb(true);
+    else renderHome();
+  }).catch(function(e){
+    if(e && e.code===403){ showGate("Key not valid or expired. Renew to continue."); if(cb) cb(false,"Key not valid or expired."); }
+    else { if(cb) cb(false,"Network error — try again."); else el("main").innerHTML='<p class="muted">Network error. Pull to retry.</p>'; }
+  });
+}
+
+// ---------- home ----------
+function showHome(){
+  el("refreshBtn").style.display=""; el("homeBtn").style.display="none";
+  el("main").innerHTML = '<div id="refbox"></div>'+
+    '<button class="btn" style="margin:2px 0 12px" onclick="openQuiz()">🧠 Daily Trader Quiz — win monthly</button>'+
+    '<div class="chips" id="chips"></div><div id="list"></div>'+
+    '<button class="btn ghost" style="margin-top:18px" onclick="openIdeas()">💡 Ideas board — suggest &amp; vote</button>';
+  el("chips").innerHTML = CLASSES.map(function(c){
+    return '<div class="chip'+(c[0]===CUR?' on':'')+'" onclick="pick(\''+c[0]+'\')">'+c[1]+'</div>';
+  }).join("");
+  if(DATA) renderHome(); else loadClass();
+  loadRef();
+  loadNotices();
+}
+// one-off messages from us: "already built", "you asked, we built it"
+function loadNotices(){
+  if(el("sheet")||el("upd")) return;   // try again next open rather than lose it
+  fetch(PAY+"/notices?key="+encodeURIComponent(K())+"&_="+Date.now(),{cache:"no-store"})
+    .then(function(r){ return r.json(); }).then(function(d){
+      if(!d||!d.notices||!d.notices.length||el("sheet")||el("upd")) return;
+      openSheet("Message from STAALWAG","About your idea","💬",
+        d.notices.map(function(t){ return '<p>'+esc(t)+'</p>'; }).join("")+
+        '<button class="btn" onclick="openIdeas()">Open the Ideas board</button>');
+    }).catch(function(){});
+}
+// ---------- refer & earn ----------
+var REFLINK="";
+function loadRef(){
+  var box=el("refbox"); if(!box) return;
+  fetch(PAY+"/reflink?key="+encodeURIComponent(K())).then(function(r){ return r.json(); }).then(function(d){
+    if(!d||!d.ok){ box.innerHTML=""; return; }
+    REFLINK=d.link;
+    var friends=d.referrals||0, months=d.free_months||0;
+    var stat='<div class="refstats">'+
+      '<div><b>'+friends+'</b><span>friend'+(friends==1?"":"s")+' joined</span></div>'+
+      '<div><b>'+months+'</b><span>free month'+(months==1?"":"s")+' earned</span></div>'+
+      '</div>';
+    var state="";
+    if(d.reward_active && d.reward_until){
+      var dt=new Date(d.reward_until*1000).toLocaleDateString();
+      state='<div class="refnote ok">✓ Free month active until '+esc(dt)+' — refer again after it ends to earn the next one.</div>';
+    } else {
+      state='<div class="refnote">One free month at a time — no stacking. When your referral subscribes, your next free month starts.</div>';
+    }
+    box.innerHTML='<div class="refcard">'+
+      '<div class="reftop">🎁 REFER &amp; EARN</div>'+
+      '<div class="refbig">Give a friend the app — get a <b>FREE month</b></div>'+
+      stat+state+
+      '<button class="btn refbtn" onclick="shareRef()">Share my link &amp; earn</button>'+
+    '</div>';
+  }).catch(function(){ box.innerHTML=""; });
+}
+function shareRef(){
+  if(!REFLINK) return;
+  if(navigator.share){
+    navigator.share({title:"STAALCALIBUR Mobile App", text:"Pre-trade intel for every market — check before you trade.", url:REFLINK}).catch(function(){});
+  } else {
+    try{ navigator.clipboard.writeText(REFLINK); toast("Referral link copied!"); }
+    catch(e){ toast(REFLINK); }
+  }
+}
+function pick(k){ CUR=k; showHome(); loadClass(); }
+function renderHome(){
+  var ops=(DATA&&DATA.opportunities)||[];
+  if(!ops.length){ el("list").innerHTML='<p class="muted">No data for this class yet.</p>'; return; }
+  el("list").innerHTML = ops.slice(0,20).map(function(o,i){
+    var v=verdictOf(o);
+    return '<div class="row" onclick="consult('+i+')">'+
+      '<div class="rk">#'+(i+1)+'</div>'+
+      '<div class="rname"><b>'+esc(o.name)+'</b><span>'+esc(o.category||"")+' · '+esc(o.trend_desc||"")+'</span></div>'+
+      '<div class="badge" style="background:'+vColor(v)+'22;color:'+vColor(v)+'">'+v+'</div>'+
+      '<div class="sc" style="color:'+scColor(o.score)+'">'+Math.round(o.score)+'</div></div>';
+  }).join("");
+}
+
+// ---------- trader quiz ----------
+var QSTATE=null, QANS={};
+function openQuiz(){
+  el("refreshBtn").style.display="none"; el("homeBtn").style.display="";
+  el("main").innerHTML='<p class="muted">Loading quiz…</p>';
+  fetch(PAY+"/quiz?key="+encodeURIComponent(K())).then(function(r){ return r.json(); }).then(function(d){
+    if(!d||!d.ok){ el("main").innerHTML='<p class="muted">'+esc((d&&d.reason)||"Couldn't load the quiz.")+'</p>'; return; }
+    QSTATE=d; QANS={};
+    if(d.exhausted) renderQuizExhausted(d);
+    else if(d.played) renderQuizDone(d);
+    else renderQuizPlay(d);
+  }).catch(function(){ el("main").innerHTML='<p class="muted">Network error. Try again.</p>'; });
+}
+function quizHeader(d){
+  return '<div class="qhdr">'+
+    '<div><div class="l">Your ID</div><div class="v">'+esc(d.anon_id||"—")+'</div></div>'+
+    '<div><div class="l">Month</div><div class="v">'+(d.month_points||0)+'</div></div>'+
+    '<div><div class="l">Rank</div><div class="v">'+(d.rank?("#"+d.rank):"—")+'</div></div>'+
+    '<div><div class="l">Days left</div><div class="v">'+(d.days_left!=null?d.days_left:"—")+'</div></div>'+
+  '</div>';
+}
+function quizBoard(d){
+  var b=d.leaderboard||[]; if(!b.length) return "";
+  return '<div class="sec">Leaderboard · this month</div>'+b.map(function(r,i){
+    var me=(r.anon===d.anon_id);
+    return '<div class="lbrow'+(me?" me":"")+'"><span class="rk">#'+(i+1)+'</span>'+
+      '<span class="aid">'+esc(r.anon)+(me?" (you)":"")+'</span><span class="pts">'+r.points+' pts</span></div>';
+  }).join("");
+}
+function pickAns(qid, idx, n){
+  QANS[qid]=idx;
+  for(var i=0;i<n;i++){ var e=el("o-"+qid+"-"+i); if(e) e.className="qopt"+(i===idx?" sel":""); }
+}
+function renderQuizPlay(d){
+  var qs=d.questions.map(function(q,qi){
+    var opts=q.options.map(function(o,oi){
+      return '<div class="qopt" id="o-'+q.id+'-'+oi+'" onclick="pickAns(\''+q.id+'\','+oi+','+q.options.length+')">'+esc(o)+'</div>';
+    }).join("");
+    return '<div class="qcard"><div class="qnum">Q'+(qi+1)+' · '+esc(q.level)+'</div>'+
+      '<div class="qq">'+esc(q.q)+'</div>'+opts+'</div>';
+  }).join("");
+  el("main").innerHTML=quizHeader(d)+
+    '<div class="qintro">5 questions, picked fresh for you today. One quiz per day — points build all month. Top the board to win.</div>'+
+    qs+'<button class="btn" id="qSubmit" style="margin-top:12px" onclick="submitQuiz()">Submit answers</button>'+
+    quizBoard(d);
+  window.scrollTo(0,0);
+}
+function submitQuiz(){
+  var n=(QSTATE.questions||[]).length, answered=Object.keys(QANS).length;
+  if(answered<n){ toast("Answer all "+n+" questions first."); return; }
+  var b=el("qSubmit"); b.disabled=true; b.textContent="Scoring…";
+  fetch(PAY+"/quiz/answer",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({key:K(),answers:QANS})}).then(function(r){ return r.json(); }).then(function(d){
+    if(d&&d.ok){ QSTATE=d; renderQuizDone(d); }
+    else if(d&&d.reason==="already_played"){ renderQuizDone(d.state||{played:true}); }
+    else { toast((d&&d.reason)||"Couldn't submit."); b.disabled=false; b.textContent="Submit answers"; }
+  }).catch(function(){ toast("Network error."); b.disabled=false; b.textContent="Submit answers"; });
+}
+function renderQuizDone(d){
+  var body="";
+  if(d.results && d.results.length){
+    body+='<div class="qdone">You scored '+d.score_today+'/'+(d.total||d.results.length)+' today 🎉</div>';
+    body+=d.results.map(function(r,qi){
+      var total=(r.poll||[]).reduce(function(a,b){return a+b;},0)||1;
+      var opts=r.options.map(function(o,oi){
+        var pct=Math.round((r.poll[oi]||0)/total*100);
+        var cls="qres"; if(oi===r.correct) cls+=" ok"; else if(oi===r.chosen) cls+=" bad";
+        return '<div class="'+cls+'"><div class="qbar" style="width:'+pct+'%"></div>'+
+          '<span class="qlab">'+esc(o)+'</span><span class="qpct">'+pct+'%</span></div>';
+      }).join("");
+      return '<div class="qcard"><div class="qnum">Q'+(qi+1)+(r.ok?" ✅":" ❌")+'</div>'+
+        '<div class="qq">'+esc(r.q)+'</div>'+opts+'</div>';
+    }).join("");
+  } else {
+    body+='<div class="qdone">You’ve played today'+(d.score_today!=null?(" — scored "+d.score_today+"/5"):"")+
+      '. Come back tomorrow for 5 fresh questions.</div>';
+  }
+  el("main").innerHTML=quizHeader(d)+body+quizBoard(d)+
+    '<div class="foot">Winners are decided at month end. Everyone gets a private, random ID (like '+esc(d.anon_id||"SC-XXXXXX")+') — only that ID is ever shown publicly, never your name.</div>';
+  window.scrollTo(0,0);
+}
+
+function renderQuizExhausted(d){
+  el("main").innerHTML=quizHeader(d)+
+    '<div class="qdone">You’ve answered every question in the bank 🏅 Nothing repeats — new questions are added regularly, so check back soon.</div>'+
+    quizBoard(d)+
+    '<div class="foot">Winners are decided at month end. Only your random ID ('+esc(d.anon_id||"SC-XXXXXX")+') is ever shown publicly — never your name.</div>';
+  window.scrollTo(0,0);
+}
+
+// ---------- consult ----------
+function consult(i){
+  var o=(DATA.opportunities||[])[i]; if(!o) return;
+  CIDX=i; CO=o; CM=tfMetrics(o); var v=verdictOf(o); CP=tradePlan(CM, v); closeSheet();
+  el("refreshBtn").style.display="none"; el("homeBtn").style.display="";
+  var vc=vColor(v);
+  var a=o.analysis||{};
+  var bd=o.breakdown||{};
+  var maxes={catalyst:25,trend:25,position:20,supply:20,volfit:10};
+  var bars=Object.keys(maxes).map(function(k){
+    var pct=Math.max(0,Math.min(100,Math.round((bd[k]||0)/maxes[k]*100)));
+    return '<div class="bar"><span class="bl">'+k+'</span><div class="bt"><i style="width:'+pct+'%"></i></div></div>';
+  }).join("");
+  var rg=regState(CM.regime), vl=valText(o);
+  // checklist (trend/momentum/volatility/regime follow the chosen timeframe)
+  var isBuy=v==="BUY";
+  var checks=[
+    ["Score ≥ 60", o.score>=60],
+    ["Trend aligned", isBuy ? (CM.above_ma20&&CM.above_ma50) : (!CM.above_ma20&&!CM.above_ma50)],
+    ["Momentum "+(isBuy?"up":"down"), isBuy ? (CM.mom20>0) : (CM.mom20<0)],
+    ["Volatility sane", (CM.atr_pct!=null && CM.atr_pct<5)],
+    ["Conviction not Low", (a.conviction||"").toLowerCase()!=="low"]
+  ];
+  if(rg){ checks.push(["Regime backs it", isBuy?rg.indexOf("BULL")>=0:rg.indexOf("BEAR")>=0]); }
+  var passed=checks.filter(function(c){return c[1];}).length;
+  var chkHtml=checks.map(function(c){
+    return '<div class="chk"><span class="m">'+(c[1]?"✅":"⬜")+'</span><span>'+c[0]+'</span></div>';
+  }).join("");
+
+  // timeframe switch
+  var hasDaily=!!o.daily;
+  var tfSwitch='<div class="tfsw">'+
+    '<button class="tfb'+(TF==="1h"?" on":"")+'" onclick="setTF(\'1h\')">1H</button>'+
+    '<button class="tfb'+(TF==="daily"?" on":"")+'"'+(hasDaily?'':' disabled')+' onclick="setTF(\'daily\')">Daily</button>'+
+    '</div>';
+
+  // primary tiles — tappable for an explanation
+  var tiles='<div class="kpis">'+
+    '<div class="kpi tap" onclick="info(\'score\')"><span class="i">ⓘ</span><div class="l">Score</div><div class="v" style="color:'+scColor(o.score)+'">'+Math.round(o.score)+'/100</div></div>';
+  if(rg){ tiles+='<div class="kpi tap" onclick="info(\'regime\')"><span class="i">ⓘ</span><div class="l">Regime ('+(TF==="daily"?"D":"1H")+')</div><div class="v">'+esc(rg)+'</div></div>'; }
+  if(vl){ tiles+='<div class="kpi tap" onclick="info(\'validation\')"><span class="i">ⓘ</span><div class="l">Validation</div><div class="v" style="font-size:12px">'+esc(vl)+'</div></div>'; }
+  tiles+='</div>';
+
+  // trade plan tiles (entry / stop / target) — tappable for the reasoning
+  var plan=CP, planHtml="";
+  if(plan){
+    var basisTxt = plan.basis==="structure" ? "swing-structure stop" : "1.5× ATR stop";
+    planHtml='<div class="sec">Trade plan · '+plan.dir+' · '+(TF==="daily"?"Daily":"1H")+' · 1:'+plan.rr+' R:R</div>'+
+      '<div class="kpis">'+
+        '<div class="kpi tap" onclick="info(\'entry\')"><span class="i">ⓘ</span><div class="l">Entry</div><div class="v" style="color:var(--steel)">'+fmt(plan.entry)+'</div></div>'+
+        '<div class="kpi tap" onclick="info(\'sl\')"><span class="i">ⓘ</span><div class="l">Stop</div><div class="v" style="color:var(--sell)">'+fmt(plan.sl)+'</div></div>'+
+        '<div class="kpi tap" onclick="info(\'tp\')"><span class="i">ⓘ</span><div class="l">Target</div><div class="v" style="color:var(--buy)">'+fmt(plan.tp)+'</div></div>'+
+      '</div>'+
+      '<div class="muted" style="margin:2px 2px 0">'+basisTxt+' ~'+plan.riskPct.toFixed(1)+'% away · target at '+plan.rr+'R. Tap any level for the reasoning.</div>';
+  } else {
+    planHtml='<div class="sec">Trade plan</div>'+
+      '<div class="muted">No trade yet — the read is <b>'+v+'</b> (wait for a directional setup). Entry, stop and target appear when a BUY or SELL lines up.</div>';
+  }
+
+  // today's outlook teaser card (opens the full brief)
+  var ol=o.outlook, olCard="";
+  if(ol){
+    olCard='<div class="olcard" onclick="showOutlook()">'+
+      '<div class="oltop">📰 Today’s outlook'+(ol.as_of?(' · '+esc(ol.as_of)):'')+'</div>'+
+      '<div class="olhead">'+esc(ol.headline||"")+'</div>'+
+      '<div class="olcta">Tap to read what’s influencing it &amp; the potential outcomes →</div>'+
+    '</div>';
+  }
+
+  el("main").innerHTML =
+    '<div class="verdict" style="background:'+vc+'1a;border:1px solid '+vc+'55">'+
+      '<div class="big" style="color:'+vc+'">'+esc(o.name)+' · '+v+'</div>'+
+      '<div class="conv">'+esc(a.conviction? (a.conviction+" conviction") : "")+'  ·  '+passed+'/'+checks.length+' checks</div>'+
+    '</div>'+
+    '<button class="btn ghost" style="margin:0 0 4px" onclick="shareCard()">📤 Share this read</button>'+
+    olCard+
+    '<div class="sec" style="display:flex;align-items:center;justify-content:space-between">'+
+      '<span>Direction &amp; levels</span>'+tfSwitch+'</div>'+
+    (sparkSVG(CM, plan)||'<p class="muted">Chart data not available for this timeframe.</p>')+
+    tiles+
+    planHtml+
+    '<div class="kpis">'+
+      '<div class="kpi"><div class="l">Price</div><div class="v">'+fmt(CM.price)+'</div></div>'+
+      '<div class="kpi"><div class="l">Mom'+(TF==="daily"?"20d":"20h")+'</div><div class="v" style="color:'+(CM.mom20>=0?"var(--buy)":"var(--sell)")+'">'+(CM.mom20>=0?"+":"")+esc(CM.mom20)+'%</div></div>'+
+      '<div class="kpi"><div class="l">ATR%</div><div class="v">'+esc(CM.atr_pct)+'%</div></div>'+
+    '</div>'+
+    '<div class="sec">Pre-trade checklist</div>'+chkHtml+
+    '<div class="sec">Score breakdown</div>'+bars+
+    '<div class="sec">Why</div><div class="why">'+esc(a.summary||o.note||"—")+(a.price_reasoning?('<br><br>'+esc(a.price_reasoning)):'')+'</div>'+
+    '<div class="foot">STAALCALIBUR is decision-support &amp; education only — a mechanical read of the data, not financial advice and not a signal to trade. Entry, stop and target are illustrative levels derived from price structure (recent swings) and volatility (ATR), not instructions. Tap any tile marked ⓘ for what it means. You alone decide; trade a demo first and never risk more than you can lose.</div>';
+  window.scrollTo(0,0);
+}
+
+// ---------- auto-update: notify the renter, one-tap install ----------
+var updSnoozed = false, UPD_AVAILABLE = false;
+function installedVer(){ try{ return localStorage.getItem("sc_ver")||""; }catch(e){ return ""; } }
+function setInstalledVer(v){ try{ localStorage.setItem("sc_ver", v); }catch(e){} setVerLabel(); }
+function verCmp(a,b){
+  var pa=String(a).split("."), pb=String(b).split("."), n=Math.max(pa.length,pb.length);
+  for(var i=0;i<n;i++){ var x=parseInt(pa[i]||"0",10)||0, y=parseInt(pb[i]||"0",10)||0;
+    if(x>y) return 1; if(x<y) return -1; }
+  return 0;
+}
+function setVerLabel(){ var b=el("verBtn"); if(b) b.textContent = "v"+(installedVer()||"·"); }
+function markUpd(on){ UPD_AVAILABLE=on; var b=el("verBtn"); if(b) b.className = "ico"+(on?" hasupd":""); }
+function toast(msg){
+  var t=el("toast"); if(!t){ t=document.createElement("div"); t.id="toast"; t.className="toast"; document.body.appendChild(t); }
+  t.textContent=msg; t.style.opacity="1"; clearTimeout(t._h); t._h=setTimeout(function(){ t.style.opacity="0"; }, 2800);
+}
+// silent check on open/resume — glows the version button if something's newer.
+function checkUpdate(){
+  fetch("/appversion?_="+Date.now(),{cache:"no-store"}).then(function(r){ return r.json(); }).then(function(d){
+    if(!d||!d.version) return;
+    var cur=installedVer();
+    if(!cur){ setInstalledVer(d.version); return; }   // first run: adopt current silently
+    if(verCmp(d.version,cur)>0){ markUpd(true); if(!updSnoozed) showUpdate(d); }
+    else { markUpd(false); }
+  }).catch(function(){});
+}
+// user tapped the version button — always give feedback.
+function manualCheck(){
+  toast("Checking for updates…");
+  fetch("/appversion?_="+Date.now(),{cache:"no-store"}).then(function(r){ return r.json(); }).then(function(d){
+    if(!d||!d.version){ toast("Couldn't check — try again."); return; }
+    var cur=installedVer();
+    if(!cur){ setInstalledVer(d.version); toast("You're on the latest (v"+d.version+")."); markUpd(false); return; }
+    if(verCmp(d.version,cur)>0){ updSnoozed=false; markUpd(true); showUpdate(d); }
+    else { toast("You're on the latest (v"+d.version+")."); markUpd(false); }
+  }).catch(function(){ toast("Network error — try again."); });
+}
+function showUpdate(d){
+  if(el("upd")) return;
+  var labels={feature:"New features",bug:"Bug fixes",security:"Security update",improvement:"Improvements"};
+  var typeLabel=labels[d.type]||"Update available";
+  var notes=(d.notes||[]).map(function(n){ return '<li>'+esc(n)+'</li>'; }).join("");
+  var m=document.createElement("div"); m.className="modal"; m.id="upd";
+  m.innerHTML='<div class="sheet">'+
+    '<div class="sub">'+esc(typeLabel)+' · v'+esc(d.version)+(d.date?(' · '+esc(d.date)):'')+'</div>'+
+    '<h3>'+esc(d.title||"A new version is ready")+'</h3>'+
+    (notes?('<ul class="upd">'+notes+'</ul>'):'')+
+    '<div id="updAsked"></div>'+
+    '<button class="btn" id="updBtn" onclick="doUpdate()">Update now</button>'+
+    '<button class="btn ghost" style="margin-top:8px" onclick="snoozeUpdate()">Later</button>'+
+    '</div>';
+  document.body.appendChild(m);
+  // "You asked, we built it": ideas from the board shipped in the last 30 days.
+  loadIdeas(function(x){
+    var box=el("updAsked"); if(!box||!x||!x.ok) return;
+    var cut=Date.now()/1000-30*86400;
+    var b=x.ideas.filter(function(i){ return i.status==="built" && (i.built_at||0)>=cut; });
+    if(b.length) box.innerHTML='<div class="sec">You asked, we built it</div><ul class="upd">'+
+      b.map(function(i){ return '<li>'+esc(i.text)+' <span class="muted">· 👍 '+(+i.votes)+'</span></li>'; }).join("")+'</ul>';
+  });
+}
+function snoozeUpdate(){ updSnoozed=true; var m=el("upd"); if(m&&m.parentNode) m.parentNode.removeChild(m); }
+
+// ---------- shareable branded card (canvas -> native share / download) ----------
+function _wrap(ctx,text,x0,y0,maxW,lh,maxLines){
+  var words=(text||"").split(" "), line="", y=y0, n=0;
+  for(var i=0;i<words.length;i++){
+    var t=line+words[i]+" ";
+    if(ctx.measureText(t).width>maxW && line){
+      ctx.fillText(line.trim(),x0,y); line=words[i]+" "; y+=lh; n++;
+      if(n>=maxLines-1){ break; }
+    } else line=t;
+  }
+  ctx.fillText(line.trim(),x0,y);
+}
+function shareCard(){
+  var o=CO; if(!o) return;
+  var v=verdictOf(o), a=o.analysis||{};
+  var vc = v==="BUY"?"#2ecc71":v==="SELL"?"#ff5b5b":"#f2c14e";
+  var W=1080,H=1080, c=document.createElement("canvas"); c.width=W; c.height=H;
+  var x=c.getContext("2d");
+  var g=x.createLinearGradient(0,0,0,H); g.addColorStop(0,"#131a26"); g.addColorStop(1,"#0a0e15");
+  x.fillStyle=g; x.fillRect(0,0,W,H);
+  x.fillStyle=vc; x.fillRect(0,0,18,H);
+  x.textBaseline="alphabetic";
+  x.fillStyle="#8aa0b4"; x.font="700 34px Arial"; x.fillText("STAALCALIBUR · V13", 72, 118);
+  x.fillStyle="#e7edf3"; x.font="900 88px Arial"; x.fillText(String(o.name).slice(0,17), 68, 250);
+  x.fillStyle=vc; x.font="900 150px Arial"; x.fillText(v, 68, 420);
+  x.fillStyle="#c7d2dd"; x.font="700 48px Arial"; x.fillText("Score "+Math.round(o.score)+"/100", 72, 500);
+  x.fillStyle="#c7d2dd"; x.font="400 42px Arial";
+  _wrap(x, (o.outlook&&o.outlook.headline)||a.summary||"", 72, 610, W-150, 56, 5);
+  x.fillStyle="#6ea8fe"; x.font="800 46px Arial"; x.fillText("Get the app · staalwag.com", 72, H-96);
+  x.fillStyle="#4d5a6c"; x.font="400 27px Arial"; x.fillText("Educational only — not financial advice.", 72, H-48);
+  c.toBlob(function(blob){
+    if(!blob){ toast("Couldn't build card."); return; }
+    var file=new File([blob],"staalcalibur.png",{type:"image/png"});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({files:[file], text:o.name+" — "+v+" · STAALCALIBUR", url:"https://staalwag.com"}).catch(function(){});
+    } else {
+      var url=URL.createObjectURL(blob), a2=document.createElement("a");
+      a2.href=url; a2.download="staalcalibur.png"; document.body.appendChild(a2); a2.click(); a2.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+      toast("Card saved — share it anywhere.");
+    }
+  },"image/png");
+}
+function doUpdate(){
+  var b=el("updBtn"); if(b){ b.textContent="Updating…"; b.disabled=true; }
+  function finish(){
+    fetch("/appversion",{cache:"no-store"}).then(function(r){ return r.json(); })
+      .then(function(d){ if(d&&d.version) setInstalledVer(d.version); })
+      .catch(function(){})
+      .then(function(){ location.reload(true); });
+  }
+  try{
+    var jobs=[];
+    if(window.caches){ jobs.push(caches.keys().then(function(ks){
+      return Promise.all(ks.map(function(k){ return caches.delete(k); })); })); }
+    if("serviceWorker" in navigator){ jobs.push(
+      navigator.serviceWorker.getRegistration().then(function(reg){
+        if(!reg) return; try{ reg.update(); }catch(e){}
+        if(reg.waiting) reg.waiting.postMessage({type:"SKIP_WAITING"});
+      }).catch(function(){})); }
+    Promise.all(jobs).then(finish, finish);
+  }catch(e){ finish(); }
+}
+
+// ---------- boot + PWA ----------
+try{ var _tf=localStorage.getItem("sc_tf"); if(_tf==="daily"||_tf==="1h") TF=_tf; }catch(e){}
+setVerLabel();
+if(K()){ CUR="commodities"; showHome(); } else { showGate(); }
+// updateViaCache:none stops the browser HTTP-cache from pinning an old worker.
+if("serviceWorker" in navigator){ navigator.serviceWorker.register("/scsw.js", {updateViaCache:"none"}).catch(function(){}); }
+checkUpdate();
+document.addEventListener("visibilitychange", function(){ if(!document.hidden) checkUpdate(); });
+</script>
+</body>
+</html>

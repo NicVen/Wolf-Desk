@@ -14,3 +14,15 @@ pyvenv.cfg
 # runtime database (production uses the Railway volume /data/growth.db)
 *.db
 growth.db
+
+# runtime Markov regime files (written for MT5 EAs; local fallback dir)
+markov_out/
+
+# real server env file holds the secret WOLF_PASS — never commit it
+wolf-desk.env
+deploy/wolf-desk.env
+
+# public track record — published live by the PC HQ via POST /proof.
+# Runtime state, never a source file; a committed copy would clobber the
+# live record on the next deploy.
+data/proof.json

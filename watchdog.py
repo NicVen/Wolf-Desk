@@ -39,7 +39,7 @@ STALE_MIN    = int(os.environ.get("STALE_DATA_MIN", str(max(REFRESH_MIN, 20) * 3
 COOLDOWN     = int(os.environ.get("ALERT_COOLDOWN_MIN", "30")) * 60
 TOKEN        = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 ADMINS       = [a.strip() for a in os.environ.get("ADMIN_IDS", "").split(",") if a.strip()]
-CLASSES      = ("commodities", "fx", "indices", "stocks")
+CLASSES      = ("commodities", "fx", "indices", "stocks", "crypto")
 # On boot the committed data snapshot is old; the first refresh rebuilds it.
 # Tolerate stale data until one refresh cycle (+buffer) has had time to land.
 _GRACE_SEC   = (max(REFRESH_MIN, 20) + 5) * 60

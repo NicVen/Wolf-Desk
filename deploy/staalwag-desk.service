@@ -1,0 +1,18 @@
+[Unit]
+Description=STAALWAG Desk (signal worker + track endpoint)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=wolf
+WorkingDirectory=/opt/staalwag-desk
+EnvironmentFile=/etc/staalwag-desk.env
+ExecStart=/opt/staalwag-desk/.venv/bin/python -m desk.serve
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

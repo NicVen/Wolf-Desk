@@ -124,9 +124,10 @@ def compose_outlook(brand, sections):
         from scout.regime import market_read
         mk = market_read([o.get("regime") or {} for o in shown])
         if mk.get("state"):
-            v = mk["votes"]
+            v = mk["votes"]; c = mk.get("counted", 0)
             L.append(f"📊 <b>Week regime: {RI.get(mk['state'],'')} {mk['state']}</b>"
-                     f"  <i>(Bull {v['BULL']} / Bear {v['BEAR']} / Side {v['SIDE']})</i>")
+                     f"  <i>(Bull {v['BULL']} / Bear {v['BEAR']} / Side {v['SIDE']}"
+                     f" · {c} voted)</i>")
     except Exception:
         pass
     L.append("<b>What we're watching this week:</b>")

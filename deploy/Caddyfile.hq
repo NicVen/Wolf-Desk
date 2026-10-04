@@ -1,0 +1,136 @@
+# =====================================================================
+# Global options.
+# Restrict to HTTP/1.1 + HTTP/2 (no HTTP/3). noVNC's websockify only
+# speaks WebSockets over HTTP/1.1; when Caddy advertises HTTP/3 the
+# browser switches to it and the cloud-desktop WebSocket fails with
+# "Failed to connect to server". Dropping h3 keeps the desk working
+# while every other site still gets HTTP/2.
+# =====================================================================
+{
+	servers {
+		protocols h1 h2
+	}
+}
+
+# STAALWAG HQ — one VPS, every desk, automatic HTTPS.
+#
+# All hostnames are free sslip.io names that resolve to the VPS IP
+# (<label>.178.104.88.38.sslip.io -> 178.104.88.38), so Caddy issues a real cert
+# for each with no domain purchase. Swap to real domains later by replacing the
+# site addresses and reloading Caddy — the hub page auto-derives its links from
+# whatever host it is served on, so it keeps working.
+#
+# Ports (all bound behind Caddy; only 80/443 are open in ufw):
+#   wolf 8777 · staalwag 8781 · veldrin 8782 · ea-forge = static files
+
+# =====================================================================
+# Real domain: staalwag.com (via Cloudflare). For Caddy to obtain the
+# Let's Encrypt certs, set the Cloudflare DNS records to "DNS only" (grey
+# cloud) first; once issued you may re-enable the proxy with SSL mode
+# "Full (strict)". Apex + www + app + pay all terminate here.
+# =====================================================================
+staalwag.com, www.staalwag.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8777
+}
+# --- WOLF Intraday Intel Desk (branded subdomain) ---
+wolf.staalwag.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8777
+}
+app.staalwag.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8777
+}
+pay.staalwag.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8790
+}
+# --- STAALWAG HQ (central command center) — admin token gates the data ---
+hq.staalwag.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8790
+}
+
+# --- HQ hub (apex, sslip fallback) ---
+178.104.88.38.sslip.io {
+	encode zstd gzip
+	root * /opt/wolf-desk/deploy/hub
+	file_server
+}
+
+# --- WOLF Intraday Desk (PWA + STAALCALIBUR engine) ---
+wolf.178.104.88.38.sslip.io {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8777
+}
+
+# --- EA Forge (static single-page app) ---
+forge.178.104.88.38.sslip.io {
+	encode zstd gzip
+	root * /opt/ea-forge
+	file_server
+}
+
+# --- STAALWAG Desk: landing page + track JSON from the worker ---
+staalwag.178.104.88.38.sslip.io {
+	encode zstd gzip
+	handle /track_record.json* {
+		reverse_proxy 127.0.0.1:8781
+	}
+	handle /latest_signal.json* {
+		reverse_proxy 127.0.0.1:8781
+	}
+	handle {
+		root * /opt/staalwag-desk/landing
+		file_server
+	}
+}
+
+# --- VELDRIN Desk: landing page + track JSON from the worker ---
+veldrin.178.104.88.38.sslip.io {
+	encode zstd gzip
+	handle /track_record.json* {
+		reverse_proxy 127.0.0.1:8782
+	}
+	handle /latest_signal.json* {
+		reverse_proxy 127.0.0.1:8782
+	}
+	handle {
+		root * /opt/wolf-desk/deploy/veldrin-landing
+		file_server
+	}
+}
+
+# --- STAALWAG HQ (central command center, sslip fallback) ---
+hq.178.104.88.38.sslip.io {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8790
+}
+
+# --- Licensing / payments (NOWPayments + activation codes) ---
+# Public on purpose: clients hit /buy + /checkout, EAs hit /verify, NOWPayments
+# hits /ipn (verified by HMAC signature). /admin/* is guarded by ADMIN_TOKEN.
+pay.178.104.88.38.sslip.io {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8790
+}
+
+# --- STAALCALIBUR app (installable PWA, license-gated; served by the wolf desk) ---
+app.178.104.88.38.sslip.io {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8777
+}
+
+# --- Cloud desktop (XFCE via noVNC) — the "like my PC" workspace ---
+# Password gate lives in /etc/caddy/desk-auth.conf, written by desktop-setup.sh
+# (kept out of git). VNC itself is bound to localhost; Caddy is the only way in.
+desk.178.104.88.38.sslip.io {
+	encode zstd gzip
+	import /etc/caddy/desk-auth.conf
+	# Bare "/" -> straight onto the desktop (auto-connect, scale to screen).
+	@root path /
+	redir @root /vnc.html?autoconnect=true&resize=remote
+	# noVNC needs websockets; Caddy upgrades them automatically.
+	reverse_proxy 127.0.0.1:6080
+}
