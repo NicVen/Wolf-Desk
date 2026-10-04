@@ -575,6 +575,14 @@ function tgSend(text) {
   });
 }
 
+// Metals, oil and indices are priced on futures, which sit away from the spot /
+// CFD price a broker shows (gold ~$20 on 4 Oct). Say so, and give distances.
+function futuresNote(symbol) {
+  const p = PAIRS.find(x => x.symbol === symbol);
+  if (!p || !p.yahoo.endsWith("=F")) return "";
+  return `Priced on ${p.yahoo} futures: your broker's price may differ. Use the pip distances from your own entry.`;
+}
+
 function fmtSignal(r, call) {
   const icon = call.direction;
   const tf   = r.timeframe || "INTRADAY";
@@ -590,6 +598,7 @@ function fmtSignal(r, call) {
     `Stop:     ${call.sl}  (-${pips(call.entry, call.sl)} pips)`,
     `Target:   ${call.tp}  (+${pips(call.tp, call.entry)} pips, ${TARGET_R}R)`,
     `Time-stop: closes at market after ${HOLD_HOURS}h if neither is hit`,
+    futuresNote(r.symbol),
     `---`,
     `Trend:  ${r.TREND} | ADX: ${r.ADX}`,
     `RSI:    ${r.RSI} | MACD: ${r.MACD > 0 ? "+" : ""}${r.MACD}`,
