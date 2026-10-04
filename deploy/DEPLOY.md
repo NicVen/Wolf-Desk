@@ -94,8 +94,14 @@ https://178.104.88.38.sslip.io/app
 
 ## Backups (Hetzner) + data
 
-Turn on Hetzner's automated backups in the console (small monthly add-on), or
-snapshot before changes. The only state to protect is on disk:
+**Customer licences back themselves up, free:** every night after 02:00 UTC
+the licensing bot sends `licenses-YYYY-MM-DD.db.gz` to your admin Telegram chat
+(`LICENSE_ADMIN_CHAT`, or `BACKUP_CHAT` to send elsewhere). If a night fails you
+get a Telegram alert and it retries hourly. To restore, see the top of
+`licensing/backup.py`.
+
+Hetzner's automated backups (small monthly add-on) cover the whole server; or
+snapshot before changes. Other state on disk:
 
 ```bash
 # ad-hoc backup of the data + marketing db
