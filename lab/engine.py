@@ -14,6 +14,8 @@ class Order:
     stop_dist: float      # price distance from entry to stop
     target_r: float       # target in R (0 = no target)
     max_bars: int         # time-stop
+    runner: bool = False  # VELDRIN-style: bank 50% at 1R + stop to entry,
+                          # stop to 1R at 2R, rest out at 3R
 
 
 def run(bars, strategy, cost: float) -> list[dict]:
@@ -28,8 +30,21 @@ def run(bars, strategy, cost: float) -> list[dict]:
         stop = e - d * o.stop_dist
         tgt = e + d * o.target_r * o.stop_dist if o.target_r else None
         exit_px, j, why = None, i + 1, "time"
+        banked, part = 0.0, 1.0           # runner: R already banked, share still open
+        if o.runner:
+            tgt = e + d * 3 * o.stop_dist
         while j < n:
             b = bars[j]
+            if o.runner:                  # move the stop on the levels reached so far
+                best = b["h"] if d > 0 else b["l"]
+                reached = d * (best - e) / o.stop_dist
+                if reached >= 1 and part == 1.0:
+                    banked, part, stop = 0.5, 0.5, e
+                    if (d > 0 and b["l"] <= stop) or (d < 0 and b["h"] >= stop):
+                        exit_px, why = stop, "stop"   # same bar came back: conservative
+                        break
+                if reached >= 2 and d * (stop - e) < o.stop_dist:
+                    stop = e + d * o.stop_dist      # same-bar dip below it counts (conservative)
             if (d > 0 and b["l"] <= stop) or (d < 0 and b["h"] >= stop):
                 exit_px, why = stop, "stop"
                 break
@@ -42,7 +57,7 @@ def run(bars, strategy, cost: float) -> list[dict]:
             j += 1
         if exit_px is None:
             break                       # still open at the end of the data
-        r = (d * (exit_px - e) - cost) / o.stop_dist
+        r = (banked * o.stop_dist + part * d * (exit_px - e) - cost) / o.stop_dist
         trades.append({"t": bars[i + 1]["t"], "r": round(r, 3), "why": why, "dir": d})
         i = j                           # flat again: look for the next setup
     return trades

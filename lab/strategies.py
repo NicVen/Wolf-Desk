@@ -188,6 +188,38 @@ def with_daily_trend(make, trend_at):
     return make2
 
 
+def make_veldrin(bars):
+    """Today's live VELDRIN rule on 1h bars: MA10 vs MA50 (0.03% band) must agree
+    on 1h AND 4h (4 hourly closes per 4h bar, current one included), London/NY
+    hours only (08-22 UTC). SL 1.5x average close-to-close move; TP1 1R bank 50%
+    + stop to entry, TP2 2R stop to TP1, TP3 3R; 18h time-stop."""
+    c = [b["c"] for b in bars]
+
+    def bias(xs):
+        if len(xs) < 50:
+            return 0
+        fast, slow = sum(xs[-10:]) / 10, sum(xs[-50:]) / 50
+        return 1 if fast > slow * 1.0003 else -1 if fast < slow * 0.9997 else 0
+
+    def s(bars, i):
+        if i < 220:
+            return None
+        h = datetime.fromtimestamp(bars[i]["t"], tz=timezone.utc).hour
+        if not 8 <= h < 22:
+            return None
+        cl = c[:i + 1]
+        b1 = bias(cl)
+        if not b1:
+            return None
+        start = (i + 1) % 4                       # 4h buckets end on bar i
+        b4 = bias(c[start + 3:i + 1:4][-60:])
+        if b1 != b4:
+            return None
+        diffs = [abs(y - x) for x, y in zip(cl[-15:], cl[-14:])]
+        return Order(b1, 1.5 * sum(diffs) / len(diffs), 0, 18, runner=True)
+    return s
+
+
 HOURLY = {
     "current (live rule)": make_current,
     "breakout + trend": make_donchian,
