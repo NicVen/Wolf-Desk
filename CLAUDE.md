@@ -93,6 +93,8 @@ information out of Claude has been painful. Fix that by how you communicate.
   a Monday routine reads `GET /digest`, builds the fixes/ideas as a PR into the
   live branch, and `POST /ready` puts a "✅ Review & approve" button in the
   channel; Nic merging = approval = live in 5 min. The app never depends on it.
+  Weekly-build commits carry `Ideas-Built: <ids>` / `Bugs-Fixed: <ids>` lines;
+  auto-ship marks those on the board once live (voters get notified).
 - **Status (Oct 2026):** v1 submitted to Play closed testing; needs 12 testers
   for 14 days (free tester-swap app, e.g. TheClosedTest) before production access.
   Opt-in link appears once Google approves the closed-test release.
