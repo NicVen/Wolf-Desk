@@ -57,6 +57,9 @@ information out of Claude has been painful. Fix that by how you communicate.
   **Auto-ship** (once `deploy/autoship-setup.sh` has been run): a timer ships
   whatever is merged into the live branch within 5 min, rolls back + Telegrams
   Nic if it breaks. So "merge the PR" = "it's live".
+  Before going live it runs `tests/` (checkout -> payment -> activation; also
+  run on every PR by GitHub). Any change to payments or licensing must keep
+  them green: `python -m unittest discover -s tests`.
 - **serve.py** (port 8777) host-routes: `staalwag.com`→site, `wolf.*`→WOLF desk,
   `app.*`→the app; also `/store` (storefront), `/proof` (track record).
 - **licensing service** (port 8790, localhost-only, behind Caddy): products/prices
