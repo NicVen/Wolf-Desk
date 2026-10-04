@@ -76,6 +76,22 @@ setup_desk() {
     case "$LEDGER" in ""|/tmp/*|/data/*) setkey "$ENV" LEDGER_PATH "$DATA/${NAME%-desk}.db" ;; esac
     grep -q "^CYCLE_SECONDS=" "$ENV" || echo "CYCLE_SECONDS=$CYCLE" >> "$ENV"
 
+    # Gold paper test of the candidate rule -> Nic's own chat (same chat as the
+    # Markov paper test), never the channel.
+    if [ "$NAME" = staalwag-desk ]; then
+        local ME; ME=$(sed -n 's/^TELEGRAM_CHAT_ID=//p' /etc/markov-bot.env 2>/dev/null | tail -1)
+        case "$ME" in
+            [0-9]*)
+                if [ -n "$(tg "$TOKEN" "getChat?chat_id=$ME" | jget 'd["result"]["id"]')" ]; then
+                    setkey "$ENV" PAPER_CHAT_ID "$ME"
+                    echo "  paper test: OK (to your chat)"
+                else
+                    echo "  paper test: NOT READY - open @$BOT in Telegram, press Start, then run this again."
+                fi ;;
+            *) echo "  paper test: skipped (no private chat in /etc/markov-bot.env)" ;;
+        esac
+    fi
+
     # 3. Service
     cp "$WOLF/deploy/$NAME.service" /etc/systemd/system/
     systemctl daemon-reload
