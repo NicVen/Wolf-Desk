@@ -289,8 +289,64 @@ def momentum():
     monthly_card("trend: 12-month direction, 14 pairs, risk-balanced", out)
 
 
+# ---------- 8. improve gold: time the live rule with the overnight effect ----------
+
+def gold_timing():
+    import run
+    import strategies
+    print("\n## 8. Gold channel rule, timed with the overnight effect\n")
+    print("| rule | trades | per month | win | PF | PF 1st half | PF 2nd half | PF last 6m (n) | PF longs (n) | PF shorts (n) | total R | worst drawdown R | luck PF (95%) | verdict | detail |")
+    print("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+    h = data.bars("GC=F", "60m", "730d")
+    d = data.bars("GC=F", "1d", "20y")
+    live = strategies.with_daily_trend(strategies.make_donchian, strategies.daily_trend(d))
+
+    def hours(make, keep):
+        def make2(bars):
+            inner = make(bars)
+
+            def s(bars, i):
+                o = inner(bars, i)
+                if o is None or not keep(datetime.fromtimestamp(bars[i]["t"], NY).hour):
+                    return None
+                return o
+            return s
+        return make2
+    us = lambda hr: 8 <= hr < 14
+    run.pooled("live Gold rule (as now)", [("GC", h, live, 0.45)])
+    run.pooled("live Gold rule, only signals outside US hours", [("GC", h, hours(live, lambda hr: not us(hr)), 0.45)])
+    run.pooled("live Gold rule, only signals in US hours", [("GC", h, hours(live, us), 0.45)])
+
+
+# ---------- 9. the gold rule on other markets (a new home for VELDRIN?) ----------
+
+MARKETS = {   # symbol: round-trip cost as a share of price
+    "SI=F": 0.0008, "HG=F": 0.0008, "CL=F": 0.0005, "ES=F": 0.0002, "NQ=F": 0.0002,
+    "YM=F": 0.0002, "BTC-USD": 0.001, "ETH-USD": 0.0015,
+    "GBPJPY=X": 0.0002, "AUDJPY=X": 0.0002, "EURJPY=X": 0.0002, "NZDJPY=X": 0.0003,
+    "CADJPY=X": 0.0003, "MXN=X": 0.0005, "ZAR=X": 0.0006,
+}
+
+
+def markets():
+    import run
+    import strategies
+    print("\n## 9. The winning Gold rule (breakout + trend + daily trend) on other markets\n")
+    print("| market | trades | per month | win | PF | PF 1st half | PF 2nd half | PF last 6m (n) | PF longs (n) | PF shorts (n) | total R | worst drawdown R | luck PF (95%) | verdict | detail |")
+    print("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+    for sym, pct in MARKETS.items():
+        try:
+            h = data.bars(sym, "60m", "730d")
+            d = data.bars(sym, "1d", "20y")
+        except Exception as e:
+            print(f"| {sym} | | | | | | | | | | | | | no data | {e} |")
+            continue
+        live = strategies.with_daily_trend(strategies.make_donchian, strategies.daily_trend(d))
+        run.pooled(sym, [(sym, h, live, h[-1]["c"] * pct)])
+
+
 def main():
-    for f in (gold_overnight, fomc, own_hours, carry_ideas, momentum):
+    for f in (gold_timing, markets, gold_overnight, fomc, own_hours, carry_ideas, momentum):
         try:
             f()
         except Exception as e:
