@@ -78,7 +78,7 @@
   <div class="sub"><span style="color:var(--gold);font-style:italic">Proven, not promised.</span>&nbsp; Every result scored on real price and banked once — append-only, never edited. This is the honest record, wins and losses.</div>
 
   <a href="/store" style="display:block;margin:14px 0 4px;text-decoration:none;background:linear-gradient(100deg,#101a2b,#12233a);border:1px solid #2a3c58;border-radius:12px;padding:13px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-    <span style="flex:1;min-width:200px;color:#e7edf3;font-weight:700;font-size:14px">📱 Like what the desk calls? Get the same reads on your phone — <span style="color:#e6b450">free 7-day trial</span>, then $9.99/mo <span style="color:#7d8a9c;text-decoration:line-through">$25</span>.</span>
+    <span style="flex:1;min-width:200px;color:#e7edf3;font-weight:700;font-size:14px">📱 Like what the desk calls? Get the same reads on your phone — <span style="color:#e6b450">free 7-day trial</span>, then $<span id="appPrice">14.99</span>/mo <span id="appReg" style="color:#7d8a9c;text-decoration:line-through">$25</span>.</span>
     <span style="background:#43d6a3;color:#04231a;font-weight:800;font-size:13.5px;padding:10px 18px;border-radius:9px;white-space:nowrap">Get the app →</span>
   </a>
 
@@ -105,6 +105,14 @@
 </div>
 
 <script>
+// App price comes from the store's own catalog, so this banner never shows a
+// price the store doesn't charge. Keeps the HTML default if the call fails.
+fetch('/app/pricing').then(function(r){return r.json();}).then(function(d){
+  if(!d) return;
+  var p=document.getElementById('appPrice'), g=document.getElementById('appReg');
+  if(p && d.price) p.textContent=d.price;
+  if(g){ if(d.promo && d.price_regular) g.textContent='$'+d.price_regular; else g.style.display='none'; }
+}).catch(function(){});
 "use strict";
 var DEFAULT_RULES = [
   "Scored on real market price, not on anyone's execution.",

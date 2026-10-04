@@ -190,7 +190,7 @@
 </head>
 <body>
 
-  <div class="banner">🚀 <b>Launch offer — limited time:</b> free <b>7-day trial</b>, then lock in <b>$9.99/mo</b> <span style="opacity:.7;text-decoration:line-through">$25</span>. No card to try it.</div>
+  <div class="banner">🚀 <b>Launch offer — limited time:</b> free <b>7-day trial</b>, then lock in <b>$<span id="bannerPrice">14.99</span>/mo</b> <span id="bannerReg" style="opacity:.7;text-decoration:line-through">$25</span>. No card to try it.</div>
 
   <nav><div class="wrap">
     <div class="brand">STAALCALIBUR <span class="v">V13</span></div>
@@ -282,7 +282,7 @@
       <div class="plan hi">
         <span class="badge" id="promoBadge">⚡ Limited time only</span>
         <div class="name">Full access</div>
-        <div class="amt"><span class="was" id="regPrice">$25</span>$<span id="price">9.99</span> <small>/ month</small></div>
+        <div class="amt"><span class="was" id="regPrice">$25</span>$<span id="price">14.99</span> <small>/ month</small></div>
         <div class="promonote" id="promoNote">Launch price — locked in while you stay subscribed.</div>
         <ul>
           <li>Everything in the trial, ongoing</li>
@@ -295,7 +295,7 @@
           <button class="btn gold" id="buyCard" onclick="buy('card')">Pay by card</button>
           <button class="btn hidden" id="buyPaypal" onclick="buy('paypal')" style="background:#0070ba;color:#fff">Pay with PayPal</button>
         </div>
-        <div class="lockline" id="lockLine">🔒 <b>Lock in $9.99/mo now.</b> Stay subscribed and it's yours at this rate. Let it lapse and you rejoin at the standard <b>$25/mo</b>.</div>
+        <div class="lockline" id="lockLine">🔒 <b>Lock in $14.99/mo now.</b> Stay subscribed and it's yours at this rate. Let it lapse and you rejoin at the standard <b>$25/mo</b>.</div>
         <div class="fineprint">Rental — cancel anytime. Secure checkout.</div>
       </div>
     </div>
@@ -372,7 +372,7 @@
   // licensing/config.py). If the call fails we keep the sensible defaults in the HTML.
   fetch('/app/pricing').then(r=>r.json()).then(d=>{
     if(!d) return;
-    if(d.price){ document.getElementById('price').textContent = d.price; }
+    if(d.price){ ['price','bannerPrice'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent=d.price;}); }
     if(d.trial_days){
       ['trialDays','trialDays2'].forEach(id=>{var e=document.getElementById(id);if(e)e.textContent=d.trial_days;});
     }
@@ -380,14 +380,14 @@
     // the live price is genuinely below the regular price. Turn the promo off
     // (config price_solo back to 25) and all of this vanishes on its own.
     if(d.promo){
-      if(d.price_regular) document.getElementById('regPrice').textContent = '$'+d.price_regular;
+      if(d.price_regular) ['regPrice','bannerReg'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent='$'+d.price_regular;});
       if(d.promo_note)    document.getElementById('promoNote').textContent = d.promo_note;
       var ll=document.getElementById('lockLine');
       if(ll && d.price && d.price_regular){
         ll.innerHTML='🔒 <b>Lock in $'+d.price+'/mo now.</b> Stay subscribed and it’s yours at this rate. Let it lapse and you rejoin at the standard <b>$'+d.price_regular+'/mo</b>.';
       }
     } else {
-      ['promoBadge','regPrice','promoNote','lockLine'].forEach(hide);
+      ['promoBadge','regPrice','promoNote','lockLine','bannerReg'].forEach(hide);
     }
     // hide a pay button whose rail isn't configured yet on the server
     if(d.crypto===false) hide('buyCrypto');
