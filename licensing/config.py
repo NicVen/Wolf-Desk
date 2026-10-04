@@ -88,6 +88,14 @@ HQ_UNITS = os.environ.get("HQ_UNITS", "caddy wolf-desk staalwag-licensing staalw
 # --- notifications (optional) ---
 LICENSE_BOT_TOKEN = os.environ.get("LICENSE_BOT_TOKEN", "")  # Telegram bot for client notices
 LICENSE_ADMIN_CHAT = os.environ.get("LICENSE_ADMIN_CHAT", "")  # your own chat id for copies
+# Google Play closed test: Google needs TESTER_GOAL people opted in for 14 days
+# before the app can go public. Sign-ups at staalwag.com/testers. Paste the Play
+# Console opt-in link into PLAY_OPTIN_URL once Google approves the test release;
+# the page then shows it. TESTER_REWARD is the line promising testers a thank-you.
+TESTER_GOAL = _int("TESTER_GOAL", 12)
+PLAY_OPTIN_URL = os.environ.get("PLAY_OPTIN_URL", "")
+TESTER_REWARD = os.environ.get("TESTER_REWARD", "Stay installed 14 days and get a free month of the app.")
+
 # Nightly off-server backup of licenses.db, sent as a file by the licensing bot
 # (licensing/backup.py). Defaults to the owner's admin chat. Hour is UTC.
 BACKUP_CHAT = os.environ.get("BACKUP_CHAT", "") or LICENSE_ADMIN_CHAT

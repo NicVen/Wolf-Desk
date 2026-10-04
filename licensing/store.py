@@ -67,6 +67,12 @@ def _init(c):
             processed_at INTEGER
         )""")
     c.execute("""
+        CREATE TABLE IF NOT EXISTS testers (
+            email     TEXT PRIMARY KEY,
+            telegram  TEXT,
+            joined    INTEGER
+        )""")
+    c.execute("""
         CREATE TABLE IF NOT EXISTS subscribers (
             telegram_id  TEXT PRIMARY KEY,
             consented_at INTEGER
@@ -630,6 +636,22 @@ def quiz_rank(license_key, period):
         if r["k"] == license_key:
             return i, total
     return None, total
+
+
+def add_tester(email, telegram=""):
+    """Returns True if new, False if this Gmail already signed up."""
+    with _LOCK:
+        c = _conn()
+        cur = c.execute("INSERT OR IGNORE INTO testers (email, telegram, joined) VALUES (?,?,?)",
+                        (email, telegram, now()))
+        c.commit()
+        return cur.rowcount == 1
+
+
+def list_testers():
+    with _LOCK:
+        return [dict(r) for r in _conn().execute(
+            "SELECT email, telegram, joined FROM testers ORDER BY joined")]
 
 
 def count_licenses():

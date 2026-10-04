@@ -493,7 +493,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
 
         # ---- STOREFRONT proxy (same-origin bridge to licensing) --------------
-        if path in ("/app/trial", "/app/checkout"):
+        if path in ("/app/trial", "/app/checkout", "/app/testers"):
             try:
                 ln = int(self.headers.get("Content-Length", "0") or "0")
                 payload = json.loads(self.rfile.read(ln).decode("utf-8")) if ln > 0 else {}
@@ -501,7 +501,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     raise ValueError("bad body")
             except Exception:
                 self._send(400, json.dumps({"error": "bad request"})); return
-            if path == "/app/trial":
+            if path == "/app/testers":
+                res, err = _lic_post("/testers/join", {"email": payload.get("email", ""),
+                                                       "telegram": payload.get("telegram", "")})
+            elif path == "/app/trial":
                 res, err = _lic_post("/trial", {"contact": payload.get("contact", ""),
                                                 "ref": payload.get("ref", "")})
             else:
@@ -706,6 +709,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
                           ".json":"application/json"}.get(ext, "application/octet-stream")
                     self._send(200, _read(fp, b""), ct); return
             self._send(404, b"not found", "text/plain"); return
+        # Play closed-test tester sign-up (public): page + live 0/12 progress.
+        if path.rstrip("/.") in ("/testers", "/tester", "/beta"):
+            self._send(200, _read(os.path.join("storefront", "testers.html"),
+                                  b"<h2>Tester sign-up coming soon.</h2>"),
+                       "text/html; charset=utf-8"); return
+        if path == "/app/testers":
+            res, err = _lic_get("/testers")
+            if res is None:
+                self._send(502, json.dumps({"error": "licensing unavailable"})); return
+            self._send(200, json.dumps(res)); return
         if path == "/app/pricing":
             # Price + trial length + which pay rails are live (single source of
             # truth: licensing/config.py). Falls back to sane defaults offline.

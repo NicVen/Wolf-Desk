@@ -516,6 +516,10 @@ class H(BaseHTTPRequestHandler):
             self._notices(one("key"))
         elif u.path == "/digest":
             self._digest(one("token"))
+        elif u.path == "/testers":
+            self._testers_status()
+        elif u.path == "/admin/testers":
+            self._admin_testers()
         elif u.path == "/admin/list":
             self._admin_list()
         elif u.path == "/admin/app_stats":
@@ -587,6 +591,8 @@ class H(BaseHTTPRequestHandler):
             self._admin_suggestion_update()
         elif u.path == "/subscribe":
             self._subscribe()
+        elif u.path == "/testers/join":
+            self._testers_join()
         else:
             self._send(404, {"error": "not found"})
 
@@ -1231,6 +1237,44 @@ class H(BaseHTTPRequestHandler):
             notify.admin("new free subscriber: %s" % tg)
             return self._send(200, {"status": "new", "subscribed": True})
         return self._send(200, {"status": "need_consent", "subscribed": False})
+
+    # ---- Play closed-test testers ----
+    _GMAIL = re.compile(r"^[a-z0-9.+_-]+@(gmail|googlemail)\.com$")
+
+    def _testers_status(self):
+        """Public: progress toward Google's tester minimum + the opt-in link."""
+        self._send(200, {"count": len(store.list_testers()), "goal": config.TESTER_GOAL,
+                         "optin_url": config.PLAY_OPTIN_URL, "reward": config.TESTER_REWARD})
+
+    def _testers_join(self):
+        """Public: a tester leaves the Gmail they use on their Android phone
+        (Play only lets listed Google accounts into a closed test)."""
+        try:
+            data = json.loads(self._body() or b"{}")
+        except Exception:  # noqa: BLE001
+            data = {}
+        email = str(data.get("email", "")).strip().lower()[:120]
+        if not self._GMAIL.match(email):
+            return self._send(400, {"error": "gmail_required"})
+        tg = re.sub(r"[^A-Za-z0-9_@]", "", str(data.get("telegram", "")))[:40]
+        new = store.add_tester(email, tg)
+        n = len(store.list_testers())
+        if new:
+            notify.admin("New app tester %d/%d: %s%s. Add them in Play Console > Testing > "
+                         "Closed testing > Testers (or GET /admin/testers for the full list)."
+                         % (n, config.TESTER_GOAL, email, (" (%s)" % tg) if tg else ""))
+        self._send(200, {"ok": True, "new": new, "count": n, "goal": config.TESTER_GOAL,
+                         "optin_url": config.PLAY_OPTIN_URL})
+
+    def _admin_testers(self):
+        """Admin: every tester, plus one comma-separated line to paste into the
+        Play Console email list."""
+        if not self._admin_ok():
+            return self._send(403, {"error": "forbidden"})
+        rows = store.list_testers()
+        self._send(200, {"count": len(rows), "goal": config.TESTER_GOAL,
+                         "paste_into_play_console": ", ".join(r["email"] for r in rows),
+                         "testers": rows})
 
     def _buy_page(self, product_code):
         p = config.product(product_code)
