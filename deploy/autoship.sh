@@ -7,6 +7,7 @@
 #   3. compile-check the Python, restart the services
 #   4. health-check both services; if either is down, roll back to the
 #      previous commit, restart, and Telegram the owner
+#   (step 3 also runs tests/ — checkout, payment, activation — before restarting)
 # A commit that was rolled back is remembered and never retried, so a bad merge
 # can't loop. Merging a fix on top ships normally.
 set -u
@@ -84,6 +85,12 @@ if git_app diff --quiet "$OLD" "$NEW" -- requirements.txt; then :; else
 fi
 as_app "$REPO/.venv/bin/python" -m compileall -q "$REPO/serve.py" "$REPO/licensing" "$REPO/compiler" >/dev/null \
     || fail "code doesn't compile"
+# Money-path tests (checkout -> payment -> activation) on a throwaway DB, before
+# anything restarts. A failure rolls back before the new code ever runs.
+if [ -d "$REPO/tests" ]; then
+    as_app sh -c "cd '$REPO' && timeout 300 .venv/bin/python -m unittest discover -s tests -q" >/dev/null 2>&1 \
+        || fail "payment tests failed"
+fi
 restart_all
 healthy || fail "app didn't come back up"
 
