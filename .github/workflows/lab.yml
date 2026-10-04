@@ -12,7 +12,7 @@ on:
 jobs:
   lab:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -21,3 +21,6 @@ jobs:
       - name: Gold
         working-directory: lab
         run: python run.py gold | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: VELDRIN (6 FX pairs)
+        working-directory: lab
+        run: python run.py fx | tee -a "$GITHUB_STEP_SUMMARY"

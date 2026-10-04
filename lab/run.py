@@ -65,7 +65,75 @@ def score(name, bars, make, cost):
             f"{s_all['total_r']:+} | {s_all['max_dd_r']} | {luck} | {'PASS' if ok else 'no'} |")
 
 
+FX = {   # yahoo symbol: round-trip cost (about 1.2 pips majors, 1.8 commodity pairs)
+    "EURUSD=X": 0.00012, "GBPUSD=X": 0.00015, "USDJPY=X": 0.012,
+    "AUDUSD=X": 0.00015, "USDCAD=X": 0.00018, "USDCHF=X": 0.00018,
+}
+FX_RULES = {
+    "current VELDRIN (live rule)": strategies.make_veldrin,
+    "breakout + trend": strategies.make_donchian,
+    "trend pullback": strategies.make_pullback,
+    "London breakout": strategies.make_session_break,
+}
+
+
+def fx():
+    """All six VELDRIN pairs pooled: one scorecard per rule, R summed across pairs."""
+    data_ = {}
+    for sym in FX:
+        try:
+            data_[sym] = (data.bars(sym, "60m", "730d"), data.bars(sym, "1d", "20y"))
+        except Exception as e:
+            print(f"(skipped {sym}: {e})")
+    print("## VELDRIN pairs pooled: " + ", ".join(data_) + "\n")
+    print("| rule | trades | per month | win | PF | PF 1st half | PF 2nd half | PF last 6m (n) | PF longs (n) | PF shorts (n) | total R | worst drawdown R | luck PF (95%) | verdict | PF per pair |")
+    print("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+    rules = dict(FX_RULES)
+    for name, make in FX_RULES.items():
+        if "live" not in name:
+            rules[name + " + daily trend"] = ("trend", make)
+    for name, make in rules.items():
+        allt, luck, per, days, mids, ends = [], [], [], 0, {}, []
+        for sym, (h, d) in data_.items():
+            mk = make
+            if isinstance(make, tuple):
+                mk = strategies.with_daily_trend(make[1], strategies.daily_trend(d))
+            tr = engine.run(h, mk(h), FX[sym])
+            mid_t = h[len(h) // 2]["t"]
+            for t in tr:
+                t["half"] = 0 if t["t"] < mid_t else 1
+            allt += tr
+            per.append(f"{sym[:6]} {engine.stats(tr, 1)['pf']}")
+            days = max(days, (h[-1]["t"] - h[0]["t"]) / 86400)
+            ends.append(h[-1]["t"])
+            for k in range(LUCK_RUNS // 4):          # fewer shuffles per pair, pooled
+                sh = shuffled(h, k)
+                luck.append(engine.run(sh, mk(sh) if not isinstance(make, tuple) else
+                                       strategies.with_daily_trend(make[1], strategies.daily_trend(d))(sh),
+                                       FX[sym]))
+        allt.sort(key=lambda t: t["t"])
+        a = [t for t in allt if t["half"] == 0]
+        b = [t for t in allt if t["half"] == 1]
+        last = [t for t in allt if t["t"] >= max(ends) - 180 * 86400]
+        st = engine.stats(allt, days)
+        sa, sb, sl = engine.stats(a, days / 2), engine.stats(b, days / 2), engine.stats(last, 180)
+        # luck: pool shuffle k across pairs
+        n_pairs = len(data_)
+        pools = [sum((luck[p * (LUCK_RUNS // 4) + k] for p in range(n_pairs)), [])
+                 for k in range(LUCK_RUNS // 4)]
+        lpf = sorted(engine.stats(x, 1)["pf"] for x in pools)[-1]
+        ok = sa["pf"] >= 1.3 and sb["pf"] >= 1.3 and st["n"] >= 30 and st["pf"] > lpf
+        lg = engine.stats([t for t in allt if t["dir"] > 0], days)
+        shs = engine.stats([t for t in allt if t["dir"] < 0], days)
+        print(f"| {name} | {st['n']} | {st['per_month']} | {st['win']}% | {st['pf']} | "
+              f"{sa['pf']} | {sb['pf']} | {sl['pf']} ({sl['n']}) | {lg['pf']} ({lg['n']}) | "
+              f"{shs['pf']} ({shs['n']}) | {st['total_r']:+} | {st['max_dd_r']} | {lpf} | "
+              f"{'PASS' if ok else 'no'} | {'; '.join(per)} |")
+
+
 def main():
+    if sys.argv[1:2] == ["fx"]:
+        return fx()
     key = sys.argv[1] if len(sys.argv) > 1 else "gold"
     sym, cost = MARKETS.get(key, (key, float(sys.argv[2]) if len(sys.argv) > 2 else 0))
     print(f"## {key} ({sym}), cost {cost} per trade\n")
