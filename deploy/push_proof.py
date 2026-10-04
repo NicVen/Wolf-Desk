@@ -203,17 +203,18 @@ def build_snapshot():
                     + ("" if conclusive else " — building sample"),
         })
 
-    # 3) Markov 18-pair -- posted FREE to subscribers on Telegram, so it is a
-    #    signal desk, not research. Scored one call per trade idea (re-posts of
-    #    an open call are folded in by HQ signals.py), in R.
+    # 3) Markov 18-pair -- posted Telegram calls Jul-Aug 2026, retired 17 Aug
+    #    2026 (HQ INVENTORY.md; Signal Engine v2 took over its service). Its
+    #    record stays visible. Scored one call per trade idea (re-posts of an
+    #    open call are folded in by HQ signals.py), in R.
     ss = scanner.get("stats") or {}
     if ss.get("closed"):
         exp = _num(ss.get("expectancy_r"))
         desks.append({
-            "name": "Markov 18-pair — free signals", "status": "proving",
+            "name": "Markov 18-pair", "status": "retired",
             "provenance": "live", "trades": int(ss.get("closed") or 0),
             "win_rate": _num(ss.get("win_rate")), "pf": None, "net_usd": None,
-            "note": "free Telegram signals, scored on real price, one call per trade idea"
+            "note": "Telegram signals Jul–Aug 2026, retired 17 Aug; scored on real price, one call per trade idea"
                     + (" — %sR net (%sR per call)" % (ss.get("net_r"), exp) if exp is not None else ""),
         })
 

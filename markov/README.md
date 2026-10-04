@@ -1,6 +1,8 @@
 # Markov 18-pair signal bot
 
-Free Telegram signals. Moved here from the PC folder `Markov - Claude BOT`
+Retired from Telegram on 17 Aug 2026 (Signal Engine v2, "My Trading Bot",
+took over its Railway service). The fixed version below runs only as a private
+paper test until it proves itself. Moved here from the PC folder `Markov - Claude BOT`
 (it used to run on Railway / the PC on port 8095). It now runs on the VPS next
 to the other desks as `markov-bot` (port 8783), set up once with
 `sudo bash deploy/markov-setup.sh`, then kept current by auto-ship.
