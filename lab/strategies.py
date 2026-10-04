@@ -220,6 +220,155 @@ def make_veldrin(bars):
     return s
 
 
+def make_hour_of_day(bars, min_n=150, t_min=2.5, stop_atr=3.0):
+    """Time-of-day pattern (Breedon & Ranaldo: currencies tend to move the same
+    way at the same hours). Walk-forward, so every trade is out-of-sample: at
+    each hour, look only at that clock hour's past 1h moves (all data BEFORE
+    now); if their average is clearly non-zero (t-stat > 2.5 on 150+ samples),
+    trade that direction for the one hour."""
+    from math import sqrt
+    n_, s_, q_ = [0] * 24, [0.0] * 24, [0.0] * 24
+    done = [0]                            # bars already added to the stats
+
+    def hr(b):
+        return datetime.fromtimestamp(b["t"], tz=timezone.utc).hour
+
+    def s(bars, i):
+        while done[0] <= i:               # add finished bars up to and incl. i
+            k = done[0]
+            if k > 0:
+                r = bars[k]["c"] / bars[k]["o"] - 1
+                h = hr(bars[k])
+                n_[h] += 1; s_[h] += r; q_[h] += r * r
+            done[0] += 1
+        if i < 220 or i + 1 >= len(bars):
+            return None
+        h = hr(bars[i + 1])               # the hour we would trade
+        n = n_[h]
+        if n < min_n:
+            return None
+        mean = s_[h] / n
+        var = max(q_[h] / n - mean * mean, 1e-18)
+        t = mean / sqrt(var / n)
+        if abs(t) < t_min:
+            return None
+        return Order(1 if t > 0 else -1, stop_atr * _atr(bars, i), 0, 1)
+    return s
+
+
+def make_fade(bars, stop_atr=2.0, target_r=1.0, hold=12, asia_only=False):
+    """Mean reversion: FX majors chop more than they trend. Fade a 2-bar RSI
+    extreme (below 5 buy, above 95 sell), no trend filter. Asia variant: only
+    22:00-07:00 UTC, the quiet hours when ranges hold best."""
+    c = [b["c"] for b in bars]
+
+    def rsi2(i):
+        up = dn = 0.0
+        for a, b in zip(c[i - 2:i], c[i - 1:i + 1]):
+            up += max(b - a, 0)
+            dn += max(a - b, 0)
+        return 100.0 if dn == 0 else 100 - 100 / (1 + up / dn)
+
+    def s(bars, i):
+        if i < 220:
+            return None
+        if asia_only:
+            h = datetime.fromtimestamp(bars[i]["t"], tz=timezone.utc).hour
+            if 7 <= h < 22:
+                return None
+        r = rsi2(i)
+        if r < 5:
+            return Order(1, stop_atr * _atr(bars, i), target_r, hold)
+        if r > 95:
+            return Order(-1, stop_atr * _atr(bars, i), target_r, hold)
+        return None
+    return s
+
+
+def make_fade_asia(bars):
+    return make_fade(bars, asia_only=True)
+
+
+_LONDON = None
+
+
+def _london_hour(t):
+    global _LONDON
+    if _LONDON is None:
+        from zoneinfo import ZoneInfo
+        _LONDON = ZoneInfo("Europe/London")
+    return datetime.fromtimestamp(t, tz=_LONDON).hour
+
+
+def make_fix_reversal(bars, look=2, min_atr=0.5, stop_atr=2.0, hold=3):
+    """London 4pm fix (WM/Reuters): banks fill large orders at the fix, pushing
+    price into it, and the move tends to snap back afterwards (Melvin & Prins;
+    Evans). On the 1h bar that ends at 16:00 London, if the last 2 hours moved
+    more than half an ATR, fade it from the fix for 3 hours."""
+    def s(bars, i):
+        if i < 220 or _london_hour(bars[i]["t"]) != 15:
+            return None
+        move = bars[i]["c"] - bars[i - look + 1]["o"]
+        atr = _atr(bars, i)
+        if abs(move) < min_atr * atr:
+            return None
+        return Order(-1 if move > 0 else 1, stop_atr * atr, 0, hold)
+    return s
+
+
+def make_weekend_gap(bars, min_atr=0.3):
+    """Sunday gap fill: when the week opens away from Friday's close, trade back
+    toward Friday's close. Target = the gap filled, stop = the same distance the
+    other way, out after 24h."""
+    def s(bars, i):
+        if i < 220 or bars[i]["t"] - bars[i - 1]["t"] < 24 * 3600:
+            return None                     # only the first bar of the week
+        gap = bars[i]["o"] - bars[i - 1]["c"]
+        atr = _atr(bars, i - 1)
+        if abs(gap) < min_atr * atr:
+            return None
+        # signal on the first bar; the engine enters at the next bar's open,
+        # so measure what is left of the gap from there
+        left = bars[i]["c"] - bars[i - 1]["c"]
+        if left * gap <= 0 or abs(left) < 0.2 * atr:
+            return None                     # already filled
+        return Order(-1 if gap > 0 else 1, abs(left), 1.0, 24)
+    return s
+
+
+def make_month_end(bars, min_n=60, t_min=2.0, stop_atr=3.0):
+    """Month-end rebalancing flows, daily bars, walk-forward: for the last 2
+    trading days of each month, use only PAST month-ends to learn the pair's
+    usual direction; trade it if the evidence is clear (t > 2)."""
+    from math import sqrt
+    st = {"n": 0, "s": 0.0, "q": 0.0, "next": 1}
+
+    def ym(k):
+        d = datetime.fromtimestamp(bars[k]["t"], tz=timezone.utc)
+        return d.year, d.month
+
+    def month_end(k):             # bar k is one of the last 2 bars of its month
+        return k + 2 < len(bars) and ym(k + 2) != ym(k)
+
+    def s(bars, i):
+        while st["next"] + 2 <= i:                # month-end status known by now
+            k = st["next"]
+            if month_end(k):
+                r = bars[k]["c"] / bars[k]["o"] - 1
+                st["n"] += 1; st["s"] += r; st["q"] += r * r
+            st["next"] += 1
+        if i < 220 or not month_end(i + 1) or st["n"] < min_n:
+            return None
+        n = st["n"]
+        mean = st["s"] / n
+        var = max(st["q"] / n - mean * mean, 1e-18)
+        t = mean / sqrt(var / n)
+        if abs(t) < t_min:
+            return None
+        return Order(1 if t > 0 else -1, stop_atr * _atr(bars, i), 0, 1)
+    return s
+
+
 HOURLY = {
     "current (live rule)": make_current,
     "breakout + trend": make_donchian,

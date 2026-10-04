@@ -74,6 +74,11 @@ FX_RULES = {
     "breakout + trend": strategies.make_donchian,
     "trend pullback": strategies.make_pullback,
     "London breakout": strategies.make_session_break,
+    "time-of-day (walk-forward)": strategies.make_hour_of_day,
+    "fade extremes": strategies.make_fade,
+    "fade extremes, Asia hours": strategies.make_fade_asia,
+    "London 4pm fix reversal": strategies.make_fix_reversal,
+    "Sunday gap fill": strategies.make_weekend_gap,
 }
 
 
@@ -93,6 +98,7 @@ def fx():
         if "live" not in name:
             rules[name + " + daily trend"] = ("trend", make)
     rules["daily trend (20y daily bars)"] = ("daily", strategies.make_trend_daily)
+    rules["month-end flows (20y daily, walk-forward)"] = ("daily", strategies.make_month_end)
     for name, make in rules.items():
         allt, luck, per, days, mids, ends = [], [], [], 0, {}, []
         for sym, (h, d) in data_.items():
