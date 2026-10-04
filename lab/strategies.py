@@ -150,6 +150,44 @@ def make_trend_daily(bars, stop_atr=3.0, hold=20):
     return s
 
 
+def daily_trend(daily):
+    """date -> +1 / -1 / 0 from the daily 50/200 EMA, known at that day's close.
+    An hourly bar on day D uses the state from the last daily close BEFORE D."""
+    c = [b["c"] for b in daily]
+    e50, e200 = _ema_series(c, 50), _ema_series(c, 200)
+    days = [datetime.fromtimestamp(b["t"], tz=timezone.utc).date() for b in daily]
+    state = {}
+    for k in range(200, len(daily)):
+        state[days[k]] = 1 if e50[k] > e200[k] else -1 if e50[k] < e200[k] else 0
+    order = sorted(state)
+
+    def at(t):
+        d = datetime.fromtimestamp(t, tz=timezone.utc).date()
+        lo, hi = 0, len(order)
+        while lo < hi:                       # last daily close strictly before d
+            mid = (lo + hi) // 2
+            if order[mid] < d:
+                lo = mid + 1
+            else:
+                hi = mid
+        return state[order[lo - 1]] if lo else 0
+    return at
+
+
+def with_daily_trend(make, trend_at):
+    """Wrap an hourly rule: only take its trades in the daily trend direction."""
+    def make2(bars):
+        inner = make(bars)
+
+        def s(bars, i):
+            o = inner(bars, i)
+            if o is None or o.direction != trend_at(bars[i]["t"]):
+                return None
+            return o
+        return s
+    return make2
+
+
 HOURLY = {
     "current (live rule)": make_current,
     "breakout + trend": make_donchian,
