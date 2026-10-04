@@ -92,11 +92,14 @@ def fx():
     for name, make in FX_RULES.items():
         if "live" not in name:
             rules[name + " + daily trend"] = ("trend", make)
+    rules["daily trend (20y daily bars)"] = ("daily", strategies.make_trend_daily)
     for name, make in rules.items():
         allt, luck, per, days, mids, ends = [], [], [], 0, {}, []
         for sym, (h, d) in data_.items():
             mk = make
-            if isinstance(make, tuple):
+            if isinstance(make, tuple) and make[0] == "daily":
+                h, mk = d, make[1]
+            elif isinstance(make, tuple):
                 mk = strategies.with_daily_trend(make[1], strategies.daily_trend(d))
             tr = engine.run(h, mk(h), FX[sym])
             mid_t = h[len(h) // 2]["t"]
@@ -108,7 +111,7 @@ def fx():
             ends.append(h[-1]["t"])
             for k in range(LUCK_RUNS // 4):          # fewer shuffles per pair, pooled
                 sh = shuffled(h, k)
-                luck.append(engine.run(sh, mk(sh) if not isinstance(make, tuple) else
+                luck.append(engine.run(sh, mk(sh) if not isinstance(make, tuple) or make[0] == "daily" else
                                        strategies.with_daily_trend(make[1], strategies.daily_trend(d))(sh),
                                        FX[sym]))
         allt.sort(key=lambda t: t["t"])
