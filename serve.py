@@ -620,7 +620,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         # Markov 18-pair bot's own record (every call + its result), proxied from
         # the bot on this server so HQ and /proof can read it over HTTPS.
-        if path in ("/markov/signals.json", "/markov/health"):
+        if path in ("/markov/signals.json", "/markov/scan.json", "/markov/health"):
             base = os.environ.get("MARKOV_URL", "http://127.0.0.1:8783")
             try:
                 with urllib.request.urlopen(base + path[len("/markov"):], timeout=8) as r:
