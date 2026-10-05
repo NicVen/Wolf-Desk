@@ -303,7 +303,38 @@ def _prev_period():
 def _age(lic):
     """How long this key has been a paying one: the app reveals its tools over
     the first days after purchase. A trial key reports trial=True."""
-    return {"trial": bool(lic.get("trial")), "since": lic.get("paid_since") or lic.get("created")}
+    return {"trial": bool(lic.get("trial")), "since": lic.get("paid_since") or lic.get("created"),
+            "for_sale": [c for c in TOOL_REVEAL if c not in config.LOCKED]}
+
+
+# The app shows its tools step by step after purchase (app_tools.py in the
+# app). The app itself sells nothing (Google Play), so when a tool becomes
+# available the customer is told here, on Telegram, once per tool.
+TOOL_REVEAL = {"HOURS": 7, "GUARDIAN": 12}          # add-on -> day after first payment
+TOOL_PITCH = {"HOURS": "See the hours each market really moves, in your own time zone, and the dead zones to sit out.",
+              "GUARDIAN": "It watches every trade you open in MT5 and warns you on your phone when one is too big, "
+                          "badly timed, or puts your prop-firm challenge at risk."}
+
+
+def tool_notices(lic, now):
+    """[(level, text)] still owed to this paying App key: one message per
+    add-on once its day has come, it is for sale, and the key doesn't have it."""
+    if (lic.get("status") != "active" or lic.get("trial") or lic.get("attach_to")
+            or not config.unlocks(lic["product"], "APP") or not lic.get("paid_since")):
+        return []
+    days = (now - lic["paid_since"]) / DAY
+    told, out = int(lic.get("tools_told") or 0), []
+    for level, (code, day) in enumerate(sorted(TOOL_REVEAL.items(), key=lambda x: x[1]), 1):
+        if level <= told or days < day or code in config.LOCKED or config.unlocks(lic["product"], code):
+            continue
+        addon = store.addon_for(lic["license_key"], code)
+        if addon and check_access(addon)[0]:
+            continue
+        p = config.product(code)
+        out.append((level, "New in STAALCALIBUR: %s is ready for your app.\n%s\n\nAdd it to your key %s at "
+                           "staalwag.com/store for $%s/month (launch price, regular $%s)."
+                    % (p["name"], TOOL_PITCH[code], lic["license_key"], p["price_solo"], p.get("price_regular") or p["price_solo"])))
+    return out
 
 
 def check_access(lic):
@@ -477,6 +508,10 @@ def sweeper():
                                       "Your %s access has been removed for non-payment. "
                                       "Renew any time to restore it." % lic["product"])
                         notify.admin("revoked: %s" % key)
+            for lic in store.all_active_or_pastdue():          # tools revealed after purchase
+                for level, text in tool_notices(lic, now):
+                    notify.client(lic["contact"], text)
+                    store.update(lic["license_key"], tools_told=level)
             # Monthly Trader Quiz winner — announce the previous month once, when
             # the month has rolled over. Runs wherever the service runs; no cron.
             if config.QUIZ_AUTO_WINNER:

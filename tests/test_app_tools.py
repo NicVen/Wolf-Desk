@@ -12,8 +12,8 @@ D = app_tools.DAY
 
 
 class Tiles(unittest.TestCase):
-    def t(self, day, trial=False, valid=True, hours=False, guard=False):
-        return app_tools.tiles(valid, trial, 1000, hours, guard, 1000 + day * D)
+    def t(self, day, trial=False, valid=True, hours=False, guard=False, sale=("HOURS", "GUARDIAN")):
+        return app_tools.tiles(valid, trial, 1000, hours, guard, 1000 + day * D, sale)
 
     def test_trial_and_bad_keys_see_no_tools(self):
         none = {"sizer": None, "hours": None, "guardian": None}
@@ -26,6 +26,9 @@ class Tiles(unittest.TestCase):
         self.assertEqual(self.t(7), {"sizer": "free", "hours": "available", "guardian": "soon"})
         self.assertEqual(self.t(11.9)["guardian"], "soon")
         self.assertEqual(self.t(12), {"sizer": "free", "hours": "available", "guardian": "available"})
+
+    def test_not_for_sale_stays_coming_soon(self):
+        self.assertEqual(self.t(30, sale=()), {"sizer": "free", "hours": "soon", "guardian": "soon"})
 
     def test_rented_add_ons_always_open(self):
         self.assertEqual(self.t(0, hours=True, guard=True), {"sizer": "free", "hours": "open", "guardian": "open"})

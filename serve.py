@@ -862,7 +862,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             hours, guard = _app_license_ok(key, dev, "HOURS"), _app_license_ok(key, dev, "GUARDIAN")
             info = _app_key_info(key, dev)
             self._send(200, json.dumps({"hours": hours, "guardian": guard, "tiles": app_tools.tiles(
-                info.get("valid"), info.get("trial"), info.get("since"), hours, guard, time.time())})); return
+                info.get("valid"), info.get("trial"), info.get("since"), hours, guard, time.time(),
+                info.get("for_sale") or ())})); return
         if path == "/appguard/live":
             key = q.get("key", [""])[0].strip(); dev = q.get("dev", ["app"])[0]
             if not _app_license_ok(key, dev, "GUARDIAN"):

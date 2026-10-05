@@ -208,6 +208,25 @@ class MoneyPath(unittest.TestCase):
             self.assertEqual(status, 400, code)
             self.assertIn("In testing", res["error"])
 
+    def test_tools_are_announced_once_each_when_for_sale(self):
+        key = self._paid_key()
+        lic = lambda: store.get(key)
+        now = store.now()
+        self.assertEqual(server.tool_notices(lic(), now), [])                 # day 0: nothing yet
+        later = lic()["paid_since"] + 8 * DAY
+        self.assertEqual(server.tool_notices(lic(), later), [])               # add-ons still locked
+        with mock.patch.object(config, "LOCKED", set()):
+            n = server.tool_notices(lic(), later)
+            self.assertEqual([lvl for lvl, _ in n], [1])                      # day 8: Prime Hours
+            self.assertIn("Prime Hours", n[0][1])
+            self.assertIn(key, n[0][1])
+            store.update(key, tools_told=1)
+            self.assertEqual(server.tool_notices(lic(), later), [])           # told once only
+            n = server.tool_notices(lic(), lic()["paid_since"] + 13 * DAY)
+            self.assertEqual([lvl for lvl, _ in n], [2])                      # day 13: Guardian
+            store.update(key, trial=1)
+            self.assertEqual(server.tool_notices(lic(), later + 30 * DAY), [])  # trials never
+
     def test_addon_rides_on_the_app_key(self):
         with mock.patch.object(config, "LOCKED", set()):
             app = self._paid_key()
