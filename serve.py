@@ -387,20 +387,21 @@ def _read(path, default=b"{}"):
 
 # --- STAALCALIBUR app: license check against the licensing service (localhost) ---
 _APP_LIC_CACHE = {}
-def _app_license_ok(key, dev):
-    """True if `key` is a live STAALCALIBUR App license. Verifies via the
-    licensing service on the same box; caches the answer for 5 min."""
+def _app_license_ok(key, dev, product="APP"):
+    """True if `key` unlocks `product` (the App, or an add-on such as HOURS
+    bought onto it). Verifies via the licensing service on the same box;
+    caches the answer for 5 min."""
     if not key:
         return False
     now = time.time()
-    ck = key + "|" + (dev or "")
+    ck = key + "|" + (dev or "") + "|" + product
     c = _APP_LIC_CACHE.get(ck)
     if c and c[1] > now:
         return c[0]
     ok = False
     try:
         base = os.environ.get("LICENSING_URL", "http://127.0.0.1:8790")
-        url = (base + "/verify?product=APP&key=" + urllib.parse.quote(key) +
+        url = (base + "/verify?product=" + product + "&key=" + urllib.parse.quote(key) +
                "&account=" + urllib.parse.quote(dev or "app") +
                "&machine=" + urllib.parse.quote(dev or "app"))
         with urllib.request.urlopen(url, timeout=6) as r:
@@ -409,6 +410,32 @@ def _app_license_ok(key, dev):
         ok = False
     _APP_LIC_CACHE[ck] = (ok, now + 300)
     return ok
+
+
+# --- Prime Hours (app add-on): data/prime_hours.json, rebuilt weekly ----------
+_HOURS_FILE = os.path.join("data", "prime_hours.json")
+_HOURS_LOCK = threading.Lock()
+_HOURS_MAX_AGE = 7 * 86400
+
+def _hours_refresh():
+    """Start one background rebuild when the file is missing or a week old.
+    Never blocks a request; a failed build keeps the old file."""
+    try:
+        if time.time() - os.path.getmtime(_HOURS_FILE) < _HOURS_MAX_AGE:
+            return
+    except OSError:
+        pass
+    if not _HOURS_LOCK.acquire(blocking=False):
+        return                                   # a build is already running
+    def job():
+        try:
+            from scout import hours
+            hours.build(out=_HOURS_FILE)
+        except Exception as e:
+            print("  [hours] build failed:", e)
+        finally:
+            _HOURS_LOCK.release()
+    threading.Thread(target=job, daemon=True).start()
 
 
 # --- Storefront proxy: same-origin bridge to the licensing service ------------
@@ -516,11 +543,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 res, err = _lic_post("/trial", {"contact": payload.get("contact", ""),
                                                 "ref": payload.get("ref", "")})
             else:
+                prod = (payload.get("product") or "APP").upper()
+                if prod not in ("APP", "GUARDIAN", "HOURS", "TOOLKIT"):
+                    prod = "APP"
                 res, err = _lic_post("/checkout", {
-                    "product": "APP",
+                    "product": prod,
                     "method": (payload.get("method") or "crypto"),
                     "contact": payload.get("contact", ""),
                     "ref": payload.get("ref", ""),
+                    "attach": payload.get("attach", ""),   # App key an add-on is bought onto
                 })
             if res is None:
                 self._send(502, json.dumps({"error": "licensing unavailable", "detail": err}))
@@ -716,6 +747,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if not _app_license_ok(key, dev):
                 self._send(403, b'{"error":"license"}'); return
             self._send(200, _read(os.path.join("data", "opportunities_%s.json" % cls))); return
+        if path == "/appaccess":
+            # which paid add-ons this App key unlocks (drives the toolkit tiles)
+            key = q.get("key", [""])[0]; dev = q.get("dev", ["app"])[0]
+            self._send(200, json.dumps({"hours": _app_license_ok(key, dev, "HOURS"),
+                                        "guardian": _app_license_ok(key, dev, "GUARDIAN")})); return
+        if path == "/apphours":
+            key = q.get("key", [""])[0]; dev = q.get("dev", ["app"])[0]
+            if not _app_license_ok(key, dev, "HOURS"):
+                self._send(403, b'{"error":"license"}'); return
+            _hours_refresh()
+            self._send(200, _read(_HOURS_FILE, b'{"symbols":{},"building":true}')); return
         if host.startswith("app.") and path in ("/", "/index.html"):
             self._send(200, _read(os.path.join("dashboard", "scapp.html")),
                        "text/html; charset=utf-8"); return

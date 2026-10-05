@@ -94,15 +94,35 @@ def price_for(code, contact):
     return p.get("price_solo", 0), None          # non-VIP solo price
 
 
-def start_checkout(product_code, contact, method="crypto", ref=""):
+def start_checkout(product_code, contact, method="crypto", ref="", attach=""):
     p = config.product(product_code)
     if not p:
         return None, "unknown product"
     price, note = price_for(product_code, contact)
     if price <= 0:
         return None, note or "nothing to charge for this item"
-    key = new_license_key(product_code)
-    store.create(key, product_code.upper(), contact, order_id=key, status="pending")
+    order = None
+    if p.get("type") == "app_addon":
+        # an add-on rides on the trader's existing App key: that key unlocks it
+        parent = store.get((attach or "").strip())
+        if (not parent or parent["status"] == "pending"
+                or not config.unlocks(parent["product"], "APP")):
+            return None, "Enter the app key you want to add this to."
+        contact = contact or parent.get("contact") or ""
+        old = store.addon_for(parent["license_key"], product_code)
+        if old:                                   # renewal: extend the same row
+            key = old["license_key"]
+            order = "%s-%s" % (key, secrets.token_hex(3).upper())
+            store.update(key, order_id=order)
+        else:
+            key = new_license_key(product_code)
+            order = key
+            store.create(key, product_code.upper(), contact, order_id=key, status="pending")
+            store.update(key, attach_to=parent["license_key"], no_bind=1)
+    else:
+        key = new_license_key(product_code)
+        order = key
+        store.create(key, product_code.upper(), contact, order_id=key, status="pending")
     # attribute the referral if a valid code was passed (can't refer yourself —
     # not the same license and not the same contact)
     if ref:
@@ -112,11 +132,11 @@ def start_checkout(product_code, contact, method="crypto", ref=""):
             store.update(key, referred_by=ref)
     desc = "%s — %d days" % (p["name"], p["period_days"])
     if method == "card":
-        url, ref = cardpay.create_checkout(price, order_id=key, description=desc)
+        url, ref = cardpay.create_checkout(price, order_id=order, description=desc)
     elif method == "paypal":
-        url, ref = paypal.create_checkout(price, order_id=key, description=desc)
+        url, ref = paypal.create_checkout(price, order_id=order, description=desc)
     else:
-        url, ref = nowpayments.create_invoice(price, order_id=key, order_description=desc)
+        url, ref = nowpayments.create_invoice(price, order_id=order, order_description=desc)
     if not url:
         return None, "payment provider error: %s" % ref
     return {"invoice_url": url, "license_key": key}, None
@@ -134,10 +154,16 @@ def apply_payment(order_id, payment_id):
     store.update(lic["license_key"], status="active", paid_until=paid_until,
                  revoke_at=None, notified=0, last_payment=payment_id)
     when = time.strftime("%Y-%m-%d", time.gmtime(paid_until))
-    notify.client(lic["contact"],
-                  "Payment received. Your %s access is active until %s (UTC).\n"
-                  "Activation key: %s\nEnter this key in the product to unlock it."
-                  % (lic["product"], when, lic["license_key"]))
+    if lic.get("attach_to"):
+        notify.client(lic["contact"],
+                      "Payment received. %s is now unlocked on your app key %s until %s (UTC).\n"
+                      "Open the app and it's ready, no new key needed."
+                      % ((p or {}).get("name", lic["product"]), lic["attach_to"], when))
+    else:
+        notify.client(lic["contact"],
+                      "Payment received. Your %s access is active until %s (UTC).\n"
+                      "Activation key: %s\nEnter this key in the product to unlock it."
+                      % (lic["product"], when, lic["license_key"]))
     notify.admin("payment ok: %s -> active until %s" % (lic["license_key"], when))
     _reward_referrer(lic)
 
@@ -619,11 +645,20 @@ class H(BaseHTTPRequestHandler):
                                     "expires_at": lic.get("paid_until"), "server_time": store.now(),
                                     "token": token, "recheck_in": config.TOKEN_TTL_HOURS * 3600})
 
-        if product and lic["product"].upper() != product.upper():
-            # a VIP membership unlocks every product flagged vip=True
-            reqp = config.product(product)
-            if not (lic["product"] == "VIP" and reqp and reqp.get("vip")):
+        if product and not config.unlocks(lic["product"], product):
+            # an add-on bought onto this key (e.g. Guardian on an App key)
+            addon = store.addon_for(key, product)
+            ok, why = check_access(addon) if addon else (False, "")
+            if not ok or lic["status"] == "revoked":
                 return self._send(200, {"valid": False, "reason": "wrong_product"})
+            if (not lic.get("no_bind") and lic.get("bind_account") and account
+                    and account != lic["bind_account"]):
+                return self._send(200, {"valid": False, "reason": "bound_to_other"})
+            store.update(key, last_seen=store.now(), last_account=account or machine or "")
+            token = tokens.issue(key, addon["product"], addon["paid_until"])
+            return self._send(200, {"valid": True, "reason": why, "product": addon["product"],
+                                    "expires_at": addon["paid_until"], "server_time": store.now(),
+                                    "token": token, "recheck_in": config.TOKEN_TTL_HOURS * 3600})
 
         # bind to first account/machine seen; block others (anti-sharing).
         # no_bind licenses (e.g. multi-device comps) skip this entirely.
@@ -734,7 +769,8 @@ class H(BaseHTTPRequestHandler):
             data = {k: v[0] for k, v in urllib.parse.parse_qs(raw.decode()).items()}
         res, err = start_checkout(data.get("product", ""), data.get("contact", ""),
                                   method=(data.get("method") or "crypto"),
-                                  ref=(data.get("ref") or ""))
+                                  ref=(data.get("ref") or ""),
+                                  attach=(data.get("attach") or ""))
         if err:
             return self._send(400, {"error": err})
         self._send(200, res)

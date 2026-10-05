@@ -575,6 +575,7 @@ function showHome(){
     return '<div class="chip'+(c[0]===CUR?' on':'')+'" onclick="pick(\''+c[0]+'\')">'+c[1]+'</div>';
   }).join("");
   if(DATA) renderHome(); else loadClass();
+  loadAccess();
   loadRef();
   loadNotices();
 }
@@ -981,12 +982,86 @@ function sizeLots(equity, pct, code, stop, price, perPoint){
   var lots=Math.floor(riskUsd/perLot*100+1e-9)/100;
   return {lots:lots, riskUsd:riskUsd, actualUsd:lots*perLot, perLot:perLot};
 }
+var ACCESS={hours:false,guardian:false};
 function toolsRow(){
-  return '<div class="tools">'+
-    '<div class="tool" onclick="openSizer()"><b>Risk Sizer</b><span class="free">Free</span></div>'+
-    '<div class="tool" onclick="soonTool(\'hours\')"><b>Prime Hours</b><span class="soon">Coming soon</span></div>'+
-    '<div class="tool" onclick="soonTool(\'guardian\')"><b>Guardian</b><span class="soon">Coming soon</span></div>'+
-  '</div>';
+  return '<div class="tools" id="tools">'+toolsInner()+'</div>';
+}
+function toolsInner(){
+  return '<div class="tool" onclick="openSizer()"><b>Risk Sizer</b><span class="free">Free</span></div>'+
+    (ACCESS.hours
+      ? '<div class="tool" onclick="openHours()"><b>Prime Hours</b><span class="free">Open</span></div>'
+      : '<div class="tool" onclick="soonTool(\'hours\')"><b>Prime Hours</b><span class="soon">Coming soon</span></div>')+
+    '<div class="tool" onclick="soonTool(\'guardian\')"><b>Guardian</b><span class="soon">Coming soon</span></div>';
+}
+// which add-ons this key unlocks; the tiles redraw when the answer arrives
+function loadAccess(){
+  fetch("/appaccess?key="+encodeURIComponent(K())+"&dev="+encodeURIComponent(DEV()),{cache:"no-store"})
+    .then(function(r){ return r.json(); }).then(function(d){
+      ACCESS={hours:!!(d&&d.hours),guardian:!!(d&&d.guardian)};
+      var t=el("tools"); if(t) t.innerHTML=toolsInner();
+    }).catch(function(){});
+}
+
+// ---------- Prime Hours: when each market really moves (paid add-on) ----------
+var HOURS=null, HSYM="";
+try{ HSYM=localStorage.getItem("sc_hsym")||""; }catch(e){}
+function openHours(){
+  el("refreshBtn").style.display="none"; el("homeBtn").style.display="";
+  el("main").innerHTML='<p class="muted">Loading Prime Hours…</p>';
+  fetch("/apphours?key="+encodeURIComponent(K())+"&dev="+encodeURIComponent(DEV()),{cache:"no-store"})
+    .then(function(r){ if(r.status===403) throw {code:403}; return r.json(); })
+    .then(function(d){ HOURS=d; renderHours(); })
+    .catch(function(e){
+      el("main").innerHTML='<p class="muted">'+(e&&e.code===403?"Prime Hours isn't unlocked on this key.":"Network error. Try again.")+'</p>';
+    });
+}
+// local start of a UTC hour, as "14:00" (handles half-hour time zones)
+var _OFF=-new Date().getTimezoneOffset();          // minutes east of UTC
+function _lmin(h){ return (((h*60+_OFF)%1440)+1440)%1440; }
+function _hm(m){ var h=Math.floor(m/60), mm=m%60; return (h<10?"0":"")+h+":"+(mm<10?"0":"")+mm; }
+function _span(w){ return w ? _hm(_lmin(w.start))+" – "+_hm(_lmin(w.end)) : "—"; }
+function _inWin(w,utcH){ if(!w) return false; return w.start<=w.end ? (utcH>=w.start&&utcH<w.end) : (utcH>=w.start||utcH<w.end); }
+function renderHours(){
+  var syms=(HOURS&&HOURS.symbols)||{}, keys=Object.keys(syms);
+  if(!keys.length){
+    el("main").innerHTML='<div class="sec" style="margin-top:4px">Prime Hours</div><p class="muted">'+
+      (HOURS&&HOURS.building?"Crunching 2 years of hourly prices for every market. Check back in a few minutes.":"No data yet.")+'</p>';
+    return;
+  }
+  keys.sort(function(a,b){ return String(syms[a].name).localeCompare(String(syms[b].name)); });
+  if(!syms[HSYM]){ HSYM = syms["GC=F"] ? "GC=F" : keys[0]; }
+  var p=syms[HSYM], nowH=new Date().getUTCHours();
+  var order=[]; for(var h=0;h<24;h++) order.push(h);
+  order.sort(function(a,b){ return _lmin(a)-_lmin(b); });
+  var bars=order.map(function(h){
+    var v=p.hours[h]||0, prime=_inWin(p.prime,h), dead=_inWin(p.dead,h);
+    var c = prime ? "var(--buy)" : dead ? "var(--sell)" : "var(--steel)";
+    return '<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%">'+
+      '<div style="height:'+Math.max(3,v)+'%;background:'+c+';opacity:'+(v?0.35+v/160:0.15)+';border-radius:3px 3px 0 0'+
+      (h===nowH?';outline:2px solid var(--fg)':'')+'"></div></div>';
+  }).join("");
+  var ticks=[0,6,12,18].map(function(i){ return '<span>'+_hm(_lmin(order[i])).slice(0,5)+'</span>'; }).join("");
+  var live=_inWin(p.prime,nowH)?'<span class="badge" style="background:rgba(46,204,113,.15);color:var(--buy)">PRIME NOW</span>'
+    : _inWin(p.dead,nowH)?'<span class="badge" style="background:rgba(255,91,91,.15);color:var(--sell)">DEAD ZONE NOW</span>':'';
+  var days=(p.days||[]).map(function(d){
+    return '<div style="flex:1;text-align:center"><div style="height:70px;display:flex;align-items:flex-end">'+
+      '<div style="width:100%;height:'+Math.max(4,d.score)+'%;background:var(--chrome);opacity:'+(0.35+d.score/160)+';border-radius:4px 4px 0 0"></div></div>'+
+      '<div class="muted" style="margin-top:4px">'+esc(d.day)+'</div></div>';
+  }).join("");
+  el("main").innerHTML=
+    '<div class="sec" style="margin-top:4px">Prime Hours</div>'+
+    '<select id="hSym" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg);font-size:16px">'+
+      keys.map(function(k){ return '<option value="'+esc(k)+'"'+(k===HSYM?' selected':'')+'>'+esc(syms[k].name)+'</option>'; }).join("")+'</select>'+
+    '<div class="chart" style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
+      '<span class="muted">MOVEMENT BY HOUR · YOUR TIME</span>'+live+'</div>'+
+      '<div style="display:flex;gap:2px;height:110px;align-items:stretch">'+bars+'</div>'+
+      '<div class="muted" style="display:flex;justify-content:space-between;margin-top:6px">'+ticks+'</div></div>'+
+    '<div class="chk"><span class="m">🔥</span><b style="flex:1">Prime window</b><span>'+_span(p.prime)+'</span></div>'+
+    '<div class="chk"><span class="m">💤</span><b style="flex:1">Dead zone · sit out</b><span>'+_span(p.dead)+'</span></div>'+
+    '<div class="sec">Best days to trade it</div><div style="display:flex;gap:8px">'+days+'</div>'+
+    '<div class="foot">Shown in your local time. Built from '+esc(p.trading_days)+' trading days of real hourly prices. '+
+      'How much a market moves is not which way it moves. Education only, not financial advice.</div>';
+  el("hSym").onchange=function(){ HSYM=this.value; try{ localStorage.setItem("sc_hsym",HSYM); }catch(e){} renderHours(); };
 }
 var SOON={
   hours:["Prime Hours","When each market really moves",
