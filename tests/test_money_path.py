@@ -189,6 +189,62 @@ class MoneyPath(unittest.TestCase):
         self.crypto_ipn(key, "NP-4")          # a second, different payment
         self.assertEqual(self.days_paid(key), 2 * APP_DAYS)
 
+    # ---- mobile toolkit: add-ons on the App key, and the TOOLKIT bundle ----
+    def _paid_key(self, product="APP", n=[0]):
+        n[0] += 1
+        key = self.checkout("crypto", contact="tk%d@example.com" % n[0], product=product)
+        self.crypto_ipn(key, "NP-TK-%s-%d" % (product, n[0]))
+        return key
+
+    def test_toolkit_not_for_sale_until_live(self):
+        for code in ("GUARDIAN", "HOURS", "TOOLKIT"):
+            status, res = self.req("POST", "/checkout", {"product": code, "contact": "b@example.com",
+                                                         "method": "crypto", "attach": "x"})
+            self.assertEqual(status, 400, code)
+            self.assertIn("In testing", res["error"])
+
+    def test_addon_rides_on_the_app_key(self):
+        with mock.patch.object(config, "LOCKED", set()):
+            app = self._paid_key()
+            self.assertFalse(self.verify(app, "GUARDIAN")["valid"])
+            code, res = self.req("POST", "/checkout", {"product": "GUARDIAN", "method": "crypto",
+                                                       "contact": "", "attach": app})
+            self.assertEqual(code, 200, res)
+            self.assertEqual(self.invoices[-1]["price"], config.product("GUARDIAN")["price_solo"])
+            addon = res["license_key"]
+            self.assertFalse(self.verify(app, "GUARDIAN")["valid"])      # not paid yet
+            self.crypto_ipn(self.invoices[-1]["order_id"], "NP-G1")
+            v = self.verify(app, "GUARDIAN")
+            self.assertTrue(v["valid"]); self.assertEqual(v["product"], "GUARDIAN")
+            self.assertTrue(self.verify(app, "APP")["valid"])            # app still opens
+            self.assertFalse(self.verify(app, "HOURS")["valid"])         # only what was paid for
+            # next month: same add-on row, a second period on top
+            code, res = self.req("POST", "/checkout", {"product": "GUARDIAN", "method": "crypto",
+                                                       "contact": "", "attach": app})
+            self.assertEqual(res["license_key"], addon)
+            self.assertNotEqual(self.invoices[-1]["order_id"], addon)
+            self.crypto_ipn(self.invoices[-1]["order_id"], "NP-G2")
+            self.assertEqual(self.days_paid(addon), 60)
+
+    def test_addon_needs_a_real_paid_app_key(self):
+        with mock.patch.object(config, "LOCKED", set()):
+            for attach in ("", "APP-NOPE"):
+                code, _ = self.req("POST", "/checkout", {"product": "HOURS", "method": "crypto",
+                                                         "contact": "c@example.com", "attach": attach})
+                self.assertEqual(code, 400)
+            unpaid = self.checkout("crypto", contact="unpaid@example.com")
+            code, _ = self.req("POST", "/checkout", {"product": "HOURS", "method": "crypto",
+                                                     "contact": "", "attach": unpaid})
+            self.assertEqual(code, 400)
+
+    def test_toolkit_key_opens_all_three(self):
+        with mock.patch.object(config, "LOCKED", set()):
+            key = self._paid_key("TOOLKIT")
+            self.assertEqual(self.invoices[-1]["price"], 39.99)
+            for p in ("APP", "GUARDIAN", "HOURS"):
+                self.assertTrue(self.verify(key, p)["valid"], p)
+            self.assertFalse(self.verify(key, "GOLD")["valid"])
+
     # ---- PayPal ----
     def test_paypal_return_then_webhook_credits_once(self):
         key = self.checkout("paypal")
