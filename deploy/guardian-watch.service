@@ -1,0 +1,18 @@
+[Unit]
+Description=Guardian: watches a linked MT5 account (read-only) and warns on Telegram
+After=network-online.target wolf-desk.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=wolf
+WorkingDirectory=/opt/wolf-desk
+EnvironmentFile=/etc/guardian.env
+ExecStart=/usr/bin/env python3 -m guardian.watch
+Restart=always
+RestartSec=15
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

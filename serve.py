@@ -42,6 +42,7 @@ import watchdog
 import atomicio
 import proof_labels
 from guardian import rules as guardian_rules
+from guardian import mt5 as guardian_mt5
 from scout.news import headlines
 
 PORT        = int(os.environ.get("PORT", "8777"))
@@ -389,29 +390,44 @@ def _read(path, default=b"{}"):
 
 # --- STAALCALIBUR app: license check against the licensing service (localhost) ---
 _APP_LIC_CACHE = {}
-def _app_license_ok(key, dev, product="APP"):
+def _app_license_ok(key, dev, product="APP", bind=True):
     """True if `key` unlocks `product` (the App, or an add-on such as HOURS
     bought onto it). Verifies via the licensing service on the same box;
-    caches the answer for 5 min."""
+    caches the answer for 5 min. bind=False checks the key without tying it
+    to a device (the Guardian MT5 EA runs on the trader's PC, not the phone
+    the key is bound to)."""
     if not key:
         return False
     now = time.time()
-    ck = key + "|" + (dev or "") + "|" + product
+    ck = key + "|" + (dev or "") + "|" + product + ("" if bind else "|nobind")
     c = _APP_LIC_CACHE.get(ck)
     if c and c[1] > now:
         return c[0]
     ok = False
     try:
         base = os.environ.get("LICENSING_URL", "http://127.0.0.1:8790")
+        who = urllib.parse.quote(dev or "app") if bind else ""
         url = (base + "/verify?product=" + product + "&key=" + urllib.parse.quote(key) +
-               "&account=" + urllib.parse.quote(dev or "app") +
-               "&machine=" + urllib.parse.quote(dev or "app"))
+               "&account=" + who + "&machine=" + who)
         with urllib.request.urlopen(url, timeout=6) as r:
             ok = bool(json.loads(r.read().decode()).get("valid"))
     except Exception:
         ok = False
     _APP_LIC_CACHE[ck] = (ok, now + 300)
     return ok
+
+
+def _guardian_hours(symbol):
+    """Prime Hours profile for any broker symbol (NAS100.cash -> ^NDX), or None."""
+    yahoo = guardian_rules.meta(symbol)[2]
+    if not yahoo:
+        return None
+    _hours_refresh()
+    try:
+        with open(_HOURS_FILE) as f:
+            return json.load(f).get("symbols", {}).get(yahoo)
+    except Exception:
+        return None
 
 
 # --- Prime Hours (app add-on): data/prime_hours.json, rebuilt weekly ----------
@@ -530,8 +546,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
 
         # ---- STOREFRONT proxy (same-origin bridge to licensing) --------------
-        # Guardian (app add-on): judge one trade before it's taken
-        if path == "/appguard":
+        # Guardian (app add-on): judge one trade before it's taken, from the
+        # app (/appguard, JSON) or from the MT5 EA (/appguard/mt5, plain text)
+        if path in ("/appguard", "/appguard/mt5"):
             try:
                 ln = int(self.headers.get("Content-Length", "0") or "0")
                 if ln <= 0 or ln > 20_000:
@@ -541,8 +558,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     raise ValueError("bad body")
             except Exception:
                 self._send(400, json.dumps({"error": "bad request"})); return
-            if not _app_license_ok(str(body.get("key") or ""), str(body.get("dev") or "app"), "GUARDIAN"):
+            mt5 = path == "/appguard/mt5"
+            if not _app_license_ok(str(body.get("key") or ""), str(body.get("dev") or "app"), "GUARDIAN", bind=not mt5):
                 self._send(403, b'{"error":"license"}'); return
+            if mt5:
+                self._send(200, guardian_mt5.answer(body, get_calendar(), _guardian_hours),
+                           "text/plain; charset=utf-8"); return
             trade = body.get("trade") if isinstance(body.get("trade"), dict) else {}
             account = body.get("account") if isinstance(body.get("account"), dict) else {}
             s = guardian_rules.SYMS.get(str(trade.get("sym") or "").upper())

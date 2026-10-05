@@ -33,6 +33,52 @@ SYMS = {
 }
 CRYPTO = {"BTCUSD"}
 
+# Broker symbols seen on a linked MT5 account (any symbol, any suffix).
+_CCY = ("USD", "EUR", "GBP", "JPY", "AUD", "NZD", "CAD", "CHF")
+_INDEX = {
+    "USD": ("NAS100", "USTEC", "US100", "NDX", "US30", "DJ30", "WS30", "US500", "SPX500", "SP500", "US2000"),
+    "EUR": ("GER40", "DE40", "DAX40", "GER30", "DE30", "EU50", "EUSTX50", "STOXX50", "FRA40"),
+    "GBP": ("UK100", "FTSE100"),
+    "JPY": ("JP225", "JPN225", "NIKKEI"),
+    "AUD": ("AUS200",),
+}
+_YAHOO = {
+    "XAUUSD": "GC=F", "GOLD": "GC=F", "XAGUSD": "SI=F", "SILVER": "SI=F",
+    "NAS100": "^NDX", "USTEC": "^NDX", "US100": "^NDX", "NDX": "^NDX",
+    "US30": "^DJI", "DJ30": "^DJI", "WS30": "^DJI", "US500": "^GSPC", "SPX500": "^GSPC", "SP500": "^GSPC",
+    "US2000": "^RUT", "GER40": "^GDAXI", "DE40": "^GDAXI", "DAX40": "^GDAXI", "GER30": "^GDAXI",
+    "EU50": "^STOXX50E", "EUSTX50": "^STOXX50E", "UK100": "^FTSE", "JP225": "^N225", "JPN225": "^N225",
+    "AUS200": "^AXJO", "USOIL": "CL=F", "XTIUSD": "CL=F", "WTI": "CL=F", "UKOIL": "BZ=F", "XBRUSD": "BZ=F",
+    "XNGUSD": "NG=F", "NATGAS": "NG=F", "BTCUSD": "BTC-USD", "ETHUSD": "ETH-USD",
+}
+
+
+def base_symbol(sym):
+    """'NAS100.cash', 'XAUUSDm', 'EURUSD+' -> the plain name."""
+    s = "".join(ch for ch in str(sym).upper().split(".")[0] if ch.isalnum())
+    for k in sorted(list(_YAHOO) + list(SYMS), key=len, reverse=True):
+        if s.startswith(k):
+            return k
+    if len(s) >= 6 and s[:3] in _CCY and s[3:6] in _CCY:
+        return s[:6]
+    return s
+
+
+def meta(sym):
+    """(name, news currencies, Yahoo ticker or None, trades at weekends)."""
+    b = base_symbol(sym)
+    if b in SYMS and b != "OTHER":
+        s = SYMS[b]
+        return (s[0] if b in ("XAUUSD", "XAGUSD", "BTCUSD") else b), s[5], s[6], b in CRYPTO
+    crypto = b.startswith(("BTC", "ETH", "SOL", "XRP", "LTC", "DOGE"))
+    if len(b) == 6 and b[:3] in _CCY and b[3:] in _CCY:
+        cur = (b[:3], b[3:])
+        yahoo = _YAHOO.get(b, b + "=X")
+    else:
+        cur = next((tuple([c]) for c, names in _INDEX.items() if b in names), ("USD",))
+        yahoo = _YAHOO.get(b)
+    return b, cur, yahoo, crypto
+
 NO, CAREFUL, OK = "NO", "CAREFUL", "OK"
 _RANK = {OK: 0, CAREFUL: 1, NO: 2}
 
@@ -89,7 +135,7 @@ def _in(w, h):
 
 def market_closed(sym, now):
     """FX/metals close Friday 21:00 UTC and reopen Sunday 22:00 UTC."""
-    if sym in CRYPTO:
+    if meta(sym)[3]:
         return False
     wd, h = now.weekday(), now.hour
     return (wd == 4 and h >= 21) or wd == 5 or (wd == 6 and h < 22)
@@ -97,13 +143,18 @@ def market_closed(sym, now):
 
 def check(trade, account, now=None, events=(), hours=None):
     """Judge one trade. Returns {"verdict", "checks": [...], "risk_usd",
-    "risk_pct", "safe_lots"}; each check is {"kind", "level", "title", "text"}."""
+    "risk_pct", "safe_lots"}; each check is {"kind", "level", "title", "text"}.
+
+    From the app the symbol must be one of SYMS. A linked MT5 account passes
+    any broker symbol with "per_lot" (the broker's own $ lost per lot at the
+    stop) instead."""
     now = now or datetime.now(timezone.utc)
     sym = str(trade.get("sym") or "").upper()
-    s = SYMS.get(sym)
-    if not s:
+    linked = "per_lot" in trade
+    given = _f(trade.get("per_lot"))
+    if sym not in SYMS and not linked:
         return {"error": "unknown symbol"}
-    name = s[0]
+    name, currencies = meta(sym)[:2]
     lots = _f(trade.get("lots"))
     stop = _f(trade.get("stop"))
     equity = _f(account.get("equity"))
@@ -118,13 +169,14 @@ def check(trade, account, now=None, events=(), hours=None):
 
     # --- size -------------------------------------------------------------
     risk = safe = pct = None
-    pl = per_lot(sym, stop, _f(trade.get("price")), _f(trade.get("per")))
+    pl = given if linked else per_lot(sym, stop, _f(trade.get("price")), _f(trade.get("per")))
     if not stop or stop <= 0:
         add("size", NO, "No stop loss",
             "Without a stop the worst case is your whole account. Set a stop first.")
     elif pl is None:
         add("size", CAREFUL, "Size not checked",
-            "Add the current price (or your broker's $ per point) so the risk can be worked out.")
+            ("Your broker didn't give the value of a price move for this symbol, so the risk couldn't be worked out."
+             if linked else "Add the current price (or your broker's $ per point) so the risk can be worked out."))
     else:
         risk = lots * pl
         pct = risk / equity * 100
@@ -142,6 +194,11 @@ def check(trade, account, now=None, events=(), hours=None):
     # --- open trades --------------------------------------------------------
     n_open = int(_f(account.get("open_trades")) or 0)
     open_risk = _f(account.get("open_risk")) or 0.0
+    naked = int(_f(account.get("open_no_stop")) or 0)
+    if naked:
+        add("heat", NO, "Open trades without a stop",
+            "%d of your open trades %s no stop. One bad move there can wipe the account, whatever this trade does."
+            % (naked, "has" if naked == 1 else "have"))
     if n_open or open_risk:
         total = open_risk + (risk or 0)
         heat = total / equity * 100
@@ -184,7 +241,7 @@ def check(trade, account, now=None, events=(), hours=None):
                     "%s left before the limit." % _money(room))
 
     # --- news -------------------------------------------------------------
-    cur = set(s[5])
+    cur = set(currencies)
     soon = None
     for e in events or ():
         ts = e.get("ts")
@@ -206,7 +263,7 @@ def check(trade, account, now=None, events=(), hours=None):
             add("news", CAREFUL, "News later",
                 "%s %s is out in %s. Will your stop survive the spike?" % (e["currency"], e.get("title", ""), _hm(m)))
         elif events:
-            add("news", OK, "No big news", "No high-impact %s news in the next 4 hours." % "/".join(s[5]))
+            add("news", OK, "No big news", "No high-impact %s news in the next 4 hours." % "/".join(currencies))
         else:
             add("news", OK, "News not checked", "The news calendar didn't load. Check it yourself before you trade.")
 
