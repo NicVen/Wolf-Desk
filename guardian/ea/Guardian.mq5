@@ -20,7 +20,7 @@
 //+------------------------------------------------------------------+
 #property copyright "STAALWAG"
 #property link      "https://staalwag.com"
-#property version   "1.13"
+#property version   "1.14"
 #property description "Guardian watches your trades and warns you. It never trades."
 
 input string GuardianKey    = "";     // Your STAALCALIBUR key (with Guardian)
@@ -38,7 +38,7 @@ ulong    g_seen[];       // tickets already judged (or open when Guardian starte
 ulong    g_wait[];       // new tickets waiting out the grace period
 datetime g_waitAt[];
 bool     g_started = false;
-bool     g_toldWeb = false, g_toldPush = false, g_toldKey = false;
+bool     g_toldWeb = false, g_toldPush = false, g_toldKey = false, g_toldAcc = false;
 int      g_syncState = 0;   // 0 not tried yet, 1 linked, -1 failing (told once each way)
 string   g_link = "checking...";   // shown on the chart so anyone can see what Guardian is doing
 int      g_tick = 0;
@@ -84,7 +84,7 @@ void Label(const string name, const string text, const int y, const color c)
 
 void ShowStatus()
   {
-   Label("GuardianStatus1", "STAALWAG Guardian 1.13   key " + GuardianKey, 30, clrSilver);
+   Label("GuardianStatus1", "STAALWAG Guardian 1.14   key " + GuardianKey, 30, clrSilver);
    Label("GuardianStatus2", "Phone link: " + g_link, 12,
          g_syncState == 1 ? clrLimeGreen : g_syncState == -1 ? clrOrangeRed : clrSilver);
    ChartRedraw();
@@ -264,8 +264,9 @@ void Judge(const ulong ticket)
 
    double equity = AccountInfoDouble(ACCOUNT_EQUITY);
    string challenge = ChallengeJson(equity);
-   string body = "{\"key\":\"" + GuardianKey + "\",\"dev\":\"mt5-" + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) + "\"," +
-                 "\"trade\":{\"sym\":\"" + sym + "\",\"side\":\"" + side + "\",\"lots\":" + Num(vol) +
+   string body = "{\"key\":\"" + GuardianKey + "\",\"dev\":\"mt5-" + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) +
+                 "\",\"login\":\"" + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) + "\"," +
+                 "\"trade\":{\"sym\":\"" + Esc(sym) + "\",\"side\":\"" + side + "\",\"lots\":" + Num(vol) +
                  ",\"stop\":" + Num(dist) + ",\"per_lot\":" + (perLot > 0 ? Num(perLot) : "null") + "}," +
                  "\"account\":{\"equity\":" + Num(equity) + ",\"risk_pct\":" + Num(RiskPercent) +
                  ",\"open_trades\":" + IntegerToString(nOpen) + ",\"open_risk\":" + Num(openRisk) +
@@ -380,6 +381,9 @@ void SyncResult(const int code, const int err)
          if(code == 403)
             why = "the key isn't accepted. Put the same key as in the app (with Guardian) in the Inputs tab.";
          else
+            if(code == 409)
+               why = "this key is linked to another MT5 account. In the app: Guardian > Use a different MT5 account.";
+         else
             why = StringFormat("the server answered %d.", code);
    g_link = "NOT linked, " + why;
    if(g_syncState != -1)
@@ -415,6 +419,15 @@ bool Ask(const string body, string &reply)
         {
          g_toldKey = true;
          Alert("Guardian: this key doesn't include Guardian. Only the basic size and stop checks will run.");
+        }
+      return(false);
+     }
+   if(code == 409)
+     {
+      if(!g_toldAcc)
+        {
+         g_toldAcc = true;
+         Alert("Guardian: this key is linked to another MT5 account. Switch it in the app: Guardian > Use a different MT5 account.");
         }
       return(false);
      }

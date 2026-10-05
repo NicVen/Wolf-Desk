@@ -532,13 +532,12 @@ function showGate(msg){
     (((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone)
        ? ''
        : '<a class="btn ghost" href="https://staalwag.com/store" target="_blank" rel="noopener">Need a key? Get the app →</a>')+
-    '<button class="btn ghost" onclick="openSizer()">Free tool: Risk Sizer</button>'+
     '<div class="muted">Rental only. Your key is remembered on this device. Decision-support &amp; education only — not financial advice.</div>'+
     '</div>';
 }
 function changeKey(){
   try{ localStorage.removeItem("sc_key"); }catch(e){}
-  DATA=null; ACCESS={hours:false,guardian:false}; showGate();
+  DATA=null; ACCESS={hours:false,guardian:false,tiles:null}; try{ localStorage.removeItem("sc_tiles"); }catch(e){} showGate();
 }
 function unlock(){
   var k=(el("keyIn").value||"").trim();
@@ -987,25 +986,31 @@ function sizeLots(equity, pct, code, stop, price, perPoint){
   var lots=Math.floor(riskUsd/perLot*100+1e-9)/100;
   return {lots:lots, riskUsd:riskUsd, actualUsd:lots*perLot, perLot:perLot};
 }
-var ACCESS={hours:false,guardian:false};
+var ACCESS={hours:false,guardian:false,tiles:null};
+try{ var _ac=JSON.parse(localStorage.getItem("sc_tiles")||"null"); if(_ac) ACCESS.tiles=_ac; }catch(e){}
 function toolsRow(){
-  return '<div class="tools" id="tools">'+toolsInner()+'</div>';
+  return '<div class="tools" id="tools"'+(toolsInner()?'':' style="display:none"')+'>'+toolsInner()+'</div>';
 }
+// tiles the server says this key sees (app_tools.py): revealed over the days
+// after purchase, none on a free trial. Nothing here sells or links to a sale.
 function toolsInner(){
-  return '<div class="tool" onclick="openSizer()"><b>Risk Sizer</b><span class="free">Free</span></div>'+
-    (ACCESS.hours
-      ? '<div class="tool" onclick="openHours()"><b>Prime Hours</b><span class="free">Open</span></div>'
-      : '<div class="tool" onclick="soonTool(\'hours\')"><b>Prime Hours</b><span class="soon">Coming soon</span></div>')+
-    (ACCESS.guardian
-      ? '<div class="tool" onclick="openGuardian()"><b>Guardian</b><span class="free">Open</span></div>'
-      : '<div class="tool" onclick="soonTool(\'guardian\')"><b>Guardian</b><span class="soon">Coming soon</span></div>');
+  var t=ACCESS.tiles||{}, out="";
+  var tile=function(name,state,open,info){
+    if(state==="open") return '<div class="tool" onclick="'+open+'()"><b>'+name+'</b><span class="free">Open</span></div>';
+    if(state==="available") return '<div class="tool" onclick="soonTool(\''+info+'\',true)"><b>'+name+'</b><span class="free">New</span></div>';
+    if(state==="soon") return '<div class="tool" onclick="soonTool(\''+info+'\')"><b>'+name+'</b><span class="soon">Coming soon</span></div>';
+    return "";
+  };
+  if(t.sizer) out+='<div class="tool" onclick="openSizer()"><b>Risk Sizer</b><span class="free">Free</span></div>';
+  return out+tile("Prime Hours",t.hours,"openHours","hours")+tile("Guardian",t.guardian,"openGuardian","guardian");
 }
 // which add-ons this key unlocks; the tiles redraw when the answer arrives
 function loadAccess(){
   fetch("/appaccess?key="+encodeURIComponent(K())+"&dev="+encodeURIComponent(DEV()),{cache:"no-store"})
     .then(function(r){ return r.json(); }).then(function(d){
-      ACCESS={hours:!!(d&&d.hours),guardian:!!(d&&d.guardian)};
-      var t=el("tools"); if(t) t.innerHTML=toolsInner();
+      ACCESS={hours:!!(d&&d.hours),guardian:!!(d&&d.guardian),tiles:(d&&d.tiles)||null};
+      try{ localStorage.setItem("sc_tiles",JSON.stringify(ACCESS.tiles)); }catch(e){}
+      var t=el("tools"); if(t){ t.innerHTML=toolsInner(); t.style.display=toolsInner()?"":"none"; }
     }).catch(function(){});
 }
 
@@ -1074,14 +1079,15 @@ var SOON={
   hours:["Prime Hours","When each market really moves",
     "<p>Pick a symbol and see a heatmap of the hours it moves most, in your own time zone. "+
     "It marks the prime window to trade and the dead zone to sit out, plus the best days of the week.</p>"+
-    "<p>Built from years of real hourly prices. Coming to the app soon.</p>"],
+    "<p>Built from years of real hourly prices.</p>"],
   guardian:["Guardian","Your buddy over your shoulder",
-    "<p>Links read-only to your MT5 account. It never places or closes a trade.</p>"+
-    "<p>The moment you open a trade it checks the size, the time and the news, and tells you straight: "+
+    "<p>Links to your MT5 account through a small add-on on your PC. It never places, changes or closes a trade.</p>"+
+    "<p>The moment you open a trade it checks the size, your open trades, the time and the news, and tells you straight: "+
     "<b>NO, sit this out</b>, or you're good. Warnings reach your phone even when the app is closed.</p>"+
-    "<p>Challenge mode loads your prop firm's daily-loss and max-loss rules. Coming to the app soon.</p>"]
+    "<p>Pick your prop firm and challenge from a list and Guardian keeps you inside its daily and max loss rules.</p>"]
 };
-function soonTool(k){ var t=SOON[k]; openSheet(t[0],"Coming soon",t[1],t[2]); }
+// `ready`: the tool can now be added to this key (how is told outside the app)
+function soonTool(k,ready){ var t=SOON[k]; openSheet(t[0],ready?"New for your key":"Coming soon",t[1],t[2]); }
 // ---------- Guardian: ask before you trade (paid add-on) ----------
 // The rules run on the server (guardian/rules.py) so the MT5 watcher can use
 // the very same ones later. Inputs and the listened/ignored record stay on the phone.
@@ -1155,6 +1161,7 @@ function renderLinked(){
     '<button class="btn" style="margin-top:12px" onclick="askLinked()">🛡️ Ask Guardian</button>'+
     '<div id="gOut"></div>'+
     '<button class="btn ghost" style="margin-top:14px" onclick="gManual()">Type a trade in by hand instead</button>'+
+    '<button class="btn ghost" style="margin-top:8px" onclick="gSwitch()">Use a different MT5 account</button>'+
     '<div class="foot">Live from the Guardian EA on your MT5. Guardian never places, changes or closes a trade. Education only, not financial advice.</div>'+
   '</div>';
   gPaintLive(); gFirmBox(false);
@@ -1186,6 +1193,14 @@ function askLinked(){
     .then(function(r){ if(r.status===403) throw {code:403}; return r.json(); })
     .then(function(d){ renderVerdict(d); })
     .catch(function(e){ out.innerHTML='<p class="err" style="text-align:center">'+(e&&e.code===403?"Guardian isn't unlocked on this key.":"Network error. Try again.")+'</p>'; });
+}
+// free this key for another MT5 account (one account per key, switch once a day)
+function gSwitch(){
+  if(!confirm("Unlink MT5 "+(GLIVE&&GLIVE.login||"")+"? Then put Guardian on the other account's chart. You can switch once a day.")) return;
+  fetch("/appguard/switch",{method:"POST",headers:{"Content-Type":"application/json"},cache:"no-store",body:JSON.stringify({key:K(),dev:DEV()})})
+    .then(function(r){ return r.json(); })
+    .then(function(d){ toast(d.error||"Unlinked. Put Guardian on the other account's chart."); })
+    .catch(function(){ toast("Network error. Try again."); });
 }
 function gNotLinked(){
   // the PC's Guardian EA hasn't sent this key's account yet

@@ -164,6 +164,9 @@ class MoneyPath(unittest.TestCase):
         self.assertEqual(self.crypto_ipn(key, "NP-1")[0], 200)
         self.assertEqual(self.days_paid(key), APP_DAYS)
         self.assertTrue(self.verify(key)["valid"])
+        since = self.verify(key)["since"]                        # tools unlock from the first payment
+        self.assertFalse(self.verify(key)["trial"])
+        self.assertAlmostEqual(since, store.now(), delta=5)
 
         # NOWPayments retries webhooks; a repeat must not add more days
         self.crypto_ipn(key, "NP-1")
@@ -186,8 +189,10 @@ class MoneyPath(unittest.TestCase):
     def test_renewal_adds_a_period_on_top(self):
         key = self.checkout("crypto")
         self.crypto_ipn(key, "NP-3")
+        since = store.get(key)["paid_since"]
         self.crypto_ipn(key, "NP-4")          # a second, different payment
         self.assertEqual(self.days_paid(key), 2 * APP_DAYS)
+        self.assertEqual(store.get(key)["paid_since"], since)   # a renewal doesn't restart the reveal
 
     # ---- mobile toolkit: add-ons on the App key, and the TOOLKIT bundle ----
     def _paid_key(self, product="APP", n=[0]):
@@ -281,6 +286,7 @@ class MoneyPath(unittest.TestCase):
         self.assertEqual(code, 200)
         self.assertTrue(res["trial"])
         self.assertTrue(self.verify(res["license_key"])["valid"])
+        self.assertTrue(self.verify(res["license_key"])["trial"])        # the app shows a trial no tools
         _, again = self.req("POST", "/trial", {"contact": "trial@example.com"})
         self.assertEqual(again.get("error"), "trial_used")
 

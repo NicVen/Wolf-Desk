@@ -153,6 +153,8 @@ def apply_payment(order_id, payment_id):
     paid_until = base + period
     store.update(lic["license_key"], status="active", paid_until=paid_until,
                  revoke_at=None, notified=0, last_payment=payment_id)
+    if not lic.get("paid_since"):              # the first payment: the app's tools unlock from this day
+        store.update(lic["license_key"], paid_since=store.now())
     when = time.strftime("%Y-%m-%d", time.gmtime(paid_until))
     if lic.get("attach_to"):
         notify.client(lic["contact"],
@@ -296,6 +298,12 @@ def announce_quiz_winner(period, reward=None, public=True):
 def _prev_period():
     first = datetime.datetime.utcnow().replace(day=1)
     return (first - datetime.timedelta(days=1)).strftime("%Y-%m")
+
+
+def _age(lic):
+    """How long this key has been a paying one: the app reveals its tools over
+    the first days after purchase. A trial key reports trial=True."""
+    return {"trial": bool(lic.get("trial")), "since": lic.get("paid_since") or lic.get("created")}
 
 
 def check_access(lic):
@@ -641,7 +649,7 @@ class H(BaseHTTPRequestHandler):
             store.update(key, last_seen=store.now(), last_account=account or machine or "")
             prod = (product or lic["product"]).upper()
             token = tokens.issue(key, prod, lic.get("paid_until") or (store.now() + 3650 * DAY))
-            return self._send(200, {"valid": True, "reason": "admin", "product": prod,
+            return self._send(200, {"valid": True, "reason": "admin", "product": prod, **_age(lic),
                                     "expires_at": lic.get("paid_until"), "server_time": store.now(),
                                     "token": token, "recheck_in": config.TOKEN_TTL_HOURS * 3600})
 
@@ -656,7 +664,7 @@ class H(BaseHTTPRequestHandler):
                 return self._send(200, {"valid": False, "reason": "bound_to_other"})
             store.update(key, last_seen=store.now(), last_account=account or machine or "")
             token = tokens.issue(key, addon["product"], addon["paid_until"])
-            return self._send(200, {"valid": True, "reason": why, "product": addon["product"],
+            return self._send(200, {"valid": True, "reason": why, "product": addon["product"], **_age(lic),
                                     "expires_at": addon["paid_until"], "server_time": store.now(),
                                     "token": token, "recheck_in": config.TOKEN_TTL_HOURS * 3600})
 
@@ -677,7 +685,7 @@ class H(BaseHTTPRequestHandler):
                                     "product": lic["product"]})
         store.update(key, last_seen=store.now(), last_account=account or machine or "")
         token = tokens.issue(key, lic["product"], lic["paid_until"])
-        self._send(200, {"valid": True, "reason": reason, "product": lic["product"],
+        self._send(200, {"valid": True, "reason": reason, "product": lic["product"], **_age(lic),
                          "expires_at": lic["paid_until"], "server_time": store.now(),
                          "token": token, "recheck_in": config.TOKEN_TTL_HOURS * 3600})
 
