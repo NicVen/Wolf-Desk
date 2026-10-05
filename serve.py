@@ -526,6 +526,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        if self.headers.get("Host", "").lower().startswith("wolf."):
+            # WOLF desk is not for public use: keep it and its tools out of search engines.
+            self.send_header("X-Robots-Tag", "noindex, nofollow, noarchive")
         if cookie:
             self.send_header("Set-Cookie", cookie)
         self.end_headers()
