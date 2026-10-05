@@ -996,7 +996,9 @@ function toolsInner(){
     (ACCESS.hours
       ? '<div class="tool" onclick="openHours()"><b>Prime Hours</b><span class="free">Open</span></div>'
       : '<div class="tool" onclick="soonTool(\'hours\')"><b>Prime Hours</b><span class="soon">Coming soon</span></div>')+
-    '<div class="tool" onclick="soonTool(\'guardian\')"><b>Guardian</b><span class="soon">Coming soon</span></div>';
+    (ACCESS.guardian
+      ? '<div class="tool" onclick="openGuardian()"><b>Guardian</b><span class="free">Open</span></div>'
+      : '<div class="tool" onclick="soonTool(\'guardian\')"><b>Guardian</b><span class="soon">Coming soon</span></div>');
 }
 // which add-ons this key unlocks; the tiles redraw when the answer arrives
 function loadAccess(){
@@ -1080,6 +1082,99 @@ var SOON={
     "<p>Challenge mode loads your prop firm's daily-loss and max-loss rules. Coming to the app soon.</p>"]
 };
 function soonTool(k){ var t=SOON[k]; openSheet(t[0],"Coming soon",t[1],t[2]); }
+// ---------- Guardian: ask before you trade (paid add-on) ----------
+// The rules run on the server (guardian/rules.py) so the MT5 watcher can use
+// the very same ones later. Inputs and the listened/ignored record stay on the phone.
+var GD={equity:"",plan:"1",sym:"XAUUSD",lots:"",stop:"",price:"",per:"",open:"",openRisk:"",ch:false,start:"",daily:"5",max:"10",today:""};
+try{ var _gd=JSON.parse(localStorage.getItem("sc_gd")||"null"); if(_gd) for(var _g in GD) if(_gd[_g]!=null) GD[_g]=_gd[_g]; }catch(e){}
+var GLAST=null;
+function glog(){ try{ return JSON.parse(localStorage.getItem("sc_glog")||"[]"); }catch(e){ return []; } }
+function gRecord(){
+  var w=glog().filter(function(x){ return x.v!=="OK" && x.c; });
+  if(!w.length) return "";
+  var kept=w.filter(function(x){ return x.c==="sat"; }).length;
+  return '<div class="chk"><span class="m">🛡️</span><b style="flex:1">Your record</b><span>Listened to '+kept+' of '+w.length+' warning'+(w.length==1?'':'s')+'</span></div>';
+}
+function _gin(id,lab,ph){ return '<div><label for="'+id+'">'+lab+'</label><input id="'+id+'" inputmode="decimal" placeholder="'+ph+'"></div>'; }
+function openGuardian(){
+  el("refreshBtn").style.display="none"; el("homeBtn").style.display="";
+  if(!GD.equity && RS.equity) GD.equity=RS.equity;
+  el("main").innerHTML='<div class="rs">'+
+    '<div class="sec" style="margin-top:4px">Guardian · ask before you trade</div>'+
+    '<div class="muted">Tell Guardian the trade you want to take. It checks the size, your open trades, the news and the time, and tells you straight.</div>'+
+    gRecord()+
+    '<div class="two">'+_gin("gEq","Account equity ($)","10000")+_gin("gPlan","Your risk per trade (%)","1")+'</div>'+
+    '<label for="gSym">Symbol</label><select id="gSym">'+RS_SYMS.map(function(s){ return '<option value="'+s[0]+'">'+esc(s[1])+'</option>'; }).join("")+'</select>'+
+    '<div class="two">'+_gin("gLots","Lot size","0.10")+'<div><label for="gStop" id="gStopL">Stop distance</label><input id="gStop" inputmode="decimal"></div></div>'+
+    '<div id="gPriceW">'+_gin("gPrice","Current price","150")+'</div>'+
+    '<div id="gPerW">'+_gin("gPer","$ per 1 point on 1.00 lot (from your broker)","1")+'</div>'+
+    '<div class="two">'+_gin("gOpen","Trades already open","0")+_gin("gOpenRisk","$ at risk on them","0")+'</div>'+
+    '<label style="display:flex;align-items:center;gap:10px;text-transform:none;letter-spacing:0;font-size:14px;color:var(--fg)">'+
+      '<input type="checkbox" id="gCh" style="width:22px;height:22px;margin:0"> Challenge mode (prop firm rules)</label>'+
+    '<div id="gChW">'+
+      '<div class="two">'+_gin("gStart","Account start size ($)","100000")+_gin("gToday","Today\'s profit/loss ($)","-250")+'</div>'+
+      '<div class="two">'+_gin("gDaily","Daily loss limit (%)","5")+_gin("gMax","Max loss limit (%)","10")+'</div>'+
+    '</div>'+
+    '<button class="btn" style="margin-top:14px" onclick="askGuardian()">🛡️ Ask Guardian</button>'+
+    '<div id="gOut"></div>'+
+    '<div class="foot">Guardian never places, changes or closes a trade. You decide. Assumes a US-dollar account. Education only, not financial advice.</div>'+
+  '</div>';
+  var map={gEq:"equity",gPlan:"plan",gLots:"lots",gStop:"stop",gPrice:"price",gPer:"per",gOpen:"open",gOpenRisk:"openRisk",gStart:"start",gToday:"today",gDaily:"daily",gMax:"max"};
+  for(var id in map){ el(id).value=GD[map[id]]; el(id).oninput=gSave; }
+  el("gSym").value=GD.sym; el("gSym").onchange=function(){ el("gStop").value=""; gSave(); };
+  el("gCh").checked=!!GD.ch; el("gCh").onchange=gSave;
+  gSave();
+}
+function gSave(){
+  var s=rsSym(el("gSym").value);
+  el("gStopL").textContent = s[5]==="pips" ? "Stop (pips)" : s[5]==="$" ? "Stop ($ in price)" : "Stop (points)";
+  el("gStop").placeholder = s[5]==="pips" ? "25" : s[0]==="BTCUSD" ? "800" : s[5]==="$" ? "8.50" : "50";
+  el("gPriceW").className = s[4]==="base" ? "" : "hidden";
+  el("gPerW").className = s[4]==="custom" ? "" : "hidden";
+  el("gChW").className = el("gCh").checked ? "" : "hidden";
+  GD={equity:el("gEq").value,plan:el("gPlan").value,sym:s[0],lots:el("gLots").value,stop:el("gStop").value,price:el("gPrice").value,
+      per:el("gPer").value,open:el("gOpen").value,openRisk:el("gOpenRisk").value,ch:el("gCh").checked,start:el("gStart").value,
+      daily:el("gDaily").value,max:el("gMax").value,today:el("gToday").value};
+  try{ localStorage.setItem("sc_gd",JSON.stringify(GD)); }catch(e){}
+}
+function askGuardian(){
+  gSave();
+  var out=el("gOut"); out.innerHTML='<p class="muted" style="text-align:center">Checking…</p>';
+  var body={key:K(),dev:DEV(),
+    trade:{sym:GD.sym,lots:_num("gLots"),stop:_num("gStop"),price:_num("gPrice"),per:_num("gPer")},
+    account:{equity:_num("gEq"),risk_pct:_num("gPlan"),open_trades:_num("gOpen"),open_risk:_num("gOpenRisk"),
+      challenge:{on:GD.ch,start:_num("gStart"),daily_pct:_num("gDaily"),max_pct:_num("gMax"),today_pl:_num("gToday")}}};
+  fetch("/appguard",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),cache:"no-store"})
+    .then(function(r){ if(r.status===403) throw {code:403}; return r.json(); })
+    .then(function(d){ renderVerdict(d); })
+    .catch(function(e){ out.innerHTML='<p class="err" style="text-align:center">'+(e&&e.code===403?"Guardian isn't unlocked on this key.":"Network error. Try again.")+'</p>'; });
+}
+function renderVerdict(d){
+  var out=el("gOut");
+  if(!d||d.error){ out.innerHTML='<p class="err" style="text-align:center">'+esc((d&&d.error)||"Something went wrong.")+'</p>'; return; }
+  var col={NO:"var(--sell)",CAREFUL:"var(--watch)",OK:"var(--buy)"}, ico={NO:"⛔",CAREFUL:"⚠️",OK:"✅"};
+  var head={NO:"NO. Sit this out.",CAREFUL:"Careful.",OK:"You're good."}[d.verdict];
+  GLAST={t:Date.now(),s:GD.sym,v:d.verdict,c:""};
+  var rows=d.checks.slice().sort(function(a,b){ var r={NO:0,CAREFUL:1,OK:2}; return r[a.level]-r[b.level]; }).map(function(c){
+    return '<div class="chk" style="align-items:flex-start"><span class="m">'+ico[c.level]+'</span><div style="flex:1;text-align:left"><b>'+esc(c.title)+'</b>'+
+      '<div class="muted" style="font-size:12.5px;line-height:1.45;margin-top:2px">'+esc(c.text)+'</div></div></div>';
+  }).join("");
+  out.innerHTML='<div class="rsout" style="border-color:'+col[d.verdict]+'"><div class="big" style="color:'+col[d.verdict]+'">'+head+'</div>'+
+    '<div style="margin-top:8px">'+rows+'</div>'+
+    (d.verdict==="OK"?'':'<div class="two" style="display:flex;gap:8px;margin-top:12px">'+
+      '<button class="btn" style="flex:1" onclick="gChoose(\'sat\')">I\'ll sit out</button>'+
+      '<button class="btn ghost" style="flex:1" onclick="gChoose(\'took\')">Taking it anyway</button></div>')+
+    '</div>';
+  if(d.verdict==="OK") gKeep();
+  out.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function gKeep(){ var l=glog(); l.push(GLAST); if(l.length>300) l=l.slice(-300); try{ localStorage.setItem("sc_glog",JSON.stringify(l)); }catch(e){} }
+function gChoose(c){
+  if(!GLAST||GLAST.c) return;
+  GLAST.c=c; gKeep();
+  toast(c==="sat"?"Good call. Saved to your record.":"Your call. Saved to your record.");
+  openGuardian();
+}
 var RS={equity:"",pct:"1",sym:"XAUUSD",stop:"",price:"",per:""};
 try{ var _rs=JSON.parse(localStorage.getItem("sc_rs")||"null"); if(_rs) for(var _k in RS) if(_rs[_k]!=null) RS[_k]=_rs[_k]; }catch(e){}
 function openSizer(){
