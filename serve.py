@@ -43,6 +43,7 @@ import atomicio
 import proof_labels
 from guardian import rules as guardian_rules
 from guardian import mt5 as guardian_mt5
+from guardian import live as guardian_live
 from scout.news import headlines
 
 PORT        = int(os.environ.get("PORT", "8777"))
@@ -548,34 +549,38 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # ---- STOREFRONT proxy (same-origin bridge to licensing) --------------
         # Guardian (app add-on): judge one trade before it's taken, from the
         # app (/appguard, JSON) or from the MT5 EA (/appguard/mt5, plain text)
-        if path in ("/appguard", "/appguard/mt5"):
+        if path in ("/appguard", "/appguard/mt5", "/appguard/mt5/sync"):
             try:
                 ln = int(self.headers.get("Content-Length", "0") or "0")
-                if ln <= 0 or ln > 20_000:
+                if ln <= 0 or ln > 200_000:
                     raise ValueError("bad size")
                 body = json.loads(self.rfile.read(ln).decode("utf-8"))
                 if not isinstance(body, dict):
                     raise ValueError("bad body")
             except Exception:
                 self._send(400, json.dumps({"error": "bad request"})); return
-            mt5 = path == "/appguard/mt5"
-            if not _app_license_ok(str(body.get("key") or ""), str(body.get("dev") or "app"), "GUARDIAN", bind=not mt5):
+            key = str(body.get("key") or "")
+            mt5 = path.startswith("/appguard/mt5")
+            if not _app_license_ok(key, str(body.get("dev") or "app"), "GUARDIAN", bind=not mt5):
                 self._send(403, b'{"error":"license"}'); return
+            if path == "/appguard/mt5/sync":       # the EA's live account snapshot
+                guardian_live.save(key, body)
+                self._send(200, "OK", "text/plain; charset=utf-8"); return
             if mt5:
                 self._send(200, guardian_mt5.answer(body, get_calendar(), _guardian_hours),
                            "text/plain; charset=utf-8"); return
             trade = body.get("trade") if isinstance(body.get("trade"), dict) else {}
             account = body.get("account") if isinstance(body.get("account"), dict) else {}
-            s = guardian_rules.SYMS.get(str(trade.get("sym") or "").upper())
-            prof = None
-            if s and s[6]:
-                _hours_refresh()
-                try:
-                    with open(_HOURS_FILE) as f:
-                        prof = json.load(f).get("symbols", {}).get(s[6])
-                except Exception:
-                    prof = None
-            self._send(200, json.dumps(guardian_rules.check(trade, account, events=get_calendar(), hours=prof))); return
+            if body.get("linked"):                  # size from the linked MT5 account
+                snap = guardian_live.load(key)
+                if not snap:
+                    self._send(200, json.dumps({"error": "Your MT5 account isn't linked yet."})); return
+                t = guardian_live.trade(snap, str(trade.get("sym") or ""), trade.get("lots"), trade.get("stop_price"))
+                if not t:
+                    self._send(200, json.dumps({"error": "That symbol isn't in your MT5 Market Watch."})); return
+                trade, account = t, guardian_live.account(snap)
+            self._send(200, json.dumps(guardian_rules.check(trade, account, events=get_calendar(),
+                                                            hours=_guardian_hours(str(trade.get("sym") or ""))))); return
 
         if path in ("/app/trial", "/app/checkout", "/app/testers"):
             try:
@@ -801,6 +806,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
             key = q.get("key", [""])[0]; dev = q.get("dev", ["app"])[0]
             self._send(200, json.dumps({"hours": _app_license_ok(key, dev, "HOURS"),
                                         "guardian": _app_license_ok(key, dev, "GUARDIAN")})); return
+        if path == "/appguard/live":
+            key = q.get("key", [""])[0]; dev = q.get("dev", ["app"])[0]
+            if not _app_license_ok(key, dev, "GUARDIAN"):
+                self._send(403, b'{"error":"license"}'); return
+            self._send(200, json.dumps(guardian_live.load(key) or {"linked": False})); return
         if path == "/apphours":
             key = q.get("key", [""])[0]; dev = q.get("dev", ["app"])[0]
             if not _app_license_ok(key, dev, "HOURS"):

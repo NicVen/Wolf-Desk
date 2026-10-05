@@ -1,11 +1,11 @@
 {
-  "version": "2.8.0",
+  "version": "2.9.0",
   "date": "2026-10-05",
-  "title": "Guardian: ask before you trade",
+  "title": "Guardian: your MT5 account live on your phone",
   "type": "feature",
   "notes": [
-    "NEW for Toolkit testers: Guardian. Tell it the trade you want to take and it checks the size, your open trades, the news and the time of day.",
-    "It answers straight: NO, sit this out, careful, or you're good, with the reason.",
-    "Challenge mode checks your prop firm's daily and max loss limits."
+    "Guardian now shows your linked MT5 account live: balance, equity, today's result and every open trade with its stop.",
+    "Ask Guardian uses your broker's own symbols and shows the safe lot size the moment you enter your stop.",
+    "Open trades without a stop are flagged in red."
   ]
 }
