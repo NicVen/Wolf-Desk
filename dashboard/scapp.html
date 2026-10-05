@@ -167,6 +167,20 @@
   .vote.on{background:var(--chrome);color:#0a0e15;border-color:var(--chrome)}
   .idea.built .tx{color:var(--chrome)}
   .nextup{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--chrome);margin:8px 0}
+  /* toolkit tiles + risk sizer */
+  .tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:2px 0 12px}
+  .tool{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center;cursor:pointer}
+  .tool:active{background:var(--card2)}
+  .tool b{display:block;font-size:13px}
+  .tool span{display:block;font-size:10px;letter-spacing:.5px;text-transform:uppercase;margin-top:3px;font-weight:800}
+  .tool .free{color:var(--buy)} .tool .soon{color:var(--watch)}
+  .rs label{display:block;color:var(--mut);font-size:11px;letter-spacing:1px;text-transform:uppercase;margin:12px 0 5px}
+  .rs input,.rs select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--card);
+    color:var(--fg);font-size:16px;text-align:left;letter-spacing:0}
+  .rs .two{display:flex;gap:8px} .rs .two>div{flex:1;min-width:0}
+  .rsout{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:14px 0 6px;text-align:center}
+  .rsout .big{font-size:30px;font-weight:900}
+  .rsout .sm{color:var(--mut);font-size:12.5px;margin-top:4px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -518,6 +532,7 @@ function showGate(msg){
     (((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone)
        ? ''
        : '<a class="btn ghost" href="https://staalwag.com/store" target="_blank" rel="noopener">Need a key? Get the app →</a>')+
+    '<button class="btn ghost" onclick="openSizer()">Free tool: Risk Sizer</button>'+
     '<div class="muted">Rental only. Your key is remembered on this device. Decision-support &amp; education only — not financial advice.</div>'+
     '</div>';
 }
@@ -552,6 +567,7 @@ function loadClass(cb){
 function showHome(){
   el("refreshBtn").style.display=""; el("homeBtn").style.display="none";
   el("main").innerHTML = '<div id="refbox"></div>'+
+    toolsRow()+
     '<button class="btn" style="margin:2px 0 12px" onclick="openQuiz()">🧠 Daily Trader Quiz — win monthly</button>'+
     '<div class="chips" id="chips"></div><div id="list"></div>'+
     '<button class="btn ghost" style="margin-top:18px" onclick="openIdeas()">💡 Ideas board — suggest &amp; vote</button>';
@@ -932,6 +948,102 @@ function doUpdate(){
     Promise.all(jobs).then(finish, finish);
   }catch(e){ finish(); }
 }
+
+// ---------- STAALWAG toolkit: free Risk Sizer + coming-soon add-ons ----------
+// Contract size per 1.00 lot. `pip` = how far one pip/point moves the price.
+// USD-base pairs (USDJPY...) are priced in the other currency, so we need the
+// current price to turn the stop into US dollars. Brokers differ on indices,
+// oil and crypto, so those go through "Other" with the trader's own figure.
+var RS_SYMS=[
+  ["XAUUSD","Gold (XAUUSD)",100,1,"usd","$"],
+  ["XAGUSD","Silver (XAGUSD)",5000,1,"usd","$"],
+  ["EURUSD","EURUSD",100000,0.0001,"usd","pips"],
+  ["GBPUSD","GBPUSD",100000,0.0001,"usd","pips"],
+  ["AUDUSD","AUDUSD",100000,0.0001,"usd","pips"],
+  ["NZDUSD","NZDUSD",100000,0.0001,"usd","pips"],
+  ["USDJPY","USDJPY",100000,0.01,"base","pips"],
+  ["USDCAD","USDCAD",100000,0.0001,"base","pips"],
+  ["USDCHF","USDCHF",100000,0.0001,"base","pips"],
+  ["BTCUSD","Bitcoin (BTCUSD)",1,1,"usd","$"],
+  ["OTHER","Other (your broker's figure)",1,1,"custom","points"]
+];
+function rsSym(code){ for(var i=0;i<RS_SYMS.length;i++) if(RS_SYMS[i][0]===code) return RS_SYMS[i]; return RS_SYMS[0]; }
+// Pure maths, no network: the lot size that risks `pct`% of `equity` if the
+// stop is hit. Rounded DOWN to 0.01 so it never risks more than asked.
+function sizeLots(equity, pct, code, stop, price, perPoint){
+  var s=rsSym(code), riskUsd=equity*pct/100, perLot;
+  if(!(equity>0)||!(pct>0)||!(stop>0)) return null;
+  if(s[4]==="custom"){ if(!(perPoint>0)) return null; perLot=stop*perPoint; }
+  else {
+    perLot=stop*s[3]*s[2];                                // loss per lot in the quote currency
+    if(s[4]==="base"){ if(!(price>0)) return null; perLot=perLot/price; }
+  }
+  var lots=Math.floor(riskUsd/perLot*100+1e-9)/100;
+  return {lots:lots, riskUsd:riskUsd, actualUsd:lots*perLot, perLot:perLot};
+}
+function toolsRow(){
+  return '<div class="tools">'+
+    '<div class="tool" onclick="openSizer()"><b>Risk Sizer</b><span class="free">Free</span></div>'+
+    '<div class="tool" onclick="soonTool(\'hours\')"><b>Prime Hours</b><span class="soon">Coming soon</span></div>'+
+    '<div class="tool" onclick="soonTool(\'guardian\')"><b>Guardian</b><span class="soon">Coming soon</span></div>'+
+  '</div>';
+}
+var SOON={
+  hours:["Prime Hours","When each market really moves",
+    "<p>Pick a symbol and see a heatmap of the hours it moves most, in your own time zone. "+
+    "It marks the prime window to trade and the dead zone to sit out, plus the best days of the week.</p>"+
+    "<p>Built from years of real hourly prices. Coming to the app soon.</p>"],
+  guardian:["Guardian","Your buddy over your shoulder",
+    "<p>Links read-only to your MT5 account. It never places or closes a trade.</p>"+
+    "<p>The moment you open a trade it checks the size, the time and the news, and tells you straight: "+
+    "<b>NO, sit this out</b>, or you're good. Warnings reach your phone even when the app is closed.</p>"+
+    "<p>Challenge mode loads your prop firm's daily-loss and max-loss rules. Coming to the app soon.</p>"]
+};
+function soonTool(k){ var t=SOON[k]; openSheet(t[0],"Coming soon",t[1],t[2]); }
+var RS={equity:"",pct:"1",sym:"XAUUSD",stop:"",price:"",per:""};
+try{ var _rs=JSON.parse(localStorage.getItem("sc_rs")||"null"); if(_rs) for(var _k in RS) if(_rs[_k]!=null) RS[_k]=_rs[_k]; }catch(e){}
+function openSizer(){
+  el("refreshBtn").style.display="none"; el("homeBtn").style.display="";
+  if(!K()) el("homeBtn").onclick=function(){ el("homeBtn").onclick=showHome; showGate(); };
+  el("main").innerHTML='<div class="rs">'+
+    '<div class="sec" style="margin-top:4px">Risk Sizer · free</div>'+
+    '<div class="muted">The biggest lot size you can take without risking more than you planned if your stop is hit.</div>'+
+    '<div class="two"><div><label for="rsEq">Account equity ($)</label><input id="rsEq" inputmode="decimal" placeholder="10000"></div>'+
+    '<div><label for="rsPct">Risk per trade (%)</label><input id="rsPct" inputmode="decimal" placeholder="1"></div></div>'+
+    '<label for="rsSym">Symbol</label><select id="rsSym">'+RS_SYMS.map(function(s){ return '<option value="'+s[0]+'">'+esc(s[1])+'</option>'; }).join("")+'</select>'+
+    '<label for="rsStop" id="rsStopL">Stop distance</label><input id="rsStop" inputmode="decimal">'+
+    '<div id="rsPriceW"><label for="rsPrice">Current price</label><input id="rsPrice" inputmode="decimal"></div>'+
+    '<div id="rsPerW"><label for="rsPer">$ per 1 point on 1.00 lot (from your broker)</label><input id="rsPer" inputmode="decimal" placeholder="1"></div>'+
+    '<div class="rsout" id="rsOut"></div>'+
+    '<div class="muted">Assumes a US-dollar account. Brokers can use different contract sizes, so check yours on a new symbol. Education only, not financial advice.</div>'+
+  '</div>';
+  el("rsEq").value=RS.equity; el("rsPct").value=RS.pct; el("rsSym").value=RS.sym;
+  el("rsStop").value=RS.stop; el("rsPrice").value=RS.price; el("rsPer").value=RS.per;
+  ["rsEq","rsPct","rsStop","rsPrice","rsPer"].forEach(function(id){ el(id).oninput=calcSizer; });
+  el("rsSym").onchange=function(){ el("rsStop").value=""; calcSizer(); };
+  calcSizer();
+}
+function _num(id){ return parseFloat(String(el(id).value||"").replace(/[, ]/g,"")); }
+function calcSizer(){
+  var s=rsSym(el("rsSym").value);
+  el("rsStopL").textContent = s[5]==="pips" ? "Stop distance (pips)" : s[5]==="$" ? "Stop distance ($ in price, e.g. 8.50)" : "Stop distance (points)";
+  el("rsStop").placeholder = s[5]==="pips" ? "25" : s[0]==="BTCUSD" ? "800" : s[5]==="$" ? "8.50" : "50";
+  el("rsPriceW").className = s[4]==="base" ? "" : "hidden";
+  el("rsPerW").className = s[4]==="custom" ? "" : "hidden";
+  RS={equity:el("rsEq").value,pct:el("rsPct").value,sym:s[0],stop:el("rsStop").value,price:el("rsPrice").value,per:el("rsPer").value};
+  try{ localStorage.setItem("sc_rs",JSON.stringify(RS)); }catch(e){}
+  var r=sizeLots(_num("rsEq"),_num("rsPct"),s[0],_num("rsStop"),_num("rsPrice"),_num("rsPer")), out=el("rsOut");
+  if(!r){ out.innerHTML='<div class="sm">Fill in the boxes above to get your lot size.</div>'; return; }
+  if(r.lots<0.01){
+    out.innerHTML='<div class="big" style="color:var(--sell)">Too wide</div><div class="sm">Even 0.01 lots would risk $'+fmtUsd(r.perLot*0.01)+
+      ', more than your $'+fmtUsd(r.riskUsd)+'. Use a closer stop or skip this trade.</div>';
+    return;
+  }
+  var pctWarn=_num("rsPct")>2 ? '<div class="sm" style="color:var(--watch)">Traders who pass prop challenges usually risk 0.5–1% per trade.</div>' : '';
+  out.innerHTML='<div class="big" style="color:var(--buy)">'+r.lots.toFixed(2)+' lots</div>'+
+    '<div class="sm">Risks $'+fmtUsd(r.actualUsd)+' if the stop is hit (your limit: $'+fmtUsd(r.riskUsd)+').</div>'+pctWarn;
+}
+function fmtUsd(n){ return (Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
 // ---------- boot + PWA ----------
 try{ var _tf=localStorage.getItem("sc_tf"); if(_tf==="daily"||_tf==="1h") TF=_tf; }catch(e){}

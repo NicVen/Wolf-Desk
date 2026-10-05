@@ -1,13 +1,11 @@
 {
-  "version": "2.6.0",
-  "date": "2026-10-03",
-  "title": "Ideas board — vote on what we build next",
+  "version": "2.7.0",
+  "date": "2026-10-05",
+  "title": "Free Risk Sizer, plus new tools on the way",
   "type": "feature",
   "notes": [
-    "NEW: Ideas board. See every reviewed idea and tap 👍 to vote. The most-voted ideas get built first.",
-    "Pick a topic when you send an idea (Signals, Charts, Alerts, Quiz, Other).",
-    "See the next update date. Small ideas ship every 2 weeks, big features on the 1st of the month.",
-    "Report bugs privately. Bug fixes ship every week.",
-    "Built ideas are marked ✅, so you can see your votes turn into updates."
+    "NEW: Risk Sizer, free for everyone. Enter your account, risk % and stop, and get the safe lot size.",
+    "Works for gold, silver, the main FX pairs, Bitcoin, or any symbol using your broker's figure.",
+    "Coming soon: Prime Hours (when each market really moves) and Guardian (warns you before a trade hurts your account)."
   ]
 }
