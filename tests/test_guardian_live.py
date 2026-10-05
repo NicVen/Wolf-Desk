@@ -56,6 +56,19 @@ class LiveTest(unittest.TestCase):
         self.assertEqual(len(snap["positions"]), 1)
         self.assertEqual(len(snap["positions"][0]["sym"]), 32)
 
+    def test_same_key_any_case_or_spaces(self):
+        # the key typed into MT5 and the one in the app must meet on one file
+        live.save(" toolkit-9e11f913 ", SNAP, d=self.d.name, now=1000)
+        self.assertIsNotNone(live.load("TOOLKIT-9E11F913", d=self.d.name, now=1000))
+
+    def test_mt5_nan_and_inf_do_not_lose_the_snapshot(self):
+        raw = ('{"key":"K","equity":1000,"positions":[{"sym":"X","sl":nan,"risk":-nan(ind)}],'
+               '"symbols":[{"s":"A","bid":1,"v":inf},{"s":"B","bid":2,"v":3}]}')
+        snap = live.clean(live.parse(raw))
+        self.assertEqual(snap["equity"], 1000)
+        self.assertIsNone(snap["positions"][0]["risk"])
+        self.assertEqual([x["s"] for x in snap["symbols"]], ["B"])
+
 
 if __name__ == "__main__":
     unittest.main()

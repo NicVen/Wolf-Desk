@@ -1103,7 +1103,7 @@ function gStop(){ if(GTIMER){ clearInterval(GTIMER); GTIMER=null; } }
 function openGuardian(){
   el("refreshBtn").style.display="none"; el("homeBtn").style.display="";
   el("main").innerHTML='<p class="muted">Loading Guardian…</p>';
-  gFetch(function(d){ if(d && d.linked!==false){ GLIVE=d; renderLinked(); gStop(); GTIMER=setInterval(gTick,10000); } else { GLIVE=null; gManual(); } });
+  gFetch(function(d){ if(d && d.linked!==false){ GLIVE=d; renderLinked(); gStop(); GTIMER=setInterval(gTick,10000); } else { GLIVE=null; if(d&&d.settings) GSET=d.settings; gManual(); } });
 }
 function gFetch(cb){
   fetch("/appguard/live?key="+encodeURIComponent(K())+"&dev="+encodeURIComponent(DEV()),{cache:"no-store"})
@@ -1121,7 +1121,12 @@ function gPaintLive(){
   var dot=d.live?'<span style="color:var(--buy)">●</span>':'<span style="color:var(--sell)">●</span>';
   var tiles=[["Balance",_m(d.balance)],["Equity",_m(d.equity)],["Today",_m(d.today_pl)],["At risk",_m(d.open_risk)+(d.open_no_stop?" + "+d.open_no_stop+" no stop":"")]];
   var ch=d.challenge||{}, room="";
-  if(ch.on){
+  if(d.firm){
+    var f=d.firm, lefts=[f.daily_left,f.max_left].filter(function(x){ return x!=null; }), lf=Math.min.apply(null,lefts);
+    room='<div class="chk"><span class="m">🏁</span><b style="flex:1">'+esc(f.firm)+' loss left</b><span style="color:'+(lf<f.size*0.01?'var(--sell)':'var(--fg)')+'">'+_m(Math.max(lf,0))+'</span></div>'+
+      '<div class="muted" style="font-size:12px;margin:-2px 0 6px">'+(f.daily_left!=null?'Today: '+_m(Math.max(f.daily_left,0))+' (floor '+_m(f.daily_floor)+') · ':'')+
+      'Overall: '+_m(Math.max(f.max_left,0))+' (floor '+_m(f.max_floor)+')'+(f.target?' · target '+_m(f.target):'')+'</div>';
+  } else if(ch.on){
     var left=Math.min(ch.start*ch.daily_pct/100+Math.min(d.today_pl,0), d.equity-ch.start*(1-ch.max_pct/100));
     room='<div class="chk"><span class="m">🏁</span><b style="flex:1">Challenge loss left</b><span style="color:'+(left<ch.start*0.01?'var(--sell)':'var(--fg)')+'">'+_m(Math.max(left,0))+'</span></div>';
   }
@@ -1142,6 +1147,7 @@ function renderLinked(){
   el("main").innerHTML='<div class="rs">'+
     '<div class="sec" style="margin-top:4px">Guardian · your MT5 account</div>'+
     '<div id="gLive"></div>'+gRecord()+
+    '<div class="sec">Your prop firm challenge</div><div id="gFirm"></div>'+
     '<div class="sec">Ask before you trade</div>'+
     '<label for="gSymL">Symbol (from your MT5)</label><select id="gSymL">'+syms.map(function(x){ return '<option>'+esc(x)+'</option>'; }).join("")+'</select>'+
     '<div class="two">'+_gin("gLotsL","Lot size","0.10")+_gin("gStopL2","Stop price","")+'</div>'+
@@ -1151,7 +1157,7 @@ function renderLinked(){
     '<button class="btn ghost" style="margin-top:14px" onclick="gManual()">Type a trade in by hand instead</button>'+
     '<div class="foot">Live from the Guardian EA on your MT5. Guardian never places, changes or closes a trade. Education only, not financial advice.</div>'+
   '</div>';
-  gPaintLive();
+  gPaintLive(); gFirmBox(false);
   el("gSymL").value=GL.sym; el("gLotsL").value=GL.lots; el("gStopL2").value=GL.stop;
   el("gSymL").onchange=function(){ el("gStopL2").value=""; gSafe(); };
   el("gLotsL").oninput=gSafe; el("gStopL2").oninput=gSafe;
@@ -1181,6 +1187,16 @@ function askLinked(){
     .then(function(d){ renderVerdict(d); })
     .catch(function(e){ out.innerHTML='<p class="err" style="text-align:center">'+(e&&e.code===403?"Guardian isn't unlocked on this key.":"Network error. Try again.")+'</p>'; });
 }
+function gNotLinked(){
+  // the PC's Guardian EA hasn't sent this key's account yet
+  return '<div class="card" style="margin:10px 0;padding:10px;border:1px solid var(--line,#333);border-radius:10px">'+
+    '<b>Link your MT5 account</b><div class="muted" style="margin-top:4px">You don\'t type your account number here. '+
+    'Put Guardian on one chart in MT5 on your PC with this key in its Inputs:</div>'+
+    '<div style="margin:6px 0;font-family:monospace;font-size:15px;user-select:all">'+esc(K())+'</div>'+
+    '<div class="muted">Within 10 seconds your balance, equity and open trades show here. '+
+    'MT5 pops up "your phone is linked", or tells you what is blocking it. '+
+    '<a href="#" style="color:var(--accent)" onclick="openGuardian();return false">Check again</a></div></div>';
+}
 function gManual(){
   gStop();
   el("refreshBtn").style.display="none"; el("homeBtn").style.display="";
@@ -1188,7 +1204,7 @@ function gManual(){
   el("main").innerHTML='<div class="rs">'+
     '<div class="sec" style="margin-top:4px">Guardian · ask before you trade</div>'+
     '<div class="muted">Tell Guardian the trade you want to take. It checks the size, your open trades, the news and the time, and tells you straight.</div>'+
-    gRecord()+
+    gRecord()+gNotLinked()+
     '<div class="two">'+_gin("gEq","Account equity ($)","10000")+_gin("gPlan","Your risk per trade (%)","1")+'</div>'+
     '<label for="gSym">Symbol</label><select id="gSym">'+RS_SYMS.map(function(s){ return '<option value="'+s[0]+'">'+esc(s[1])+'</option>'; }).join("")+'</select>'+
     '<div class="two">'+_gin("gLots","Lot size","0.10")+'<div><label for="gStop" id="gStopL">Stop distance</label><input id="gStop" inputmode="decimal"></div></div>'+
@@ -1197,7 +1213,7 @@ function gManual(){
     '<div class="two">'+_gin("gOpen","Trades already open","0")+_gin("gOpenRisk","$ at risk on them","0")+'</div>'+
     '<label style="display:flex;align-items:center;gap:10px;text-transform:none;letter-spacing:0;font-size:14px;color:var(--fg)">'+
       '<input type="checkbox" id="gCh" style="width:22px;height:22px;margin:0"> Challenge mode (prop firm rules)</label>'+
-    '<div id="gChW">'+
+    '<div id="gChW"><div id="gFirm"></div>'+
       '<div class="two">'+_gin("gStart","Account start size ($)","100000")+_gin("gToday","Today\'s profit/loss ($)","-250")+'</div>'+
       '<div class="two">'+_gin("gDaily","Daily loss limit (%)","5")+_gin("gMax","Max loss limit (%)","10")+'</div>'+
     '</div>'+
@@ -1209,7 +1225,81 @@ function gManual(){
   for(var id in map){ el(id).value=GD[map[id]]; el(id).oninput=gSave; }
   el("gSym").value=GD.sym; el("gSym").onchange=function(){ el("gStop").value=""; gSave(); };
   el("gCh").checked=!!GD.ch; el("gCh").onchange=gSave;
-  gSave();
+  gSave(); gFirmBox(false);
+}
+// ---------- prop firm presets (guardian/propfirms.py): pick, don't type ----------
+var FIRMS=null;
+function gFirms(cb){
+  if(FIRMS) return cb(FIRMS);
+  fetch("/appguard/firms",{cache:"no-store"}).then(function(r){ return r.json(); })
+    .then(function(d){ FIRMS=d; cb(d); }).catch(function(){ cb(null); });
+}
+function gSettings(){ return (GLIVE&&GLIVE.settings)||GSET||{}; }
+var GSET=null;
+function gFirmBox(edit){
+  var box=el("gFirm"); if(!box) return;
+  var f=GLIVE&&GLIVE.firm, st=gSettings();
+  if(f && !edit){
+    box.innerHTML='<div class="rsout" style="margin:0 0 8px;padding:10px;text-align:left">'+
+      '<b>'+esc(f.firm)+' · '+esc(f.program)+' · '+_m(f.size)+'</b>'+
+      '<div class="muted" style="font-size:12.5px;line-height:1.45;margin-top:4px">'+esc(f.summary)+'</div>'+
+      (f.check?'<div style="font-size:12px;color:var(--watch);margin-top:4px">⚠️ Sources differ on this one. Check the numbers on your '+esc(f.firm)+' dashboard.</div>':'')+
+      '<div class="muted" style="font-size:12px;margin-top:4px">Used by Guardian on this phone and on your PC.</div>'+
+      '<button class="btn ghost" style="margin-top:8px" onclick="gFirmBox(true)">Change</button></div>';
+    return;
+  }
+  box.innerHTML='<p class="muted">Loading firms…</p>';
+  gFirms(function(d){
+    if(!d){ box.innerHTML='<p class="err">Could not load the firm list. Try again.</p>'; return; }
+    var by={}, order=[];
+    d.presets.forEach(function(p){ if(!by[p.firm]){ by[p.firm]=[]; order.push(p.firm); } by[p.firm].push(p); });
+    box.innerHTML='<div class="muted" style="margin-bottom:6px">Pick your firm and challenge. Guardian sets the daily and max loss rules for you, here and on your PC.</div>'+
+      '<label for="gPre">Firm and challenge</label><select id="gPre"><option value="">No challenge</option>'+
+      order.map(function(fm){ return '<optgroup label="'+esc(fm)+'">'+by[fm].map(function(p){
+        return '<option value="'+p.id+'">'+esc(fm+' · '+p.program)+'</option>'; }).join("")+'</optgroup>'; }).join("")+
+      '<option value="custom">Other firm (type the limits)</option></select>'+
+      '<div id="gPreW"><label for="gSize">Account size</label><select id="gSize"></select>'+
+      '<div id="gCustW" class="two">'+_gin("gCD","Daily loss limit (%)","5")+_gin("gCM","Max loss limit (%)","10")+'</div>'+
+      '<div class="muted" id="gPreSum" style="font-size:12.5px;line-height:1.45;margin-top:6px"></div></div>'+
+      _gin("gRisk","Your risk per trade (%)","1")+
+      '<button class="btn" style="margin-top:10px" onclick="gFirmSave()">Save my challenge</button>'+
+      '<div class="muted" style="font-size:11.5px;margin-top:6px">Firm rules as published, checked '+esc(d.checked)+'. Firms change them, so check your firm\'s dashboard.</div>';
+    el("gPre").value=st.preset||""; el("gRisk").value=st.risk_pct||(GLIVE?GLIVE.risk_pct:GD.plan)||"";
+    el("gCD").value=st.daily_pct||""; el("gCM").value=st.max_pct||"";
+    el("gPre").onchange=function(){ gFirmSizes(""); };
+    gFirmSizes(st.size||"");
+  });
+}
+function gPreset(id){ return (FIRMS&&FIRMS.presets||[]).filter(function(p){ return p.id===id; })[0]; }
+function gFirmSizes(keep){
+  var id=el("gPre").value, p=gPreset(id), sizes=p?p.sizes:[5000,10000,25000,50000,100000,200000];
+  el("gPreW").className=id?"":"hidden";
+  el("gCustW").className=id==="custom"?"two":"hidden";
+  if(!keep && GLIVE && GLIVE.balance){                  // closest size to the account's balance
+    keep=sizes.reduce(function(a,b){ return Math.abs(b-GLIVE.balance)<Math.abs(a-GLIVE.balance)?b:a; });
+  }
+  el("gSize").innerHTML=sizes.map(function(z){ return '<option value="'+z+'">'+_m(z)+'</option>'; }).join("");
+  if(keep) el("gSize").value=String(+keep);
+  var sum=function(){ el("gPreSum").innerHTML=p?esc(p.summary)+(p.check?' <span style="color:var(--watch)">Sources differ on this one: check your firm\'s dashboard.</span>':''):""; };
+  el("gSize").onchange=sum; sum();
+}
+function gFirmSave(){
+  var id=el("gPre").value, body={key:K(),dev:DEV(),preset:id,size:+el("gSize").value,risk_pct:_num("gRisk"),
+    daily_pct:_num("gCD"),max_pct:_num("gCM")};
+  fetch("/appguard/settings",{method:"POST",headers:{"Content-Type":"application/json"},cache:"no-store",body:JSON.stringify(body)})
+    .then(function(r){ if(r.status===403) throw {code:403}; return r.json(); })
+    .then(function(d){
+      if(d.error){ toast(d.error); return; }
+      GSET=d.settings; toast(id?"Saved. Guardian uses these rules on your phone and PC.":"Challenge rules off.");
+      var p=gPreset(id);
+      if(!GLIVE && el("gCh")){                          // the hand-typed form follows the choice too
+        GD.ch=!!id; GD.plan=String(body.risk_pct||GD.plan);
+        if(id){ GD.start=String(body.size); GD.daily=String(p?(p.daily_pct||""):body.daily_pct); GD.max=String(p?p.max_pct:body.max_pct); }
+        try{ localStorage.setItem("sc_gd",JSON.stringify(GD)); }catch(e){}
+      }
+      openGuardian();
+    })
+    .catch(function(e){ toast(e&&e.code===403?"Guardian isn't unlocked on this key.":"Network error. Try again."); });
 }
 function gSave(){
   var s=rsSym(el("gSym").value);

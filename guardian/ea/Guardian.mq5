@@ -20,12 +20,12 @@
 //+------------------------------------------------------------------+
 #property copyright "STAALWAG"
 #property link      "https://staalwag.com"
-#property version   "1.10"
+#property version   "1.12"
 #property description "Guardian watches your trades and warns you. It never trades."
 
 input string GuardianKey    = "";     // Your STAALCALIBUR key (with Guardian)
 input double RiskPercent    = 1.0;    // Your risk per trade (%)
-input double ChallengeStart = 0;      // Prop challenge start size in $ (0 = no challenge)
+input double ChallengeStart = 0;      // Prop challenge size in $ (0 = none; or pick your firm in the app)
 input double DailyLossPct   = 5.0;    // Challenge daily loss limit (%)
 input double MaxLossPct     = 10.0;   // Challenge max loss limit (%)
 input int    GraceSeconds   = 5;      // Seconds to let you set a stop before checking
@@ -39,6 +39,7 @@ ulong    g_wait[];       // new tickets waiting out the grace period
 datetime g_waitAt[];
 bool     g_started = false;
 bool     g_toldWeb = false, g_toldPush = false, g_toldKey = false;
+int      g_syncState = 0;   // 0 not tried yet, 1 linked, -1 failing (told once each way)
 int      g_tick = 0;
 
 //+------------------------------------------------------------------+
@@ -88,7 +89,16 @@ double PerLot(const string sym, const double dist)
    return(dist / ts * tv);
   }
 
-string Num(const double v) { return(DoubleToString(v, 6)); }
+// A JSON number; a value MT5 can't express (nan, inf) is sent as 0.
+string Num(const double v) { return(MathIsValidNumber(v) ? DoubleToString(v, 6) : "0"); }
+
+// A JSON string body (symbol and server names can hold odd characters).
+string Esc(string v)
+  {
+   StringReplace(v, "\\", "\\\\");
+   StringReplace(v, "\"", "\\\"");
+   return(v);
+  }
 
 // Equity at the start of today (server time), kept across restarts.
 double DayStartEquity()
@@ -100,8 +110,17 @@ double DayStartEquity()
      {
       GlobalVariableSet(base + "_day", today);
       GlobalVariableSet(base + "_eq", eq);
+      GlobalVariableSet(base + "_bal", AccountInfoDouble(ACCOUNT_BALANCE));
      }
    return(GlobalVariableGet(base + "_eq"));
+  }
+
+// Balance at the start of today: most prop firms count the daily loss from it.
+double DayStartBalance()
+  {
+   DayStartEquity();
+   string v = "Guardian_" + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) + "_bal";
+   return(GlobalVariableCheck(v) ? GlobalVariableGet(v) : AccountInfoDouble(ACCOUNT_BALANCE));
   }
 
 //+------------------------------------------------------------------+
@@ -270,7 +289,7 @@ void Sync()
       double pl = (sl > 0) ? PerLot(sym, MathAbs(op - sl)) : -1;
       if(pos != "")
          pos += ",";
-      pos += "{\"sym\":\"" + sym + "\",\"side\":\"" +
+      pos += "{\"sym\":\"" + Esc(sym) + "\",\"side\":\"" +
              (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY ? "BUY" : "SELL") +
              "\",\"lots\":" + Num(vol) + ",\"open\":" + Num(op) + ",\"sl\":" + Num(sl) +
              ",\"profit\":" + Num(PositionGetDouble(POSITION_PROFIT)) +
@@ -286,13 +305,13 @@ void Sync()
          continue;
       if(syms != "")
          syms += ",";
-      syms += "{\"s\":\"" + s + "\",\"bid\":" + Num(SymbolInfoDouble(s, SYMBOL_BID)) + ",\"v\":" + Num(v) +
+      syms += "{\"s\":\"" + Esc(s) + "\",\"bid\":" + Num(SymbolInfoDouble(s, SYMBOL_BID)) + ",\"v\":" + Num(v) +
               ",\"digits\":" + IntegerToString(SymbolInfoInteger(s, SYMBOL_DIGITS)) + "}";
      }
    string body = "{\"key\":\"" + GuardianKey + "\",\"login\":\"" + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) +
-                 "\",\"server\":\"" + AccountInfoString(ACCOUNT_SERVER) + "\",\"currency\":\"" +
+                 "\",\"server\":\"" + Esc(AccountInfoString(ACCOUNT_SERVER)) + "\",\"currency\":\"" +
                  AccountInfoString(ACCOUNT_CURRENCY) + "\",\"balance\":" + Num(AccountInfoDouble(ACCOUNT_BALANCE)) +
-                 ",\"equity\":" + Num(equity) + ",\"day_start\":" + Num(DayStartEquity()) +
+                 ",\"equity\":" + Num(equity) + ",\"day_start\":" + Num(DayStartEquity()) + ",\"day_start_bal\":" + Num(DayStartBalance()) +
                  ",\"risk_pct\":" + Num(RiskPercent) + ",\"challenge\":" + ChallengeJson(equity) +
                  ",\"orders\":" + IntegerToString(OrdersTotal()) +
                  ",\"positions\":[" + pos + "],\"symbols\":[" + syms + "]}";
@@ -300,7 +319,43 @@ void Sync()
    string headers;
    StringToCharArray(body, post, 0, WHOLE_ARRAY, CP_UTF8);
    ArrayResize(post, ArraySize(post) - 1);
-   WebRequest("POST", ServerURL + "/sync", "Content-Type: application/json\r\n", 5000, post, res, headers);
+   ResetLastError();
+   int code = WebRequest("POST", ServerURL + "/sync", "Content-Type: application/json\r\n", 5000, post, res, headers);
+   SyncResult(code, GetLastError());
+  }
+
+// Say once whether the phone link works, and why not when it doesn't.
+void SyncResult(const int code, const int err)
+  {
+   if(code == 200)
+     {
+      if(g_syncState != 1)
+        {
+         g_syncState = 1;
+         string ok = "Guardian: your phone is linked. Open Guardian in the STAALCALIBUR app to see this account live.";
+         Print(ok);
+         if(PopupOnPC)
+            Alert(ok);
+        }
+      return;
+     }
+   string why;
+   if(code == -1 && err == 4014)
+      why = "MT5 blocks it. Tools > Options > Expert Advisors > tick Allow WebRequest, add https://app.178.104.88.38.sslip.io";
+   else
+      if(code == -1)
+         why = StringFormat("the server can't be reached (error %d). Check the internet on this PC.", err);
+      else
+         if(code == 403)
+            why = "the key isn't accepted. Put the same key as in the app (with Guardian) in the Inputs tab.";
+         else
+            why = StringFormat("the server answered %d.", code);
+   if(g_syncState != -1)
+     {
+      g_syncState = -1;
+      Print("Guardian: phone link failed, ", why);
+      Alert("Guardian: your phone can't see this account yet, " + why);
+     }
   }
 
 // POST to staalwag.com. False when it can't be reached (the local check takes over).

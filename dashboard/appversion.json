@@ -1,11 +1,11 @@
 {
-  "version": "2.9.0",
+  "version": "2.10.0",
   "date": "2026-10-05",
-  "title": "Guardian: your MT5 account live on your phone",
+  "title": "Guardian: pick your prop firm",
   "type": "feature",
   "notes": [
-    "Guardian now shows your linked MT5 account live: balance, equity, today's result and every open trade with its stop.",
-    "Ask Guardian uses your broker's own symbols and shows the safe lot size the moment you enter your stop.",
-    "Open trades without a stop are flagged in red."
+    "Pick your prop firm, challenge and account size from a list. Guardian sets the daily and max loss rules for you.",
+    "The same rules are used by Guardian on your PC, so you set them in one place.",
+    "Trailing drawdowns follow your account's highs, and the live screen shows today's and overall loss left."
   ]
 }

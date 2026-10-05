@@ -223,6 +223,10 @@ def check(trade, account, now=None, events=(), hours=None):
         daily = _f(ch.get("daily_pct"))
         maxl = _f(ch.get("max_pct"))
         rooms = []
+        if "max_floor" in ch:                   # a firm preset: the floors are worked out already
+            for k in ("daily_floor", "max_floor"):
+                if _f(ch.get(k)) is not None:
+                    rooms.append(equity - _f(ch[k]))
         if daily:
             rooms.append(start * daily / 100 + min(today, 0.0))
         if maxl:
