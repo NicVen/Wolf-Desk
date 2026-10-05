@@ -536,6 +536,10 @@ function showGate(msg){
     '<div class="muted">Rental only. Your key is remembered on this device. Decision-support &amp; education only — not financial advice.</div>'+
     '</div>';
 }
+function changeKey(){
+  try{ localStorage.removeItem("sc_key"); }catch(e){}
+  DATA=null; ACCESS={hours:false,guardian:false}; showGate();
+}
 function unlock(){
   var k=(el("keyIn").value||"").trim();
   if(!k){ el("gErr").textContent="Enter your activation key."; return; }
@@ -570,7 +574,8 @@ function showHome(){
     toolsRow()+
     '<button class="btn" style="margin:2px 0 12px" onclick="openQuiz()">🧠 Daily Trader Quiz — win monthly</button>'+
     '<div class="chips" id="chips"></div><div id="list"></div>'+
-    '<button class="btn ghost" style="margin-top:18px" onclick="openIdeas()">💡 Ideas board — suggest &amp; vote</button>';
+    '<button class="btn ghost" style="margin-top:18px" onclick="openIdeas()">💡 Ideas board — suggest &amp; vote</button>'+
+    '<div style="text-align:center;margin-top:14px"><a href="#" class="muted" onclick="changeKey();return false">Use a different key</a></div>';
   el("chips").innerHTML = CLASSES.map(function(c){
     return '<div class="chip'+(c[0]===CUR?' on':'')+'" onclick="pick(\''+c[0]+'\')">'+c[1]+'</div>';
   }).join("");
