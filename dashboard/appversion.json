@@ -1,10 +1,11 @@
 {
-  "version": "2.9.1",
+  "version": "2.10.0",
   "date": "2026-10-05",
-  "title": "Guardian: clearer MT5 link",
-  "type": "fix",
+  "title": "Guardian: pick your prop firm",
+  "type": "feature",
   "notes": [
-    "When your MT5 account isn't linked yet, Guardian shows your key and how to link it.",
-    "The PC's Guardian now says in MT5 when your phone is linked, or exactly what is blocking it."
+    "Pick your prop firm, challenge and account size from a list. Guardian sets the daily and max loss rules for you.",
+    "The same rules are used by Guardian on your PC, so you set them in one place.",
+    "Trailing drawdowns follow your account's highs, and the live screen shows today's and overall loss left."
   ]
 }

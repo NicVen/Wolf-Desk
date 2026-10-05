@@ -15,6 +15,8 @@ import os
 import re
 import time
 
+from guardian import propfirms
+
 DIR = os.path.join("data", "guardian_live")
 STALE = 120          # seconds without a snapshot = the EA (or the PC) is off
 MAX_SYMS = 80
@@ -72,6 +74,7 @@ def clean(body, now=None):
         "balance": _f(body.get("balance")),
         "equity": _f(body.get("equity")),
         "day_start": _f(body.get("day_start")) or _f(body.get("equity")),
+        "day_start_bal": _f(body.get("day_start_bal")) or _f(body.get("day_start")) or _f(body.get("balance")),
         "risk_pct": _f(body.get("risk_pct"), 1.0) or 1.0,
         "challenge": {"on": bool(ch.get("on")), "start": _f(ch.get("start")),
                       "daily_pct": _f(ch.get("daily_pct")), "max_pct": _f(ch.get("max_pct"))},
@@ -89,7 +92,94 @@ def save(key, body, d=DIR, now=None):
     with open(p + ".tmp", "w") as f:
         json.dump(snap, f, separators=(",", ":"))
     os.replace(p + ".tmp", p)
+    cfg = _cfg_read(key, d)
+    if cfg.get("preset"):                         # trailing limits follow the account's highs
+        pe = max(_f(cfg.get("peak_eq")), snap["equity"])
+        pb = max(_f(cfg.get("peak_day_bal")), snap["day_start_bal"])
+        if pe != cfg.get("peak_eq") or pb != cfg.get("peak_day_bal"):
+            cfg.update(peak_eq=pe, peak_day_bal=pb)
+            _cfg_write(key, cfg, d)
     return snap
+
+
+# ---- the trader's challenge (firm preset + size), chosen in the app ----------
+def _cfg_path(key, d=DIR):
+    return _path(key, d)[:-5] + ".cfg.json"
+
+
+def _cfg_read(key, d=DIR):
+    try:
+        with open(_cfg_path(key, d)) as f:
+            c = json.load(f)
+        return c if isinstance(c, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _cfg_write(key, cfg, d=DIR):
+    os.makedirs(d, exist_ok=True)
+    p = _cfg_path(key, d)
+    with open(p + ".tmp", "w") as f:
+        json.dump(cfg, f, separators=(",", ":"))
+    os.replace(p + ".tmp", p)
+
+
+def preset_of(cfg):
+    """The preset dict a saved setting points at (a firm's, or the trader's own)."""
+    pid = cfg.get("preset")
+    if pid == "custom":
+        mx = _f(cfg.get("max_pct"))
+        if mx <= 0:
+            return None
+        return {"id": "custom", "firm": "Custom", "program": "My own limits", "daily_pct": _f(cfg.get("daily_pct")) or None,
+                "daily_basis": "balance", "max_pct": mx, "max_type": "static", "targets": [], "sizes": [],
+                "check": False, "source": ""}
+    return propfirms.get(pid) if pid else None
+
+
+def set_challenge(key, body, d=DIR, now=None):
+    """Save the trader's choice from the app. The trailing highs start from
+    today: Guardian can't see the account's past, so they begin at the start
+    size or today's figures, whichever is higher."""
+    pid = str(body.get("preset") or "")
+    size = _f(body.get("size"))
+    cfg = {"preset": pid, "size": size, "risk_pct": _f(body.get("risk_pct")) or None, "set": int(now or time.time())}
+    if pid == "custom":
+        cfg.update(daily_pct=_f(body.get("daily_pct")), max_pct=_f(body.get("max_pct")))
+    if pid and (size <= 0 or not preset_of(cfg)):
+        raise ValueError("Pick a firm, a challenge and your account size.")
+    snap = load(key, d, now) or {}
+    cfg["peak_eq"] = max(size, _f(snap.get("equity")))
+    cfg["peak_day_bal"] = max(size, _f(snap.get("day_start_bal")))
+    if not pid:
+        cfg = {"preset": "", "risk_pct": cfg["risk_pct"], "set": cfg["set"]}
+    _cfg_write(key, cfg, d)
+    return cfg
+
+
+def rules_for(key, equity=None, snap=None, d=DIR, now=None):
+    """What the chosen challenge means right now: (challenge dict for
+    rules.check, the trader's risk %, a description for the app). (None,
+    risk, None) when no firm is chosen."""
+    cfg = _cfg_read(key, d)
+    risk = _f(cfg.get("risk_pct")) or None
+    p = preset_of(cfg)
+    if not p or _f(cfg.get("size")) <= 0:
+        return None, risk, None
+    size = _f(cfg["size"])
+    snap = snap if snap is not None else (load(key, d, now) or {})
+    eq = _f(equity) if equity is not None else _f(snap.get("equity"), size)
+    st = {"day_bal": snap.get("day_start_bal") or size, "day_eq": snap.get("day_start") or size,
+          "peak_eq": max(_f(cfg.get("peak_eq")), eq), "peak_day_bal": cfg.get("peak_day_bal")}
+    daily, mx = propfirms.floors(p, size, st)
+    ch = {"on": True, "start": size, "daily_floor": daily, "max_floor": mx}
+    info = {"id": p["id"], "firm": p["firm"], "program": p["program"], "size": size,
+            "summary": propfirms.summary(p, size), "check": p["check"], "source": p["source"],
+            "daily_floor": None if daily is None else round(daily, 2), "max_floor": round(mx, 2),
+            "daily_left": None if daily is None else round(eq - daily, 2), "max_left": round(eq - mx, 2)}
+    if snap.get("balance") and p["targets"]:
+        info["target"] = round(size * (1 + p["targets"][0] / 100), 2)
+    return ch, risk, info
 
 
 def load(key, d=DIR, now=None):
@@ -106,6 +196,12 @@ def load(key, d=DIR, now=None):
     snap["open_risk"] = round(sum(risks), 2)
     snap["open_no_stop"] = sum(1 for p in snap["positions"] if p.get("risk") is None)
     snap["today_pl"] = round(snap["equity"] - snap["day_start"], 2)
+    snap.setdefault("day_start_bal", snap["day_start"])
+    ch, risk, info = rules_for(key, snap=snap, d=d, now=now)
+    if risk:
+        snap["risk_pct"] = risk
+    if ch:                                        # the firm chosen in the app wins over the EA's inputs
+        snap["challenge"], snap["firm"] = ch, info
     return snap
 
 
@@ -117,6 +213,12 @@ def account(snap):
     if ch.get("on"):
         acc["challenge"] = dict(ch, today_pl=snap["today_pl"])
     return acc
+
+
+def settings(key, d=DIR):
+    """The saved choice, for the app's form."""
+    cfg = _cfg_read(key, d)
+    return {k: cfg.get(k) for k in ("preset", "size", "risk_pct", "daily_pct", "max_pct") if cfg.get(k) is not None}
 
 
 def trade(snap, sym, lots, stop_price):

@@ -20,12 +20,12 @@
 //+------------------------------------------------------------------+
 #property copyright "STAALWAG"
 #property link      "https://staalwag.com"
-#property version   "1.11"
+#property version   "1.12"
 #property description "Guardian watches your trades and warns you. It never trades."
 
 input string GuardianKey    = "";     // Your STAALCALIBUR key (with Guardian)
 input double RiskPercent    = 1.0;    // Your risk per trade (%)
-input double ChallengeStart = 0;      // Prop challenge start size in $ (0 = no challenge)
+input double ChallengeStart = 0;      // Prop challenge size in $ (0 = none; or pick your firm in the app)
 input double DailyLossPct   = 5.0;    // Challenge daily loss limit (%)
 input double MaxLossPct     = 10.0;   // Challenge max loss limit (%)
 input int    GraceSeconds   = 5;      // Seconds to let you set a stop before checking
@@ -110,8 +110,17 @@ double DayStartEquity()
      {
       GlobalVariableSet(base + "_day", today);
       GlobalVariableSet(base + "_eq", eq);
+      GlobalVariableSet(base + "_bal", AccountInfoDouble(ACCOUNT_BALANCE));
      }
    return(GlobalVariableGet(base + "_eq"));
+  }
+
+// Balance at the start of today: most prop firms count the daily loss from it.
+double DayStartBalance()
+  {
+   DayStartEquity();
+   string v = "Guardian_" + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) + "_bal";
+   return(GlobalVariableCheck(v) ? GlobalVariableGet(v) : AccountInfoDouble(ACCOUNT_BALANCE));
   }
 
 //+------------------------------------------------------------------+
@@ -302,7 +311,7 @@ void Sync()
    string body = "{\"key\":\"" + GuardianKey + "\",\"login\":\"" + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) +
                  "\",\"server\":\"" + Esc(AccountInfoString(ACCOUNT_SERVER)) + "\",\"currency\":\"" +
                  AccountInfoString(ACCOUNT_CURRENCY) + "\",\"balance\":" + Num(AccountInfoDouble(ACCOUNT_BALANCE)) +
-                 ",\"equity\":" + Num(equity) + ",\"day_start\":" + Num(DayStartEquity()) +
+                 ",\"equity\":" + Num(equity) + ",\"day_start\":" + Num(DayStartEquity()) + ",\"day_start_bal\":" + Num(DayStartBalance()) +
                  ",\"risk_pct\":" + Num(RiskPercent) + ",\"challenge\":" + ChallengeJson(equity) +
                  ",\"orders\":" + IntegerToString(OrdersTotal()) +
                  ",\"positions\":[" + pos + "],\"symbols\":[" + syms + "]}";

@@ -44,6 +44,7 @@ import proof_labels
 from guardian import rules as guardian_rules
 from guardian import mt5 as guardian_mt5
 from guardian import live as guardian_live
+from guardian import propfirms as guardian_propfirms
 from scout.news import headlines
 
 PORT        = int(os.environ.get("PORT", "8777"))
@@ -549,7 +550,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # ---- STOREFRONT proxy (same-origin bridge to licensing) --------------
         # Guardian (app add-on): judge one trade before it's taken, from the
         # app (/appguard, JSON) or from the MT5 EA (/appguard/mt5, plain text)
-        if path in ("/appguard", "/appguard/mt5", "/appguard/mt5/sync"):
+        if path in ("/appguard", "/appguard/mt5", "/appguard/mt5/sync", "/appguard/settings"):
             try:
                 ln = int(self.headers.get("Content-Length", "0") or "0")
                 if ln <= 0 or ln > 200_000:
@@ -567,7 +568,20 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if path == "/appguard/mt5/sync":       # the EA's live account snapshot
                 guardian_live.save(key, body)
                 self._send(200, "OK", "text/plain; charset=utf-8"); return
+            if path == "/appguard/settings":       # firm + challenge chosen in the app
+                try:
+                    guardian_live.set_challenge(key, body)
+                except ValueError as e:
+                    self._send(200, json.dumps({"error": str(e)})); return
+                self._send(200, json.dumps({"ok": True, "settings": guardian_live.settings(key)})); return
             if mt5:
+                acc = body.get("account") if isinstance(body.get("account"), dict) else {}
+                ch, risk, _ = guardian_live.rules_for(key, equity=acc.get("equity"))
+                if risk:                            # the app's choice wins over the EA's inputs
+                    acc["risk_pct"] = risk
+                if ch:
+                    acc["challenge"] = ch
+                body["account"] = acc
                 self._send(200, guardian_mt5.answer(body, get_calendar(), _guardian_hours),
                            "text/plain; charset=utf-8"); return
             trade = body.get("trade") if isinstance(body.get("trade"), dict) else {}
@@ -811,7 +825,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
             key = q.get("key", [""])[0].strip(); dev = q.get("dev", ["app"])[0]
             if not _app_license_ok(key, dev, "GUARDIAN"):
                 self._send(403, b'{"error":"license"}'); return
-            self._send(200, json.dumps(guardian_live.load(key) or {"linked": False})); return
+            snap = guardian_live.load(key) or {"linked": False}
+            snap["settings"] = guardian_live.settings(key)
+            self._send(200, json.dumps(snap)); return
+        if path == "/appguard/firms":
+            self._send(200, json.dumps(guardian_propfirms.listing())); return
         if path == "/apphours":
             key = q.get("key", [""])[0]; dev = q.get("dev", ["app"])[0]
             if not _app_license_ok(key, dev, "HOURS"):
