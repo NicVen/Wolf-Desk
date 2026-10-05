@@ -41,7 +41,8 @@ PRESETS = {
                  "https://fxify.com/faqs/all-faqs/what-are-the-rules-for-the-assessment-account/"),
     "fxify-2s": ("FXIFY", "Two Phase Standard", 4, _B, 10, _TL, (10, 5), _SZ8, True,
                  "https://fxify.com/faqs/all-faqs/how-do-you-calculate-the-max-trailing-drawdown/"),
-    "fxify-2p": ("FXIFY", "Two Phase Pro", 4, _B, 8, _S, (4, 8), SIZES, True,
+    # loss limits confirmed on a live FXIFY account (2026-10-05); targets as FXIFY's launch post words them
+    "fxify-2p": ("FXIFY", "Two Phase Pro", 4, _B, 8, _S, (4, 8), SIZES, False,
                  "https://fxify.com/blog/introducing-fxify-2-phase-pro/"),
     "fxify-3": ("FXIFY", "Three Phase", 5, _B, 5, _S, (5, 5, 5), _SZ8, True,
                 "https://fxify.com/faqs/all-faqs/what-are-the-rules-for-the-assessment-account/"),
