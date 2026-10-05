@@ -1,11 +1,10 @@
 {
-  "version": "2.9.0",
+  "version": "2.9.1",
   "date": "2026-10-05",
-  "title": "Guardian: your MT5 account live on your phone",
-  "type": "feature",
+  "title": "Guardian: clearer MT5 link",
+  "type": "fix",
   "notes": [
-    "Guardian now shows your linked MT5 account live: balance, equity, today's result and every open trade with its stop.",
-    "Ask Guardian uses your broker's own symbols and shows the safe lot size the moment you enter your stop.",
-    "Open trades without a stop are flagged in red."
+    "When your MT5 account isn't linked yet, Guardian shows your key and how to link it.",
+    "The PC's Guardian now says in MT5 when your phone is linked, or exactly what is blocking it."
   ]
 }

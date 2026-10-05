@@ -12,6 +12,7 @@ file name), latest wins.
 import hashlib
 import json
 import os
+import re
 import time
 
 DIR = os.path.join("data", "guardian_live")
@@ -23,13 +24,29 @@ MAX_POS = 200
 def _f(x, d=0.0):
     try:
         v = float(x)
-        return v if v == v else d
+        return v if v == v and abs(v) != float("inf") else d
     except (TypeError, ValueError):
         return d
 
 
 def _path(key, d=DIR):
+    # the same key typed in MT5 and in the app must land on the same file,
+    # whatever the case or stray spaces
+    key = str(key or "").strip().upper()
     return os.path.join(d, hashlib.sha256(key.encode()).hexdigest()[:32] + ".json")
+
+
+_BAD_NUM = re.compile(r'(?<=[:\[,])\s*-?(?:nan|inf)[a-z()]*\s*(?=[,}\]])', re.I)
+
+
+def parse(raw):
+    """The EA's JSON. MT5 writes an unusable number as 'nan', 'inf' or
+    '-nan(ind)', which is not JSON; those become null instead of losing the
+    whole snapshot."""
+    try:
+        return json.loads(raw)
+    except ValueError:
+        return json.loads(_BAD_NUM.sub("null", raw))
 
 
 def clean(body, now=None):
@@ -44,7 +61,7 @@ def clean(body, now=None):
                     "profit": _f(p.get("profit")), "risk": None if risk is None else _f(risk)})
     syms = []
     for s in (body.get("symbols") or [])[:MAX_SYMS]:
-        if isinstance(s, dict) and s.get("s") and _f(s.get("v")) > 0:
+        if isinstance(s, dict) and s.get("s") and 0 < _f(s.get("v")) < 1e12:
             syms.append({"s": str(s["s"])[:32], "bid": _f(s.get("bid")), "v": _f(s.get("v")),
                          "digits": int(_f(s.get("digits"), 2))})
     ch = body.get("challenge") if isinstance(body.get("challenge"), dict) else {}

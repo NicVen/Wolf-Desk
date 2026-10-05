@@ -554,12 +554,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 ln = int(self.headers.get("Content-Length", "0") or "0")
                 if ln <= 0 or ln > 200_000:
                     raise ValueError("bad size")
-                body = json.loads(self.rfile.read(ln).decode("utf-8"))
+                raw = self.rfile.read(ln).decode("utf-8", "replace").rstrip("\x00")
+                body = guardian_live.parse(raw) if path.startswith("/appguard/mt5") else json.loads(raw)
                 if not isinstance(body, dict):
                     raise ValueError("bad body")
             except Exception:
                 self._send(400, json.dumps({"error": "bad request"})); return
-            key = str(body.get("key") or "")
+            key = str(body.get("key") or "").strip()
             mt5 = path.startswith("/appguard/mt5")
             if not _app_license_ok(key, str(body.get("dev") or "app"), "GUARDIAN", bind=not mt5):
                 self._send(403, b'{"error":"license"}'); return
@@ -807,7 +808,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, json.dumps({"hours": _app_license_ok(key, dev, "HOURS"),
                                         "guardian": _app_license_ok(key, dev, "GUARDIAN")})); return
         if path == "/appguard/live":
-            key = q.get("key", [""])[0]; dev = q.get("dev", ["app"])[0]
+            key = q.get("key", [""])[0].strip(); dev = q.get("dev", ["app"])[0]
             if not _app_license_ok(key, dev, "GUARDIAN"):
                 self._send(403, b'{"error":"license"}'); return
             self._send(200, json.dumps(guardian_live.load(key) or {"linked": False})); return

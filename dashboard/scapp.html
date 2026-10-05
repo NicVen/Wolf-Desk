@@ -1181,6 +1181,16 @@ function askLinked(){
     .then(function(d){ renderVerdict(d); })
     .catch(function(e){ out.innerHTML='<p class="err" style="text-align:center">'+(e&&e.code===403?"Guardian isn't unlocked on this key.":"Network error. Try again.")+'</p>'; });
 }
+function gNotLinked(){
+  // the PC's Guardian EA hasn't sent this key's account yet
+  return '<div class="card" style="margin:10px 0;padding:10px;border:1px solid var(--line,#333);border-radius:10px">'+
+    '<b>Link your MT5 account</b><div class="muted" style="margin-top:4px">You don\'t type your account number here. '+
+    'Put Guardian on one chart in MT5 on your PC with this key in its Inputs:</div>'+
+    '<div style="margin:6px 0;font-family:monospace;font-size:15px;user-select:all">'+esc(K())+'</div>'+
+    '<div class="muted">Within 10 seconds your balance, equity and open trades show here. '+
+    'MT5 pops up "your phone is linked", or tells you what is blocking it. '+
+    '<a href="#" onclick="openGuardian();return false">Check again</a></div></div>';
+}
 function gManual(){
   gStop();
   el("refreshBtn").style.display="none"; el("homeBtn").style.display="";
@@ -1188,7 +1198,7 @@ function gManual(){
   el("main").innerHTML='<div class="rs">'+
     '<div class="sec" style="margin-top:4px">Guardian · ask before you trade</div>'+
     '<div class="muted">Tell Guardian the trade you want to take. It checks the size, your open trades, the news and the time, and tells you straight.</div>'+
-    gRecord()+
+    gRecord()+gNotLinked()+
     '<div class="two">'+_gin("gEq","Account equity ($)","10000")+_gin("gPlan","Your risk per trade (%)","1")+'</div>'+
     '<label for="gSym">Symbol</label><select id="gSym">'+RS_SYMS.map(function(s){ return '<option value="'+s[0]+'">'+esc(s[1])+'</option>'; }).join("")+'</select>'+
     '<div class="two">'+_gin("gLots","Lot size","0.10")+'<div><label for="gStop" id="gStopL">Stop distance</label><input id="gStop" inputmode="decimal"></div></div>'+
