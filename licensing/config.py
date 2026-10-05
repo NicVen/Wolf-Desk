@@ -147,6 +147,15 @@ PRODUCTS = {
     # to 25 (the storefront then drops the strike-through + "limited time" badge
     # automatically). price_regular is display-only; it is never charged.
     "APP":       {"name": "STAALCALIBUR App", "price_solo": 14.99, "price_vip": 14.99, "price_regular": 25, "period_days": 30, "type": "app", "vip": False},
+    # --- STAALWAG mobile toolkit (prices set by Nic, 5 Oct 2026) ---
+    # Add-ons ride on the trader's App key: buying one with `attach` = their App
+    # key makes that same key unlock it (see server.start_checkout / _verify).
+    # TOOLKIT is one key that unlocks everything in `includes`.
+    # Each stays in LOCKED below until its feature is live in the app.
+    "GUARDIAN":  {"name": "Guardian", "price_solo": 24.99, "price_vip": 24.99, "price_regular": 35, "period_days": 30, "type": "app_addon", "vip": False},
+    "HOURS":     {"name": "Prime Hours", "price_solo": 7.99, "price_vip": 7.99, "price_regular": 10, "period_days": 30, "type": "app_addon", "vip": False},
+    "TOOLKIT":   {"name": "STAALWAG Toolkit (App + Guardian + Prime Hours)", "price_solo": 39.99, "price_vip": 39.99, "price_regular": 55, "period_days": 30, "type": "app_bundle", "vip": False,
+                  "includes": ["APP", "GUARDIAN", "HOURS"]},
     # --- VIP membership: $40/mo. Unlocks every vip=True product ---
     "VIP":       {"name": "VIP Membership", "price_solo": 40, "price_vip": 40, "period_days": 30, "type": "bundle", "vip": False},
 }
@@ -161,3 +170,15 @@ LOCKED_NOTE = "In testing - not for sale until it passes its public track-record
 
 def product(code):
     return PRODUCTS.get((code or "").upper())
+
+
+def unlocks(holder, wanted):
+    """True if a key for product `holder` also opens product `wanted`
+    (a bundle like TOOLKIT, or VIP for vip=True products)."""
+    holder, wanted = (holder or "").upper(), (wanted or "").upper()
+    if holder == wanted:
+        return True
+    h, w = product(holder), product(wanted)
+    if h and wanted in (h.get("includes") or []):
+        return True
+    return holder == "VIP" and bool(w and w.get("vip"))

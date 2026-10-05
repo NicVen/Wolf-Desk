@@ -53,6 +53,8 @@ restart_all() {
     systemctl restart $SERVICES
     # Markov bot (deploy/markov-setup.sh): restarted only if it is installed and running.
     systemctl try-restart markov-bot 2>/dev/null || true
+    # Guardian MT5 watcher (deploy/guardian-setup.sh): same.
+    systemctl try-restart guardian-watch 2>/dev/null || true
 }
 
 BRANCH=$(git_app rev-parse --abbrev-ref HEAD) || { log "not a git checkout"; exit 1; }

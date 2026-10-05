@@ -94,15 +94,35 @@ def price_for(code, contact):
     return p.get("price_solo", 0), None          # non-VIP solo price
 
 
-def start_checkout(product_code, contact, method="crypto", ref=""):
+def start_checkout(product_code, contact, method="crypto", ref="", attach=""):
     p = config.product(product_code)
     if not p:
         return None, "unknown product"
     price, note = price_for(product_code, contact)
     if price <= 0:
         return None, note or "nothing to charge for this item"
-    key = new_license_key(product_code)
-    store.create(key, product_code.upper(), contact, order_id=key, status="pending")
+    order = None
+    if p.get("type") == "app_addon":
+        # an add-on rides on the trader's existing App key: that key unlocks it
+        parent = store.get((attach or "").strip())
+        if (not parent or parent["status"] == "pending"
+                or not config.unlocks(parent["product"], "APP")):
+            return None, "Enter the app key you want to add this to."
+        contact = contact or parent.get("contact") or ""
+        old = store.addon_for(parent["license_key"], product_code)
+        if old:                                   # renewal: extend the same row
+            key = old["license_key"]
+            order = "%s-%s" % (key, secrets.token_hex(3).upper())
+            store.update(key, order_id=order)
+        else:
+            key = new_license_key(product_code)
+            order = key
+            store.create(key, product_code.upper(), contact, order_id=key, status="pending")
+            store.update(key, attach_to=parent["license_key"], no_bind=1)
+    else:
+        key = new_license_key(product_code)
+        order = key
+        store.create(key, product_code.upper(), contact, order_id=key, status="pending")
     # attribute the referral if a valid code was passed (can't refer yourself —
     # not the same license and not the same contact)
     if ref:
@@ -112,11 +132,11 @@ def start_checkout(product_code, contact, method="crypto", ref=""):
             store.update(key, referred_by=ref)
     desc = "%s — %d days" % (p["name"], p["period_days"])
     if method == "card":
-        url, ref = cardpay.create_checkout(price, order_id=key, description=desc)
+        url, ref = cardpay.create_checkout(price, order_id=order, description=desc)
     elif method == "paypal":
-        url, ref = paypal.create_checkout(price, order_id=key, description=desc)
+        url, ref = paypal.create_checkout(price, order_id=order, description=desc)
     else:
-        url, ref = nowpayments.create_invoice(price, order_id=key, order_description=desc)
+        url, ref = nowpayments.create_invoice(price, order_id=order, order_description=desc)
     if not url:
         return None, "payment provider error: %s" % ref
     return {"invoice_url": url, "license_key": key}, None
@@ -133,11 +153,19 @@ def apply_payment(order_id, payment_id):
     paid_until = base + period
     store.update(lic["license_key"], status="active", paid_until=paid_until,
                  revoke_at=None, notified=0, last_payment=payment_id)
+    if not lic.get("paid_since"):              # the first payment: the app's tools unlock from this day
+        store.update(lic["license_key"], paid_since=store.now())
     when = time.strftime("%Y-%m-%d", time.gmtime(paid_until))
-    notify.client(lic["contact"],
-                  "Payment received. Your %s access is active until %s (UTC).\n"
-                  "Activation key: %s\nEnter this key in the product to unlock it."
-                  % (lic["product"], when, lic["license_key"]))
+    if lic.get("attach_to"):
+        notify.client(lic["contact"],
+                      "Payment received. %s is now unlocked on your app key %s until %s (UTC).\n"
+                      "Open the app and it's ready, no new key needed."
+                      % ((p or {}).get("name", lic["product"]), lic["attach_to"], when))
+    else:
+        notify.client(lic["contact"],
+                      "Payment received. Your %s access is active until %s (UTC).\n"
+                      "Activation key: %s\nEnter this key in the product to unlock it."
+                      % (lic["product"], when, lic["license_key"]))
     notify.admin("payment ok: %s -> active until %s" % (lic["license_key"], when))
     _reward_referrer(lic)
 
@@ -270,6 +298,43 @@ def announce_quiz_winner(period, reward=None, public=True):
 def _prev_period():
     first = datetime.datetime.utcnow().replace(day=1)
     return (first - datetime.timedelta(days=1)).strftime("%Y-%m")
+
+
+def _age(lic):
+    """How long this key has been a paying one: the app reveals its tools over
+    the first days after purchase. A trial key reports trial=True."""
+    return {"trial": bool(lic.get("trial")), "since": lic.get("paid_since") or lic.get("created"),
+            "for_sale": [c for c in TOOL_REVEAL if c not in config.LOCKED]}
+
+
+# The app shows its tools step by step after purchase (app_tools.py in the
+# app). The app itself sells nothing (Google Play), so when a tool becomes
+# available the customer is told here, on Telegram, once per tool.
+TOOL_REVEAL = {"HOURS": 7, "GUARDIAN": 12}          # add-on -> day after first payment
+TOOL_PITCH = {"HOURS": "See the hours each market really moves, in your own time zone, and the dead zones to sit out.",
+              "GUARDIAN": "It watches every trade you open in MT5 and warns you on your phone when one is too big, "
+                          "badly timed, or puts your prop-firm challenge at risk."}
+
+
+def tool_notices(lic, now):
+    """[(level, text)] still owed to this paying App key: one message per
+    add-on once its day has come, it is for sale, and the key doesn't have it."""
+    if (lic.get("status") != "active" or lic.get("trial") or lic.get("attach_to")
+            or not config.unlocks(lic["product"], "APP") or not lic.get("paid_since")):
+        return []
+    days = (now - lic["paid_since"]) / DAY
+    told, out = int(lic.get("tools_told") or 0), []
+    for level, (code, day) in enumerate(sorted(TOOL_REVEAL.items(), key=lambda x: x[1]), 1):
+        if level <= told or days < day or code in config.LOCKED or config.unlocks(lic["product"], code):
+            continue
+        addon = store.addon_for(lic["license_key"], code)
+        if addon and check_access(addon)[0]:
+            continue
+        p = config.product(code)
+        out.append((level, "New in STAALCALIBUR: %s is ready for your app.\n%s\n\nAdd it to your key %s at "
+                           "staalwag.com/store for $%s/month (launch price, regular $%s)."
+                    % (p["name"], TOOL_PITCH[code], lic["license_key"], p["price_solo"], p.get("price_regular") or p["price_solo"])))
+    return out
 
 
 def check_access(lic):
@@ -443,6 +508,10 @@ def sweeper():
                                       "Your %s access has been removed for non-payment. "
                                       "Renew any time to restore it." % lic["product"])
                         notify.admin("revoked: %s" % key)
+            for lic in store.all_active_or_pastdue():          # tools revealed after purchase
+                for level, text in tool_notices(lic, now):
+                    notify.client(lic["contact"], text)
+                    store.update(lic["license_key"], tools_told=level)
             # Monthly Trader Quiz winner — announce the previous month once, when
             # the month has rolled over. Runs wherever the service runs; no cron.
             if config.QUIZ_AUTO_WINNER:
@@ -615,15 +684,24 @@ class H(BaseHTTPRequestHandler):
             store.update(key, last_seen=store.now(), last_account=account or machine or "")
             prod = (product or lic["product"]).upper()
             token = tokens.issue(key, prod, lic.get("paid_until") or (store.now() + 3650 * DAY))
-            return self._send(200, {"valid": True, "reason": "admin", "product": prod,
+            return self._send(200, {"valid": True, "reason": "admin", "product": prod, **_age(lic),
                                     "expires_at": lic.get("paid_until"), "server_time": store.now(),
                                     "token": token, "recheck_in": config.TOKEN_TTL_HOURS * 3600})
 
-        if product and lic["product"].upper() != product.upper():
-            # a VIP membership unlocks every product flagged vip=True
-            reqp = config.product(product)
-            if not (lic["product"] == "VIP" and reqp and reqp.get("vip")):
+        if product and not config.unlocks(lic["product"], product):
+            # an add-on bought onto this key (e.g. Guardian on an App key)
+            addon = store.addon_for(key, product)
+            ok, why = check_access(addon) if addon else (False, "")
+            if not ok or lic["status"] == "revoked":
                 return self._send(200, {"valid": False, "reason": "wrong_product"})
+            if (not lic.get("no_bind") and lic.get("bind_account") and account
+                    and account != lic["bind_account"]):
+                return self._send(200, {"valid": False, "reason": "bound_to_other"})
+            store.update(key, last_seen=store.now(), last_account=account or machine or "")
+            token = tokens.issue(key, addon["product"], addon["paid_until"])
+            return self._send(200, {"valid": True, "reason": why, "product": addon["product"], **_age(lic),
+                                    "expires_at": addon["paid_until"], "server_time": store.now(),
+                                    "token": token, "recheck_in": config.TOKEN_TTL_HOURS * 3600})
 
         # bind to first account/machine seen; block others (anti-sharing).
         # no_bind licenses (e.g. multi-device comps) skip this entirely.
@@ -642,7 +720,7 @@ class H(BaseHTTPRequestHandler):
                                     "product": lic["product"]})
         store.update(key, last_seen=store.now(), last_account=account or machine or "")
         token = tokens.issue(key, lic["product"], lic["paid_until"])
-        self._send(200, {"valid": True, "reason": reason, "product": lic["product"],
+        self._send(200, {"valid": True, "reason": reason, "product": lic["product"], **_age(lic),
                          "expires_at": lic["paid_until"], "server_time": store.now(),
                          "token": token, "recheck_in": config.TOKEN_TTL_HOURS * 3600})
 
@@ -734,7 +812,8 @@ class H(BaseHTTPRequestHandler):
             data = {k: v[0] for k, v in urllib.parse.parse_qs(raw.decode()).items()}
         res, err = start_checkout(data.get("product", ""), data.get("contact", ""),
                                   method=(data.get("method") or "crypto"),
-                                  ref=(data.get("ref") or ""))
+                                  ref=(data.get("ref") or ""),
+                                  attach=(data.get("attach") or ""))
         if err:
             return self._send(400, {"error": err})
         self._send(200, res)

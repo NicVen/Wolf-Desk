@@ -56,7 +56,10 @@ def _init(c):
                      ("ref_rewarded", "INTEGER DEFAULT 0"),
                      ("ref_reward_until", "INTEGER"),
                      ("anon_id", "TEXT"),
-                     ("trial", "INTEGER DEFAULT 0")):
+                     ("trial", "INTEGER DEFAULT 0"),
+                     ("attach_to", "TEXT"),
+                     ("paid_since", "INTEGER"),
+                     ("tools_told", "INTEGER DEFAULT 0")):
         try:
             c.execute("ALTER TABLE licenses ADD COLUMN %s %s" % (col, ddl))
         except sqlite3.OperationalError:
@@ -177,6 +180,16 @@ def create(license_key, product, contact, order_id, status="pending"):
 def get(license_key):
     with _LOCK:
         r = _conn().execute("SELECT * FROM licenses WHERE license_key=?", (license_key,)).fetchone()
+        return dict(r) if r else None
+
+
+def addon_for(parent_key, product):
+    """The add-on row (any status) bought onto `parent_key` for `product`."""
+    with _LOCK:
+        r = _conn().execute(
+            "SELECT * FROM licenses WHERE attach_to=? AND product=? "
+            "ORDER BY COALESCE(paid_until,0) DESC LIMIT 1",
+            (parent_key, (product or "").upper())).fetchone()
         return dict(r) if r else None
 
 

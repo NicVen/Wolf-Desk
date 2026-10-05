@@ -1,13 +1,10 @@
 {
-  "version": "2.6.0",
-  "date": "2026-10-03",
-  "title": "Ideas board — vote on what we build next",
+  "version": "2.11.0",
+  "date": "2026-10-05",
+  "title": "Your tools unlock step by step",
   "type": "feature",
   "notes": [
-    "NEW: Ideas board. See every reviewed idea and tap 👍 to vote. The most-voted ideas get built first.",
-    "Pick a topic when you send an idea (Signals, Charts, Alerts, Quiz, Other).",
-    "See the next update date. Small ideas ship every 2 weeks, big features on the 1st of the month.",
-    "Report bugs privately. Bug fixes ship every week.",
-    "Built ideas are marked ✅, so you can see your votes turn into updates."
+    "New tools appear over your first days as a member: Risk Sizer first, then Prime Hours, then Guardian.",
+    "Guardian now works on one MT5 account per key. Switch accounts in Guardian, once a day."
   ]
 }

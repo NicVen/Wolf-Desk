@@ -167,6 +167,20 @@
   .vote.on{background:var(--chrome);color:#0a0e15;border-color:var(--chrome)}
   .idea.built .tx{color:var(--chrome)}
   .nextup{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--chrome);margin:8px 0}
+  /* toolkit tiles + risk sizer */
+  .tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:2px 0 12px}
+  .tool{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center;cursor:pointer}
+  .tool:active{background:var(--card2)}
+  .tool b{display:block;font-size:13px}
+  .tool span{display:block;font-size:10px;letter-spacing:.5px;text-transform:uppercase;margin-top:3px;font-weight:800}
+  .tool .free{color:var(--buy)} .tool .soon{color:var(--watch)}
+  .rs label{display:block;color:var(--mut);font-size:11px;letter-spacing:1px;text-transform:uppercase;margin:12px 0 5px}
+  .rs input,.rs select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--card);
+    color:var(--fg);font-size:16px;text-align:left;letter-spacing:0}
+  .rs .two{display:flex;gap:8px} .rs .two>div{flex:1;min-width:0}
+  .rsout{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:14px 0 6px;text-align:center}
+  .rsout .big{font-size:30px;font-weight:900}
+  .rsout .sm{color:var(--mut);font-size:12.5px;margin-top:4px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -521,6 +535,10 @@ function showGate(msg){
     '<div class="muted">Rental only. Your key is remembered on this device. Decision-support &amp; education only — not financial advice.</div>'+
     '</div>';
 }
+function changeKey(){
+  try{ localStorage.removeItem("sc_key"); }catch(e){}
+  DATA=null; ACCESS={hours:false,guardian:false,tiles:null}; try{ localStorage.removeItem("sc_tiles"); }catch(e){} showGate();
+}
 function unlock(){
   var k=(el("keyIn").value||"").trim();
   if(!k){ el("gErr").textContent="Enter your activation key."; return; }
@@ -552,13 +570,16 @@ function loadClass(cb){
 function showHome(){
   el("refreshBtn").style.display=""; el("homeBtn").style.display="none";
   el("main").innerHTML = '<div id="refbox"></div>'+
+    toolsRow()+
     '<button class="btn" style="margin:2px 0 12px" onclick="openQuiz()">🧠 Daily Trader Quiz — win monthly</button>'+
     '<div class="chips" id="chips"></div><div id="list"></div>'+
-    '<button class="btn ghost" style="margin-top:18px" onclick="openIdeas()">💡 Ideas board — suggest &amp; vote</button>';
+    '<button class="btn ghost" style="margin-top:18px" onclick="openIdeas()">💡 Ideas board — suggest &amp; vote</button>'+
+    '<div style="text-align:center;margin-top:14px"><a href="#" class="muted" onclick="changeKey();return false">Use a different key</a></div>';
   el("chips").innerHTML = CLASSES.map(function(c){
     return '<div class="chip'+(c[0]===CUR?' on':'')+'" onclick="pick(\''+c[0]+'\')">'+c[1]+'</div>';
   }).join("");
   if(DATA) renderHome(); else loadClass();
+  loadAccess();
   loadRef();
   loadNotices();
 }
@@ -932,6 +953,463 @@ function doUpdate(){
     Promise.all(jobs).then(finish, finish);
   }catch(e){ finish(); }
 }
+
+// ---------- STAALWAG toolkit: free Risk Sizer + coming-soon add-ons ----------
+// Contract size per 1.00 lot. `pip` = how far one pip/point moves the price.
+// USD-base pairs (USDJPY...) are priced in the other currency, so we need the
+// current price to turn the stop into US dollars. Brokers differ on indices,
+// oil and crypto, so those go through "Other" with the trader's own figure.
+var RS_SYMS=[
+  ["XAUUSD","Gold (XAUUSD)",100,1,"usd","$"],
+  ["XAGUSD","Silver (XAGUSD)",5000,1,"usd","$"],
+  ["EURUSD","EURUSD",100000,0.0001,"usd","pips"],
+  ["GBPUSD","GBPUSD",100000,0.0001,"usd","pips"],
+  ["AUDUSD","AUDUSD",100000,0.0001,"usd","pips"],
+  ["NZDUSD","NZDUSD",100000,0.0001,"usd","pips"],
+  ["USDJPY","USDJPY",100000,0.01,"base","pips"],
+  ["USDCAD","USDCAD",100000,0.0001,"base","pips"],
+  ["USDCHF","USDCHF",100000,0.0001,"base","pips"],
+  ["BTCUSD","Bitcoin (BTCUSD)",1,1,"usd","$"],
+  ["OTHER","Other (your broker's figure)",1,1,"custom","points"]
+];
+function rsSym(code){ for(var i=0;i<RS_SYMS.length;i++) if(RS_SYMS[i][0]===code) return RS_SYMS[i]; return RS_SYMS[0]; }
+// Pure maths, no network: the lot size that risks `pct`% of `equity` if the
+// stop is hit. Rounded DOWN to 0.01 so it never risks more than asked.
+function sizeLots(equity, pct, code, stop, price, perPoint){
+  var s=rsSym(code), riskUsd=equity*pct/100, perLot;
+  if(!(equity>0)||!(pct>0)||!(stop>0)) return null;
+  if(s[4]==="custom"){ if(!(perPoint>0)) return null; perLot=stop*perPoint; }
+  else {
+    perLot=stop*s[3]*s[2];                                // loss per lot in the quote currency
+    if(s[4]==="base"){ if(!(price>0)) return null; perLot=perLot/price; }
+  }
+  var lots=Math.floor(riskUsd/perLot*100+1e-9)/100;
+  return {lots:lots, riskUsd:riskUsd, actualUsd:lots*perLot, perLot:perLot};
+}
+var ACCESS={hours:false,guardian:false,tiles:null};
+try{ var _ac=JSON.parse(localStorage.getItem("sc_tiles")||"null"); if(_ac) ACCESS.tiles=_ac; }catch(e){}
+function toolsRow(){
+  return '<div class="tools" id="tools"'+(toolsInner()?'':' style="display:none"')+'>'+toolsInner()+'</div>';
+}
+// tiles the server says this key sees (app_tools.py): revealed over the days
+// after purchase, none on a free trial. Nothing here sells or links to a sale.
+function toolsInner(){
+  var t=ACCESS.tiles||{}, out="";
+  var tile=function(name,state,open,info){
+    if(state==="open") return '<div class="tool" onclick="'+open+'()"><b>'+name+'</b><span class="free">Open</span></div>';
+    if(state==="available") return '<div class="tool" onclick="soonTool(\''+info+'\',true)"><b>'+name+'</b><span class="free">New</span></div>';
+    if(state==="soon") return '<div class="tool" onclick="soonTool(\''+info+'\')"><b>'+name+'</b><span class="soon">Coming soon</span></div>';
+    return "";
+  };
+  if(t.sizer) out+='<div class="tool" onclick="openSizer()"><b>Risk Sizer</b><span class="free">Free</span></div>';
+  return out+tile("Prime Hours",t.hours,"openHours","hours")+tile("Guardian",t.guardian,"openGuardian","guardian");
+}
+// which add-ons this key unlocks; the tiles redraw when the answer arrives
+function loadAccess(){
+  fetch("/appaccess?key="+encodeURIComponent(K())+"&dev="+encodeURIComponent(DEV()),{cache:"no-store"})
+    .then(function(r){ return r.json(); }).then(function(d){
+      ACCESS={hours:!!(d&&d.hours),guardian:!!(d&&d.guardian),tiles:(d&&d.tiles)||null};
+      try{ localStorage.setItem("sc_tiles",JSON.stringify(ACCESS.tiles)); }catch(e){}
+      var t=el("tools"); if(t){ t.innerHTML=toolsInner(); t.style.display=toolsInner()?"":"none"; }
+    }).catch(function(){});
+}
+
+// ---------- Prime Hours: when each market really moves (paid add-on) ----------
+var HOURS=null, HSYM="";
+try{ HSYM=localStorage.getItem("sc_hsym")||""; }catch(e){}
+function openHours(){
+  el("refreshBtn").style.display="none"; el("homeBtn").style.display="";
+  el("main").innerHTML='<p class="muted">Loading Prime Hours…</p>';
+  fetch("/apphours?key="+encodeURIComponent(K())+"&dev="+encodeURIComponent(DEV()),{cache:"no-store"})
+    .then(function(r){ if(r.status===403) throw {code:403}; return r.json(); })
+    .then(function(d){ HOURS=d; renderHours(); })
+    .catch(function(e){
+      el("main").innerHTML='<p class="muted">'+(e&&e.code===403?"Prime Hours isn't unlocked on this key.":"Network error. Try again.")+'</p>';
+    });
+}
+// local start of a UTC hour, as "14:00" (handles half-hour time zones)
+var _OFF=-new Date().getTimezoneOffset();          // minutes east of UTC
+function _lmin(h){ return (((h*60+_OFF)%1440)+1440)%1440; }
+function _hm(m){ var h=Math.floor(m/60), mm=m%60; return (h<10?"0":"")+h+":"+(mm<10?"0":"")+mm; }
+function _span(w){ return w ? _hm(_lmin(w.start))+" – "+_hm(_lmin(w.end)) : "—"; }
+function _inWin(w,utcH){ if(!w) return false; return w.start<=w.end ? (utcH>=w.start&&utcH<w.end) : (utcH>=w.start||utcH<w.end); }
+function renderHours(){
+  var syms=(HOURS&&HOURS.symbols)||{}, keys=Object.keys(syms);
+  if(!keys.length){
+    el("main").innerHTML='<div class="sec" style="margin-top:4px">Prime Hours</div><p class="muted">'+
+      (HOURS&&HOURS.building?"Crunching 2 years of hourly prices for every market. Check back in a few minutes.":"No data yet.")+'</p>';
+    return;
+  }
+  keys.sort(function(a,b){ return String(syms[a].name).localeCompare(String(syms[b].name)); });
+  if(!syms[HSYM]){ HSYM = syms["GC=F"] ? "GC=F" : keys[0]; }
+  var p=syms[HSYM], nowH=new Date().getUTCHours();
+  var order=[]; for(var h=0;h<24;h++) order.push(h);
+  order.sort(function(a,b){ return _lmin(a)-_lmin(b); });
+  var bars=order.map(function(h){
+    var v=p.hours[h]||0, prime=_inWin(p.prime,h), dead=_inWin(p.dead,h);
+    var c = prime ? "var(--buy)" : dead ? "var(--sell)" : "var(--steel)";
+    return '<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%">'+
+      '<div style="height:'+Math.max(3,v)+'%;background:'+c+';opacity:'+(v?0.35+v/160:0.15)+';border-radius:3px 3px 0 0'+
+      (h===nowH?';outline:2px solid var(--fg)':'')+'"></div></div>';
+  }).join("");
+  var ticks=[0,6,12,18].map(function(i){ return '<span>'+_hm(_lmin(order[i])).slice(0,5)+'</span>'; }).join("");
+  var live=_inWin(p.prime,nowH)?'<span class="badge" style="background:rgba(46,204,113,.15);color:var(--buy)">PRIME NOW</span>'
+    : _inWin(p.dead,nowH)?'<span class="badge" style="background:rgba(255,91,91,.15);color:var(--sell)">DEAD ZONE NOW</span>':'';
+  var days=(p.days||[]).map(function(d){
+    return '<div style="flex:1;text-align:center"><div style="height:70px;display:flex;align-items:flex-end">'+
+      '<div style="width:100%;height:'+Math.max(4,d.score)+'%;background:var(--chrome);opacity:'+(0.35+d.score/160)+';border-radius:4px 4px 0 0"></div></div>'+
+      '<div class="muted" style="margin-top:4px">'+esc(d.day)+'</div></div>';
+  }).join("");
+  el("main").innerHTML=
+    '<div class="sec" style="margin-top:4px">Prime Hours</div>'+
+    '<select id="hSym" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg);font-size:16px">'+
+      keys.map(function(k){ return '<option value="'+esc(k)+'"'+(k===HSYM?' selected':'')+'>'+esc(syms[k].name)+'</option>'; }).join("")+'</select>'+
+    '<div class="chart" style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
+      '<span class="muted">MOVEMENT BY HOUR · YOUR TIME</span>'+live+'</div>'+
+      '<div style="display:flex;gap:2px;height:110px;align-items:stretch">'+bars+'</div>'+
+      '<div class="muted" style="display:flex;justify-content:space-between;margin-top:6px">'+ticks+'</div></div>'+
+    '<div class="chk"><span class="m">🔥</span><b style="flex:1">Prime window</b><span>'+_span(p.prime)+'</span></div>'+
+    '<div class="chk"><span class="m">💤</span><b style="flex:1">Dead zone · sit out</b><span>'+_span(p.dead)+'</span></div>'+
+    '<div class="sec">Best days to trade it</div><div style="display:flex;gap:8px">'+days+'</div>'+
+    '<div class="foot">Shown in your local time. Built from '+esc(p.trading_days)+' trading days of real hourly prices. '+
+      'How much a market moves is not which way it moves. Education only, not financial advice.</div>';
+  el("hSym").onchange=function(){ HSYM=this.value; try{ localStorage.setItem("sc_hsym",HSYM); }catch(e){} renderHours(); };
+}
+var SOON={
+  hours:["Prime Hours","When each market really moves",
+    "<p>Pick a symbol and see a heatmap of the hours it moves most, in your own time zone. "+
+    "It marks the prime window to trade and the dead zone to sit out, plus the best days of the week.</p>"+
+    "<p>Built from years of real hourly prices.</p>"],
+  guardian:["Guardian","Your buddy over your shoulder",
+    "<p>Links to your MT5 account through a small add-on on your PC. It never places, changes or closes a trade.</p>"+
+    "<p>The moment you open a trade it checks the size, your open trades, the time and the news, and tells you straight: "+
+    "<b>NO, sit this out</b>, or you're good. Warnings reach your phone even when the app is closed.</p>"+
+    "<p>Pick your prop firm and challenge from a list and Guardian keeps you inside its daily and max loss rules.</p>"]
+};
+// `ready`: the tool can now be added to this key (how is told outside the app)
+function soonTool(k,ready){ var t=SOON[k]; openSheet(t[0],ready?"New for your key":"Coming soon",t[1],t[2]); }
+// ---------- Guardian: ask before you trade (paid add-on) ----------
+// The rules run on the server (guardian/rules.py) so the MT5 watcher can use
+// the very same ones later. Inputs and the listened/ignored record stay on the phone.
+var GD={equity:"",plan:"1",sym:"XAUUSD",lots:"",stop:"",price:"",per:"",open:"",openRisk:"",ch:false,start:"",daily:"5",max:"10",today:""};
+try{ var _gd=JSON.parse(localStorage.getItem("sc_gd")||"null"); if(_gd) for(var _g in GD) if(_gd[_g]!=null) GD[_g]=_gd[_g]; }catch(e){}
+var GLAST=null;
+function glog(){ try{ return JSON.parse(localStorage.getItem("sc_glog")||"[]"); }catch(e){ return []; } }
+function gRecord(){
+  var w=glog().filter(function(x){ return x.v!=="OK" && x.c; });
+  if(!w.length) return "";
+  var kept=w.filter(function(x){ return x.c==="sat"; }).length;
+  return '<div class="chk"><span class="m">🛡️</span><b style="flex:1">Your record</b><span>Listened to '+kept+' of '+w.length+' warning'+(w.length==1?'':'s')+'</span></div>';
+}
+function _gin(id,lab,ph){ return '<div><label for="'+id+'">'+lab+'</label><input id="'+id+'" inputmode="decimal" placeholder="'+ph+'"></div>'; }
+// ---------- Guardian linked to MT5 (the Guardian EA posts a live snapshot) ----------
+var GLIVE=null, GTIMER=null, GL={sym:"",lots:"",stop:""};
+try{ var _gl=JSON.parse(localStorage.getItem("sc_gl")||"null"); if(_gl) GL=_gl; }catch(e){}
+function gStop(){ if(GTIMER){ clearInterval(GTIMER); GTIMER=null; } }
+function openGuardian(){
+  el("refreshBtn").style.display="none"; el("homeBtn").style.display="";
+  el("main").innerHTML='<p class="muted">Loading Guardian…</p>';
+  gFetch(function(d){ if(d && d.linked!==false){ GLIVE=d; renderLinked(); gStop(); GTIMER=setInterval(gTick,10000); } else { GLIVE=null; if(d&&d.settings) GSET=d.settings; gManual(); } });
+}
+function gFetch(cb){
+  fetch("/appguard/live?key="+encodeURIComponent(K())+"&dev="+encodeURIComponent(DEV()),{cache:"no-store"})
+    .then(function(r){ if(r.status===403) throw {code:403}; return r.json(); }).then(cb)
+    .catch(function(e){ if(e&&e.code===403){ el("main").innerHTML='<p class="muted">Guardian isn\'t unlocked on this key.</p>'; } else cb(null); });
+}
+function gTick(){
+  if(!el("gLive")){ gStop(); return; }                 // left the screen
+  gFetch(function(d){ if(d && d.linked!==false && el("gLive")){ GLIVE=d; gPaintLive(); gSafe(); } });
+}
+function _m(v){ return (v<0?"-$":"$")+fmtUsd(Math.abs(v)); }
+function _ago(s){ return s<60 ? s+"s ago" : s<3600 ? Math.round(s/60)+" min ago" : Math.round(s/3600)+"h ago"; }
+function gPaintLive(){
+  var d=GLIVE, box=el("gLive"); if(!box) return;
+  var dot=d.live?'<span style="color:var(--buy)">●</span>':'<span style="color:var(--sell)">●</span>';
+  var tiles=[["Balance",_m(d.balance)],["Equity",_m(d.equity)],["Today",_m(d.today_pl)],["At risk",_m(d.open_risk)+(d.open_no_stop?" + "+d.open_no_stop+" no stop":"")]];
+  var ch=d.challenge||{}, room="";
+  if(d.firm){
+    var f=d.firm, lefts=[f.daily_left,f.max_left].filter(function(x){ return x!=null; }), lf=Math.min.apply(null,lefts);
+    room='<div class="chk"><span class="m">🏁</span><b style="flex:1">'+esc(f.firm)+' loss left</b><span style="color:'+(lf<f.size*0.01?'var(--sell)':'var(--fg)')+'">'+_m(Math.max(lf,0))+'</span></div>'+
+      '<div class="muted" style="font-size:12px;margin:-2px 0 6px">'+(f.daily_left!=null?'Today: '+_m(Math.max(f.daily_left,0))+' (floor '+_m(f.daily_floor)+') · ':'')+
+      'Overall: '+_m(Math.max(f.max_left,0))+' (floor '+_m(f.max_floor)+')'+(f.target?' · target '+_m(f.target):'')+'</div>';
+  } else if(ch.on){
+    var left=Math.min(ch.start*ch.daily_pct/100+Math.min(d.today_pl,0), d.equity-ch.start*(1-ch.max_pct/100));
+    room='<div class="chk"><span class="m">🏁</span><b style="flex:1">Challenge loss left</b><span style="color:'+(left<ch.start*0.01?'var(--sell)':'var(--fg)')+'">'+_m(Math.max(left,0))+'</span></div>';
+  }
+  var pos=(d.positions||[]).map(function(p){
+    var stop=p.sl>0 ? 'stop '+p.sl : '<b style="color:var(--sell)">NO STOP</b>';
+    return '<div class="chk"><span class="m" style="color:'+(p.side==="BUY"?"var(--buy)":"var(--sell)")+'">'+(p.side==="BUY"?"▲":"▼")+'</span>'+
+      '<div style="flex:1"><b>'+esc(p.sym)+'</b> <span class="muted">'+esc(p.side)+' '+(+p.lots).toFixed(2)+'</span><div class="muted" style="font-size:12px">'+stop+
+      (p.risk!=null?' · risks '+_m(p.risk):'')+'</div></div><span style="color:'+(p.profit>=0?"var(--buy)":"var(--sell)")+'">'+_m(p.profit)+'</span></div>';
+  }).join("") || '<p class="muted">No open trades.</p>';
+  box.innerHTML='<div class="muted" style="margin:6px 0 10px">'+dot+' MT5 '+esc(d.login)+' · '+esc(d.server)+' · '+(d.live?"updated "+_ago(d.age):"<b style=\'color:var(--sell)\'>EA offline, last seen "+_ago(d.age)+"</b>")+'</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+tiles.map(function(t){
+      return '<div class="rsout" style="margin:0;padding:10px"><div class="sm" style="margin:0">'+t[0]+'</div><div style="font-size:18px;font-weight:800">'+t[1]+'</div></div>'; }).join("")+'</div>'+
+    room+'<div class="sec">Open trades ('+(d.positions||[]).length+')</div>'+pos;
+}
+function renderLinked(){
+  var d=GLIVE, syms=(d.symbols||[]).map(function(x){ return x.s; });
+  if(syms.indexOf(GL.sym)<0) GL.sym = syms.filter(function(x){ return /XAU|GOLD/.test(x); })[0] || syms[0] || "";
+  el("main").innerHTML='<div class="rs">'+
+    '<div class="sec" style="margin-top:4px">Guardian · your MT5 account</div>'+
+    '<div id="gLive"></div>'+gRecord()+
+    '<div class="sec">Your prop firm challenge</div><div id="gFirm"></div>'+
+    '<div class="sec">Ask before you trade</div>'+
+    '<label for="gSymL">Symbol (from your MT5)</label><select id="gSymL">'+syms.map(function(x){ return '<option>'+esc(x)+'</option>'; }).join("")+'</select>'+
+    '<div class="two">'+_gin("gLotsL","Lot size","0.10")+_gin("gStopL2","Stop price","")+'</div>'+
+    '<div class="muted" id="gSafe" style="margin-top:8px"></div>'+
+    '<button class="btn" style="margin-top:12px" onclick="askLinked()">🛡️ Ask Guardian</button>'+
+    '<div id="gOut"></div>'+
+    '<button class="btn ghost" style="margin-top:14px" onclick="gManual()">Type a trade in by hand instead</button>'+
+    '<button class="btn ghost" style="margin-top:8px" onclick="gSwitch()">Use a different MT5 account</button>'+
+    '<div class="foot">Live from the Guardian EA on your MT5. Guardian never places, changes or closes a trade. Education only, not financial advice.</div>'+
+  '</div>';
+  gPaintLive(); gFirmBox(false);
+  el("gSymL").value=GL.sym; el("gLotsL").value=GL.lots; el("gStopL2").value=GL.stop;
+  el("gSymL").onchange=function(){ el("gStopL2").value=""; gSafe(); };
+  el("gLotsL").oninput=gSafe; el("gStopL2").oninput=gSafe;
+  gSafe();
+}
+// the biggest size that keeps this stop inside the trader's own risk plan
+function gSafe(){
+  if(!el("gSymL")) return;
+  GL={sym:el("gSymL").value,lots:el("gLotsL").value,stop:el("gStopL2").value};
+  try{ localStorage.setItem("sc_gl",JSON.stringify(GL)); }catch(e){}
+  var x=(GLIVE.symbols||[]).filter(function(y){ return y.s===GL.sym; })[0], out=el("gSafe");
+  if(!x){ out.textContent=""; return; }
+  el("gStopL2").placeholder="now "+x.bid.toFixed(x.digits);
+  var stop=_num("gStopL2"), dist=Math.abs(x.bid-stop);
+  if(!(stop>0)||!(dist>0)){ out.innerHTML=GL.sym+' is at <b>'+x.bid.toFixed(x.digits)+'</b>. Enter where your stop goes to see your safe size.'; return; }
+  var perLot=dist*x.v, safe=Math.floor(GLIVE.equity*GLIVE.risk_pct/100/perLot*100+1e-9)/100, lots=_num("gLotsL");
+  out.innerHTML='Safe size on your '+GLIVE.risk_pct+'% plan: <b style="color:var(--buy)">'+safe.toFixed(2)+' lots</b>'+
+    (lots>0?' · '+lots.toFixed(2)+' lots risks <b>'+_m(lots*perLot)+'</b>':'');
+}
+function askLinked(){
+  gSafe();
+  var out=el("gOut"); out.innerHTML='<p class="muted" style="text-align:center">Checking…</p>';
+  GD.sym=GL.sym;
+  fetch("/appguard",{method:"POST",headers:{"Content-Type":"application/json"},cache:"no-store",
+    body:JSON.stringify({key:K(),dev:DEV(),linked:true,trade:{sym:GL.sym,lots:_num("gLotsL"),stop_price:_num("gStopL2")}})})
+    .then(function(r){ if(r.status===403) throw {code:403}; return r.json(); })
+    .then(function(d){ renderVerdict(d); })
+    .catch(function(e){ out.innerHTML='<p class="err" style="text-align:center">'+(e&&e.code===403?"Guardian isn't unlocked on this key.":"Network error. Try again.")+'</p>'; });
+}
+// free this key for another MT5 account (one account per key, switch once a day)
+function gSwitch(){
+  if(!confirm("Unlink MT5 "+(GLIVE&&GLIVE.login||"")+"? Then put Guardian on the other account's chart. You can switch once a day.")) return;
+  fetch("/appguard/switch",{method:"POST",headers:{"Content-Type":"application/json"},cache:"no-store",body:JSON.stringify({key:K(),dev:DEV()})})
+    .then(function(r){ return r.json(); })
+    .then(function(d){ toast(d.error||"Unlinked. Put Guardian on the other account's chart."); })
+    .catch(function(){ toast("Network error. Try again."); });
+}
+function gNotLinked(){
+  // the PC's Guardian EA hasn't sent this key's account yet
+  return '<div class="card" style="margin:10px 0;padding:10px;border:1px solid var(--line,#333);border-radius:10px">'+
+    '<b>Link your MT5 account</b><div class="muted" style="margin-top:4px">You don\'t type your account number here. '+
+    'Put Guardian on one chart in MT5 on your PC with this key in its Inputs:</div>'+
+    '<div style="margin:6px 0;font-family:monospace;font-size:15px;user-select:all">'+esc(K())+'</div>'+
+    '<div class="muted">Within 10 seconds your balance, equity and open trades show here. '+
+    'MT5 pops up "your phone is linked", or tells you what is blocking it. '+
+    '<a href="#" style="color:var(--accent)" onclick="openGuardian();return false">Check again</a></div></div>';
+}
+function gManual(){
+  gStop();
+  el("refreshBtn").style.display="none"; el("homeBtn").style.display="";
+  if(!GD.equity && RS.equity) GD.equity=RS.equity;
+  el("main").innerHTML='<div class="rs">'+
+    '<div class="sec" style="margin-top:4px">Guardian · ask before you trade</div>'+
+    '<div class="muted">Tell Guardian the trade you want to take. It checks the size, your open trades, the news and the time, and tells you straight.</div>'+
+    gRecord()+gNotLinked()+
+    '<div class="two">'+_gin("gEq","Account equity ($)","10000")+_gin("gPlan","Your risk per trade (%)","1")+'</div>'+
+    '<label for="gSym">Symbol</label><select id="gSym">'+RS_SYMS.map(function(s){ return '<option value="'+s[0]+'">'+esc(s[1])+'</option>'; }).join("")+'</select>'+
+    '<div class="two">'+_gin("gLots","Lot size","0.10")+'<div><label for="gStop" id="gStopL">Stop distance</label><input id="gStop" inputmode="decimal"></div></div>'+
+    '<div id="gPriceW">'+_gin("gPrice","Current price","150")+'</div>'+
+    '<div id="gPerW">'+_gin("gPer","$ per 1 point on 1.00 lot (from your broker)","1")+'</div>'+
+    '<div class="two">'+_gin("gOpen","Trades already open","0")+_gin("gOpenRisk","$ at risk on them","0")+'</div>'+
+    '<label style="display:flex;align-items:center;gap:10px;text-transform:none;letter-spacing:0;font-size:14px;color:var(--fg)">'+
+      '<input type="checkbox" id="gCh" style="width:22px;height:22px;margin:0"> Challenge mode (prop firm rules)</label>'+
+    '<div id="gChW"><div id="gFirm"></div>'+
+      '<div class="two">'+_gin("gStart","Account start size ($)","100000")+_gin("gToday","Today\'s profit/loss ($)","-250")+'</div>'+
+      '<div class="two">'+_gin("gDaily","Daily loss limit (%)","5")+_gin("gMax","Max loss limit (%)","10")+'</div>'+
+    '</div>'+
+    '<button class="btn" style="margin-top:14px" onclick="askGuardian()">🛡️ Ask Guardian</button>'+
+    '<div id="gOut"></div>'+
+    '<div class="foot">Guardian never places, changes or closes a trade. You decide. Assumes a US-dollar account. Education only, not financial advice.</div>'+
+  '</div>';
+  var map={gEq:"equity",gPlan:"plan",gLots:"lots",gStop:"stop",gPrice:"price",gPer:"per",gOpen:"open",gOpenRisk:"openRisk",gStart:"start",gToday:"today",gDaily:"daily",gMax:"max"};
+  for(var id in map){ el(id).value=GD[map[id]]; el(id).oninput=gSave; }
+  el("gSym").value=GD.sym; el("gSym").onchange=function(){ el("gStop").value=""; gSave(); };
+  el("gCh").checked=!!GD.ch; el("gCh").onchange=gSave;
+  gSave(); gFirmBox(false);
+}
+// ---------- prop firm presets (guardian/propfirms.py): pick, don't type ----------
+var FIRMS=null;
+function gFirms(cb){
+  if(FIRMS) return cb(FIRMS);
+  fetch("/appguard/firms",{cache:"no-store"}).then(function(r){ return r.json(); })
+    .then(function(d){ FIRMS=d; cb(d); }).catch(function(){ cb(null); });
+}
+function gSettings(){ return (GLIVE&&GLIVE.settings)||GSET||{}; }
+var GSET=null;
+function gFirmBox(edit){
+  var box=el("gFirm"); if(!box) return;
+  var f=GLIVE&&GLIVE.firm, st=gSettings();
+  if(f && !edit){
+    box.innerHTML='<div class="rsout" style="margin:0 0 8px;padding:10px;text-align:left">'+
+      '<b>'+esc(f.firm)+' · '+esc(f.program)+' · '+_m(f.size)+'</b>'+
+      '<div class="muted" style="font-size:12.5px;line-height:1.45;margin-top:4px">'+esc(f.summary)+'</div>'+
+      (f.check?'<div style="font-size:12px;color:var(--watch);margin-top:4px">⚠️ Sources differ on this one. Check the numbers on your '+esc(f.firm)+' dashboard.</div>':'')+
+      '<div class="muted" style="font-size:12px;margin-top:4px">Used by Guardian on this phone and on your PC.</div>'+
+      '<button class="btn ghost" style="margin-top:8px" onclick="gFirmBox(true)">Change</button></div>';
+    return;
+  }
+  box.innerHTML='<p class="muted">Loading firms…</p>';
+  gFirms(function(d){
+    if(!d){ box.innerHTML='<p class="err">Could not load the firm list. Try again.</p>'; return; }
+    var by={}, order=[];
+    d.presets.forEach(function(p){ if(!by[p.firm]){ by[p.firm]=[]; order.push(p.firm); } by[p.firm].push(p); });
+    box.innerHTML='<div class="muted" style="margin-bottom:6px">Pick your firm and challenge. Guardian sets the daily and max loss rules for you, here and on your PC.</div>'+
+      '<label for="gPre">Firm and challenge</label><select id="gPre"><option value="">No challenge</option>'+
+      order.map(function(fm){ return '<optgroup label="'+esc(fm)+'">'+by[fm].map(function(p){
+        return '<option value="'+p.id+'">'+esc(fm+' · '+p.program)+'</option>'; }).join("")+'</optgroup>'; }).join("")+
+      '<option value="custom">Other firm (type the limits)</option></select>'+
+      '<div id="gPreW"><label for="gSize">Account size</label><select id="gSize"></select>'+
+      '<div id="gCustW" class="two">'+_gin("gCD","Daily loss limit (%)","5")+_gin("gCM","Max loss limit (%)","10")+'</div>'+
+      '<div class="muted" id="gPreSum" style="font-size:12.5px;line-height:1.45;margin-top:6px"></div></div>'+
+      _gin("gRisk","Your risk per trade (%)","1")+
+      '<button class="btn" style="margin-top:10px" onclick="gFirmSave()">Save my challenge</button>'+
+      '<div class="muted" style="font-size:11.5px;margin-top:6px">Firm rules as published, checked '+esc(d.checked)+'. Firms change them, so check your firm\'s dashboard.</div>';
+    el("gPre").value=st.preset||""; el("gRisk").value=st.risk_pct||(GLIVE?GLIVE.risk_pct:GD.plan)||"";
+    el("gCD").value=st.daily_pct||""; el("gCM").value=st.max_pct||"";
+    el("gPre").onchange=function(){ gFirmSizes(""); };
+    gFirmSizes(st.size||"");
+  });
+}
+function gPreset(id){ return (FIRMS&&FIRMS.presets||[]).filter(function(p){ return p.id===id; })[0]; }
+function gFirmSizes(keep){
+  var id=el("gPre").value, p=gPreset(id), sizes=p?p.sizes:[5000,10000,25000,50000,100000,200000];
+  el("gPreW").className=id?"":"hidden";
+  el("gCustW").className=id==="custom"?"two":"hidden";
+  if(!keep && GLIVE && GLIVE.balance){                  // closest size to the account's balance
+    keep=sizes.reduce(function(a,b){ return Math.abs(b-GLIVE.balance)<Math.abs(a-GLIVE.balance)?b:a; });
+  }
+  el("gSize").innerHTML=sizes.map(function(z){ return '<option value="'+z+'">'+_m(z)+'</option>'; }).join("");
+  if(keep) el("gSize").value=String(+keep);
+  var sum=function(){ el("gPreSum").innerHTML=p?esc(p.summary)+(p.check?' <span style="color:var(--watch)">Sources differ on this one: check your firm\'s dashboard.</span>':''):""; };
+  el("gSize").onchange=sum; sum();
+}
+function gFirmSave(){
+  var id=el("gPre").value, body={key:K(),dev:DEV(),preset:id,size:+el("gSize").value,risk_pct:_num("gRisk"),
+    daily_pct:_num("gCD"),max_pct:_num("gCM")};
+  fetch("/appguard/settings",{method:"POST",headers:{"Content-Type":"application/json"},cache:"no-store",body:JSON.stringify(body)})
+    .then(function(r){ if(r.status===403) throw {code:403}; return r.json(); })
+    .then(function(d){
+      if(d.error){ toast(d.error); return; }
+      GSET=d.settings; toast(id?"Saved. Guardian uses these rules on your phone and PC.":"Challenge rules off.");
+      var p=gPreset(id);
+      if(!GLIVE && el("gCh")){                          // the hand-typed form follows the choice too
+        GD.ch=!!id; GD.plan=String(body.risk_pct||GD.plan);
+        if(id){ GD.start=String(body.size); GD.daily=String(p?(p.daily_pct||""):body.daily_pct); GD.max=String(p?p.max_pct:body.max_pct); }
+        try{ localStorage.setItem("sc_gd",JSON.stringify(GD)); }catch(e){}
+      }
+      openGuardian();
+    })
+    .catch(function(e){ toast(e&&e.code===403?"Guardian isn't unlocked on this key.":"Network error. Try again."); });
+}
+function gSave(){
+  var s=rsSym(el("gSym").value);
+  el("gStopL").textContent = s[5]==="pips" ? "Stop (pips)" : s[5]==="$" ? "Stop ($ in price)" : "Stop (points)";
+  el("gStop").placeholder = s[5]==="pips" ? "25" : s[0]==="BTCUSD" ? "800" : s[5]==="$" ? "8.50" : "50";
+  el("gPriceW").className = s[4]==="base" ? "" : "hidden";
+  el("gPerW").className = s[4]==="custom" ? "" : "hidden";
+  el("gChW").className = el("gCh").checked ? "" : "hidden";
+  GD={equity:el("gEq").value,plan:el("gPlan").value,sym:s[0],lots:el("gLots").value,stop:el("gStop").value,price:el("gPrice").value,
+      per:el("gPer").value,open:el("gOpen").value,openRisk:el("gOpenRisk").value,ch:el("gCh").checked,start:el("gStart").value,
+      daily:el("gDaily").value,max:el("gMax").value,today:el("gToday").value};
+  try{ localStorage.setItem("sc_gd",JSON.stringify(GD)); }catch(e){}
+}
+function askGuardian(){
+  gSave();
+  var out=el("gOut"); out.innerHTML='<p class="muted" style="text-align:center">Checking…</p>';
+  var body={key:K(),dev:DEV(),
+    trade:{sym:GD.sym,lots:_num("gLots"),stop:_num("gStop"),price:_num("gPrice"),per:_num("gPer")},
+    account:{equity:_num("gEq"),risk_pct:_num("gPlan"),open_trades:_num("gOpen"),open_risk:_num("gOpenRisk"),
+      challenge:{on:GD.ch,start:_num("gStart"),daily_pct:_num("gDaily"),max_pct:_num("gMax"),today_pl:_num("gToday")}}};
+  fetch("/appguard",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),cache:"no-store"})
+    .then(function(r){ if(r.status===403) throw {code:403}; return r.json(); })
+    .then(function(d){ renderVerdict(d); })
+    .catch(function(e){ out.innerHTML='<p class="err" style="text-align:center">'+(e&&e.code===403?"Guardian isn't unlocked on this key.":"Network error. Try again.")+'</p>'; });
+}
+function renderVerdict(d){
+  var out=el("gOut");
+  if(!d||d.error){ out.innerHTML='<p class="err" style="text-align:center">'+esc((d&&d.error)||"Something went wrong.")+'</p>'; return; }
+  var col={NO:"var(--sell)",CAREFUL:"var(--watch)",OK:"var(--buy)"}, ico={NO:"⛔",CAREFUL:"⚠️",OK:"✅"};
+  var head={NO:"NO. Sit this out.",CAREFUL:"Careful.",OK:"You're good."}[d.verdict];
+  GLAST={t:Date.now(),s:GD.sym,v:d.verdict,c:""};
+  var rows=d.checks.slice().sort(function(a,b){ var r={NO:0,CAREFUL:1,OK:2}; return r[a.level]-r[b.level]; }).map(function(c){
+    return '<div class="chk" style="align-items:flex-start"><span class="m">'+ico[c.level]+'</span><div style="flex:1;text-align:left"><b>'+esc(c.title)+'</b>'+
+      '<div class="muted" style="font-size:12.5px;line-height:1.45;margin-top:2px">'+esc(c.text)+'</div></div></div>';
+  }).join("");
+  out.innerHTML='<div class="rsout" style="border-color:'+col[d.verdict]+'"><div class="big" style="color:'+col[d.verdict]+'">'+head+'</div>'+
+    '<div style="margin-top:8px">'+rows+'</div>'+
+    (d.verdict==="OK"?'':'<div class="two" style="display:flex;gap:8px;margin-top:12px">'+
+      '<button class="btn" style="flex:1" onclick="gChoose(\'sat\')">I\'ll sit out</button>'+
+      '<button class="btn ghost" style="flex:1" onclick="gChoose(\'took\')">Taking it anyway</button></div>')+
+    '</div>';
+  if(d.verdict==="OK") gKeep();
+  out.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function gKeep(){ var l=glog(); l.push(GLAST); if(l.length>300) l=l.slice(-300); try{ localStorage.setItem("sc_glog",JSON.stringify(l)); }catch(e){} }
+function gChoose(c){
+  if(!GLAST||GLAST.c) return;
+  GLAST.c=c; gKeep();
+  toast(c==="sat"?"Good call. Saved to your record.":"Your call. Saved to your record.");
+  if(GLIVE) renderLinked(); else gManual();
+}
+var RS={equity:"",pct:"1",sym:"XAUUSD",stop:"",price:"",per:""};
+try{ var _rs=JSON.parse(localStorage.getItem("sc_rs")||"null"); if(_rs) for(var _k in RS) if(_rs[_k]!=null) RS[_k]=_rs[_k]; }catch(e){}
+function openSizer(){
+  el("refreshBtn").style.display="none"; el("homeBtn").style.display="";
+  if(!K()) el("homeBtn").onclick=function(){ el("homeBtn").onclick=showHome; showGate(); };
+  el("main").innerHTML='<div class="rs">'+
+    '<div class="sec" style="margin-top:4px">Risk Sizer · free</div>'+
+    '<div class="muted">The biggest lot size you can take without risking more than you planned if your stop is hit.</div>'+
+    '<div class="two"><div><label for="rsEq">Account equity ($)</label><input id="rsEq" inputmode="decimal" placeholder="10000"></div>'+
+    '<div><label for="rsPct">Risk per trade (%)</label><input id="rsPct" inputmode="decimal" placeholder="1"></div></div>'+
+    '<label for="rsSym">Symbol</label><select id="rsSym">'+RS_SYMS.map(function(s){ return '<option value="'+s[0]+'">'+esc(s[1])+'</option>'; }).join("")+'</select>'+
+    '<label for="rsStop" id="rsStopL">Stop distance</label><input id="rsStop" inputmode="decimal">'+
+    '<div id="rsPriceW"><label for="rsPrice">Current price</label><input id="rsPrice" inputmode="decimal"></div>'+
+    '<div id="rsPerW"><label for="rsPer">$ per 1 point on 1.00 lot (from your broker)</label><input id="rsPer" inputmode="decimal" placeholder="1"></div>'+
+    '<div class="rsout" id="rsOut"></div>'+
+    '<div class="muted">Assumes a US-dollar account. Brokers can use different contract sizes, so check yours on a new symbol. Education only, not financial advice.</div>'+
+  '</div>';
+  el("rsEq").value=RS.equity; el("rsPct").value=RS.pct; el("rsSym").value=RS.sym;
+  el("rsStop").value=RS.stop; el("rsPrice").value=RS.price; el("rsPer").value=RS.per;
+  ["rsEq","rsPct","rsStop","rsPrice","rsPer"].forEach(function(id){ el(id).oninput=calcSizer; });
+  el("rsSym").onchange=function(){ el("rsStop").value=""; calcSizer(); };
+  calcSizer();
+}
+function _num(id){ return parseFloat(String(el(id).value||"").replace(/[, ]/g,"")); }
+function calcSizer(){
+  var s=rsSym(el("rsSym").value);
+  el("rsStopL").textContent = s[5]==="pips" ? "Stop distance (pips)" : s[5]==="$" ? "Stop distance ($ in price, e.g. 8.50)" : "Stop distance (points)";
+  el("rsStop").placeholder = s[5]==="pips" ? "25" : s[0]==="BTCUSD" ? "800" : s[5]==="$" ? "8.50" : "50";
+  el("rsPriceW").className = s[4]==="base" ? "" : "hidden";
+  el("rsPerW").className = s[4]==="custom" ? "" : "hidden";
+  RS={equity:el("rsEq").value,pct:el("rsPct").value,sym:s[0],stop:el("rsStop").value,price:el("rsPrice").value,per:el("rsPer").value};
+  try{ localStorage.setItem("sc_rs",JSON.stringify(RS)); }catch(e){}
+  var r=sizeLots(_num("rsEq"),_num("rsPct"),s[0],_num("rsStop"),_num("rsPrice"),_num("rsPer")), out=el("rsOut");
+  if(!r){ out.innerHTML='<div class="sm">Fill in the boxes above to get your lot size.</div>'; return; }
+  if(r.lots<0.01){
+    out.innerHTML='<div class="big" style="color:var(--sell)">Too wide</div><div class="sm">Even 0.01 lots would risk $'+fmtUsd(r.perLot*0.01)+
+      ', more than your $'+fmtUsd(r.riskUsd)+'. Use a closer stop or skip this trade.</div>';
+    return;
+  }
+  var pctWarn=_num("rsPct")>2 ? '<div class="sm" style="color:var(--watch)">Traders who pass prop challenges usually risk 0.5–1% per trade.</div>' : '';
+  out.innerHTML='<div class="big" style="color:var(--buy)">'+r.lots.toFixed(2)+' lots</div>'+
+    '<div class="sm">Risks $'+fmtUsd(r.actualUsd)+' if the stop is hit (your limit: $'+fmtUsd(r.riskUsd)+').</div>'+pctWarn;
+}
+function fmtUsd(n){ return (Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
 // ---------- boot + PWA ----------
 try{ var _tf=localStorage.getItem("sc_tf"); if(_tf==="daily"||_tf==="1h") TF=_tf; }catch(e){}

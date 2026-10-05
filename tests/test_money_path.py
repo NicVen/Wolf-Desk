@@ -164,6 +164,9 @@ class MoneyPath(unittest.TestCase):
         self.assertEqual(self.crypto_ipn(key, "NP-1")[0], 200)
         self.assertEqual(self.days_paid(key), APP_DAYS)
         self.assertTrue(self.verify(key)["valid"])
+        since = self.verify(key)["since"]                        # tools unlock from the first payment
+        self.assertFalse(self.verify(key)["trial"])
+        self.assertAlmostEqual(since, store.now(), delta=5)
 
         # NOWPayments retries webhooks; a repeat must not add more days
         self.crypto_ipn(key, "NP-1")
@@ -186,8 +189,85 @@ class MoneyPath(unittest.TestCase):
     def test_renewal_adds_a_period_on_top(self):
         key = self.checkout("crypto")
         self.crypto_ipn(key, "NP-3")
+        since = store.get(key)["paid_since"]
         self.crypto_ipn(key, "NP-4")          # a second, different payment
         self.assertEqual(self.days_paid(key), 2 * APP_DAYS)
+        self.assertEqual(store.get(key)["paid_since"], since)   # a renewal doesn't restart the reveal
+
+    # ---- mobile toolkit: add-ons on the App key, and the TOOLKIT bundle ----
+    def _paid_key(self, product="APP", n=[0]):
+        n[0] += 1
+        key = self.checkout("crypto", contact="tk%d@example.com" % n[0], product=product)
+        self.crypto_ipn(key, "NP-TK-%s-%d" % (product, n[0]))
+        return key
+
+    def test_toolkit_not_for_sale_until_live(self):
+        for code in ("GUARDIAN", "HOURS", "TOOLKIT"):
+            status, res = self.req("POST", "/checkout", {"product": code, "contact": "b@example.com",
+                                                         "method": "crypto", "attach": "x"})
+            self.assertEqual(status, 400, code)
+            self.assertIn("In testing", res["error"])
+
+    def test_tools_are_announced_once_each_when_for_sale(self):
+        key = self._paid_key()
+        lic = lambda: store.get(key)
+        now = store.now()
+        self.assertEqual(server.tool_notices(lic(), now), [])                 # day 0: nothing yet
+        later = lic()["paid_since"] + 8 * DAY
+        self.assertEqual(server.tool_notices(lic(), later), [])               # add-ons still locked
+        with mock.patch.object(config, "LOCKED", set()):
+            n = server.tool_notices(lic(), later)
+            self.assertEqual([lvl for lvl, _ in n], [1])                      # day 8: Prime Hours
+            self.assertIn("Prime Hours", n[0][1])
+            self.assertIn(key, n[0][1])
+            store.update(key, tools_told=1)
+            self.assertEqual(server.tool_notices(lic(), later), [])           # told once only
+            n = server.tool_notices(lic(), lic()["paid_since"] + 13 * DAY)
+            self.assertEqual([lvl for lvl, _ in n], [2])                      # day 13: Guardian
+            store.update(key, trial=1)
+            self.assertEqual(server.tool_notices(lic(), later + 30 * DAY), [])  # trials never
+
+    def test_addon_rides_on_the_app_key(self):
+        with mock.patch.object(config, "LOCKED", set()):
+            app = self._paid_key()
+            self.assertFalse(self.verify(app, "GUARDIAN")["valid"])
+            code, res = self.req("POST", "/checkout", {"product": "GUARDIAN", "method": "crypto",
+                                                       "contact": "", "attach": app})
+            self.assertEqual(code, 200, res)
+            self.assertEqual(self.invoices[-1]["price"], config.product("GUARDIAN")["price_solo"])
+            addon = res["license_key"]
+            self.assertFalse(self.verify(app, "GUARDIAN")["valid"])      # not paid yet
+            self.crypto_ipn(self.invoices[-1]["order_id"], "NP-G1")
+            v = self.verify(app, "GUARDIAN")
+            self.assertTrue(v["valid"]); self.assertEqual(v["product"], "GUARDIAN")
+            self.assertTrue(self.verify(app, "APP")["valid"])            # app still opens
+            self.assertFalse(self.verify(app, "HOURS")["valid"])         # only what was paid for
+            # next month: same add-on row, a second period on top
+            code, res = self.req("POST", "/checkout", {"product": "GUARDIAN", "method": "crypto",
+                                                       "contact": "", "attach": app})
+            self.assertEqual(res["license_key"], addon)
+            self.assertNotEqual(self.invoices[-1]["order_id"], addon)
+            self.crypto_ipn(self.invoices[-1]["order_id"], "NP-G2")
+            self.assertEqual(self.days_paid(addon), 60)
+
+    def test_addon_needs_a_real_paid_app_key(self):
+        with mock.patch.object(config, "LOCKED", set()):
+            for attach in ("", "APP-NOPE"):
+                code, _ = self.req("POST", "/checkout", {"product": "HOURS", "method": "crypto",
+                                                         "contact": "c@example.com", "attach": attach})
+                self.assertEqual(code, 400)
+            unpaid = self.checkout("crypto", contact="unpaid@example.com")
+            code, _ = self.req("POST", "/checkout", {"product": "HOURS", "method": "crypto",
+                                                     "contact": "", "attach": unpaid})
+            self.assertEqual(code, 400)
+
+    def test_toolkit_key_opens_all_three(self):
+        with mock.patch.object(config, "LOCKED", set()):
+            key = self._paid_key("TOOLKIT")
+            self.assertEqual(self.invoices[-1]["price"], 39.99)
+            for p in ("APP", "GUARDIAN", "HOURS"):
+                self.assertTrue(self.verify(key, p)["valid"], p)
+            self.assertFalse(self.verify(key, "GOLD")["valid"])
 
     # ---- PayPal ----
     def test_paypal_return_then_webhook_credits_once(self):
@@ -225,6 +305,7 @@ class MoneyPath(unittest.TestCase):
         self.assertEqual(code, 200)
         self.assertTrue(res["trial"])
         self.assertTrue(self.verify(res["license_key"])["valid"])
+        self.assertTrue(self.verify(res["license_key"])["trial"])        # the app shows a trial no tools
         _, again = self.req("POST", "/trial", {"contact": "trial@example.com"})
         self.assertEqual(again.get("error"), "trial_used")
 
