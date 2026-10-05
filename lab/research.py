@@ -316,6 +316,13 @@ def gold_timing():
     run.pooled("live Gold rule (as now)", [("GC", h, live, 0.45)])
     run.pooled("live Gold rule, only signals outside US hours", [("GC", h, hours(live, lambda hr: not us(hr)), 0.45)])
     run.pooled("live Gold rule, only signals in US hours", [("GC", h, hours(live, us), 0.45)])
+    # today's live version (skip US hours) plus the big-money crowd filter
+    from datetime import datetime as _dt
+    c = data.cot("GOLD - COMMODITY EXCHANGE", range(2010, _dt.utcnow().year + 1), report="disagg")
+    night = hours(live, lambda hr: not us(hr))
+    for who, label in (("am", "miners"), ("lev", "hedge funds")):
+        run.pooled(f"skip US hours + skip when {label} are crowded",
+                   [("GC", h, strategies.with_cot_filter(night, c, who), 0.45)])
 
 
 # ---------- 9. the gold rule on other markets (a new home for VELDRIN?) ----------
