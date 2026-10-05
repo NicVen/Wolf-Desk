@@ -20,7 +20,7 @@
 //+------------------------------------------------------------------+
 #property copyright "STAALWAG"
 #property link      "https://staalwag.com"
-#property version   "1.00"
+#property version   "1.10"
 #property description "Guardian watches your trades and warns you. It never trades."
 
 input string GuardianKey    = "";     // Your STAALCALIBUR key (with Guardian)
@@ -32,12 +32,14 @@ input int    GraceSeconds   = 5;      // Seconds to let you set a stop before ch
 input bool   PushToPhone    = true;   // Send warnings to the MT5 app on your phone
 input bool   PopupOnPC      = true;   // Pop-up warnings on this PC
 input string ServerURL      = "https://app.178.104.88.38.sslip.io/appguard/mt5";
+input int    SyncSeconds    = 10;     // How often your phone's Guardian screen is updated
 
 ulong    g_seen[];       // tickets already judged (or open when Guardian started)
 ulong    g_wait[];       // new tickets waiting out the grace period
 datetime g_waitAt[];
 bool     g_started = false;
 bool     g_toldWeb = false, g_toldPush = false, g_toldKey = false;
+int      g_tick = 0;
 
 //+------------------------------------------------------------------+
 int OnInit()
@@ -106,6 +108,8 @@ double DayStartEquity()
 void OnTimer()
   {
    DayStartEquity();                      // record the day's start even when nothing trades
+   if(SyncSeconds > 0 && (g_tick++ % SyncSeconds) == 0)
+      Sync();
    ulong cur[];
    for(int i = PositionsTotal() - 1; i >= 0; i--)
      {
@@ -211,10 +215,7 @@ void Judge(const ulong ticket)
      }
 
    double equity = AccountInfoDouble(ACCOUNT_EQUITY);
-   string challenge = "{\"on\":false}";
-   if(ChallengeStart > 0)
-      challenge = "{\"on\":true,\"start\":" + Num(ChallengeStart) + ",\"daily_pct\":" + Num(DailyLossPct) +
-                  ",\"max_pct\":" + Num(MaxLossPct) + ",\"today_pl\":" + Num(equity - DayStartEquity()) + "}";
+   string challenge = ChallengeJson(equity);
    string body = "{\"key\":\"" + GuardianKey + "\",\"dev\":\"mt5-" + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) + "\"," +
                  "\"trade\":{\"sym\":\"" + sym + "\",\"side\":\"" + side + "\",\"lots\":" + Num(vol) +
                  ",\"stop\":" + Num(dist) + ",\"per_lot\":" + (perLot > 0 ? Num(perLot) : "null") + "}," +
@@ -241,6 +242,65 @@ void Judge(const ulong ticket)
       return;
      }
    Warn(lines);
+  }
+
+string ChallengeJson(const double equity)
+  {
+   if(ChallengeStart <= 0)
+      return("{\"on\":false}");
+   return("{\"on\":true,\"start\":" + Num(ChallengeStart) + ",\"daily_pct\":" + Num(DailyLossPct) +
+          ",\"max_pct\":" + Num(MaxLossPct) + ",\"today_pl\":" + Num(equity - DayStartEquity()) + "}");
+  }
+
+// Live snapshot for the phone: balance, equity, open trades, and what a 1.0
+// price move is worth per lot on every Market Watch symbol.
+void Sync()
+  {
+   double equity = AccountInfoDouble(ACCOUNT_EQUITY);
+   string pos = "";
+   for(int i = PositionsTotal() - 1; i >= 0; i--)
+     {
+      ulong t = PositionGetTicket(i);
+      if(t == 0)
+         continue;
+      string sym = PositionGetString(POSITION_SYMBOL);
+      double vol = PositionGetDouble(POSITION_VOLUME);
+      double op = PositionGetDouble(POSITION_PRICE_OPEN);
+      double sl = PositionGetDouble(POSITION_SL);
+      double pl = (sl > 0) ? PerLot(sym, MathAbs(op - sl)) : -1;
+      if(pos != "")
+         pos += ",";
+      pos += "{\"sym\":\"" + sym + "\",\"side\":\"" +
+             (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY ? "BUY" : "SELL") +
+             "\",\"lots\":" + Num(vol) + ",\"open\":" + Num(op) + ",\"sl\":" + Num(sl) +
+             ",\"profit\":" + Num(PositionGetDouble(POSITION_PROFIT)) +
+             ",\"risk\":" + (pl > 0 ? Num(pl * vol) : "null") + "}";
+     }
+   string syms = "";
+   int n = MathMin(SymbolsTotal(true), 80);
+   for(int i = 0; i < n; i++)
+     {
+      string s = SymbolName(i, true);
+      double v = PerLot(s, 1.0);
+      if(v <= 0)
+         continue;
+      if(syms != "")
+         syms += ",";
+      syms += "{\"s\":\"" + s + "\",\"bid\":" + Num(SymbolInfoDouble(s, SYMBOL_BID)) + ",\"v\":" + Num(v) +
+              ",\"digits\":" + IntegerToString(SymbolInfoInteger(s, SYMBOL_DIGITS)) + "}";
+     }
+   string body = "{\"key\":\"" + GuardianKey + "\",\"login\":\"" + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) +
+                 "\",\"server\":\"" + AccountInfoString(ACCOUNT_SERVER) + "\",\"currency\":\"" +
+                 AccountInfoString(ACCOUNT_CURRENCY) + "\",\"balance\":" + Num(AccountInfoDouble(ACCOUNT_BALANCE)) +
+                 ",\"equity\":" + Num(equity) + ",\"day_start\":" + Num(DayStartEquity()) +
+                 ",\"risk_pct\":" + Num(RiskPercent) + ",\"challenge\":" + ChallengeJson(equity) +
+                 ",\"orders\":" + IntegerToString(OrdersTotal()) +
+                 ",\"positions\":[" + pos + "],\"symbols\":[" + syms + "]}";
+   char post[], res[];
+   string headers;
+   StringToCharArray(body, post, 0, WHOLE_ARRAY, CP_UTF8);
+   ArrayResize(post, ArraySize(post) - 1);
+   WebRequest("POST", ServerURL + "/sync", "Content-Type: application/json\r\n", 5000, post, res, headers);
   }
 
 // POST to staalwag.com. False when it can't be reached (the local check takes over).

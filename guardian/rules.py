@@ -115,6 +115,10 @@ def per_lot(sym, stop, price=None, per_point=None):
     return v
 
 
+def _pct(v):
+    return ("%.2f%%" if v < 1 else "%.1f%%") % v
+
+
 def _money(v):
     return "${:,.2f}".format(v)
 
@@ -181,7 +185,7 @@ def check(trade, account, now=None, events=(), hours=None):
         risk = lots * pl
         pct = risk / equity * 100
         safe = int(equity * plan / 100 / pl * 100 + 1e-9) / 100
-        msg = "If the stop is hit you lose %s, %.1f%% of your account." % (_money(risk), pct)
+        msg = "If the stop is hit you lose %s, %s of your account." % (_money(risk), _pct(pct))
         if pct > plan * OVERSIZE:
             add("size", NO, "Too big",
                 "%s Your plan is %g%%: the safe size is %.2f lots." % (msg, plan, safe))
@@ -202,13 +206,13 @@ def check(trade, account, now=None, events=(), hours=None):
     if n_open or open_risk:
         total = open_risk + (risk or 0)
         heat = total / equity * 100
-        txt = ("Adding this to your %d open trade%s puts %s at risk if every stop is hit (%.1f%% of the account)."
-               % (n_open, "" if n_open == 1 else "s", _money(total), heat))
+        txt = ("Adding this to your %d open trade%s puts %s at risk if every stop is hit (%s of the account)."
+               % (n_open, "" if n_open == 1 else "s", _money(total), _pct(heat)))
         if heat > HEAT_NO:
             add("heat", NO, "Too much on at once", txt + " Close or tighten something before adding more.")
         elif heat > HEAT_CAREFUL or n_open >= BUSY:
             add("heat", CAREFUL, "A lot on already", txt)
-        else:
+        elif not naked:                         # "fine" would contradict the no-stop warning
             add("heat", OK, "Open trades are fine", txt)
 
     # --- prop-firm challenge --------------------------------------------------
