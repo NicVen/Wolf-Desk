@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive">
 <meta name="theme-color" content="#0a0e15">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -129,7 +130,7 @@
 <body>
 <aside class="catalog">
   <div class="catttl">🐺 WOLF</div>
-  <div class="catsub">Rental desk — VIP monthly</div>
+  <div class="catsub" style="color:var(--amber)">🔒 Not for public use</div>
   <h4>MT5 · Expert Advisors</h4>
   <button class="catbtn" onclick="lock('STAALWAG Gold EA')">🥇 STAALWAG Gold<span class="lk">🔒</span></button>
   <button class="catbtn" onclick="lock('STAALWAG FX EA')">💱 STAALWAG FX<span class="lk">🔒</span></button>
@@ -147,9 +148,9 @@
   <button class="catbtn" onclick="lock('STAALCALIBUR Edge V13')">⚔️ STAALCALIBUR Edge V13<span class="lk">🔒</span></button>
   <button class="catbtn" onclick="lock('Markov Scalper')">📈 Markov Scalper<span class="lk">🔒</span></button>
   <h4>TradingView · Chart Add-on</h4>
-  <button class="catbtn" onclick="openSub(false)">🚦 Markov 2 Gate<span class="lk" style="color:var(--green)">free</span></button>
+  <button class="catbtn" onclick="openSub(false)">🚦 Markov 2 Gate<span class="lk">🔒</span></button>
   <h4>Mobile App</h4>
-  <button class="catbtn" onclick="location.href='/store'">📱 STAALCALIBUR Android App<span class="lk" style="color:var(--gold,#d4af37)">$14.99</span></button>
+  <button class="catbtn" data-open onclick="location.href='/store'">📱 STAALCALIBUR Android App<span class="lk" style="color:var(--gold,#d4af37)">$14.99</span></button>
 </aside>
 <div class="lockmodal" id="lockmodal" onclick="if(event.target.id==='lockmodal')this.classList.remove('on')">
   <div class="lockbox">
@@ -158,6 +159,34 @@
     <button onclick="document.getElementById('lockmodal').classList.remove('on')" style="width:100%">Close</button>
   </div>
 </div>
+<script>
+// DESK LOCK (Oct 2026): the whole desk is closed to the public during housekeeping.
+// Every click shows the "not for public use" note instead of doing anything; the
+// only live link is the STAALCALIBUR App. Admin devices (opened once with ?admin=1)
+// keep full access. To reopen: set DESK_LOCKED = false.
+var DESK_LOCKED = true;
+function deskAdmin(){ try{ return localStorage.getItem('wolf_sub')==='admin'; }catch(e){ return false; } }
+function deskLockNote(){
+  document.getElementById('lockmsg').innerHTML =
+    'The <b>WOLF Intraday Intel Desk</b> is closed while we do some housekeeping.<br><br>'+
+    'It will reopen for PC traders using the STAALWAG EAs and indicators.<br><br>'+
+    'Looking for the phone app? <a href="/store" style="color:var(--gold2)">📱 Get the STAALCALIBUR App</a>';
+  document.getElementById('lockmodal').classList.add('on');
+}
+if(DESK_LOCKED){
+  document.addEventListener('click', function(e){
+    if(deskAdmin()) return;
+    var t=e.target;
+    if(t.closest('#lockmodal')) return;                       // the note itself (Close, App link)
+    if(t.closest('[data-open]')) return;                      // the App button
+    e.preventDefault(); e.stopImmediatePropagation(); deskLockNote();
+  }, true);
+  window.addEventListener('DOMContentLoaded', function(){
+    if(deskAdmin()) return;
+    ['venue','autock'].forEach(function(id){ var el=document.getElementById(id); if(el) el.disabled=true; });
+  });
+}
+</script>
 
 <div class="lockmodal" id="submodal" onclick="if(event.target.id==='submodal' && !document.body.classList.contains('gated'))this.classList.remove('on')">
   <div class="lockbox" style="max-width:460px;text-align:left;max-height:88vh;overflow:auto">
@@ -184,7 +213,7 @@
       <div class="sub" style="color:var(--gold,#d4af37);letter-spacing:1px;font-size:10px;font-style:italic;margin-top:3px">Intel with teeth.</div></div>
     </div>
     <button class="navbtn" id="subBtn" onclick="openSub(false)" style="background:var(--green);color:#04120a">🐺 Subscribe · Free</button>
-    <button class="navbtn" onclick="location.href='/store'" style="background:var(--gold,#d4af37);color:#2a1e05;font-weight:800">📱 Get the App · $14.99</button>
+    <button class="navbtn" data-open onclick="location.href='/store'" style="background:var(--gold,#d4af37);color:#2a1e05;font-weight:800">📱 Get the App · $14.99</button>
     <div class="spacer"></div>
     <button class="navbtn" onclick="openVip()">⭐ VIP Membership</button>
     <button class="navbtn" onclick="openRentals()">🔑 Rentals</button>
@@ -377,7 +406,7 @@ function enforceGate(){ document.body.classList.add('gated'); openSub(true); }
 
 // count meaningful clicks by non-subscribers; after the limit, grey out and force subscribe
 document.addEventListener('click', function(e){
-  if(subscribed()) return;
+  if(subscribed() || (DESK_LOCKED && !deskAdmin())) return;   // desk lock replaces the free-click gate
   var t=e.target.closest('button,[onclick],.tab,.catbtn,.card');
   if(!t) return;
   if(t.closest('#submodal')||t.closest('#buymodal')||t.id==='subBtn') return; // never count these
