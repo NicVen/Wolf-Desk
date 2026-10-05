@@ -41,6 +41,7 @@ import run                      # noqa
 import watchdog
 import atomicio
 import proof_labels
+from guardian import rules as guardian_rules
 from scout.news import headlines
 
 PORT        = int(os.environ.get("PORT", "8777"))
@@ -160,6 +161,7 @@ def get_calendar() -> list:
                 "title": e.get("title", ""),
                 "forecast": e.get("forecast", ""),
                 "previous": e.get("previous", ""),
+                "ts": guardian_rules.parse_event_time(e.get("date")),
             })
         _CAL["data"] = rows; _CAL["ts"] = time.time()
     except Exception as e:
@@ -528,6 +530,32 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
 
         # ---- STOREFRONT proxy (same-origin bridge to licensing) --------------
+        # Guardian (app add-on): judge one trade before it's taken
+        if path == "/appguard":
+            try:
+                ln = int(self.headers.get("Content-Length", "0") or "0")
+                if ln <= 0 or ln > 20_000:
+                    raise ValueError("bad size")
+                body = json.loads(self.rfile.read(ln).decode("utf-8"))
+                if not isinstance(body, dict):
+                    raise ValueError("bad body")
+            except Exception:
+                self._send(400, json.dumps({"error": "bad request"})); return
+            if not _app_license_ok(str(body.get("key") or ""), str(body.get("dev") or "app"), "GUARDIAN"):
+                self._send(403, b'{"error":"license"}'); return
+            trade = body.get("trade") if isinstance(body.get("trade"), dict) else {}
+            account = body.get("account") if isinstance(body.get("account"), dict) else {}
+            s = guardian_rules.SYMS.get(str(trade.get("sym") or "").upper())
+            prof = None
+            if s and s[6]:
+                _hours_refresh()
+                try:
+                    with open(_HOURS_FILE) as f:
+                        prof = json.load(f).get("symbols", {}).get(s[6])
+                except Exception:
+                    prof = None
+            self._send(200, json.dumps(guardian_rules.check(trade, account, events=get_calendar(), hours=prof))); return
+
         if path in ("/app/trial", "/app/checkout", "/app/testers"):
             try:
                 ln = int(self.headers.get("Content-Length", "0") or "0")

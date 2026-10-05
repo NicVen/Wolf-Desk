@@ -18,7 +18,7 @@ self.addEventListener("activate", function (e) {
 });
 self.addEventListener("fetch", function (e) {
   var u = new URL(e.request.url);
-  if (/^\/(appdata|appaccess|apphours|verify|appversion)\b/.test(u.pathname)) return;   // never cache license/data/version
+  if (/^\/(appdata|appaccess|apphours|appguard|verify|appversion)\b/.test(u.pathname)) return;   // never cache license/data/version
   e.respondWith(
     fetch(e.request).then(function (res) {
       if (res && res.ok && e.request.method === "GET") {

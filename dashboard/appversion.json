@@ -1,11 +1,11 @@
 {
-  "version": "2.7.0",
+  "version": "2.8.0",
   "date": "2026-10-05",
-  "title": "Free Risk Sizer, plus new tools on the way",
+  "title": "Guardian: ask before you trade",
   "type": "feature",
   "notes": [
-    "NEW: Risk Sizer, free for everyone. Enter your account, risk % and stop, and get the safe lot size.",
-    "Works for gold, silver, the main FX pairs, Bitcoin, or any symbol using your broker's figure.",
-    "Coming soon: Prime Hours (when each market really moves) and Guardian (warns you before a trade hurts your account)."
+    "NEW for Toolkit testers: Guardian. Tell it the trade you want to take and it checks the size, your open trades, the news and the time of day.",
+    "It answers straight: NO, sit this out, careful, or you're good, with the reason.",
+    "Challenge mode checks your prop firm's daily and max loss limits."
   ]
 }
