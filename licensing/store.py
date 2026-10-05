@@ -57,7 +57,9 @@ def _init(c):
                      ("ref_reward_until", "INTEGER"),
                      ("anon_id", "TEXT"),
                      ("trial", "INTEGER DEFAULT 0"),
-                     ("attach_to", "TEXT")):
+                     ("attach_to", "TEXT"),
+                     ("paid_since", "INTEGER"),
+                     ("tools_told", "INTEGER DEFAULT 0")):
         try:
             c.execute("ALTER TABLE licenses ADD COLUMN %s %s" % (col, ddl))
         except sqlite3.OperationalError:

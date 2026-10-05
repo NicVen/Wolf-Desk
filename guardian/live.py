@@ -215,6 +215,46 @@ def account(snap):
     return acc
 
 
+# ---- one MT5 account per key (stops a key being shared) ----------------------
+SWITCH_WAIT = 86400          # the linked account can be changed once a day
+
+
+def claim_account(key, login, d=DIR, now=None):
+    """True when this MT5 login may use the key: the first account to connect
+    claims it, and only that account works until the owner switches it from
+    the app (which only runs on the owner's own phone). A request without a
+    login (EA before 1.14) is let through."""
+    login = str(login or "").strip()
+    if not login:
+        return True
+    cfg = _cfg_read(key, d)
+    if not cfg.get("mt5"):
+        cfg.update(mt5=login, mt5_set=int(now or time.time()))
+        _cfg_write(key, cfg, d)
+        return True
+    return cfg["mt5"] == login
+
+
+def linked_account(key, d=DIR):
+    return _cfg_read(key, d).get("mt5") or ""
+
+
+def release_account(key, d=DIR, now=None):
+    """Free the key for another MT5 account. Returns an error string or None."""
+    now = int(now or time.time())
+    cfg = _cfg_read(key, d)
+    if not cfg.get("mt5"):
+        return None
+    if now - int(cfg.get("mt5_set") or 0) < SWITCH_WAIT:
+        return "You can switch accounts once a day. Try again tomorrow."
+    cfg.pop("mt5", None)
+    cfg["mt5_set"] = now                       # the next account to connect starts a new day
+    if cfg.get("size"):                        # trailing highs belong to the old account
+        cfg["peak_eq"] = cfg["peak_day_bal"] = cfg["size"]
+    _cfg_write(key, cfg, d)
+    return None
+
+
 def settings(key, d=DIR):
     """The saved choice, for the app's form."""
     cfg = _cfg_read(key, d)

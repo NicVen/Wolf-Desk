@@ -45,6 +45,7 @@ from guardian import rules as guardian_rules
 from guardian import mt5 as guardian_mt5
 from guardian import live as guardian_live
 from guardian import propfirms as guardian_propfirms
+import app_tools
 from scout.news import headlines
 
 PORT        = int(os.environ.get("PORT", "8777"))
@@ -392,6 +393,31 @@ def _read(path, default=b"{}"):
 
 # --- STAALCALIBUR app: license check against the licensing service (localhost) ---
 _APP_LIC_CACHE = {}
+_APP_INFO_CACHE = {}
+
+
+def _app_key_info(key, dev):
+    """The App key's /verify answer (valid, trial, since), cached 5 min."""
+    if not key:
+        return {}
+    now = time.time()
+    ck = key + "|" + (dev or "")
+    c = _APP_INFO_CACHE.get(ck)
+    if c and c[1] > now:
+        return c[0]
+    info = {}
+    try:
+        base = os.environ.get("LICENSING_URL", "http://127.0.0.1:8790")
+        who = urllib.parse.quote(dev or "app")
+        url = base + "/verify?product=APP&key=" + urllib.parse.quote(key) + "&account=" + who + "&machine=" + who
+        with urllib.request.urlopen(url, timeout=6) as r:
+            info = json.loads(r.read().decode())
+    except Exception:
+        info = {}
+    _APP_INFO_CACHE[ck] = (info, now + 300)
+    return info
+
+
 def _app_license_ok(key, dev, product="APP", bind=True):
     """True if `key` unlocks `product` (the App, or an add-on such as HOURS
     bought onto it). Verifies via the licensing service on the same box;
@@ -550,7 +576,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # ---- STOREFRONT proxy (same-origin bridge to licensing) --------------
         # Guardian (app add-on): judge one trade before it's taken, from the
         # app (/appguard, JSON) or from the MT5 EA (/appguard/mt5, plain text)
-        if path in ("/appguard", "/appguard/mt5", "/appguard/mt5/sync", "/appguard/settings"):
+        if path in ("/appguard", "/appguard/mt5", "/appguard/mt5/sync", "/appguard/settings", "/appguard/switch"):
             try:
                 ln = int(self.headers.get("Content-Length", "0") or "0")
                 if ln <= 0 or ln > 200_000:
@@ -565,6 +591,19 @@ class Handler(http.server.BaseHTTPRequestHandler):
             mt5 = path.startswith("/appguard/mt5")
             if not _app_license_ok(key, str(body.get("dev") or "app"), "GUARDIAN", bind=not mt5):
                 self._send(403, b'{"error":"license"}'); return
+            if mt5:                                 # one MT5 account per key
+                acc0 = body.get("account") if isinstance(body.get("account"), dict) else {}
+                login = body.get("login") or acc0.get("login")
+                dev0 = str(body.get("dev") or "")
+                if not login and dev0.startswith("mt5-"):   # EAs before 1.14 name the account in "dev"
+                    login = dev0[4:]
+                if not guardian_live.claim_account(key, login):
+                    self._send(409, "ACCOUNT\nThis Guardian key is linked to another MT5 account. "
+                                    "To use it here, open Guardian in the app and tap 'Use a different MT5 account'.",
+                               "text/plain; charset=utf-8"); return
+            if path == "/appguard/switch":          # the owner frees the key for another account
+                err = guardian_live.release_account(key)
+                self._send(200, json.dumps({"error": err} if err else {"ok": True})); return
             if path == "/appguard/mt5/sync":       # the EA's live account snapshot
                 guardian_live.save(key, body)
                 self._send(200, "OK", "text/plain; charset=utf-8"); return
@@ -817,10 +856,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send(403, b'{"error":"license"}'); return
             self._send(200, _read(os.path.join("data", "opportunities_%s.json" % cls))); return
         if path == "/appaccess":
-            # which paid add-ons this App key unlocks (drives the toolkit tiles)
+            # which toolkit tiles this App key sees (app_tools.py: revealed over
+            # the days after purchase; trials see none) and which it rents
             key = q.get("key", [""])[0]; dev = q.get("dev", ["app"])[0]
-            self._send(200, json.dumps({"hours": _app_license_ok(key, dev, "HOURS"),
-                                        "guardian": _app_license_ok(key, dev, "GUARDIAN")})); return
+            hours, guard = _app_license_ok(key, dev, "HOURS"), _app_license_ok(key, dev, "GUARDIAN")
+            info = _app_key_info(key, dev)
+            self._send(200, json.dumps({"hours": hours, "guardian": guard, "tiles": app_tools.tiles(
+                info.get("valid"), info.get("trial"), info.get("since"), hours, guard, time.time(),
+                info.get("for_sale") or ())})); return
         if path == "/appguard/live":
             key = q.get("key", [""])[0].strip(); dev = q.get("dev", ["app"])[0]
             if not _app_license_ok(key, dev, "GUARDIAN"):

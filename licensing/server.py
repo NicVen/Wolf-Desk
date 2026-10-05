@@ -153,6 +153,8 @@ def apply_payment(order_id, payment_id):
     paid_until = base + period
     store.update(lic["license_key"], status="active", paid_until=paid_until,
                  revoke_at=None, notified=0, last_payment=payment_id)
+    if not lic.get("paid_since"):              # the first payment: the app's tools unlock from this day
+        store.update(lic["license_key"], paid_since=store.now())
     when = time.strftime("%Y-%m-%d", time.gmtime(paid_until))
     if lic.get("attach_to"):
         notify.client(lic["contact"],
@@ -296,6 +298,43 @@ def announce_quiz_winner(period, reward=None, public=True):
 def _prev_period():
     first = datetime.datetime.utcnow().replace(day=1)
     return (first - datetime.timedelta(days=1)).strftime("%Y-%m")
+
+
+def _age(lic):
+    """How long this key has been a paying one: the app reveals its tools over
+    the first days after purchase. A trial key reports trial=True."""
+    return {"trial": bool(lic.get("trial")), "since": lic.get("paid_since") or lic.get("created"),
+            "for_sale": [c for c in TOOL_REVEAL if c not in config.LOCKED]}
+
+
+# The app shows its tools step by step after purchase (app_tools.py in the
+# app). The app itself sells nothing (Google Play), so when a tool becomes
+# available the customer is told here, on Telegram, once per tool.
+TOOL_REVEAL = {"HOURS": 7, "GUARDIAN": 12}          # add-on -> day after first payment
+TOOL_PITCH = {"HOURS": "See the hours each market really moves, in your own time zone, and the dead zones to sit out.",
+              "GUARDIAN": "It watches every trade you open in MT5 and warns you on your phone when one is too big, "
+                          "badly timed, or puts your prop-firm challenge at risk."}
+
+
+def tool_notices(lic, now):
+    """[(level, text)] still owed to this paying App key: one message per
+    add-on once its day has come, it is for sale, and the key doesn't have it."""
+    if (lic.get("status") != "active" or lic.get("trial") or lic.get("attach_to")
+            or not config.unlocks(lic["product"], "APP") or not lic.get("paid_since")):
+        return []
+    days = (now - lic["paid_since"]) / DAY
+    told, out = int(lic.get("tools_told") or 0), []
+    for level, (code, day) in enumerate(sorted(TOOL_REVEAL.items(), key=lambda x: x[1]), 1):
+        if level <= told or days < day or code in config.LOCKED or config.unlocks(lic["product"], code):
+            continue
+        addon = store.addon_for(lic["license_key"], code)
+        if addon and check_access(addon)[0]:
+            continue
+        p = config.product(code)
+        out.append((level, "New in STAALCALIBUR: %s is ready for your app.\n%s\n\nAdd it to your key %s at "
+                           "staalwag.com/store for $%s/month (launch price, regular $%s)."
+                    % (p["name"], TOOL_PITCH[code], lic["license_key"], p["price_solo"], p.get("price_regular") or p["price_solo"])))
+    return out
 
 
 def check_access(lic):
@@ -469,6 +508,10 @@ def sweeper():
                                       "Your %s access has been removed for non-payment. "
                                       "Renew any time to restore it." % lic["product"])
                         notify.admin("revoked: %s" % key)
+            for lic in store.all_active_or_pastdue():          # tools revealed after purchase
+                for level, text in tool_notices(lic, now):
+                    notify.client(lic["contact"], text)
+                    store.update(lic["license_key"], tools_told=level)
             # Monthly Trader Quiz winner — announce the previous month once, when
             # the month has rolled over. Runs wherever the service runs; no cron.
             if config.QUIZ_AUTO_WINNER:
@@ -641,7 +684,7 @@ class H(BaseHTTPRequestHandler):
             store.update(key, last_seen=store.now(), last_account=account or machine or "")
             prod = (product or lic["product"]).upper()
             token = tokens.issue(key, prod, lic.get("paid_until") or (store.now() + 3650 * DAY))
-            return self._send(200, {"valid": True, "reason": "admin", "product": prod,
+            return self._send(200, {"valid": True, "reason": "admin", "product": prod, **_age(lic),
                                     "expires_at": lic.get("paid_until"), "server_time": store.now(),
                                     "token": token, "recheck_in": config.TOKEN_TTL_HOURS * 3600})
 
@@ -656,7 +699,7 @@ class H(BaseHTTPRequestHandler):
                 return self._send(200, {"valid": False, "reason": "bound_to_other"})
             store.update(key, last_seen=store.now(), last_account=account or machine or "")
             token = tokens.issue(key, addon["product"], addon["paid_until"])
-            return self._send(200, {"valid": True, "reason": why, "product": addon["product"],
+            return self._send(200, {"valid": True, "reason": why, "product": addon["product"], **_age(lic),
                                     "expires_at": addon["paid_until"], "server_time": store.now(),
                                     "token": token, "recheck_in": config.TOKEN_TTL_HOURS * 3600})
 
@@ -677,7 +720,7 @@ class H(BaseHTTPRequestHandler):
                                     "product": lic["product"]})
         store.update(key, last_seen=store.now(), last_account=account or machine or "")
         token = tokens.issue(key, lic["product"], lic["paid_until"])
-        self._send(200, {"valid": True, "reason": reason, "product": lic["product"],
+        self._send(200, {"valid": True, "reason": reason, "product": lic["product"], **_age(lic),
                          "expires_at": lic["paid_until"], "server_time": store.now(),
                          "token": token, "recheck_in": config.TOKEN_TTL_HOURS * 3600})
 
