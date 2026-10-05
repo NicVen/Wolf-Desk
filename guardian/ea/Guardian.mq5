@@ -20,7 +20,7 @@
 //+------------------------------------------------------------------+
 #property copyright "STAALWAG"
 #property link      "https://staalwag.com"
-#property version   "1.12"
+#property version   "1.13"
 #property description "Guardian watches your trades and warns you. It never trades."
 
 input string GuardianKey    = "";     // Your STAALCALIBUR key (with Guardian)
@@ -40,6 +40,7 @@ datetime g_waitAt[];
 bool     g_started = false;
 bool     g_toldWeb = false, g_toldPush = false, g_toldKey = false;
 int      g_syncState = 0;   // 0 not tried yet, 1 linked, -1 failing (told once each way)
+string   g_link = "checking...";   // shown on the chart so anyone can see what Guardian is doing
 int      g_tick = 0;
 
 //+------------------------------------------------------------------+
@@ -51,6 +52,7 @@ int OnInit()
       return(INIT_PARAMETERS_INCORRECT);
      }
    EventSetTimer(1);
+   ShowStatus();
    string hello = StringFormat("Guardian is watching MT5 account %I64d. Open a trade and it checks it within seconds.",
                                AccountInfoInteger(ACCOUNT_LOGIN));
    Print(hello);
@@ -59,7 +61,34 @@ int OnInit()
    return(INIT_SUCCEEDED);
   }
 
-void OnDeinit(const int reason) { EventKillTimer(); }
+void OnDeinit(const int reason) { EventKillTimer(); ObjectsDeleteAll(0, "GuardianStatus"); }
+
+// Bottom-left of the chart (clear of the one-click trading panel): which
+// Guardian runs, with which key, and whether the phone is linked.
+void Label(const string name, const string text, const int y, const color c)
+  {
+   if(ObjectFind(0, name) < 0)
+     {
+      ObjectCreate(0, name, OBJ_LABEL, 0, 0, 0);
+      ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_LOWER);
+      ObjectSetInteger(0, name, OBJPROP_ANCHOR, ANCHOR_LEFT_LOWER);
+      ObjectSetInteger(0, name, OBJPROP_XDISTANCE, 10);
+      ObjectSetInteger(0, name, OBJPROP_FONTSIZE, 10);
+      ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
+      ObjectSetInteger(0, name, OBJPROP_HIDDEN, true);
+     }
+   ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y);
+   ObjectSetInteger(0, name, OBJPROP_COLOR, c);
+   ObjectSetString(0, name, OBJPROP_TEXT, text);
+  }
+
+void ShowStatus()
+  {
+   Label("GuardianStatus1", "STAALWAG Guardian 1.13   key " + GuardianKey, 30, clrSilver);
+   Label("GuardianStatus2", "Phone link: " + g_link, 12,
+         g_syncState == 1 ? clrLimeGreen : g_syncState == -1 ? clrOrangeRed : clrSilver);
+   ChartRedraw();
+  }
 
 //+------------------------------------------------------------------+
 int Find(const ulong &arr[], const ulong t)
@@ -329,9 +358,11 @@ void SyncResult(const int code, const int err)
   {
    if(code == 200)
      {
+      g_link = "LINKED, open Guardian in the app";
       if(g_syncState != 1)
         {
          g_syncState = 1;
+         ShowStatus();
          string ok = "Guardian: your phone is linked. Open Guardian in the STAALCALIBUR app to see this account live.";
          Print(ok);
          if(PopupOnPC)
@@ -350,9 +381,11 @@ void SyncResult(const int code, const int err)
             why = "the key isn't accepted. Put the same key as in the app (with Guardian) in the Inputs tab.";
          else
             why = StringFormat("the server answered %d.", code);
+   g_link = "NOT linked, " + why;
    if(g_syncState != -1)
      {
       g_syncState = -1;
+      ShowStatus();
       Print("Guardian: phone link failed, ", why);
       Alert("Guardian: your phone can't see this account yet, " + why);
      }
