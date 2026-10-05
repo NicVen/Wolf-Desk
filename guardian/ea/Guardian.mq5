@@ -12,7 +12,7 @@
 //|                                                                  |
 //| Setup (once):                                                    |
 //|  1. Tools > Options > Expert Advisors > tick "Allow WebRequest"  |
-//|     and add  https://app.staalwag.com                            |
+//|     and add  https://app.178.104.88.38.sslip.io             |
 //|  2. Tools > Options > Notifications > tick "Enable Push" and     |
 //|     paste your MetaQuotes ID (MT5 phone app > Settings > Chat    |
 //|     and messages)                                                |
@@ -31,7 +31,7 @@ input double MaxLossPct     = 10.0;   // Challenge max loss limit (%)
 input int    GraceSeconds   = 5;      // Seconds to let you set a stop before checking
 input bool   PushToPhone    = true;   // Send warnings to the MT5 app on your phone
 input bool   PopupOnPC      = true;   // Pop-up warnings on this PC
-input string ServerURL      = "https://app.staalwag.com/appguard/mt5";
+input string ServerURL      = "https://app.178.104.88.38.sslip.io/appguard/mt5";
 
 ulong    g_seen[];       // tickets already judged (or open when Guardian started)
 ulong    g_wait[];       // new tickets waiting out the grace period
@@ -257,7 +257,7 @@ bool Ask(const string body, string &reply)
       if(GetLastError() == 4014 && !g_toldWeb)
         {
          g_toldWeb = true;
-         Alert("Guardian: allow it online. Tools > Options > Expert Advisors > tick Allow WebRequest, add https://app.staalwag.com");
+         Alert("Guardian: allow it online. Tools > Options > Expert Advisors > tick Allow WebRequest, add https://app.178.104.88.38.sslip.io");
         }
       return(false);
      }
@@ -311,7 +311,7 @@ void LocalCheck(const string sym, const string side, const double vol, const dou
    string lines[3];
    lines[0] = "NO";
    lines[1] = "GUARDIAN NO. Sit this out. " + what + " " + reason;
-   lines[2] = "(staalwag.com could not be reached, so news and time were not checked)";
+   lines[2] = "(the Guardian server could not be reached, so news and time were not checked)";
    Warn(lines);
   }
 
