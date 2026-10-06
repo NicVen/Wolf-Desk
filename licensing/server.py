@@ -95,6 +95,8 @@ def price_for(code, contact):
 
 
 def start_checkout(product_code, contact, method="crypto", ref="", attach=""):
+    if config.SALES_PAUSED:
+        return None, "sales_paused"
     p = config.product(product_code)
     if not p:
         return None, "unknown product"
@@ -894,6 +896,7 @@ class H(BaseHTTPRequestHandler):
             "crypto": crypto_on,
             "card": card_on,
             "paypal": paypal_on,
+            "paused": config.SALES_PAUSED,
         })
 
     def _trial(self):
@@ -1415,6 +1418,13 @@ class H(BaseHTTPRequestHandler):
         p = config.product(product_code)
         if not p:
             return self._send(404, "<h2>Unknown product.</h2>", "text/html")
+        if config.SALES_PAUSED:
+            return self._send(200, """<!doctype html><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1"><title>Coming soon</title>
+<div style="font-family:system-ui;max-width:460px;margin:40px auto;padding:0 20px;color:#1a2230">
+<h1 style="font-size:20px">Paid plans open soon</h1>
+<p>You can't buy yet. Start the free trial in the meantime:
+<a href="https://staalwag.com/store">staalwag.com/store</a></p></div>""", "text/html")
         html = """<!doctype html><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
 <title>Rent %(name)s</title>

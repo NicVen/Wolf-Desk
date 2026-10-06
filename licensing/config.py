@@ -33,6 +33,13 @@ STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 
 
+# --- Sales switch ---
+# Paid checkouts are OFF until Nic confirms his visa allows selling (2026-10-06).
+# Free trials, testers and the app keep working. To open sales: put
+# SALES_PAUSED=0 in /etc/staalwag-licensing.env and restart the service.
+SALES_PAUSED = os.environ.get("SALES_PAUSED", "1").strip().lower() not in ("0", "false", "no", "off")
+
+
 def card_enabled():
     """True once a card provider is configured (keys present in the env)."""
     return bool(STRIPE_SECRET_KEY)
