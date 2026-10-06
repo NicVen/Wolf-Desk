@@ -95,9 +95,11 @@ def analyze(r):
     verdict = _verdict(r)
     bull, bear = _bull_bear(r)
     side = "long" if verdict.startswith("BUY") else "short" if verdict == "SELL" else "neutral"
-    summary = (f"{verdict} — conviction {_conviction(r['score'])}. "
-               + (f"The data leans {side}: " if side != "neutral"
-                  else "No clean edge yet: ")
+    # Describes the market, never tells anyone to buy or sell (that is regulated
+    # financial advice in SA/NZ). "verdict" stays as an internal trend code.
+    trend = {"long": "up", "short": "down"}.get(side, "mixed")
+    summary = (f"Trend {trend} · strength {_conviction(r['score'])}. "
+               + ("" if side != "neutral" else "No clear trend: ")
                + (bull[0] if side == "long" and bull else
                   bear[0] if side == "short" and bear else
                   "trend unconfirmed, wait for structure."))

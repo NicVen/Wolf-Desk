@@ -209,6 +209,16 @@ function esc(s){ return (s==null?"":String(s)).replace(/[&<>]/g,function(c){retu
 // ---------- verdict helpers ----------
 function verdictOf(o){ return (o.analysis && o.analysis.verdict) ? o.analysis.verdict.toUpperCase() : (o.score>=60?"BUY":o.score>=45?"WATCH":"SELL"); }
 function vColor(v){ return v==="BUY"?"var(--buy)":v==="SELL"?"var(--sell)":"var(--watch)"; }
+// The app describes the market; it never tells anyone to buy or sell (that would be
+// regulated financial advice in SA/NZ). The trend label is a fact from the chart, and
+// trade levels are only worked out for the direction the user picks.
+function trendOf(v){ return v==="BUY"?"UP":v==="SELL"?"DOWN":"MIXED"; }
+function trendArrow(v){ return v==="BUY"?"▲ UP":v==="SELL"?"▼ DOWN":"◆ MIXED"; }
+function factText(s){
+  return String(s||"").replace(/^(BUY \(weak\)|BUY|SELL|WATCH) — conviction (\w+)\. (The data leans (long|short): |No clean edge yet: )/,
+    function(_,v,c,_r,side){ return "Trend "+(side==="long"?"up":side==="short"?"down":"mixed")+" · strength "+c+". "; });
+}
+var PDIR = null;  // the user's own choice on the consult screen: "long" | "short" | null
 function scColor(s){ return s>=65?"var(--buy)":s>=50?"var(--watch)":"var(--sell)"; }
 function regState(reg){ return (reg && reg.state) ? String(reg.state).toUpperCase() : ""; }
 function valText(o){ return (o.validation && o.validation.label) ? String(o.validation.label) : ""; }
@@ -316,14 +326,14 @@ function info(kind){
   var o=CO; if(!o) return;
   var a=o.analysis||{}, title, sub, val, body;
   if(kind==="score"){
-    title="Score"; sub="0–100 opportunity read"; val=Math.round(o.score)+"/100";
+    title="Trend strength"; sub="0–100: how strongly the conditions line up"; val=Math.round(o.score)+"/100";
     var why=a.score_reasoning||"";
     body="<p>What it is: a single 0–100 read that blends five factors — "+
       "<b>catalyst</b> (news/fundamentals, /25), <b>trend</b> (price vs its moving averages, /25), "+
       "<b>position</b> (where price sits in its range, /20), <b>supply</b> (supply/demand backdrop, /20) and "+
       "<b>volatility fit</b> (is it moving enough to trade, /10). More of these lining up = a higher score.</p>"+
       (why?("<p><b>Why "+esc(val)+":</b> "+esc(why)+"</p>"):"")+
-      "<p>Rule of thumb: 65+ is a strong setup, 50–64 worth watching, under 50 weak.</p>";
+      "<p>Rule of thumb: 65+ means the conditions line up strongly, 50–64 partly, under 50 weakly. It describes the market, it is not a recommendation.</p>";
   } else if(kind==="regime"){
     var rg=(CM&&CM.regime)||{};
     title="Regime ("+(TF==="daily"?"Daily":"1H")+")"; sub="Markov trend state"; val=regState(rg)||"—";
@@ -340,10 +350,10 @@ function info(kind){
     var p=CP; if(!p){ return; }
     var tfw = TF==="daily" ? "daily" : "hourly";
     var maw = TF==="daily" ? "50-day average" : "50-hour average";
-    var dirw = p.dir==="BUY" ? "long (buy)" : "short (sell)";
+    var dirw = p.dir==="BUY" ? "long" : "short";
     if(kind==="entry"){
       title="Entry"; sub="Where the plan gets in"; val=fmt(p.entry);
-      body="<p>What it is: the price to open the trade, in the verdict's direction — this is a <b>"+esc(dirw)+"</b> setup.</p>"+
+      body="<p>What it is: the price to open the trade in the direction you picked — your <b>"+esc(dirw)+"</b> idea.</p>"+
         "<p><b>Why "+esc(val)+":</b> the current price is used as a market entry. For a tighter fill you can wait for a pullback toward the "+
         "20-"+(TF==="daily"?"day":"hour")+" average"+((CM&&CM.ma20!=null)?(" ("+fmt(CM.ma20)+")"):"")+" before entering, but the plan below is measured from here.</p>";
     } else if(kind==="sl"){
@@ -369,13 +379,13 @@ function info(kind){
   } else {
     var vv=o.validation||{};
     title="Validation"; sub="Real edge or noise?"; val=valText(o)||"—";
-    body="<p>What it is: a <b>Deflated Sharpe</b> check — does this instrument's edge, in the direction we're calling, look "+
+    body="<p>What it is: a <b>Deflated Sharpe</b> check — does this instrument's current trend look "+
       "statistically <b>real</b> or likely just <b>noise</b>? It's deflated for how many instruments we test, so a lucky-looking chart doesn't fool it.</p>";
     var vb=[];
     if(vv.dsr!=null) vb.push("DSR <b>"+(Math.round(vv.dsr*100)/100)+"</b> (higher = more likely real)");
     if(vv.n!=null) vb.push("<b>"+esc(vv.n)+"</b> bars tested");
     if(vb.length) body+="<p><b>Why “"+esc(val)+"”:</b> "+vb.join(", ")+".</p>";
-    body+="<p>This is a quality label only — it never changes the score or the verdict.</p>";
+    body+="<p>This is a quality label only — it never changes the trend strength.</p>";
   }
   openSheet(title,sub,val,body);
 }
@@ -506,10 +516,11 @@ function showOutlook(){
     '<p style="color:var(--buy)">▲ '+esc(ol.bull_case||"")+'</p>'+
     '<p style="color:var(--sell)">▼ '+esc(ol.bear_case||"")+'</p>'+
     hh+
-    (ol.bottom_line?('<div class="sec">Bottom line</div><p>'+esc(ol.bottom_line)+'</p>'):'')+
+    (ol.bottom_line?('<div class="sec">Bottom line</div><p>'+esc(factText(ol.bottom_line))+'</p>'):'')+
     '<p class="muted" style="font-size:11px;margin-top:14px">Mechanical read of the tape + fundamentals, with live headlines from Google News, as of '+esc(ol.as_of||"")+'. Educational — not financial advice.</p>';
-  openSheet("Daily outlook", o.name||"", ol.verdict||"", body);
+  openSheet("Daily outlook", o.name||"", ol.verdict?("Trend "+trendOf(String(ol.verdict).split(" ")[0]).toLowerCase()):"", body);
 }
+function pickDir(d){ PDIR = (PDIR===d) ? null : d; var y=window.scrollY; if(CIDX>=0) consult(CIDX); window.scrollTo(0,y); }
 function setTF(tf){
   if(tf===TF) return;
   if(tf==="daily" && !(CO&&CO.daily)) return;   // no daily data → ignore
@@ -645,7 +656,7 @@ function renderHome(){
     return '<div class="row" onclick="consult('+i+')">'+
       '<div class="rk">#'+(i+1)+'</div>'+
       '<div class="rname"><b>'+esc(o.name)+'</b><span>'+esc(o.category||"")+' · '+esc(o.trend_desc||"")+'</span></div>'+
-      '<div class="badge" style="background:'+vColor(v)+'22;color:'+vColor(v)+'">'+v+'</div>'+
+      '<div class="badge" style="background:'+vColor(v)+'22;color:'+vColor(v)+'">'+trendArrow(v)+'</div>'+
       '<div class="sc" style="color:'+scColor(o.score)+'">'+Math.round(o.score)+'</div></div>';
   }).join("");
 }
@@ -743,7 +754,9 @@ function renderQuizExhausted(d){
 // ---------- consult ----------
 function consult(i){
   var o=(DATA.opportunities||[])[i]; if(!o) return;
-  CIDX=i; CO=o; CM=tfMetrics(o); var v=verdictOf(o); CP=tradePlan(CM, v); closeSheet();
+  if(CIDX!==i) PDIR=null;   // a new market starts with no direction chosen
+  CIDX=i; CO=o; CM=tfMetrics(o); var v=verdictOf(o);
+  CP=PDIR ? tradePlan(CM, PDIR==="long"?"BUY":"SELL") : null; closeSheet();
   el("refreshBtn").style.display="none"; el("homeBtn").style.display="";
   var vc=vColor(v);
   var a=o.analysis||{};
@@ -757,13 +770,13 @@ function consult(i){
   // checklist (trend/momentum/volatility/regime follow the chosen timeframe)
   var isBuy=v==="BUY";
   var checks=[
-    ["Score ≥ 60", o.score>=60],
+    ["Trend strength ≥ 60", o.score>=60],
     ["Trend aligned", isBuy ? (CM.above_ma20&&CM.above_ma50) : (!CM.above_ma20&&!CM.above_ma50)],
     ["Momentum "+(isBuy?"up":"down"), isBuy ? (CM.mom20>0) : (CM.mom20<0)],
     ["Volatility sane", (CM.atr_pct!=null && CM.atr_pct<5)],
-    ["Conviction not Low", (a.conviction||"").toLowerCase()!=="low"]
+    ["Strength not low", (a.conviction||"").toLowerCase()!=="low"]
   ];
-  if(rg){ checks.push(["Regime backs it", isBuy?rg.indexOf("BULL")>=0:rg.indexOf("BEAR")>=0]); }
+  if(rg){ checks.push(["Regime agrees", isBuy?rg.indexOf("BULL")>=0:rg.indexOf("BEAR")>=0]); }
   var passed=checks.filter(function(c){return c[1];}).length;
   var chkHtml=checks.map(function(c){
     return '<div class="chk"><span class="m">'+(c[1]?"✅":"⬜")+'</span><span>'+c[0]+'</span></div>';
@@ -778,25 +791,28 @@ function consult(i){
 
   // primary tiles — tappable for an explanation
   var tiles='<div class="kpis">'+
-    '<div class="kpi tap" onclick="info(\'score\')"><span class="i">ⓘ</span><div class="l">Score</div><div class="v" style="color:'+scColor(o.score)+'">'+Math.round(o.score)+'/100</div></div>';
+    '<div class="kpi tap" onclick="info(\'score\')"><span class="i">ⓘ</span><div class="l">Trend strength</div><div class="v" style="color:'+scColor(o.score)+'">'+Math.round(o.score)+'/100</div></div>';
   if(rg){ tiles+='<div class="kpi tap" onclick="info(\'regime\')"><span class="i">ⓘ</span><div class="l">Regime ('+(TF==="daily"?"D":"1H")+')</div><div class="v">'+esc(rg)+'</div></div>'; }
   if(vl){ tiles+='<div class="kpi tap" onclick="info(\'validation\')"><span class="i">ⓘ</span><div class="l">Validation</div><div class="v" style="font-size:12px">'+esc(vl)+'</div></div>'; }
   tiles+='</div>';
 
-  // trade plan tiles (entry / stop / target) — tappable for the reasoning
+  // plan my trade: the user picks the direction, the app only does the maths
   var plan=CP, planHtml="";
+  var dirBtns='<div class="tfsw" style="margin-left:auto">'+
+    '<button class="tfb'+(PDIR==="long"?" on":"")+'" onclick="pickDir(\'long\')">▲ Long</button>'+
+    '<button class="tfb'+(PDIR==="short"?" on":"")+'" onclick="pickDir(\'short\')">▼ Short</button></div>';
+  planHtml='<div class="sec" style="display:flex;align-items:center;justify-content:space-between">'+
+    '<span>Plan my trade · '+(TF==="daily"?"Daily":"1H")+'</span>'+dirBtns+'</div>';
   if(plan){
     var basisTxt = plan.basis==="structure" ? "swing-structure stop" : "1.5× ATR stop";
-    planHtml='<div class="sec">Trade plan · '+plan.dir+' · '+(TF==="daily"?"Daily":"1H")+' · 1:'+plan.rr+' R:R</div>'+
-      '<div class="kpis">'+
+    planHtml+='<div class="kpis">'+
         '<div class="kpi tap" onclick="info(\'entry\')"><span class="i">ⓘ</span><div class="l">Entry</div><div class="v" style="color:var(--steel)">'+fmt(plan.entry)+'</div></div>'+
         '<div class="kpi tap" onclick="info(\'sl\')"><span class="i">ⓘ</span><div class="l">Stop</div><div class="v" style="color:var(--sell)">'+fmt(plan.sl)+'</div></div>'+
         '<div class="kpi tap" onclick="info(\'tp\')"><span class="i">ⓘ</span><div class="l">Target</div><div class="v" style="color:var(--buy)">'+fmt(plan.tp)+'</div></div>'+
       '</div>'+
-      '<div class="muted" style="margin:2px 2px 0">'+basisTxt+' ~'+plan.riskPct.toFixed(1)+'% away · target at '+plan.rr+'R. Tap any level for the reasoning.</div>';
+      '<div class="muted" style="margin:2px 2px 0">Your '+(PDIR==="long"?"long":"short")+' · '+basisTxt+' ~'+plan.riskPct.toFixed(1)+'% away · target at '+plan.rr+'R. Tap any level for the maths.</div>';
   } else {
-    planHtml='<div class="sec">Trade plan</div>'+
-      '<div class="muted">No trade yet — the read is <b>'+v+'</b> (wait for a directional setup). Entry, stop and target appear when a BUY or SELL lines up.</div>';
+    planHtml+='<div class="muted">Pick <b>Long</b> or <b>Short</b> and the app works out an entry, a stop beyond the recent swing and a 2R target for your idea. Your call, our maths.</div>';
   }
 
   // today's outlook teaser card (opens the full brief)
@@ -811,8 +827,8 @@ function consult(i){
 
   el("main").innerHTML =
     '<div class="verdict" style="background:'+vc+'1a;border:1px solid '+vc+'55">'+
-      '<div class="big" style="color:'+vc+'">'+esc(o.name)+' · '+v+'</div>'+
-      '<div class="conv">'+esc(a.conviction? (a.conviction+" conviction") : "")+'  ·  '+passed+'/'+checks.length+' checks</div>'+
+      '<div class="big" style="color:'+vc+'">'+esc(o.name)+' · Trend '+trendOf(v).toLowerCase()+'</div>'+
+      '<div class="conv">'+esc(a.conviction? ("Strength "+a.conviction.toLowerCase()) : "")+'  ·  '+passed+'/'+checks.length+' conditions</div>'+
     '</div>'+
     '<button class="btn ghost" style="margin:0 0 4px" onclick="shareCard()">📤 Share this read</button>'+
     olCard+
@@ -826,10 +842,10 @@ function consult(i){
       '<div class="kpi"><div class="l">Mom'+(TF==="daily"?"20d":"20h")+'</div><div class="v" style="color:'+(CM.mom20>=0?"var(--buy)":"var(--sell)")+'">'+(CM.mom20>=0?"+":"")+esc(CM.mom20)+'%</div></div>'+
       '<div class="kpi"><div class="l">ATR%</div><div class="v">'+esc(CM.atr_pct)+'%</div></div>'+
     '</div>'+
-    '<div class="sec">Pre-trade checklist</div>'+chkHtml+
+    '<div class="sec">Conditions ('+(isBuy?"uptrend":v==="SELL"?"downtrend":"no clear trend")+')</div>'+chkHtml+
     '<div class="sec">Score breakdown</div>'+bars+
-    '<div class="sec">Why</div><div class="why">'+esc(a.summary||o.note||"—")+(a.price_reasoning?('<br><br>'+esc(a.price_reasoning)):'')+'</div>'+
-    '<div class="foot">STAALCALIBUR is decision-support &amp; education only — a mechanical read of the data, not financial advice and not a signal to trade. Entry, stop and target are illustrative levels derived from price structure (recent swings) and volatility (ATR), not instructions. Tap any tile marked ⓘ for what it means. You alone decide; trade a demo first and never risk more than you can lose.</div>';
+    '<div class="sec">What the data shows</div><div class="why">'+esc(factText(a.summary||o.note||"—"))+(a.price_reasoning?('<br><br>'+esc(a.price_reasoning)):'')+'</div>'+
+    '<div class="foot">STAALCALIBUR is a charting and calculation tool for education — it describes what the data shows and never recommends buying or selling anything. It is not financial advice. Entry, stop and target are only worked out for the direction <b>you</b> pick, from price structure (recent swings) and volatility (ATR). Tap any tile marked ⓘ for what it means. You alone decide; trade a demo first and never risk more than you can lose.</div>';
   window.scrollTo(0,0);
 }
 
@@ -920,17 +936,17 @@ function shareCard(){
   x.textBaseline="alphabetic";
   x.fillStyle="#8aa0b4"; x.font="700 34px Arial"; x.fillText("STAALCALIBUR · V13", 72, 118);
   x.fillStyle="#e7edf3"; x.font="900 88px Arial"; x.fillText(String(o.name).slice(0,17), 68, 250);
-  x.fillStyle=vc; x.font="900 150px Arial"; x.fillText(v, 68, 420);
-  x.fillStyle="#c7d2dd"; x.font="700 48px Arial"; x.fillText("Score "+Math.round(o.score)+"/100", 72, 500);
+  x.fillStyle=vc; x.font="900 130px Arial"; x.fillText("TREND "+trendOf(v), 68, 420);
+  x.fillStyle="#c7d2dd"; x.font="700 48px Arial"; x.fillText("Trend strength "+Math.round(o.score)+"/100", 72, 500);
   x.fillStyle="#c7d2dd"; x.font="400 42px Arial";
   _wrap(x, (o.outlook&&o.outlook.headline)||a.summary||"", 72, 610, W-150, 56, 5);
   x.fillStyle="#6ea8fe"; x.font="800 46px Arial"; x.fillText("Get the app · staalwag.com", 72, H-96);
-  x.fillStyle="#4d5a6c"; x.font="400 27px Arial"; x.fillText("Educational only — not financial advice.", 72, H-48);
+  x.fillStyle="#4d5a6c"; x.font="400 27px Arial"; x.fillText("Market data for education — not financial advice.", 72, H-48);
   c.toBlob(function(blob){
     if(!blob){ toast("Couldn't build card."); return; }
     var file=new File([blob],"staalcalibur.png",{type:"image/png"});
     if(navigator.canShare && navigator.canShare({files:[file]})){
-      navigator.share({files:[file], text:o.name+" — "+v+" · STAALCALIBUR", url:"https://staalwag.com"}).catch(function(){});
+      navigator.share({files:[file], text:o.name+" — trend "+trendOf(v).toLowerCase()+" · STAALCALIBUR", url:"https://staalwag.com"}).catch(function(){});
     } else {
       var url=URL.createObjectURL(blob), a2=document.createElement("a");
       a2.href=url; a2.download="staalcalibur.png"; document.body.appendChild(a2); a2.click(); a2.remove();

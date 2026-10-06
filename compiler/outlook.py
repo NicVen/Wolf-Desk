@@ -85,7 +85,7 @@ def outlook(r):
     name = r.get("name", "This market")
 
     lead = {"BUY": "buyers in control", "BUY (weak)": "a tentative bid",
-            "SELL": "sellers in control", "WATCH": "no clean edge yet"}.get(verdict, "mixed")
+            "SELL": "sellers in control", "WATCH": "no clear trend yet"}.get(verdict, "mixed")
     headline = "%s: %s." % (name, lead)
 
     bull_case = ("If direction holds: " + bull[0]) if bull else \
