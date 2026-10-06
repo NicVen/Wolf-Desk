@@ -239,6 +239,15 @@ def linked_account(key, d=DIR):
     return _cfg_read(key, d).get("mt5") or ""
 
 
+def purge(key, d=DIR):
+    """Delete everything Guardian holds for this key (data-deletion request)."""
+    for p in (_path(key, d), _cfg_path(key, d)):
+        try:
+            os.remove(p)
+        except OSError:
+            pass
+
+
 def release_account(key, d=DIR, now=None):
     """Free the key for another MT5 account. Returns an error string or None."""
     now = int(now or time.time())

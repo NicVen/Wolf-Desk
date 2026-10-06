@@ -328,6 +328,43 @@ class MoneyPath(unittest.TestCase):
         self.checkout("crypto")
         self.assertEqual(self.invoices[-1]["price"], p["price"])
 
+    # ---- Google Play review + data deletion ----
+    def test_review_key_works_on_any_device_and_is_made_once(self):
+        key, made = server.ensure_review_key()
+        self.assertTrue(made)
+        self.assertIn(key, self.admin_msgs[-1])                 # sent to the owner
+        self.assertEqual(server.ensure_review_key(), (key, False))
+        for acc in ("pixel-1", "tablet-2"):
+            res = self.req("GET", "/verify?key=%s&product=APP&account=%s" % (key, acc))[1]
+            self.assertTrue(res["valid"])
+            self.assertFalse(res["trial"])
+        _, got = self.req("GET", "/admin/review_key", headers={"X-Admin-Token": "test-admin"})
+        self.assertEqual(got["license_key"], key)
+        self.assertEqual(self.req("GET", "/admin/review_key")[0], 403)
+        # the deletion form can't switch it off
+        self.req("POST", "/delete_request", {"key": key, "contact": server.REVIEW_CONTACT})
+        self.assertTrue(self.verify(key)["valid"])
+
+    def test_delete_with_matching_contact_erases_now(self):
+        key = self.checkout("crypto", contact="Gone@Example.com")
+        self.crypto_ipn(key, "NP-DEL1")
+        self.assertTrue(self.verify(key)["valid"])
+        code, res = self.req("POST", "/delete_request", {"key": key.lower(), "contact": "gone@example.com"})
+        self.assertEqual(code, 200)
+        self.assertEqual(res["erased"], [key])
+        lic = store.get(key)
+        self.assertEqual((lic["contact"], lic["status"], lic["bind_account"]), ("", "revoked", None))
+        self.assertFalse(self.verify(key)["valid"])
+
+    def test_delete_with_wrong_contact_goes_to_owner(self):
+        key = self.checkout("crypto", contact="keep@example.com")
+        self.crypto_ipn(key, "NP-DEL2")
+        _, res = self.req("POST", "/delete_request", {"key": key, "contact": "someone@else.com"})
+        self.assertEqual(res, {"ok": True, "erased": []})        # same answer, nothing revealed
+        self.assertTrue(self.verify(key)["valid"])
+        self.assertIn("by hand", self.admin_msgs[-1])
+        self.assertEqual(self.req("POST", "/delete_request", {})[0], 400)
+
 
 if __name__ == "__main__":
     unittest.main()

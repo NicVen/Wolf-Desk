@@ -696,3 +696,38 @@ def payment_seen(payment_id):
                   (payment_id, now()))
         c.commit()
         return False
+
+
+def erase_license(license_key):
+    """Delete a customer's personal data on their request (Google Play's
+    account-deletion rule): the key and its add-ons are switched off, and the
+    contact, device and quiz/vote history are wiped. Ideas they posted stay on
+    the board, unlinked from them (the board never showed names)."""
+    with _LOCK:
+        c = _conn()
+        keys = [license_key] + [r[0] for r in c.execute(
+            "SELECT license_key FROM licenses WHERE attach_to=?", (license_key,))]
+        for k in keys:
+            c.execute("UPDATE licenses SET contact='', bind_account=NULL, bind_machine=NULL, "
+                      "last_account='', status='revoked', updated=? WHERE license_key=?", (now(), k))
+            for table in ("quiz_plays", "quiz_seen", "suggestion_votes", "app_notices"):
+                c.execute("DELETE FROM %s WHERE license_key=?" % table, (k,))
+            c.execute("UPDATE suggestions SET contact='', license_key=NULL WHERE license_key=?", (k,))
+        c.commit()
+        return keys
+
+
+def forget_contact(contact):
+    """Remove an email / Telegram id from the tester list and the free
+    subscriber list. Returns how many rows went."""
+    contact = (contact or "").strip()
+    if not contact:
+        return 0
+    with _LOCK:
+        c = _conn()
+        n = c.execute("DELETE FROM testers WHERE lower(email)=lower(?) OR telegram=?",
+                      (contact, contact)).rowcount
+        n += c.execute("DELETE FROM subscribers WHERE telegram_id=?", (contact,)).rowcount
+        c.execute("UPDATE suggestions SET contact='' WHERE contact=?", (contact,))
+        c.commit()
+        return n

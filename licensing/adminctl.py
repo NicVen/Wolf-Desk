@@ -9,6 +9,7 @@ Run on the box (env is auto-loaded from /etc/staalwag-licensing.env):
   python3 -m licensing.adminctl list                 # every key + status + days left
   python3 -m licensing.adminctl issue APP --days 30 --contact 123456789
   python3 -m licensing.adminctl admin-key            # your no-bind, all-product master key
+  python3 -m licensing.adminctl review-key           # the key Google Play's reviewers use
   python3 -m licensing.adminctl revoke APP-XXXXXXXX  # cut access now
   python3 -m licensing.adminctl extend APP-XXXXXXXX --days 30
   python3 -m licensing.adminctl reset  APP-XXXXXXXX  # unbind device (client got a new phone)
@@ -118,6 +119,15 @@ def cmd_admin_key(a):
     return 0
 
 
+def cmd_review_key(a):
+    res = _call("GET", "/admin/review_key")
+    if res.get("error"):
+        print("ERROR:", res["error"]); return 1
+    print("Google Play reviewer key (any device, App only):\n\n   ", res["license_key"], "\n")
+    print("Play Console -> App content -> App access: paste it with 'type this key, tap Unlock'.")
+    return 0
+
+
 def cmd_revoke(a):
     print(json.dumps(_call("POST", "/admin/revoke", {"key": a.key}), indent=2)); return 0
 
@@ -170,6 +180,8 @@ def main(argv=None):
     pa = sub.add_parser("admin-key", help="mint your no-bind, all-product master key")
     pa.add_argument("--contact", default="admin")
     pa.set_defaults(fn=cmd_admin_key)
+
+    sub.add_parser("review-key", help="show the Google Play reviewer key").set_defaults(fn=cmd_review_key)
 
     pr = sub.add_parser("revoke", help="cut a key's access immediately")
     pr.add_argument("key"); pr.set_defaults(fn=cmd_revoke)

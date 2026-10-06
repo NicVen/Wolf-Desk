@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>STAALCALIBUR — Delete my data</title>
+<style>
+  :root{--bg:#0a0e15;--card:#131a26;--line:#1e2a3a;--fg:#e7edf3;--mut:#8aa0b4;--accent:#6ea8fe;--gold:#e6b450;--red:#f87171;--green:#34d399}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);line-height:1.6;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;padding:40px 18px 80px}
+  .wrap{max-width:560px;margin:0 auto}
+  h1{font-size:26px;margin:0 0 4px}
+  .sub{color:var(--mut);font-size:14px;margin:0 0 22px}
+  h2{font-size:17px;margin:26px 0 8px;color:var(--gold)}
+  p,li{color:#cdd8e4;font-size:15px}
+  a{color:var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-top:10px}
+  label{display:block;font-size:13px;color:var(--mut);margin:12px 0 4px}
+  input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#0d131d;color:var(--fg);font-size:16px}
+  button{width:100%;margin-top:16px;padding:13px;border:0;border-radius:10px;background:var(--red);color:#1a0505;font-weight:800;font-size:16px;cursor:pointer}
+  button:disabled{opacity:.5}
+  #msg{margin-top:14px;font-size:15px}
+  footer{margin-top:40px;color:var(--mut);font-size:13px;border-top:1px solid var(--line);padding-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Delete my data</h1>
+  <p class="sub">STAALCALIBUR app · operated by STAALWAG</p>
+
+  <div class="card">
+    <p style="margin-top:0">Enter your activation key and the email or Telegram ID you used when you got it.
+    If they match, your data is deleted straight away.</p>
+    <label for="key">Activation key</label>
+    <input id="key" placeholder="APP-XXXXXXXX" autocomplete="off" autocapitalize="characters">
+    <label for="contact">Email or Telegram ID</label>
+    <input id="contact" placeholder="you@example.com" autocomplete="email">
+    <button id="go" onclick="del()">Delete my data</button>
+    <div id="msg"></div>
+  </div>
+
+  <h2>What gets deleted</h2>
+  <ul>
+    <li>Your email or Telegram ID.</li>
+    <li>The phone and MT5 account your key was linked to.</li>
+    <li>Your quiz scores, votes and messages.</li>
+    <li>Everything Guardian stored about your MT5 account.</li>
+    <li>Your key is switched off. This can't be undone, and unused paid time is not refunded.</li>
+  </ul>
+
+  <h2>What we keep</h2>
+  <ul>
+    <li>Payment records (amount and date, no contact details), because tax law requires them.</li>
+    <li>Ideas you posted on the public ideas board, which never showed your name, stay without any link to you.</li>
+  </ul>
+
+  <h2>Lost your key?</h2>
+  <p>Fill in only your email or Telegram ID and send it. We delete your data by hand within 30 days.
+  You can also email <a href="mailto:staalwag@gmail.com">staalwag@gmail.com</a>.</p>
+
+  <footer>© <span id="yr"></span> STAALWAG · <a href="/privacy">Privacy policy</a></footer>
+</div>
+<script>
+document.getElementById('yr').textContent=new Date().getFullYear();
+try{ var k=new URLSearchParams(location.search).get('key')||localStorage.getItem('sc_key'); if(k) document.getElementById('key').value=k; }catch(e){}
+function del(){
+  var key=document.getElementById('key').value.trim(), contact=document.getElementById('contact').value.trim(),
+      msg=document.getElementById('msg'), go=document.getElementById('go');
+  if(!key && !contact){ msg.style.color='var(--red)'; msg.textContent='Enter your key, your email or Telegram ID, or both.'; return; }
+  if(key && !confirm('Delete your data and switch off key '+key+'? This cannot be undone.')) return;
+  go.disabled=true; msg.style.color='var(--mut)'; msg.textContent='Sending…';
+  fetch('/app/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:key,contact:contact})})
+    .then(function(r){ return r.json(); }).then(function(d){
+      if(!d.ok) throw 0;
+      try{ if(key && localStorage.getItem('sc_key')===key) localStorage.removeItem('sc_key'); }catch(e){}
+      msg.style.color='var(--green)';
+      msg.textContent='Done. If your key and contact matched, your data is already deleted. Otherwise we delete it by hand within 30 days.';
+    }).catch(function(){ go.disabled=false; msg.style.color='var(--red)'; msg.textContent='That did not go through. Try again, or email staalwag@gmail.com.'; });
+}
+</script>
+</body>
+</html>

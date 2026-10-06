@@ -22,7 +22,7 @@
 <body>
 <div class="wrap">
   <h1>Privacy Policy — STAALCALIBUR</h1>
-  <p class="sub">Last updated: 2 October 2026 · Operated by STAALWAG</p>
+  <p class="sub">Last updated: 6 October 2026 · Operated by STAALWAG</p>
 
   <p>This policy explains what the STAALCALIBUR app and the STAALWAG website
   (staalwag.com) collect, why, and your choices. We keep data collection to the
@@ -34,6 +34,7 @@
       <li><b>Activation key &amp; device identifier:</b> when you unlock the app, your licence key and a device identifier are checked against our licensing service to confirm the key is valid and to prevent sharing.</li>
       <li><b>Contact you provide:</b> if you start a trial or buy, the email or messaging ID you enter, used only to deliver your key and account notices.</li>
       <li><b>Basic usage/diagnostic data:</b> non-identifying information such as app version and whether a check-in succeeded, used to keep the service running.</li>
+      <li><b>Guardian (optional add-on):</b> only if you install the Guardian EA in your own MetaTrader 5, it sends your account balance, equity, open positions and the trades you ask about, so the app can warn you about risk. It is read-only: it cannot place, change or close trades.</li>
     </ul>
   </div>
 
@@ -41,7 +42,7 @@
   <div class="card">
     <ul>
       <li>We do not collect your name, contacts, photos, location, or files.</li>
-      <li>We do not connect to your brokerage and we never have access to your money or trades.</li>
+      <li>We never have access to your money, and we cannot place, change or close trades for you.</li>
       <li>We do not sell your data to anyone.</li>
     </ul>
   </div>
@@ -68,8 +69,10 @@
   to delete your records (see Contact).</p>
 
   <h2>Your choices</h2>
-  <p>You can stop using the app at any time and request deletion of your contact
-  and licence records. Uninstalling the app removes it from your device.</p>
+  <p>You can stop using the app at any time. Uninstalling the app removes it from your device.</p>
+  <p><b>Delete your data:</b> go to <a href="/delete-account">staalwag.com/delete-account</a>
+  (also linked inside the app). With your key and contact it happens straight away; otherwise
+  we do it within 30 days.</p>
 
   <h2>Children</h2>
   <p>STAALCALIBUR is for adults (18+) and is not directed at children.</p>
@@ -86,8 +89,11 @@
   <h2>Contact</h2>
   <p>Questions or deletion requests: <a href="mailto:staalwag@gmail.com">staalwag@gmail.com</a>.</p>
 
-  <footer>© <span id="yr"></span> STAALWAG · <a href="/store">Get the app</a> · <a href="/">Home</a></footer>
+  <footer>© <span id="yr"></span> STAALWAG<span id="web"> · <a href="/store">Get the app</a> · <a href="/">Home</a></span></footer>
 </div>
-<script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
+<script>document.getElementById('yr').textContent=new Date().getFullYear();
+// inside the installed app: no links that lead to a purchase (Google Play rules)
+if((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone || document.referrer.indexOf('android-app://')===0)
+  document.getElementById('web').style.display='none';</script>
 </body>
 </html>
