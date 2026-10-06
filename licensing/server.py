@@ -337,6 +337,48 @@ def tool_notices(lic, now):
     return out
 
 
+# Google Play's reviewers must be able to open the app. They use one key that
+# works on any device; it is made once, on first start, and sent to the admin
+# chat so the owner can paste it into Play Console (App content -> App access).
+REVIEW_CONTACT = "google-play-review"
+
+
+def ensure_review_key():
+    """Return (key, made_now)."""
+    key = store.meta_get("review_key")
+    if key and store.get(key):
+        return key, False
+    key = new_license_key("APP")
+    now = store.now()
+    store.create(key, "APP", REVIEW_CONTACT, order_id=key, status="pending")
+    store.update(key, status="active", paid_until=now + 3650 * DAY, revoke_at=None,
+                 no_bind=1, paid_since=now - 30 * DAY, tools_told=len(TOOL_REVEAL))
+    store.meta_set("review_key", key)
+    notify.admin("Google Play reviewer key: %s\n\nPlay Console -> App content -> App access -> "
+                 "'All or some functionality is restricted' -> Add instructions. Name: Activation key. "
+                 "Paste the key, and write: Open the app, type this key into the activation box, "
+                 "tap Unlock. Works on any device." % key)
+    return key, True
+
+
+def delete_request(key, contact):
+    """The public 'delete my data' form. A matching key + contact is erased at
+    once; anything else goes to the admin chat to be done by hand. The answer
+    never says whether a key exists."""
+    key, contact = (key or "").strip().upper()[:60], (contact or "").strip()[:120]
+    lic = store.get(key) if key else None
+    match = bool(lic and contact and (lic.get("contact") or "").strip().lower() == contact.lower()
+                 and not lic.get("admin") and lic.get("contact") != REVIEW_CONTACT)
+    erased = store.erase_license(key) if match else []
+    gone = store.forget_contact(contact)
+    if match:
+        notify.admin("Data deleted on request: %s (%s)" % (", ".join(erased), contact))
+    else:
+        notify.admin("Deletion request to do by hand (key %s, contact %s). %d tester/subscriber "
+                     "rows removed automatically." % (key or "-", contact or "-", gone))
+    return {"ok": True, "erased": erased}
+
+
 def check_access(lic):
     """Return (allowed, reason)."""
     now = store.now()
@@ -591,6 +633,10 @@ class H(BaseHTTPRequestHandler):
             self._testers_status()
         elif u.path == "/admin/testers":
             self._admin_testers()
+        elif u.path == "/admin/review_key":
+            if not self._admin_ok():
+                return self._send(403, {"error": "forbidden"})
+            self._send(200, {"license_key": ensure_review_key()[0]})
         elif u.path == "/admin/list":
             self._admin_list()
         elif u.path == "/admin/app_stats":
@@ -662,6 +708,14 @@ class H(BaseHTTPRequestHandler):
             self._admin_suggestion_update()
         elif u.path == "/subscribe":
             self._subscribe()
+        elif u.path == "/delete_request":
+            try:
+                data = json.loads(self._body() or b"{}")
+            except Exception:  # noqa: BLE001
+                data = {}
+            if not (str(data.get("key") or "").strip() or str(data.get("contact") or "").strip()):
+                return self._send(400, {"error": "key_or_contact_required"})
+            self._send(200, delete_request(data.get("key"), data.get("contact")))
         elif u.path == "/testers/join":
             self._testers_join()
         else:
@@ -1691,6 +1745,10 @@ if(T()) loadAll();
 
 
 def main():
+    try:
+        ensure_review_key()
+    except Exception as e:  # noqa: BLE001
+        print("[licensing] review key: %s" % e, flush=True)
     threading.Thread(target=sweeper, daemon=True).start()
     srv = ThreadingHTTPServer((config.BIND_ADDR, config.PORT), H)
     print("[licensing] serving on %s:%d (grace %dh)" %

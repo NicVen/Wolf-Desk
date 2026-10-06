@@ -1,3 +1,4 @@
+import os
 """The phone's Guardian screen runs on the EA's live account snapshot."""
 import tempfile
 import unittest
@@ -36,6 +37,14 @@ class LiveTest(unittest.TestCase):
         self.assertEqual([x["s"] for x in s["symbols"]], ["NAS100", "XAUUSD"])   # junk dropped
         self.assertFalse(live.load("K", d=self.d.name, now=1000 + live.STALE + 1)["live"])
         self.assertIsNone(live.load("other", d=self.d.name))
+
+    def test_purge_deletes_everything_for_the_key(self):
+        live.save("K", SNAP, d=self.d.name, now=1000)
+        live.claim_account("K", "7200717", d=self.d.name)
+        self.assertTrue(os.listdir(self.d.name))
+        live.purge("k ", d=self.d.name)
+        self.assertEqual(os.listdir(self.d.name), [])
+        live.purge("K", d=self.d.name)                     # nothing left: no error
 
     def test_ask_from_live_account(self):
         live.save("K", SNAP, d=self.d.name, now=1000)

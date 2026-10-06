@@ -639,7 +639,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, json.dumps(guardian_rules.check(trade, account, events=get_calendar(),
                                                             hours=_guardian_hours(str(trade.get("sym") or ""))))); return
 
-        if path in ("/app/trial", "/app/checkout", "/app/testers"):
+        if path in ("/app/trial", "/app/checkout", "/app/testers", "/app/delete"):
             try:
                 ln = int(self.headers.get("Content-Length", "0") or "0")
                 payload = json.loads(self.rfile.read(ln).decode("utf-8")) if ln > 0 else {}
@@ -647,7 +647,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     raise ValueError("bad body")
             except Exception:
                 self._send(400, json.dumps({"error": "bad request"})); return
-            if path == "/app/testers":
+            if path == "/app/delete":
+                res, err = _lic_post("/delete_request", {"key": payload.get("key", ""),
+                                                         "contact": payload.get("contact", "")})
+                for k in (res or {}).get("erased") or []:
+                    guardian_live.purge(k)                     # the Guardian copy of their account
+                if res is not None:
+                    res = {"ok": bool(res.get("ok")), "error": res.get("error")}   # never echo keys
+            elif path == "/app/testers":
                 res, err = _lic_post("/testers/join", {"email": payload.get("email", ""),
                                                        "telegram": payload.get("telegram", "")})
             elif path == "/app/trial":
@@ -893,6 +900,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if path.rstrip("/.") in ("/privacy", "/privacy-policy"):
             self._send(200, _read(os.path.join("dashboard", "privacy.html"),
                                   b"<h2>Privacy policy coming soon.</h2>"),
+                       "text/html; charset=utf-8"); return
+        if path.rstrip("/.") in ("/delete-account", "/delete-my-data", "/delete"):
+            self._send(200, _read(os.path.join("dashboard", "delete.html"),
+                                  b"<h2>Email staalwag@gmail.com to delete your data.</h2>"),
                        "text/html; charset=utf-8"); return
         if path.rstrip("/.") in ("/store", "/get-app", "/getapp"):
             # tolerate trailing "/" or "." (browsers/autocomplete sometimes append one)

@@ -533,7 +533,12 @@ function showGate(msg){
        ? ''
        : '<a class="btn ghost" href="https://staalwag.com/store" target="_blank" rel="noopener">Need a key? Get the app →</a>')+
     '<div class="muted">Rental only. Your key is remembered on this device. Decision-support &amp; education only — not financial advice.</div>'+
+    legalLinks()+
     '</div>';
+}
+function legalLinks(){
+  return '<div class="muted" style="text-align:center;margin-top:12px;font-size:12px">'+
+    '<a class="muted" href="/privacy">Privacy policy</a> · <a class="muted" href="/delete-account">Delete my data</a></div>';
 }
 function changeKey(){
   try{ localStorage.removeItem("sc_key"); }catch(e){}
@@ -574,7 +579,8 @@ function showHome(){
     '<button class="btn" style="margin:2px 0 12px" onclick="openQuiz()">🧠 Daily Trader Quiz — win monthly</button>'+
     '<div class="chips" id="chips"></div><div id="list"></div>'+
     '<button class="btn ghost" style="margin-top:18px" onclick="openIdeas()">💡 Ideas board — suggest &amp; vote</button>'+
-    '<div style="text-align:center;margin-top:14px"><a href="#" class="muted" onclick="changeKey();return false">Use a different key</a></div>';
+    '<div style="text-align:center;margin-top:14px"><a href="#" class="muted" onclick="changeKey();return false">Use a different key</a></div>'+
+    legalLinks();
   el("chips").innerHTML = CLASSES.map(function(c){
     return '<div class="chip'+(c[0]===CUR?' on':'')+'" onclick="pick(\''+c[0]+'\')">'+c[1]+'</div>';
   }).join("");

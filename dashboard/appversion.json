@@ -1,10 +1,9 @@
 {
-  "version": "2.11.0",
-  "date": "2026-10-05",
-  "title": "Your tools unlock step by step",
-  "type": "feature",
+  "version": "2.11.1",
+  "date": "2026-10-06",
+  "title": "Privacy and your data",
+  "type": "fix",
   "notes": [
-    "New tools appear over your first days as a member: Risk Sizer first, then Prime Hours, then Guardian.",
-    "Guardian now works on one MT5 account per key. Switch accounts in Guardian, once a day."
+    "Privacy policy and Delete my data are now linked at the bottom of the app."
   ]
 }
