@@ -901,6 +901,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, _read(os.path.join("dashboard", "privacy.html"),
                                   b"<h2>Privacy policy coming soon.</h2>"),
                        "text/html; charset=utf-8"); return
+        if path.rstrip("/.") in ("/terms", "/terms-of-service", "/tos"):
+            self._send(200, _read(os.path.join("dashboard", "terms.html"),
+                                  b"<h2>Terms coming soon.</h2>"),
+                       "text/html; charset=utf-8"); return
         if path.rstrip("/.") in ("/delete-account", "/delete-my-data", "/delete"):
             self._send(200, _read(os.path.join("dashboard", "delete.html"),
                                   b"<h2>Email staalwag@gmail.com to delete your data.</h2>"),

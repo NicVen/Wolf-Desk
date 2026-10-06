@@ -1,9 +1,9 @@
 {
-  "version": "2.11.1",
+  "version": "2.11.2",
   "date": "2026-10-06",
-  "title": "Privacy and your data",
+  "title": "Terms of Service",
   "type": "fix",
   "notes": [
-    "Privacy policy and Delete my data are now linked at the bottom of the app."
+    "Terms of Service, Privacy policy and Delete my data are linked at the bottom of the app."
   ]
 }
