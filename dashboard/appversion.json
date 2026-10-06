@@ -1,9 +1,10 @@
 {
-  "version": "2.11.2",
+  "version": "2.11.3",
   "date": "2026-10-06",
-  "title": "Terms of Service",
-  "type": "fix",
+  "title": "Plan my trade",
+  "type": "feature",
   "notes": [
-    "Terms of Service, Privacy policy and Delete my data are linked at the bottom of the app."
+    "Each market now shows its trend (up, down or mixed) and trend strength.",
+    "Plan my trade: tap Long or Short and the app works out your entry, stop and target."
   ]
 }
