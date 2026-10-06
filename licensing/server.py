@@ -525,10 +525,27 @@ def run_digests(now_dt=None):
 # ---------------------------------------------------------------------------
 # background sweeper: pre-expiry reminders, lapse -> past_due, revoke after grace
 # ---------------------------------------------------------------------------
+def free_topup(now):
+    """Sales paused = the App is free. Keep every App key alive (trial or not)
+    so nobody lapses or gets a 'pay to renew' message. Revoked keys (abuse)
+    stay revoked."""
+    if not config.SALES_PAUSED:
+        return
+    floor = now + config.RENEW_NOTICE_DAYS * DAY + DAY
+    for lic in store.all_active_or_pastdue():
+        if (lic.get("product") or "").upper() != "APP":
+            continue
+        if lic["status"] == "past_due" or (lic.get("paid_until") or 0) < floor:
+            store.update(lic["license_key"], status="active", revoke_at=None, notified=0,
+                         paid_until=max(lic.get("paid_until") or 0,
+                                        now + config.FREE_TOPUP_DAYS * DAY))
+
+
 def sweeper():
     while True:
         try:
             now = store.now()
+            free_topup(now)
             for lic in store.all_active_or_pastdue():
                 key, paid_until = lic["license_key"], lic.get("paid_until") or 0
                 if lic["status"] == "active":
@@ -903,6 +920,8 @@ class H(BaseHTTPRequestHandler):
         """Public: issue a free App trial key. One per contact; length from
         config.APP_TRIAL_DAYS. Abuse-guarded, no payment, no card."""
         days = config.APP_TRIAL_DAYS
+        if config.SALES_PAUSED:
+            days = max(days, config.FREE_TOPUP_DAYS)   # free period: topped up by the sweeper
         if days <= 0:
             return self._send(403, {"error": "trials_off"})
         raw = self._body()

@@ -161,6 +161,22 @@ class MoneyPath(unittest.TestCase):
             self.assertEqual(status, 200, res)
         self.assertFalse(self.req("GET", "/pricing")[1]["paused"])
 
+    def test_free_mode_keeps_app_keys_alive(self):
+        key = self.checkout("crypto", contact="free@example.com")
+        self.crypto_ipn(key, "pay-free-1")
+        now = store.now()
+        store.update(key, status="past_due", paid_until=now - DAY, revoke_at=now + 3600)
+        with mock.patch.object(config, "SALES_PAUSED", True):
+            server.free_topup(now)
+            lic = store.get(key)
+            self.assertEqual(lic["status"], "active")
+            self.assertGreaterEqual(lic["paid_until"], now + 29 * DAY)
+            status, res = self.req("POST", "/trial", {"contact": "free-trial@example.com"})
+            self.assertEqual(res["trial_days"], config.FREE_TOPUP_DAYS)
+        store.update(key, status="past_due", paid_until=now - DAY)
+        server.free_topup(now)                       # sales open: no top-up
+        self.assertEqual(store.get(key)["status"], "past_due")
+
     # ---- crypto (NOWPayments) ----
     def test_only_the_app_is_for_sale(self):
         for code in ("SIG_GOLD", "SIG_VELDRIN", "GOLD", "VIP"):
