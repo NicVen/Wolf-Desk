@@ -33,6 +33,17 @@ STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 
 
+# --- Sales switch ---
+# Paid checkouts are OFF until Nic confirms his visa allows selling (2026-10-06).
+# Free trials, testers and the app keep working. To open sales: put
+# SALES_PAUSED=0 in /etc/staalwag-licensing.env and restart the service.
+SALES_PAUSED = os.environ.get("SALES_PAUSED", "1").strip().lower() not in ("0", "false", "no", "off")
+# While sales are paused the App is free: App keys are topped up so they never
+# run out, and nobody gets a "renew/pay" message. When sales reopen, each key
+# still has up to this many days left before the normal reminders start.
+FREE_TOPUP_DAYS = _int("FREE_TOPUP_DAYS", 30)
+
+
 def card_enabled():
     """True once a card provider is configured (keys present in the env)."""
     return bool(STRIPE_SECRET_KEY)

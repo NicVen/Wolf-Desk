@@ -190,11 +190,11 @@
 </head>
 <body>
 
-  <div class="banner">🚀 <b>Launch offer — limited time:</b> free <b>7-day trial</b>, then lock in <b>$<span id="bannerPrice">14.99</span>/mo</b> <span id="bannerReg" style="opacity:.7;text-decoration:line-through">$25</span>. No card to try it.</div>
+  <div class="banner" id="banner">🚀 <b>Launch offer — limited time:</b> free <b>7-day trial</b>, then lock in <b>$<span id="bannerPrice">14.99</span>/mo</b> <span id="bannerReg" style="opacity:.7;text-decoration:line-through">$25</span>. No card to try it.</div>
 
   <nav><div class="wrap">
     <div class="brand">STAALCALIBUR <span class="v">V13</span></div>
-    <button class="btn cta" onclick="openTrial()">Free trial</button>
+    <button class="btn cta" onclick="openTrial()" data-free="Get it free">Free trial</button>
   </div></nav>
 
   <!-- HERO -->
@@ -205,7 +205,7 @@
       <h1>Know the setup <span class="hl">before</span> you risk a cent.</h1>
       <p class="sub">STAALCALIBUR grades every market the way a professional desk does — one razor <b>0–100 score</b>, the live <b>regime</b>, and a cold <b>real-vs-noise</b> check on the edge — then works out a clean trade plan for the direction you pick. No hunches. No noise. Just the read, in seconds, on your phone.</p>
       <div class="heroctas">
-        <button class="btn green pulse" onclick="openTrial()">Start free 7-day trial →</button>
+        <button class="btn green pulse" onclick="openTrial()" data-free="Get it free →">Start free 7-day trial →</button>
         <a class="btn ghost" href="#how">See how it works</a>
       </div>
       <div class="truststrip">
@@ -252,34 +252,34 @@
     <div class="eyebrow">Up and running in 2 minutes</div>
     <h2>Three steps.</h2>
     <div class="steps" style="margin-top:26px">
-      <div class="step"><h3>Start your trial</h3><p>Tap the button, drop an email or Telegram ID. You get an activation key instantly — no card.</p></div>
+      <div class="step"><h3 data-free="Get your free key">Start your trial</h3><p>Tap the button, drop an email or Telegram ID. You get an activation key instantly — no card.</p></div>
       <div class="step"><h3>Install on Android</h3><p>Download the app and open it. If asked, allow install from your browser — then tap Install.</p></div>
       <div class="step"><h3>Unlock &amp; go</h3><p>Paste your key, and the scores, regime and plans light up. Keep it if it earns its place.</p></div>
     </div>
     <div style="text-align:center;margin-top:28px">
-      <button class="btn green" onclick="openTrial()">Get my free trial key</button>
+      <button class="btn green" onclick="openTrial()" data-free="Get my free key">Get my free trial key</button>
     </div>
   </div></div></section>
 
   <!-- PRICING -->
   <section id="pricing"><div class="wrap">
     <div class="eyebrow" style="text-align:center">Pricing</div>
-    <h2 style="text-align:center">Try it free. Keep it if it delivers.</h2>
-    <p class="lead" style="margin:0 auto 30px;text-align:center">Full access for <span id="trialDays">7</span> days, free. After that it's a simple monthly rental — cancel anytime, no lock-in.</p>
+    <h2 style="text-align:center" data-free="Free for a limited time.">Try it free. Keep it if it delivers.</h2>
+    <p class="lead" style="margin:0 auto 30px;text-align:center" data-free="Full access to everything, free while the launch lasts. No card, no catch.">Full access for <span id="trialDays">7</span> days, free. After that it's a simple monthly rental — cancel anytime, no lock-in.</p>
     <div class="price">
       <div class="plan">
-        <div class="name">Free trial</div>
-        <div class="amt">$0 <small>/ <span id="trialDays2">7</span> days</small></div>
+        <div class="name" data-free="Free access">Free trial</div>
+        <div class="amt" data-free-html="$0 <small>/ limited time</small>">$0 <small>/ <span id="trialDays2">7</span> days</small></div>
         <ul>
           <li>Every score, regime &amp; plan unlocked</li>
           <li>No card required</li>
           <li>Refer a friend for a free month</li>
-          <li>Cancel by simply not renewing</li>
+          <li data-paid>Cancel by simply not renewing</li>
         </ul>
-        <button class="btn green block" onclick="openTrial()">Start free trial</button>
-        <div class="fineprint">One trial per person.</div>
+        <button class="btn green block" onclick="openTrial()" data-free="Get it free">Start free trial</button>
+        <div class="fineprint" data-free="One key per person.">One trial per person.</div>
       </div>
-      <div class="plan hi">
+      <div class="plan hi" data-paid>
         <span class="badge" id="promoBadge">⚡ Limited time only</span>
         <div class="name">Full access</div>
         <div class="amt"><span class="was" id="regPrice">$25</span>$<span id="price">14.99</span> <small>/ month</small></div>
@@ -290,7 +290,7 @@
           <li>Trader quiz &amp; monthly rewards</li>
           <li>Pay by crypto or card</li>
         </ul>
-        <div class="payrow">
+        <div class="payrow" id="payRow">
           <button class="btn" id="buyCrypto" onclick="buy('crypto')">Pay with crypto</button>
           <button class="btn gold" id="buyCard" onclick="buy('card')">Pay by card</button>
           <button class="btn hidden" id="buyPaypal" onclick="buy('paypal')" style="background:#0070ba;color:#fff">Pay with PayPal</button>
@@ -308,10 +308,11 @@
     <div style="max-width:760px;margin-top:20px">
       <details><summary>Is this financial advice?</summary><p>No. STAALCALIBUR is a decision-support and education tool. It shows you what the data says — you make the calls and manage your own risk. Nothing here is a promise of profit.</p></details>
       <details><summary>What do I actually get?</summary><p>A 0–100 trend-strength score per instrument with a full breakdown, the current market regime (BULL/BEAR/SIDE and its stickiness), a real-vs-noise edge check, and a trade-plan calculator for the direction you pick — all in a phone app you unlock with a key.</p></details>
-      <details><summary>Do I need a card for the trial?</summary><p>No. The free trial just needs an email or Telegram ID. You only pay if you decide to keep it after the trial ends.</p></details>
-      <details><summary>How do I pay if I keep it?</summary><p>Crypto or card — whichever suits you. Checkout is handled securely; your key extends automatically once payment clears.</p></details>
+      <details data-paid><summary>Do I need a card for the trial?</summary><p>No. The free trial just needs an email or Telegram ID. You only pay if you decide to keep it after the trial ends.</p></details>
+      <details data-freeonly class="hidden"><summary>Is it really free?</summary><p>Yes. During the launch everything is free: no card, no payment. If paid plans ever start, you'll be told well before, and nothing is charged automatically.</p></details>
+      <details data-paid><summary>How do I pay if I keep it?</summary><p>Crypto or card — whichever suits you. Checkout is handled securely; your key extends automatically once payment clears.</p></details>
       <details><summary>What device does it run on?</summary><p>Android today — install the app and unlock with your key. Your key ties the app to your device.</p></details>
-      <details><summary>Can I cancel?</summary><p>Yes, anytime — it's a rental, not a contract. Stop renewing and access simply ends after your paid period.</p></details>
+      <details data-paid><summary>Can I cancel?</summary><p>Yes, anytime — it's a rental, not a contract. Stop renewing and access simply ends after your paid period.</p></details>
     </div>
     <div class="disc">
       <b>Risk notice.</b> Trading carries substantial risk of loss and is not suitable for everyone. STAALCALIBUR provides decision-support and educational information only — not investment, financial, or trading advice, and not a recommendation to buy or sell any instrument. Past performance and model outputs do not guarantee future results. You are solely responsible for your own decisions and risk management.
@@ -322,7 +323,7 @@
   <section><div class="wrap" style="text-align:center">
     <h2>Stop trading blind.</h2>
     <p class="lead" style="margin:0 auto 24px">Let the desk do the homework. You take the shot.</p>
-    <button class="btn green" style="font-size:17px;padding:17px 30px" onclick="openTrial()">Start your free 7-day trial</button>
+    <button class="btn green" style="font-size:17px;padding:17px 30px" onclick="openTrial()" data-free="Get it free">Start your free 7-day trial</button>
   </div></section>
 
   <footer><div class="wrap">
@@ -393,7 +394,20 @@
     if(d.crypto===false) hide('buyCrypto');
     if(d.card===false)   hide('buyCard');
     if(d.paypal){ var pp=document.getElementById('buyPaypal'); if(pp) pp.classList.remove('hidden'); }
+    // sales switched off on the server: no buy buttons, just "open soon"
+    if(d.paused) freeMode();
   }).catch(()=>{});
+  // Sales switched off on the server: the whole page becomes "free for a
+  // limited time". No prices, no buy buttons, nothing that asks for money.
+  var FREE=false;
+  function freeMode(){
+    FREE=true;
+    document.getElementById('banner').innerHTML='🚀 <b>Free for a limited time:</b> full access, no card, no catch.';
+    document.querySelectorAll('[data-free]').forEach(function(e){ e.textContent=e.getAttribute('data-free'); });
+    document.querySelectorAll('[data-free-html]').forEach(function(e){ e.innerHTML=e.getAttribute('data-free-html'); });
+    document.querySelectorAll('[data-paid]').forEach(function(e){ e.classList.add('hidden'); });
+    document.querySelectorAll('[data-freeonly]').forEach(function(e){ e.classList.remove('hidden'); });
+  }
   function hide(id){var e=document.getElementById(id);if(e)e.classList.add('hidden');}
 
   var modal=document.getElementById('modal');
@@ -417,11 +431,11 @@
           document.getElementById('dlBtn').href='/app/get?key='+encodeURIComponent(d.license_key);
           if(d.paid_until){
             var days=Math.max(0,Math.round((d.paid_until-Date.now()/1000)/86400));
-            document.getElementById('expLine').textContent='Trial active — '+days+' days of full access.';
+            document.getElementById('expLine').textContent= FREE ? 'Free access active. No payment needed.' : 'Trial active — '+days+' days of full access.';
           }
           show('mDone');
         } else {
-          msg(d.error==='trial_used' ? 'Looks like this contact already used a trial. Grab full access below.' : (d.error||'Something went wrong — try again.'),'err');
+          msg(d.error==='trial_used' ? (FREE ? 'This contact already has a free key. Check your messages for it.' : 'Looks like this contact already used a trial. Grab full access below.') : (d.error||'Something went wrong — try again.'),'err');
         }
       })
       .catch(()=>{ btn.disabled=false; msg('Network hiccup — try again.','err'); });
@@ -441,7 +455,7 @@
       .then(r=>r.json())
       .then(d=>{
         if(d.invoice_url){ location.href=d.invoice_url; }
-        else { btn.disabled=false; btn.textContent=old; alert(d.error||'Checkout is not available right now. Try the other payment option, or start a free trial.'); }
+        else { btn.disabled=false; btn.textContent=old; alert(d.error==='sales_paused' ? 'Paid plans open soon. Start the free trial now.' : d.error||'Checkout is not available right now. Try the other payment option, or start a free trial.'); }
       })
       .catch(()=>{ btn.disabled=false; btn.textContent=old; alert('Network hiccup — try again.'); });
   }

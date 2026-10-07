@@ -31,6 +31,7 @@ os.environ.update({
     "ADMIN_TOKEN": "test-admin",
     "LICENSE_BOT_TOKEN": "", "LICENSE_ADMIN_CHAT": "",
     "UPDATES_BOT_TOKEN": "", "UPDATES_CHAT": "",
+    "SALES_PAUSED": "0",
 })
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -146,6 +147,35 @@ class MoneyPath(unittest.TestCase):
 
     def verify(self, key, product="APP"):
         return self.req("GET", "/verify?key=%s&product=%s&account=acc1" % (key, product))[1]
+
+    def test_sales_switch_blocks_checkout(self):
+        with mock.patch.object(config, "SALES_PAUSED", True):
+            status, res = self.req("POST", "/checkout",
+                                   {"product": "APP", "contact": "b@example.com", "method": "crypto"})
+            self.assertEqual(status, 400)
+            self.assertEqual(res["error"], "sales_paused")
+            self.assertTrue(self.req("GET", "/pricing")[1]["paused"])
+            self.assertIn("open soon", self.req("GET", "/buy?product=APP")[1])
+            # trials keep working while sales are off
+            status, res = self.req("POST", "/trial", {"contact": "trial-paused@example.com"})
+            self.assertEqual(status, 200, res)
+        self.assertFalse(self.req("GET", "/pricing")[1]["paused"])
+
+    def test_free_mode_keeps_app_keys_alive(self):
+        key = self.checkout("crypto", contact="free@example.com")
+        self.crypto_ipn(key, "pay-free-1")
+        now = store.now()
+        store.update(key, status="past_due", paid_until=now - DAY, revoke_at=now + 3600)
+        with mock.patch.object(config, "SALES_PAUSED", True):
+            server.free_topup(now)
+            lic = store.get(key)
+            self.assertEqual(lic["status"], "active")
+            self.assertGreaterEqual(lic["paid_until"], now + 29 * DAY)
+            status, res = self.req("POST", "/trial", {"contact": "free-trial@example.com"})
+            self.assertEqual(res["trial_days"], config.FREE_TOPUP_DAYS)
+        store.update(key, status="past_due", paid_until=now - DAY)
+        server.free_topup(now)                       # sales open: no top-up
+        self.assertEqual(store.get(key)["status"], "past_due")
 
     # ---- crypto (NOWPayments) ----
     def test_only_the_app_is_for_sale(self):
