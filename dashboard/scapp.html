@@ -541,7 +541,8 @@ function showGate(msg){
     // Google Play bans in-app links to outside payment, so hide the "get the app"
     // link when running as the installed app (standalone). Web visitors still see it.
     (((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone)
-       ? ''
+       // Tester access: one tap, no key needed. Remove this line to turn it off.
+       ? '<button class="btn ghost" id="trialBtn" onclick="freeKey()">Tester access (no key needed)</button>'
        : '<a class="btn ghost" href="https://staalwag.com/store" target="_blank" rel="noopener">Need a key? Get the app →</a>')+
     '<div class="muted">Rental only. Your key is remembered on this device. Decision-support &amp; education only — not financial advice.</div>'+
     legalLinks()+
@@ -555,6 +556,20 @@ function changeKey(){
   try{ localStorage.removeItem("sc_key"); }catch(e){}
   DATA=null; ACCESS={hours:false,guardian:false,tiles:null}; try{ localStorage.removeItem("sc_tiles"); }catch(e){} showGate();
 }
+// Tester access (no payment, so Play-safe): this device gets its own free key
+// behind the scenes, so it still expires and can be revoked like any key.
+function freeKey(){
+  el("gErr").textContent="Opening…"; el("trialBtn").disabled=true;
+  fetch("/app/trial",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contact:"tester-"+DEV()})})
+  .then(function(r){ return r.json(); }).then(function(d){
+    el("trialBtn").disabled=false;
+    if(d && d.license_key){ el("keyIn").value=d.license_key; unlock(); return; }
+    var e=d && d.error;
+    el("gErr").textContent = e==="trial_used" ? "This phone already used tester access. Email contact@staalwag.com for a key."
+      : e==="trials_off" ? "Tester access is closed right now." : "That didn't work. Try again.";
+  }).catch(function(){ el("trialBtn").disabled=false; el("gErr").textContent="Network error. Try again."; });
+}
+
 function unlock(){
   var k=(el("keyIn").value||"").trim();
   if(!k){ el("gErr").textContent="Enter your activation key."; return; }
