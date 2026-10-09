@@ -1,11 +1,25 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "io.sslip.app_38.app_88.app_104.app_178.app.twa",
       "sha256_cert_fingerprints": [
         "7D:A7:0C:23:47:11:DC:94:AD:81:4E:43:0B:BE:3E:6C:EF:F8:80:12:F5:56:41:D6:64:FF:45:28:16:EE:9D:FF"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.staalwag.staalcalibur",
+      "sha256_cert_fingerprints": [
+        "B3:42:C4:02:E4:5B:BA:AE:98:FD:EF:5C:B7:DB:82:34:B4:28:A7:8E:BC:2E:B8:69:CD:D1:3E:72:03:AA:18:9A"
       ]
     }
   }
