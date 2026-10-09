@@ -1,0 +1,58 @@
+plugins {
+    id "com.android.application"
+}
+
+// The address the app opens. Same site as the website: changing the site
+// changes the app, no Play update needed.
+def appHost = "app.staalwag.com"
+def appUrl = "https://" + appHost + "/"
+
+android {
+    namespace "com.staalwag.staalcalibur"
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.staalwag.staalcalibur"
+        minSdk 23
+        targetSdk 36
+        // Must be higher than every build already on Play. Date-based: YYYYMMDDnn.
+        versionCode 2026100901
+        versionName "2.12.0"
+
+        resValue "string", "app_name", "STAALCALIBUR"
+        resValue "string", "launch_url", appUrl
+        resValue "string", "asset_statements",
+            "[{ \\\"relation\\\": [\\\"delegate_permission/common.handle_all_urls\\\"], \\\"target\\\": {\\\"namespace\\\": \\\"web\\\", \\\"site\\\": \\\"https://" + appHost + "\\\"}}]"
+        manifestPlaceholders = [hostName: appHost]
+    }
+
+    // Signed only when the upload key is supplied (GitHub secrets in CI).
+    // Without it the build is unsigned, which is enough to prove it compiles.
+    def ks = System.getenv("STAALCALIBUR_KEYSTORE")
+    signingConfigs {
+        if (ks) {
+            upload {
+                storeFile file(ks)
+                storePassword System.getenv("STAALCALIBUR_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("STAALCALIBUR_KEY_ALIAS")
+                keyPassword System.getenv("STAALCALIBUR_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (ks) signingConfig signingConfigs.upload
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation "com.google.androidbrowserhelper:androidbrowserhelper:2.5.0"
+}

@@ -1,0 +1,50 @@
+name: Android app build
+
+# Builds the STAALCALIBUR Play bundle (.aab). Signed with the Play upload key
+# when the STAALCALIBUR_* secrets are set; otherwise unsigned (proves it builds).
+# Download it from the run's "Artifacts" box, upload it in Play Console.
+on:
+  pull_request:
+    paths: ["android/**", ".github/workflows/android.yml"]
+  push:
+    paths: ["android/**", ".github/workflows/android.yml"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Upload key
+        env:
+          KEYSTORE_B64: ${{ secrets.STAALCALIBUR_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.keystore"
+            echo "STAALCALIBUR_KEYSTORE=$RUNNER_TEMP/upload.keystore" >> "$GITHUB_ENV"
+            echo "Signing with the upload key."
+          else
+            echo "No upload key secret: building unsigned."
+          fi
+      - name: Build bundle
+        working-directory: android
+        env:
+          STAALCALIBUR_KEYSTORE_PASSWORD: ${{ secrets.STAALCALIBUR_KEYSTORE_PASSWORD }}
+          STAALCALIBUR_KEY_ALIAS: ${{ secrets.STAALCALIBUR_KEY_ALIAS }}
+          STAALCALIBUR_KEY_PASSWORD: ${{ secrets.STAALCALIBUR_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon bundleRelease assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: staalcalibur-play-bundle
+          path: |
+            android/app/build/outputs/bundle/release/*.aab
+            android/app/build/outputs/apk/debug/*.apk
