@@ -20,8 +20,12 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - uses: android-actions/setup-android@v3
-      - run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Android SDK packages
+        # The runner already has the Android SDK; just add API 36.
+        run: |
+          SDKM=$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager | sort -V | tail -1)
+          yes | "$SDKM" --licenses > /dev/null || true
+          "$SDKM" "platforms;android-36" "build-tools;36.0.0"
       - name: Upload key
         env:
           KEYSTORE_B64: ${{ secrets.STAALCALIBUR_KEYSTORE_B64 }}
