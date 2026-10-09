@@ -10,6 +10,9 @@ on:
     paths: ["android/**", ".github/workflows/android.yml"]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -52,3 +55,13 @@ jobs:
           path: |
             android/app/build/outputs/bundle/release/*.aab
             android/app/build/outputs/apk/debug/*.apk
+      - name: Publish unsigned build to the android-builds branch
+        # So the bundle can be fetched with plain git (and signed offline).
+        if: github.event_name != 'pull_request'
+        run: |
+          mkdir -p "$RUNNER_TEMP/out" && cp android/app/build/outputs/bundle/release/*.aab "$RUNNER_TEMP/out/"
+          cd "$RUNNER_TEMP/out"
+          git init -q -b android-builds
+          git -c user.name=ci -c user.email=ci@staalwag.com commit -q --allow-empty -m "Build from ${GITHUB_SHA}" && git add -A
+          git -c user.name=ci -c user.email=ci@staalwag.com commit -q --amend -m "Build from ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" android-builds
