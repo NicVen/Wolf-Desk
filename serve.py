@@ -518,9 +518,9 @@ def _lic_post(path, payload, timeout=12):
 
 
 # ---- Search visibility ------------------------------------------------------
-# Only staalwag.com (and the public WOLF desk) should be indexed. The app.*
-# subdomain, sslip.io and the old Railway URL serve the same pages, so they ask
-# crawlers to stay out — otherwise Google splits the ranking across copies.
+# Only staalwag.com should be indexed. The WOLF desk (wolf.*) stays out of
+# search by design; app.*, sslip.io and the old Railway URL serve copies of the
+# same pages, so they all ask crawlers to stay out — otherwise Google splits the ranking across copies.
 SITE_URL = "https://staalwag.com"
 SITEMAP_PATHS = ["/", "/store", "/proof", "/download", "/privacy"]
 SITEMAP_XML = (
@@ -533,7 +533,7 @@ _ROBOTS_PRIVATE = ["/app", "/data", "/refresh", "/news", "/login", "/auth", "/go
 
 
 def robots_txt(host: str) -> str:
-    if host in ("staalwag.com", "wolf.staalwag.com"):
+    if host == "staalwag.com":
         lines = ["User-agent: *", "Allow: /"] + ["Disallow: %s" % p for p in _ROBOTS_PRIVATE]
         lines += ["", "Sitemap: %s/sitemap.xml" % SITE_URL]
     else:

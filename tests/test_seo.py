@@ -55,7 +55,7 @@ class SeoTest(unittest.TestCase):
         self.assertNotIn("Disallow: /proof", body)
 
     def test_robots_blocks_duplicate_hosts(self):
-        for host in ("app.staalwag.com", "178.104.88.38.sslip.io",
+        for host in ("app.staalwag.com", "wolf.staalwag.com", "178.104.88.38.sslip.io",
                      "wolf-desk-production.up.railway.app"):
             code, _, body = self.get("/robots.txt", host)
             self.assertEqual(code, 200)
