@@ -517,6 +517,30 @@ def _lic_post(path, payload, timeout=12):
         return None, str(e)
 
 
+# ---- Search visibility ------------------------------------------------------
+# Only staalwag.com (and the public WOLF desk) should be indexed. The app.*
+# subdomain, sslip.io and the old Railway URL serve the same pages, so they ask
+# crawlers to stay out — otherwise Google splits the ranking across copies.
+SITE_URL = "https://staalwag.com"
+SITEMAP_PATHS = ["/", "/store", "/proof", "/download", "/privacy"]
+SITEMAP_XML = (
+    '<?xml version="1.0" encoding="UTF-8"?>\n'
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    + "".join("  <url><loc>%s%s</loc></url>\n" % (SITE_URL, p) for p in SITEMAP_PATHS)
+    + "</urlset>\n")
+_ROBOTS_PRIVATE = ["/app", "/data", "/refresh", "/news", "/login", "/auth", "/go",
+                   "/l", "/clicks.json", "/markov.json", "/health"]
+
+
+def robots_txt(host: str) -> str:
+    if host in ("staalwag.com", "wolf.staalwag.com"):
+        lines = ["User-agent: *", "Allow: /"] + ["Disallow: %s" % p for p in _ROBOTS_PRIVATE]
+        lines += ["", "Sitemap: %s/sitemap.xml" % SITE_URL]
+    else:
+        lines = ["User-agent: *", "Disallow: /"]
+    return "\n".join(lines) + "\n"
+
+
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *a): pass
 
@@ -683,6 +707,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
         u = urlparse(self.path); path = u.path; q = parse_qs(u.query)
         cls = (q.get("class", ["commodities"])[0]).lower()
         if cls not in CLASSES: cls = "commodities"
+
+        # ---- Search engines: one canonical host + robots.txt + sitemap.xml ----
+        host = self.headers.get("Host", "").lower().split(":")[0]
+        if host == "www.staalwag.com":
+            # 301 www -> apex so Google sees one site, not two copies of it.
+            self.send_response(301)
+            self.send_header("Location", "https://staalwag.com" + self.path)
+            self.end_headers(); return
+        if path == "/robots.txt":
+            self._send(200, robots_txt(host), "text/plain; charset=utf-8"); return
+        if path == "/sitemap.xml":
+            self._send(200, SITEMAP_XML, "application/xml; charset=utf-8"); return
 
         # Telegram login redirect target
         if path == "/auth":
