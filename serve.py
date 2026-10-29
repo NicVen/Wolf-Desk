@@ -558,6 +558,39 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _send_video(self, fp):
+        # Byte-range support: Safari/iOS will not play an <video> without it,
+        # and it lets every browser seek without downloading the whole file.
+        import re
+        size = os.path.getsize(fp)
+        start, end = 0, size - 1
+        m = re.match(r"bytes=(\d*)-(\d*)$", (self.headers.get("Range") or "").strip())
+        partial = bool(m) and (m.group(1) != "" or m.group(2) != "")
+        if partial:
+            if m.group(1) == "":
+                start = max(0, size - int(m.group(2)))
+            else:
+                start = int(m.group(1))
+                if m.group(2):
+                    end = min(int(m.group(2)), size - 1)
+            if start > end or start >= size:
+                self.send_response(416)
+                self.send_header("Content-Range", f"bytes */{size}")
+                self.send_header("Content-Length", "0")
+                self.end_headers(); return
+        with open(fp, "rb") as f:
+            f.seek(start)
+            body = f.read(end - start + 1)
+        self.send_response(206 if partial else 200)
+        self.send_header("Content-Type", "video/mp4")
+        self.send_header("Accept-Ranges", "bytes")
+        self.send_header("Content-Length", str(len(body)))
+        if partial:
+            self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+        self.send_header("Cache-Control", "public, max-age=86400")
+        self.end_headers()
+        self.wfile.write(body)
+
     def _redirect(self, location, cookie=None):
         self.send_response(302)
         self.send_header("Location", location)
@@ -957,6 +990,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 fp = os.path.join("storefront", *rel.split("/"))
                 if os.path.isfile(fp):
                     ext = os.path.splitext(rel)[1].lower()
+                    if ext == ".mp4":
+                        self._send_video(fp); return
                     ct = {".png":"image/png",".jpg":"image/jpeg",".jpeg":"image/jpeg",
                           ".webp":"image/webp",".svg":"image/svg+xml",".css":"text/css",
                           ".js":"application/javascript",".ico":"image/x-icon",
