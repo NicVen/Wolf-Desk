@@ -82,6 +82,7 @@ class SeoTest(unittest.TestCase):
         self.assertIn('<link rel="canonical" href="https://staalwag.com/"', body)
         self.assertIn("STAALCALIBUR", re.search(r"<title>(.*?)</title>", body).group(1))
         self.assertIn('href="/store"', body)
+        self.assertIn('name="google-site-verification"', body)
         ld = re.search(r'<script type="application/ld\+json">(.*?)</script>', body, re.S)
         graph = json.loads(ld.group(1))["@graph"]
         names = {g["name"] for g in graph}
