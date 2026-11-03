@@ -596,11 +596,43 @@ def sweeper():
 # ---------------------------------------------------------------------------
 # HTTP
 # ---------------------------------------------------------------------------
+
+# ---- HQ "remember this device" ----------------------------------------------
+# The cookie holds a fingerprint of ADMIN_TOKEN, never the token itself, so
+# rotating ADMIN_TOKEN signs every remembered device out at once.
+HQ_COOKIE = "hq_auth"
+HQ_COOKIE_DAYS = 400   # the longest browsers allow
+
+
+def _token_ok(tok):
+    return bool(config.ADMIN_TOKEN) and bool(tok) and hmac.compare_digest(
+        str(tok).encode(), config.ADMIN_TOKEN.encode())
+
+
+def _hq_cookie_value():
+    return hmac.new(config.ADMIN_TOKEN.encode(), b"hq-remember-v1", "sha256").hexdigest()
+
+
+def _hq_cookie(clear=False):
+    val, age = ("", 0) if clear else (_hq_cookie_value(), HQ_COOKIE_DAYS * 86400)
+    return "%s=%s; Max-Age=%d; Path=/; HttpOnly; Secure; SameSite=Strict" % (HQ_COOKIE, val, age)
+
+
+def _cookie_ok(header):
+    if not config.ADMIN_TOKEN or not header:
+        return False
+    for part in header.split(";"):
+        k, _, v = part.strip().partition("=")
+        if k == HQ_COOKIE and v and hmac.compare_digest(v.encode(), _hq_cookie_value().encode()):
+            return True
+    return False
+
+
 class H(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass
 
-    def _send(self, code, body, ctype="application/json"):
+    def _send(self, code, body, ctype="application/json", headers=None):
         if isinstance(body, (dict, list)):
             body = json.dumps(body).encode()
         elif isinstance(body, str):
@@ -610,6 +642,8 @@ class H(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", "*")  # buy flow runs on wolf.* desk
         self.send_header("Cache-Control", "no-store")          # always serve fresh (HQ/pages)
         self.send_header("Content-Length", str(len(body)))
+        for k, v in (headers or {}).items():
+            self.send_header(k, v)
         self.end_headers()
         self.wfile.write(body)
 
@@ -634,6 +668,13 @@ class H(BaseHTTPRequestHandler):
 
         host = (self.headers.get("Host", "") or "").lower()
         if host.startswith("hq.") and u.path in ("/", "/index.html"):
+            # one-click login link (hq.../?tok=TOKEN): remember this device, then
+            # drop the token from the address bar.
+            if one("tok"):
+                if _token_ok(one("tok")):
+                    return self._send(302, b"", "text/plain",
+                                      {"Location": "/", "Set-Cookie": _hq_cookie()})
+                return self._send(302, b"", "text/plain", {"Location": "/"})
             return self._admin_page()
 
         if u.path == "/verify":
@@ -701,6 +742,10 @@ class H(BaseHTTPRequestHandler):
             self._checkout()
         elif u.path == "/trial":
             self._trial()
+        elif u.path == "/admin/login":
+            self._admin_login()
+        elif u.path == "/admin/logout":
+            self._send(200, {"ok": True}, headers={"Set-Cookie": _hq_cookie(clear=True)})
         elif u.path == "/admin/issue":
             self._admin_issue()
         elif u.path == "/admin/partner_settle":
@@ -742,7 +787,27 @@ class H(BaseHTTPRequestHandler):
 
     # ---- admin auth ----
     def _admin_ok(self):
-        return bool(config.ADMIN_TOKEN) and self.headers.get("X-Admin-Token") == config.ADMIN_TOKEN
+        if _token_ok(self.headers.get("X-Admin-Token")):
+            return True
+        # HQ "remember this device" cookie. SameSite=Strict already keeps other
+        # sites from riding on it; the Origin check is a second lock for POSTs.
+        if not _cookie_ok(self.headers.get("Cookie")):
+            return False
+        origin = self.headers.get("Origin")
+        if origin and urllib.parse.urlparse(origin).netloc.lower() != (self.headers.get("Host") or "").lower():
+            return False
+        return True
+
+    def _admin_login(self):
+        """HQ unlock: check the admin token once, then remember this device with
+        a long-lived cookie so Nic is never asked again on it."""
+        try:
+            data = json.loads(self._body() or b"{}")
+        except ValueError:
+            data = {}
+        if not _token_ok(str(data.get("token") or "").strip()):
+            return self._send(403, {"error": "forbidden"})
+        self._send(200, {"ok": True}, headers={"Set-Cookie": _hq_cookie()})
 
     # ---- handlers ----
     def _verify(self, key, account, machine, product):
@@ -1549,7 +1614,7 @@ window.addEventListener('error',function(e){window.showDiag('JS ERROR: '+(e.mess
 window.addEventListener('unhandledrejection',function(e){window.showDiag('PROMISE: '+((e.reason&&e.reason.message)||e.reason||''));});
 </script>
 <div class="wrap">
-<div id=gate class=gate>
+<div id=gate class=gate style=display:none>
  <h1>STAALWAG <span class=a>HQ</span></h1><div class=sub>Central command center</div>
  <input id=tok type=text placeholder="Admin token" autocomplete=off autocapitalize=off autocorrect=off spellcheck=false>
  <button class=btn style=width:100% onclick=unlock()>Unlock</button>
@@ -1639,13 +1704,16 @@ window.addEventListener('unhandledrejection',function(e){window.showDiag('PROMIS
 function T(){try{return localStorage.getItem("hq_tok")||""}catch(e){return""}}
 function H(){return {"X-Admin-Token":T()}}
 function esc(x){return (x==null?"":String(x)).replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
-function unlock(){var t=document.getElementById("tok").value.trim();if(!t)return;try{localStorage.setItem("hq_tok",t)}catch(e){}loadAll();}
+function unlock(){var t=document.getElementById("tok").value.trim();if(!t)return;try{localStorage.setItem("hq_tok",t)}catch(e){}
+ var g=document.getElementById("gerr");if(g)g.textContent="Checking…";
+ fetch("/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:t}),credentials:"same-origin"})
+  .then(function(r){if(r.status==403){if(g)g.textContent="Wrong token (403).";return;}loadAll(true);})
+  .catch(function(){if(g)g.textContent="Couldn't reach HQ.";});}
 function tab(p){var ts=document.querySelectorAll(".tab");for(var i=0;i<ts.length;i++)ts[i].className="tab"+(ts[i].getAttribute("data-p")===p?" on":"");
  var ps=document.querySelectorAll(".pane");for(var j=0;j<ps.length;j++)ps[j].className="pane"+(ps[j].id==="p-"+p?" on":"");}
 function tile(v,l,hot){return '<div class="tile'+(hot?' hot':'')+'"><b>'+v+'</b><span>'+l+'</span></div>';}
 function getPlan(){
  var b=document.getElementById("planbtn"),o=document.getElementById("planout");
- if(!T()){o.innerHTML='<span style="color:#f66">Unlock HQ first (admin token).</span>';return;}
  b.disabled=true;var old=b.textContent;b.textContent="Working… pulling data + reasoning";
  o.textContent="Fetching live gold, ranking signals, and reasoning… (a few seconds)";
  fetch("/admin/daily_plan",{headers:H()}).then(function(r){return r.json()}).then(function(d){
@@ -1673,15 +1741,19 @@ function getPlan(){
 }
 function base(){var h=location.hostname;var p=h.split(".");return p.length>2?p.slice(1).join("."):h;}
 function sub(s){return location.protocol+"//"+s+"."+base();}
-function loadAll(){
- var g=document.getElementById("gerr");if(g)g.textContent="Checking…";
+function showGate(m){document.getElementById("hq").style.display="none";document.getElementById("gate").style.display="";var g=document.getElementById("gerr");if(g)g.textContent=m||"";}
+function loadAll(loud){
  var code=0;
- fetch("/admin/app_stats",{headers:H()}).then(function(r){code=r.status;if(r.status==403)throw 0;if(!r.ok)throw 1;return r.json()}).then(function(s){
-  if(g)g.textContent="";
+ fetch("/admin/app_stats",{headers:H(),credentials:"same-origin"}).then(function(r){code=r.status;if(r.status==403)throw 0;if(!r.ok)throw 1;return r.json()}).then(function(s){
+  var g=document.getElementById("gerr");if(g)g.textContent="";
   document.getElementById("gate").style.display="none";document.getElementById("hq").style.display="";
   document.getElementById("gtiles").innerHTML=tile(s.installed,"App keys")+tile(s.subscribed,"Active subs",1)+tile(s.active_7d,"Using (7d)")+tile(s.suggestions_new,"New suggestions");
   loadHealth();loadApp();loadLic();renderLinks();
- }).catch(function(e){var m=(e===0?"Wrong token (403).":"Couldn't reach HQ (status "+code+").");if(g)g.textContent=m;if(window.showDiag)window.showDiag("Login failed: "+m+" token len="+(T()||"").length);});
+ }).catch(function(e){
+  // Not remembered on this device yet: just show the unlock box, no alarm.
+  if(e===0&&!loud){showGate("");return;}
+  var m=(e===0?"Wrong token (403).":"Couldn't reach HQ (status "+code+").");showGate(m);
+  if(loud&&window.showDiag)window.showDiag("Login failed: "+m);});
 }
 function loadHealth(){
  var box=document.getElementById("svc");if(box)box.innerHTML='<div class=muted>Checking services…</div>';
@@ -1766,10 +1838,9 @@ function renderLinks(){
   return '<a class=card target=_blank rel=noopener href="'+x.u+'"><div class=ic>'+x.ic+'</div><div class=nm>'+x.nm+'</div><div class=ds>'+x.ds+'</div></a>';
  }).join("");
 }
-// one-click login: open hq...?tok=YOURTOKEN once; it's saved and stripped from the URL.
-(function(){try{var p=new URLSearchParams(location.search).get("tok");
- if(p){localStorage.setItem("hq_tok",p);history.replaceState({},"",location.pathname);}}catch(e){}})();
-if(T()) loadAll();
+// Remembered devices (cookie) open straight in; others see the unlock box once.
+// One-click login: open hq...?tok=YOURTOKEN once (the server remembers the device).
+loadAll(false);
 </script></div></body></html>"""
 
 
