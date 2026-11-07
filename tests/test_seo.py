@@ -94,6 +94,32 @@ class SeoTest(unittest.TestCase):
         self.assertIn('<link rel="canonical" href="https://staalwag.com/store"', body)
         json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>', body, re.S).group(1))
 
+    def test_play_link_is_tagged_and_counted(self):
+        code, hdrs, _ = self.get("/play?s=Telegram-Gold")
+        self.assertEqual(code, 302)
+        loc = hdrs["Location"]
+        self.assertTrue(loc.startswith("https://play.google.com/store/apps/details?id=com.staalwag.staalcalibur&referrer="))
+        self.assertIn("utm_source%3Dtelegram-gold", loc)
+        code, hdrs, _ = self.get("/play?s=<script>")
+        self.assertIn("utm_source%3Dscript", hdrs["Location"])
+        self.assertIn("Disallow: /play", self.get("/robots.txt")[2])
+
+    def test_lot_size_calculator_page(self):
+        code, _, body = self.get("/lot-size-calculator")
+        self.assertEqual(code, 200)
+        self.assertIn('<link rel="canonical" href="https://staalwag.com/lot-size-calculator"', body)
+        self.assertIn('href="/play?s=calc-page"', body)
+        json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>', body, re.S).group(1))
+        for word in ("BUY", "SELL"):   # facts-only rule
+            self.assertNotRegex(body, r"\b%s\b" % word)
+        code, hdrs, _ = self.get("/position-size-calculator")
+        self.assertEqual(code, 301)
+        self.assertEqual(hdrs["Location"], "/lot-size-calculator")
+
+    def test_site_and_download_point_to_play(self):
+        self.assertIn('href="/play?s=site"', self.get("/")[2])
+        self.assertIn('href="/play?s=download"', self.get("/download")[2])
+
 
 if __name__ == "__main__":
     unittest.main()

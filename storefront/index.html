@@ -361,7 +361,7 @@
   <footer><div class="wrap">
     <div class="brand" style="font-size:15px;margin-bottom:8px">STAALCALIBUR <span class="v">V13</span></div>
     <div>Part of the STAALWAG desk. Decision-support &amp; education only — not financial advice.</div>
-    <div style="margin-top:8px">© <span id="yr"></span> STAALWAG · <a href="/proof">Track record</a> · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a> · <a href="/">Home</a></div>
+    <div style="margin-top:8px">© <span id="yr"></span> STAALWAG · <a href="/proof">Track record</a> · <a href="/lot-size-calculator">Lot size calculator</a> · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a> · <a href="/">Home</a></div>
     <div style="margin-top:6px;font-size:12px">Laurin Venter trading as STAALWAG · 67 Egmont Street, Hawera 4610, Taranaki, New Zealand</div>
   </div></footer>
 
@@ -454,7 +454,9 @@
   function hide(id){var e=document.getElementById(id);if(e)e.classList.add('hidden');}
 
   var modal=document.getElementById('modal');
-  function openTrial(){ show('mForm'); document.getElementById('mMsg').textContent=''; modal.classList.add('on'); setTimeout(()=>{var c=document.getElementById('contact');if(c)c.focus();},60); }
+  // While the app is free, every "Get it free" button goes straight to Google Play
+  // (the app hands out its own free key on first open).
+  function openTrial(){ if(FREE){ location.href='/play?s=store'; return; } show('mForm'); document.getElementById('mMsg').textContent=''; modal.classList.add('on'); setTimeout(()=>{var c=document.getElementById('contact');if(c)c.focus();},60); }
   function closeModal(){ modal.classList.remove('on'); }
 
   // "See how it works": play the promo in a lightbox. Portrait screens get the 9:16 cut.

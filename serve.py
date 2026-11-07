@@ -522,14 +522,29 @@ def _lic_post(path, payload, timeout=12):
 # search by design; app.*, sslip.io and the old Railway URL serve copies of the
 # same pages, so they all ask crawlers to stay out — otherwise Google splits the ranking across copies.
 SITE_URL = "https://staalwag.com"
-SITEMAP_PATHS = ["/", "/store", "/proof", "/download", "/privacy"]
+SITEMAP_PATHS = ["/", "/store", "/lot-size-calculator", "/proof", "/download", "/privacy"]
 SITEMAP_XML = (
     '<?xml version="1.0" encoding="UTF-8"?>\n'
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     + "".join("  <url><loc>%s%s</loc></url>\n" % (SITE_URL, p) for p in SITEMAP_PATHS)
     + "</urlset>\n")
 _ROBOTS_PRIVATE = ["/app", "/data", "/refresh", "/news", "/login", "/auth", "/go",
-                   "/l", "/clicks.json", "/markov.json", "/health"]
+                   "/l", "/play", "/clicks.json", "/markov.json", "/health"]
+
+
+# ---- Google Play links -------------------------------------------------------
+# /play?s=<where> -> the STAALCALIBUR Play listing, tagged with where the visitor
+# came from. The tag shows in Play Console (User acquisition, UTM) and the click
+# is counted in /clicks.json as "play-<where>", so we can see which free
+# channel (Telegram, a directory, a forum post, the site) actually brings installs.
+PLAY_ID = "com.staalwag.staalcalibur"
+PLAY_URL = "https://play.google.com/store/apps/details?id=" + PLAY_ID
+
+
+def play_link(src: str) -> str:
+    src = "".join(c for c in (src or "").lower() if c.isalnum() or c == "-")[:30] or "direct"
+    ref = urllib.parse.quote("utm_source=%s&utm_medium=link&utm_campaign=free-launch" % src, safe="")
+    return src, "%s&referrer=%s" % (PLAY_URL, ref)
 
 
 def robots_txt(host: str) -> str:
@@ -925,6 +940,19 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if not apk:
                 self._send(404, "APK not published yet.", "text/plain"); return
             self._send(200, apk, "application/vnd.android.package-archive"); return
+        if path == "/play":
+            src, dest = play_link(q.get("s", ["direct"])[0])
+            try: track_click("play-" + src)
+            except Exception: pass
+            self._redirect(dest); return
+        if path.rstrip("/.") in ("/position-size-calculator", "/lot-size", "/risk-sizer"):
+            self.send_response(301)
+            self.send_header("Location", "/lot-size-calculator")
+            self.end_headers(); return
+        if path.rstrip("/.") == "/lot-size-calculator":
+            self._send(200, _read(os.path.join("dashboard", "lot-size-calculator.html"),
+                                  b"<h2>Coming soon.</h2>"),
+                       "text/html; charset=utf-8"); return
         if path in ("/download", "/get"):
             self._send(200, _read(os.path.join("dashboard", "download.html"),
                                   b"<h2>Download coming soon.</h2>"),

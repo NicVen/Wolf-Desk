@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0e15" />
+<title>Lot Size Calculator for Gold (XAUUSD) &amp; Forex · Free · STAALWAG</title>
+<meta name="description" content="Free lot size calculator for gold (XAUUSD), silver, forex pairs and bitcoin. Enter your account size, risk % and stop distance to get the biggest lot size that keeps your loss inside your limit." />
+<link rel="canonical" href="https://staalwag.com/lot-size-calculator" />
+<meta property="og:url" content="https://staalwag.com/lot-size-calculator" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="STAALWAG" />
+<meta property="og:title" content="Free lot size calculator: gold, forex, bitcoin" />
+<meta property="og:description" content="How many lots can you take without risking more than you planned? Answer in seconds." />
+<meta property="og:image" content="https://staalwag.com/og-staalwag.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="/favicon-32.png" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "WebApplication",
+   "name": "STAALWAG Lot Size Calculator",
+   "url": "https://staalwag.com/lot-size-calculator",
+   "applicationCategory": "FinanceApplication",
+   "operatingSystem": "Any",
+   "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+   "publisher": {"@id": "https://staalwag.com/#org"}
+  },
+  {
+   "@type": "FAQPage",
+   "mainEntity": [
+    {"@type": "Question", "name": "How do I work out lot size for gold (XAUUSD)?",
+     "acceptedAnswer": {"@type": "Answer", "text": "On most brokers 1.00 lot of gold is 100 ounces, so a $1 move in the gold price is $100 per lot. Lot size = money you are willing to lose / (stop distance in $ x 100). Example: $10,000 account, 1% risk = $100; stop $8.50 away; 100 / (8.50 x 100) = 0.11 lots."}},
+    {"@type": "Question", "name": "How do I work out lot size for EURUSD and other forex pairs?",
+     "acceptedAnswer": {"@type": "Answer", "text": "For pairs quoted in US dollars (EURUSD, GBPUSD, AUDUSD, NZDUSD) one pip on 1.00 lot is worth $10. Lot size = money at risk / (stop in pips x 10). Example: $100 at risk with a 25-pip stop = 0.40 lots."}},
+    {"@type": "Question", "name": "Why round the lot size down?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Rounding down to the nearest 0.01 lot means the trade never risks more than the limit you set. Rounding up would quietly break your own risk rule."}},
+    {"@type": "Question", "name": "What risk per trade do traders use?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Many traders, and most prop-firm challenge rules, keep risk to around 0.5% to 1% of the account per trade, so a losing streak does not wipe out the account. The right figure is your own decision."}}
+   ]
+  }
+ ]
+}
+</script>
+<style>
+  :root{--bg:#0a0e15;--card:#131a26;--card2:#18212f;--line:#1e2a3a;--fg:#e7edf3;--mut:#7d8a9c;
+    --steel:#8aa0b4;--chrome:#c7d2dd;--accent:#6ea8fe;--good:#2ecc71;--bad:#ff5b5b;--watch:#f2c14e}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:22px 18px 40px}
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .logo{font-weight:900;letter-spacing:2px;color:var(--chrome);text-decoration:none}
+  .top a.small{color:var(--steel);font-size:13px;text-decoration:none}
+  h1{font-size:28px;line-height:1.2;margin:6px 0 8px}
+  h2{font-size:19px;margin:30px 0 8px}
+  p,li{color:var(--chrome)}
+  .lead{color:var(--mut);margin:0 0 18px}
+  .calc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+  label{display:block;font-size:13px;color:var(--steel);margin:12px 0 5px}
+  input,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--card2);
+    color:var(--fg);font-size:16px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .two label{margin-top:0}
+  .hidden{display:none}
+  .out{margin-top:16px;padding:14px;border-radius:12px;background:#0d131d;border:1px solid var(--line);text-align:center}
+  .big{font-size:34px;font-weight:900}
+  .sm{font-size:14px;color:var(--mut)}
+  .muted{font-size:12px;color:var(--mut);margin-top:12px}
+  .cta{margin-top:26px;background:linear-gradient(135deg,#142033,#0f1826);border:1px solid #2a3b55;border-radius:16px;padding:18px;text-align:center}
+  .cta h3{margin:0 0 6px}
+  .btn{display:inline-block;margin-top:10px;padding:14px 22px;border-radius:12px;background:var(--good);color:#04140a;
+    font-weight:800;text-decoration:none}
+  .faq b{display:block;color:var(--fg);margin-top:14px}
+  footer{margin-top:34px;font-size:12px;color:var(--mut);text-align:center}
+  footer a{color:var(--steel)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="logo" href="/">STAALWAG</a><a class="small" href="/play?s=calc-top">Get the free app &rarr;</a></div>
+
+  <h1>Lot size calculator: gold, forex &amp; bitcoin</h1>
+  <p class="lead">The biggest lot size you can take without losing more than you planned if your stop is hit. Free, no sign-up, works on your phone.</p>
+
+  <div class="calc">
+    <div class="two">
+      <div><label for="rsEq">Account size ($)</label><input id="rsEq" inputmode="decimal" placeholder="10000"></div>
+      <div><label for="rsPct">Risk per trade (%)</label><input id="rsPct" inputmode="decimal" placeholder="1" value="1"></div>
+    </div>
+    <label for="rsSym">Market</label>
+    <select id="rsSym"></select>
+    <label for="rsStop" id="rsStopL">Stop distance</label><input id="rsStop" inputmode="decimal">
+    <div id="rsPriceW"><label for="rsPrice">Current price</label><input id="rsPrice" inputmode="decimal"></div>
+    <div id="rsPerW"><label for="rsPer">$ per 1 point on 1.00 lot (from your broker)</label><input id="rsPer" inputmode="decimal" placeholder="1"></div>
+    <div class="out" id="rsOut"></div>
+    <div class="muted">Assumes a US-dollar account. Brokers can use different contract sizes, so check yours on a new symbol. Education only, not financial advice.</div>
+  </div>
+
+  <div class="cta">
+    <h3>Take it with you</h3>
+    <p class="sm" style="margin:0">This calculator is built into <b>STAALCALIBUR</b>, our free Android app. It also shows the trend, trend strength and key levels for gold, forex, indices, stocks and crypto.</p>
+    <a class="btn" href="/play?s=calc-page">Get it free on Google Play</a>
+  </div>
+
+  <h2>How the lot size is worked out</h2>
+  <p>Three numbers decide it: how much you are willing to lose, how far away your stop is, and how much one point of movement is worth on 1.00 lot.</p>
+  <p><b>Lot size = money at risk &divide; (stop distance &times; value of one point per lot)</b></p>
+  <ul>
+    <li><b>Gold (XAUUSD):</b> 1.00 lot is usually 100 ounces, so a $1 move is $100 per lot.</li>
+    <li><b>Silver (XAGUSD):</b> 1.00 lot is usually 5,000 ounces, so a $0.01 move is $50 per lot.</li>
+    <li><b>EURUSD, GBPUSD, AUDUSD, NZDUSD:</b> one pip on 1.00 lot is $10.</li>
+    <li><b>USDJPY, USDCAD, USDCHF:</b> one pip is worth 10 units of the second currency, so it changes with the price. That is why the calculator asks for the current price.</li>
+  </ul>
+
+  <h2>Worked example: gold</h2>
+  <p>Your account is $10,000 and you risk 1%, so $100. Your stop is $8.50 below your entry. One lot loses $8.50 &times; 100 = $850 if the stop is hit. $100 &divide; $850 = 0.117, rounded down to <b>0.11 lots</b>, which risks $93.50.</p>
+
+  <h2>Questions</h2>
+  <div class="faq">
+    <b>Why round down?</b>
+    <p>Rounding down to the nearest 0.01 lot means the trade never risks more than the limit you set.</p>
+    <b>What if the answer says "too wide"?</b>
+    <p>Even the smallest lot (0.01) would lose more than your limit. Either the stop is too far away for this account size, or the trade is too big for your rules.</p>
+    <b>What risk per trade do traders use?</b>
+    <p>Many traders, and most prop-firm challenge rules, keep it around 0.5% to 1% per trade so a losing streak does not empty the account. The figure is your call.</p>
+  </div>
+
+  <footer>&copy; <span id="yr"></span> STAALWAG · <a href="/">Home</a> · <a href="/store">STAALCALIBUR app</a> · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a><br>
+  Education only. Not financial advice. Trading carries risk; never risk money you cannot afford to lose.</footer>
+</div>
+<script>
+// Same maths as the Risk Sizer inside the app (dashboard/scapp.html).
+var RS_SYMS=[
+  ["XAUUSD","Gold (XAUUSD)",100,1,"usd","$"],
+  ["XAGUSD","Silver (XAGUSD)",5000,1,"usd","$"],
+  ["EURUSD","EURUSD",100000,0.0001,"usd","pips"],
+  ["GBPUSD","GBPUSD",100000,0.0001,"usd","pips"],
+  ["AUDUSD","AUDUSD",100000,0.0001,"usd","pips"],
+  ["NZDUSD","NZDUSD",100000,0.0001,"usd","pips"],
+  ["USDJPY","USDJPY",100000,0.01,"base","pips"],
+  ["USDCAD","USDCAD",100000,0.0001,"base","pips"],
+  ["USDCHF","USDCHF",100000,0.0001,"base","pips"],
+  ["BTCUSD","Bitcoin (BTCUSD)",1,1,"usd","$"],
+  ["OTHER","Other (your broker's figure)",1,1,"custom","points"]
+];
+function el(id){ return document.getElementById(id); }
+function rsSym(code){ for(var i=0;i<RS_SYMS.length;i++) if(RS_SYMS[i][0]===code) return RS_SYMS[i]; return RS_SYMS[0]; }
+function sizeLots(equity, pct, code, stop, price, perPoint){
+  var s=rsSym(code), riskUsd=equity*pct/100, perLot;
+  if(!(equity>0)||!(pct>0)||!(stop>0)) return null;
+  if(s[4]==="custom"){ if(!(perPoint>0)) return null; perLot=stop*perPoint; }
+  else {
+    perLot=stop*s[3]*s[2];
+    if(s[4]==="base"){ if(!(price>0)) return null; perLot=perLot/price; }
+  }
+  var lots=Math.floor(riskUsd/perLot*100+1e-9)/100;
+  return {lots:lots, riskUsd:riskUsd, actualUsd:lots*perLot, perLot:perLot};
+}
+function num(id){ return parseFloat(String(el(id).value||"").replace(/[, ]/g,"")); }
+function fmtUsd(n){ return (Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function calc(){
+  var s=rsSym(el("rsSym").value);
+  el("rsStopL").textContent = s[5]==="pips" ? "Stop distance (pips)" : s[5]==="$" ? "Stop distance ($ in price, e.g. 8.50)" : "Stop distance (points)";
+  el("rsStop").placeholder = s[5]==="pips" ? "25" : s[0]==="BTCUSD" ? "800" : s[5]==="$" ? "8.50" : "50";
+  el("rsPriceW").className = s[4]==="base" ? "" : "hidden";
+  el("rsPerW").className = s[4]==="custom" ? "" : "hidden";
+  var r=sizeLots(num("rsEq"),num("rsPct"),s[0],num("rsStop"),num("rsPrice"),num("rsPer")), out=el("rsOut");
+  if(!r){ out.innerHTML='<div class="sm">Fill in the boxes above to get your lot size.</div>'; return; }
+  if(r.lots<0.01){
+    out.innerHTML='<div class="big" style="color:var(--bad)">Too wide</div><div class="sm">Even 0.01 lots would risk $'+fmtUsd(r.perLot*0.01)+
+      ', more than your $'+fmtUsd(r.riskUsd)+'. Use a closer stop or a smaller trade.</div>';
+    return;
+  }
+  var warn=num("rsPct")>2 ? '<div class="sm" style="color:var(--watch)">Most prop-firm rules keep risk to 0.5–1% per trade.</div>' : '';
+  out.innerHTML='<div class="big" style="color:var(--good)">'+r.lots.toFixed(2)+' lots</div>'+
+    '<div class="sm">Loses $'+fmtUsd(r.actualUsd)+' if the stop is hit (your limit: $'+fmtUsd(r.riskUsd)+').</div>'+warn;
+}
+el("rsSym").innerHTML=RS_SYMS.map(function(s){ return '<option value="'+s[0]+'">'+s[1]+'</option>'; }).join("");
+["rsEq","rsPct","rsStop","rsPrice","rsPer"].forEach(function(id){ el(id).oninput=calc; });
+el("rsSym").onchange=function(){ el("rsStop").value=""; calc(); };
+el("yr").textContent=new Date().getFullYear();
+calc();
+</script>
+</body>
+</html>
