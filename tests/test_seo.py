@@ -120,6 +120,16 @@ class SeoTest(unittest.TestCase):
         self.assertIn('href="/play?s=site"', self.get("/")[2])
         self.assertIn('href="/play?s=download"', self.get("/download")[2])
 
+    def test_pip_value_calculator_page(self):
+        code, _, body = self.get("/pip-value-calculator")
+        self.assertEqual(code, 200)
+        self.assertIn('<link rel="canonical" href="https://staalwag.com/pip-value-calculator"', body)
+        self.assertIn('href="/play?s=pip-page"', body)
+        json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>', body, re.S).group(1))
+        for word in ("BUY", "SELL"):   # facts-only rule
+            self.assertNotRegex(body, r"\b%s\b" % word)
+        self.assertIn('href="/pip-value-calculator"', self.get("/lot-size-calculator")[2])
+
 
 if __name__ == "__main__":
     unittest.main()
