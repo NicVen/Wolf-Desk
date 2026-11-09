@@ -8,6 +8,7 @@
 #   4. health-check both services; if either is down, roll back to the
 #      previous commit, restart, and Telegram the owner
 #   (step 3 also runs tests/ — checkout, payment, activation — before restarting)
+# Every run also checks staalwag.com answers through Caddy and repairs it (site_guard).
 # A commit that was rolled back is remembered and never retried, so a bad merge
 # can't loop. Merging a fix on top ships normally.
 set -u
@@ -56,6 +57,38 @@ restart_all() {
     # Guardian MT5 watcher (deploy/guardian-setup.sh): same.
     systemctl try-restart guardian-watch 2>/dev/null || true
 }
+
+# --- Site guard (every run, before anything else) ---------------------------
+# 2026-11: an OS upgrade replaced /etc/caddy/Caddyfile with the blank default, so
+# Caddy stopped serving staalwag.com (and the app, store and payments) for days
+# while the app itself ran fine. Check the real HTTPS site through Caddy; if it
+# is down, put our Caddyfile back (only when ours is missing and the repo copy
+# validates), reload Caddy, and Telegram the owner once.
+site_up() {
+    curl -sf -m 10 --resolve staalwag.com:443:127.0.0.1 https://staalwag.com/appversion >/dev/null
+}
+site_guard() {
+    command -v caddy >/dev/null || return 0
+    if site_up; then rm -f "$STATE/site_down"; return 0; fi
+    sleep 20; site_up && return 0           # one retry: a cert renewal or restart in progress
+    local note=""
+    if ! grep -q "staalwag.com" /etc/caddy/Caddyfile 2>/dev/null &&
+       caddy validate --config "$REPO/deploy/Caddyfile.hq" --adapter caddyfile >/dev/null 2>&1; then
+        cp /etc/caddy/Caddyfile "$STATE/Caddyfile.replaced.$(date +%F-%H%M)" 2>/dev/null || true
+        cp "$REPO/deploy/Caddyfile.hq" /etc/caddy/Caddyfile
+        note=" Its web settings had been wiped (usually by a system upgrade); restored them."
+    fi
+    systemctl is-active -q caddy && systemctl reload caddy || systemctl restart caddy
+    sleep 30
+    if site_up; then
+        rm -f "$STATE/site_down"
+        tg "🔧 staalwag.com was down and has been fixed automatically.$note"
+    elif [ ! -f "$STATE/site_down" ]; then
+        touch "$STATE/site_down"
+        tg "🚨 staalwag.com is down and the automatic fix didn't work. Please check the server."
+    fi
+}
+site_guard
 
 BRANCH=$(git_app rev-parse --abbrev-ref HEAD) || { log "not a git checkout"; exit 1; }
 git_app fetch -q origin "$BRANCH" || { log "fetch failed (network?)"; exit 0; }
