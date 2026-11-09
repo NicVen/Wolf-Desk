@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0e15" />
+<title>Pip Value Calculator for Forex &amp; Gold (XAUUSD) · Free · STAALWAG</title>
+<meta name="description" content="Free pip value calculator: see what one pip is worth in US dollars on EURUSD, GBPUSD, USDJPY, gold (XAUUSD), silver and more, for any lot size." />
+<link rel="canonical" href="https://staalwag.com/pip-value-calculator" />
+<meta property="og:url" content="https://staalwag.com/pip-value-calculator" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="STAALWAG" />
+<meta property="og:title" content="Free pip value calculator: forex and gold" />
+<meta property="og:description" content="What is one pip worth on your trade? Answer in seconds." />
+<meta property="og:image" content="https://staalwag.com/og-staalwag.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="/favicon-32.png" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "WebApplication",
+   "name": "STAALWAG Pip Value Calculator",
+   "url": "https://staalwag.com/pip-value-calculator",
+   "applicationCategory": "FinanceApplication",
+   "operatingSystem": "Any",
+   "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+   "publisher": {"@id": "https://staalwag.com/#org"}
+  },
+  {
+   "@type": "FAQPage",
+   "mainEntity": [
+    {"@type": "Question", "name": "What is one pip worth on EURUSD?",
+     "acceptedAnswer": {"@type": "Answer", "text": "On EURUSD, GBPUSD, AUDUSD and NZDUSD one pip (0.0001) on 1.00 standard lot is worth $10. On 0.10 lots it is $1, and on 0.01 lots it is $0.10."}},
+    {"@type": "Question", "name": "What is one pip worth on USDJPY?",
+     "acceptedAnswer": {"@type": "Answer", "text": "One pip on USDJPY is 0.01, which is 1,000 yen on 1.00 lot. In US dollars that is 1,000 divided by the USDJPY price, so about $6.67 when USDJPY is 150."}},
+    {"@type": "Question", "name": "What is a pip worth on gold (XAUUSD)?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Most brokers set 1.00 lot of gold at 100 ounces. A $0.01 move is then $1 per lot, a $0.10 move is $10 and a $1 move is $100. Brokers differ on what they call a pip on gold, so this calculator works in dollars of price movement."}}
+   ]
+  }
+ ]
+}
+</script>
+<style>
+  :root{--bg:#0a0e15;--card:#131a26;--card2:#18212f;--line:#1e2a3a;--fg:#e7edf3;--mut:#7d8a9c;
+    --steel:#8aa0b4;--chrome:#c7d2dd;--accent:#6ea8fe;--good:#2ecc71;--bad:#ff5b5b;--watch:#f2c14e}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:22px 18px 40px}
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .logo{font-weight:900;letter-spacing:2px;color:var(--chrome);text-decoration:none}
+  .top a.small{color:var(--steel);font-size:13px;text-decoration:none}
+  h1{font-size:28px;line-height:1.2;margin:6px 0 8px}
+  h2{font-size:19px;margin:30px 0 8px}
+  p,li{color:var(--chrome)}
+  .lead{color:var(--mut);margin:0 0 18px}
+  .calc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+  label{display:block;font-size:13px;color:var(--steel);margin:12px 0 5px}
+  input,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--card2);
+    color:var(--fg);font-size:16px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .two label{margin-top:0}
+  .hidden{display:none}
+  .out{margin-top:16px;padding:14px;border-radius:12px;background:#0d131d;border:1px solid var(--line);text-align:center}
+  .big{font-size:34px;font-weight:900}
+  .sm{font-size:14px;color:var(--mut)}
+  .muted{font-size:12px;color:var(--mut);margin-top:12px}
+  .cta{margin-top:26px;background:linear-gradient(135deg,#142033,#0f1826);border:1px solid #2a3b55;border-radius:16px;padding:18px;text-align:center}
+  .cta h3{margin:0 0 6px}
+  .btn{display:inline-block;margin-top:10px;padding:14px 22px;border-radius:12px;background:var(--good);color:#04140a;
+    font-weight:800;text-decoration:none}
+  .faq b{display:block;color:var(--fg);margin-top:14px}
+  footer{margin-top:34px;font-size:12px;color:var(--mut);text-align:center}
+  footer a{color:var(--steel)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="logo" href="/">STAALWAG</a><a class="small" href="/play?s=pip-top">Get the free app &rarr;</a></div>
+
+  <h1>Pip value calculator: forex &amp; gold</h1>
+  <p class="lead">What one pip, or one dollar of price movement, is worth in US dollars on your trade. Free, no sign-up, works on your phone.</p>
+
+  <div class="calc">
+    <label for="pvSym">Market</label>
+    <select id="pvSym"></select>
+    <div class="two" style="margin-top:12px">
+      <div><label for="pvLots">Lot size</label><input id="pvLots" inputmode="decimal" value="1"></div>
+      <div id="pvPriceW"><label for="pvPrice">Current price</label><input id="pvPrice" inputmode="decimal"></div>
+    </div>
+    <div class="out" id="pvOut"></div>
+    <div class="muted">Assumes a US-dollar account and standard contract sizes. Check your broker's contract size on a new symbol. Education only, not financial advice.</div>
+  </div>
+
+  <div class="cta">
+    <h3>Take it with you</h3>
+    <p class="sm" style="margin:0"><b>STAALCALIBUR</b>, our free Android app, works out your lot size from your risk and stop, and shows the trend, trend strength and key levels for gold, forex, indices, stocks and crypto.</p>
+    <a class="btn" href="/play?s=pip-page">Get it free on Google Play</a>
+  </div>
+
+  <h2>How pip value is worked out</h2>
+  <p><b>Pip value = pip size &times; contract size &times; lots</b>, then turned into US dollars if the pair is not quoted in dollars.</p>
+  <ul>
+    <li><b>EURUSD, GBPUSD, AUDUSD, NZDUSD:</b> 0.0001 &times; 100,000 = <b>$10 per pip</b> on 1.00 lot.</li>
+    <li><b>USDJPY:</b> 0.01 &times; 100,000 = 1,000 yen per pip. Divide by the USDJPY price to get dollars.</li>
+    <li><b>USDCAD, USDCHF:</b> 0.0001 &times; 100,000 = 10 CAD or CHF per pip. Divide by the price to get dollars.</li>
+    <li><b>Gold (XAUUSD):</b> 100 ounces per lot, so <b>$100 per $1 move</b> and $1 per $0.01 move.</li>
+    <li><b>Silver (XAGUSD):</b> 5,000 ounces per lot, so $50 per $0.01 move.</li>
+  </ul>
+
+  <h2>Worked example: USDJPY</h2>
+  <p>You trade 0.50 lots of USDJPY and the price is 150.00. One pip is 1,000 yen &times; 0.50 = 500 yen. 500 &divide; 150 = <b>$3.33 per pip</b>. A 20-pip stop would cost about $66.67.</p>
+
+  <h2>Next step: size the trade</h2>
+  <p>Knowing the pip value is half the job. The <a href="/lot-size-calculator" style="color:var(--accent)">lot size calculator</a> uses it to find the biggest trade that keeps your loss inside your limit.</p>
+
+  <footer>&copy; <span id="yr"></span> STAALWAG · <a href="/">Home</a> · <a href="/lot-size-calculator">Lot size calculator</a> · <a href="/store">STAALCALIBUR app</a> · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a><br>
+  Education only. Not financial advice. Trading carries risk; never risk money you cannot afford to lose.</footer>
+</div>
+<script>
+// [code, label, contract size per lot, pip size, quote type, unit word]
+var PV=[
+  ["EURUSD","EURUSD",100000,0.0001,"usd","pip"],
+  ["GBPUSD","GBPUSD",100000,0.0001,"usd","pip"],
+  ["AUDUSD","AUDUSD",100000,0.0001,"usd","pip"],
+  ["NZDUSD","NZDUSD",100000,0.0001,"usd","pip"],
+  ["USDJPY","USDJPY",100000,0.01,"base","pip"],
+  ["USDCAD","USDCAD",100000,0.0001,"base","pip"],
+  ["USDCHF","USDCHF",100000,0.0001,"base","pip"],
+  ["XAUUSD","Gold (XAUUSD)",100,1,"usd","$1 move"],
+  ["XAGUSD","Silver (XAGUSD)",5000,0.01,"usd","$0.01 move"]
+];
+function el(id){ return document.getElementById(id); }
+function sym(c){ for(var i=0;i<PV.length;i++) if(PV[i][0]===c) return PV[i]; return PV[0]; }
+function num(id){ return parseFloat(String(el(id).value||"").replace(/[, ]/g,"")); }
+function usd(n){ return (Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function pipValue(code, lots, price){
+  var s=sym(code); if(!(lots>0)) return null;
+  var v=s[2]*s[3]*lots;
+  if(s[4]==="base"){ if(!(price>0)) return null; v=v/price; }
+  return v;
+}
+function calc(){
+  var s=sym(el("pvSym").value);
+  el("pvPriceW").style.visibility = s[4]==="base" ? "visible" : "hidden";
+  el("pvPrice").placeholder = s[0]==="USDJPY" ? "150.00" : "1.3500";
+  var v=pipValue(s[0], num("pvLots"), num("pvPrice")), out=el("pvOut");
+  if(v===null){ out.innerHTML='<div class="sm">'+(s[4]==="base"?"Enter the lot size and current price.":"Enter a lot size.")+'</div>'; return; }
+  var extra = s[0]==="XAUUSD" ? '<div class="sm">$'+usd(v/100)+' per $0.01 move · $'+usd(v/10)+' per $0.10 move</div>'
+            : '<div class="sm">10 pips = $'+usd(v*10)+' · 50 pips = $'+usd(v*50)+'</div>';
+  out.innerHTML='<div class="big" style="color:var(--good)">$'+usd(v)+'</div><div class="sm">per '+s[5]+' on '+num("pvLots")+' lot'+(num("pvLots")===1?'':'s')+'</div>'+extra;
+}
+el("pvSym").innerHTML=PV.map(function(s){ return '<option value="'+s[0]+'">'+s[1]+'</option>'; }).join("");
+["pvLots","pvPrice"].forEach(function(id){ el(id).oninput=calc; });
+el("pvSym").onchange=function(){ el("pvPrice").value=""; calc(); };
+el("yr").textContent=new Date().getFullYear();
+calc();
+</script>
+</body>
+</html>
