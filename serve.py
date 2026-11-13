@@ -47,6 +47,7 @@ from guardian import live as guardian_live
 from guardian import propfirms as guardian_propfirms
 import app_tools
 import app_stats
+import play_sync
 from scout.news import headlines
 
 PORT        = int(os.environ.get("PORT", "8777"))
@@ -916,6 +917,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
             except Exception as e:  # noqa: BLE001
                 body = {"error": str(e)}
             body["play_clicks"] = click_stats()   # older all-time counter (/clicks.json)
+            try:
+                body["google_play"] = play_sync.load()   # official Play numbers (nightly sync)
+                for c in ((body["google_play"].get("data") or {}).get("countries") or []):
+                    c["country"] = app_stats.COUNTRY_NAMES.get(c["cc"], c["cc"])
+            except Exception as e:  # noqa: BLE001
+                body["google_play"] = {"data": None, "status": {"state": "error", "error": str(e)}}
             self._send(200, json.dumps(body)); return
         if path.rstrip("/.") == "/stats":
             self._send(200, _read(os.path.join("dashboard", "stats.html"), b"<h2>Coming soon.</h2>"),
@@ -1190,6 +1197,7 @@ if __name__ == "__main__":
         print("WOLF: could not start marketing bot:", e)
     # Watchdog: restarts dead threads, alerts ADMIN_IDS, feeds /health.
     threading.Thread(target=watchdog.main, daemon=True).start()
+    threading.Thread(target=play_sync.loop, daemon=True).start()   # Google Play stats, every 6h
     class Server(socketserver.ThreadingTCPServer):
         allow_reuse_address = True
         daemon_threads = True

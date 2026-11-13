@@ -106,6 +106,7 @@ class StatsEndpointTest(unittest.TestCase):
         d = json.loads(body)
         self.assertGreaterEqual(d["site"]["views_today"], 1)
         self.assertIn("play_clicks", d)
+        self.assertIn("google_play", d)
 
     def test_dashboard_is_installable_and_private(self):
         code, body = self.req("/stats")
