@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#0a0e15" />
+<title>STAALCALIBUR Stats</title>
+<link rel="manifest" href="/stats.webmanifest" />
+<link rel="icon" href="/favicon-32.png" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<style>
+:root{--bg:#0a0e15;--card:#111723;--line:#1f2938;--txt:#e6ebf2;--mut:#8791a0;--blue:#6ea8ff;--green:#2ecc71;--amber:#f5b041;--red:#ff6b6b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.45 -apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:22px 18px 40px}
+.top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+h1{font-size:24px;margin:0;letter-spacing:.5px}
+h1 b{color:var(--blue)}
+h2{font-size:16px;margin:26px 0 10px;color:var(--txt)}
+.mut{color:var(--mut);font-size:13px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.tile .n{font-size:30px;font-weight:800}
+.tile .l{color:var(--mut);font-size:13px;margin-top:2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;overflow-x:auto}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--mut);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+td.r,th.r{text-align:right}
+.bar{height:8px;border-radius:4px;background:var(--blue)}
+.funnel{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
+.step{flex:1;min-width:150px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center}
+.step .n{font-size:28px;font-weight:800}
+.arrow{align-self:center;color:var(--mut);font-size:22px}
+.legend span{display:inline-flex;align-items:center;gap:5px;margin-right:14px;font-size:12px;color:var(--mut)}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.note{background:#0f1a2b;border:1px solid #213656;border-radius:14px;padding:12px 14px;font-size:13px;color:#b9c6d8;margin-top:22px}
+.empty{color:var(--mut);font-size:13px;padding:6px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>STAALCALIBUR <b>Stats</b></h1>
+    <div class="mut" id="upd">Loading…</div>
+  </div>
+
+  <h2>The app</h2>
+  <div class="tiles" id="appTiles"></div>
+
+  <h2>Last 30 days</h2>
+  <div class="card">
+    <div class="legend"><span><i style="background:var(--blue)"></i>Phones using the app</span><span><i style="background:var(--green)"></i>New installs</span></div>
+    <svg id="chartApp" width="100%" height="150"></svg>
+    <div class="legend" style="margin-top:10px"><span><i style="background:#3a4a63"></i>Website visits</span><span><i style="background:var(--amber)"></i>Google Play taps</span></div>
+    <svg id="chartSite" width="100%" height="120"></svg>
+  </div>
+
+  <h2>Just looking, or using? (last 7 days)</h2>
+  <div class="funnel" id="funnel"></div>
+
+  <h2>Countries</h2>
+  <div class="card"><table id="cc"></table></div>
+
+  <div class="grid2">
+    <div>
+      <h2>What people use in the app (30 days)</h2>
+      <div class="card"><table id="tools"></table></div>
+    </div>
+    <div>
+      <h2>Website pages (7 days)</h2>
+      <div class="card"><table id="pages"></table></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Exact installs and uninstalls:</b> Google counts those itself. Open Play Console, then STAALCALIBUR, then <b>Statistics</b>.
+    This page counts what happens inside the app and on staalwag.com. "Phones with the app" means phones that opened the installed app at least once since counting started.
+    "Probably uninstalled" means installed phones not opened for 30 days or more.<br><br>
+    <b>No personal details are stored.</b> No names, emails, keys or IP addresses. Country comes from the phone's time zone setting. Each phone is a random code that can't be traced back to a person.
+  </div>
+</div>
+<script>
+function el(id){ return document.getElementById(id); }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+function fmt(n){ return (n||0).toLocaleString(); }
+function flag(cc){ if(!/^[A-Z]{2}$/.test(cc)) return "🌐"; return String.fromCodePoint(127397+cc.charCodeAt(0),127397+cc.charCodeAt(1)); }
+function tile(n,l,color){ return '<div class="tile"><div class="n"'+(color?' style="color:'+color+'"':'')+'>'+fmt(n)+'</div><div class="l">'+l+'</div></div>'; }
+var NAMES={"risk-sizer":"Risk Sizer","prime-hours":"Prime Hours","guardian":"Guardian","quiz":"Daily quiz","ideas-board":"Ideas board",
+  "suggest":"Sent an idea or bug","outlook":"Market outlook","market-switch":"Switched market (gold, FX, ...)"};
+function bars(svg, rows, series, labels){
+  var w=svg.clientWidth||800, h=+svg.getAttribute("height"), pad=18, n=rows.length, gw=(w-10)/n;
+  var max=1; rows.forEach(function(r){ series.forEach(function(s){ max=Math.max(max,r[s[0]]||0); }); });
+  var bw=Math.max(2,(gw-4)/series.length), out="";
+  rows.forEach(function(r,i){
+    series.forEach(function(s,j){
+      var v=r[s[0]]||0, bh=Math.round((h-pad-14)*v/max), x=5+i*gw+2+j*bw, y=h-pad-bh;
+      out+='<rect x="'+x.toFixed(1)+'" y="'+y+'" width="'+(bw-1).toFixed(1)+'" height="'+bh+'" rx="2" fill="'+s[1]+'"><title>'+r.day+': '+v+' '+s[2]+'</title></rect>';
+      if(v && labels) out+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(y-3)+'" fill="#8791a0" font-size="9" text-anchor="middle">'+v+'</text>';
+    });
+    if(i%5===4||i===n-1) out+='<text x="'+(5+i*gw+gw/2).toFixed(1)+'" y="'+(h-4)+'" fill="#8791a0" font-size="10" text-anchor="middle">'+r.day.slice(5)+'</text>';
+  });
+  svg.innerHTML=out;
+}
+function render(d){
+  var a=d.app, s=d.site;
+  el("upd").textContent="Updated "+new Date().toLocaleTimeString()+" · refreshes every minute";
+  el("appTiles").innerHTML=
+    tile(a.installs_seen,"Phones with the app")+
+    tile(a.new_installs_7d,"New phones this week",getComputedStyle(document.body).getPropertyValue("--green"))+
+    tile(a.active.today,"Using it today")+
+    tile(a.active["7d"],"Using it this week")+
+    tile(a.active["30d"],"Using it this month")+
+    tile(a.opens_7d,"App opens this week")+
+    tile(a.probably_uninstalled,"Probably uninstalled (30+ days quiet)","#ff6b6b")+
+    tile(a.browser_users,"Used it in a browser, not installed");
+  bars(el("chartApp"), d.chart, [["active","#6ea8ff","phones using"],["new_installs","#2ecc71","new installs"]], true);
+  bars(el("chartSite"), d.chart, [["views","#3a4a63","website visits"],["play_taps","#f5b041","Play taps"]], false);
+  el("funnel").innerHTML=
+    '<div class="step"><div class="n">'+fmt(s.views_7d)+'</div><div class="mut">Website visits</div></div><div class="arrow">→</div>'+
+    '<div class="step"><div class="n" style="color:var(--amber)">'+fmt(s.play_taps_7d)+'</div><div class="mut">Tapped "Get it on Google Play"</div></div><div class="arrow">→</div>'+
+    '<div class="step"><div class="n" style="color:var(--green)">'+fmt(a.new_installs_7d)+'</div><div class="mut">Installed and opened the app</div></div><div class="arrow">→</div>'+
+    '<div class="step"><div class="n" style="color:var(--blue)">'+fmt(a.active["7d"])+'</div><div class="mut">Actually using it</div></div>';
+  el("cc").innerHTML = d.countries.length ?
+    '<tr><th>Country</th><th class="r">Phones with app</th><th class="r">Using (7 days)</th><th class="r">Website visits (30d)</th><th class="r">Play taps (30d)</th></tr>'+
+    d.countries.map(function(r){ return '<tr><td>'+flag(r.cc)+' '+esc(r.country)+'</td><td class="r">'+fmt(r.installs)+'</td><td class="r">'+fmt(r.active_7d)+'</td><td class="r">'+fmt(r.views_30d)+'</td><td class="r">'+fmt(r.play_taps_30d)+'</td></tr>'; }).join("")
+    : '<tr><td class="empty">No visits counted yet.</td></tr>';
+  var tmax=1; d.tools_30d.forEach(function(t){ tmax=Math.max(tmax,t.uses); });
+  el("tools").innerHTML = d.tools_30d.length ?
+    d.tools_30d.map(function(t){ return '<tr><td>'+esc(NAMES[t.tool]||t.tool)+'</td><td style="width:40%"><div class="bar" style="width:'+Math.round(100*t.uses/tmax)+'%"></div></td><td class="r">'+fmt(t.uses)+'</td></tr>'; }).join("")
+    : '<tr><td class="empty">Nothing used yet.</td></tr>';
+  el("pages").innerHTML = d.pages_7d.length ?
+    '<tr><th>Page</th><th class="r">Visits</th><th class="r">Play taps</th></tr>'+
+    d.pages_7d.map(function(p){ return '<tr><td>'+esc(p.page)+'</td><td class="r">'+fmt(p.views)+'</td><td class="r">'+fmt(p.play_taps)+'</td></tr>'; }).join("")
+    : '<tr><td class="empty">No visits counted yet.</td></tr>';
+}
+function load(){
+  fetch("/stats.json",{cache:"no-store"}).then(function(r){ return r.json(); }).then(function(d){
+    if(d.error){ el("upd").textContent="Stats error: "+d.error; return; }
+    render(d);
+  }).catch(function(){ el("upd").textContent="Can't reach staalwag.com right now. Retrying…"; });
+}
+load(); setInterval(load, 60000);
+</script>
+</body>
+</html>

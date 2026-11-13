@@ -46,6 +46,7 @@ from guardian import mt5 as guardian_mt5
 from guardian import live as guardian_live
 from guardian import propfirms as guardian_propfirms
 import app_tools
+import app_stats
 from scout.news import headlines
 
 PORT        = int(os.environ.get("PORT", "8777"))
@@ -529,7 +530,7 @@ SITEMAP_XML = (
     + "".join("  <url><loc>%s%s</loc></url>\n" % (SITE_URL, p) for p in SITEMAP_PATHS)
     + "</urlset>\n")
 _ROBOTS_PRIVATE = ["/app", "/data", "/refresh", "/news", "/login", "/auth", "/go",
-                   "/l", "/play", "/clicks.json", "/markov.json", "/health"]
+                   "/l", "/play", "/clicks.json", "/markov.json", "/health", "/stats", "/hit"]
 
 
 # ---- Google Play links -------------------------------------------------------
@@ -647,6 +648,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
             except Exception as e:
                 self._send(400, json.dumps({"error": str(e)}))
             return
+
+        # Anonymous usage counter (app opens, tools, page views, Play taps).
+        if path == "/hit":
+            try:
+                ln = int(self.headers.get("Content-Length", "0") or "0")
+                if 0 < ln <= 2000:
+                    app_stats.record(json.loads(self.rfile.read(ln).decode("utf-8", "replace")))
+            except Exception:
+                pass
+            self._send(204, b"", "text/plain"); return
 
         # ---- STOREFRONT proxy (same-origin bridge to licensing) --------------
         # Guardian (app add-on): judge one trade before it's taken, from the
@@ -896,6 +907,25 @@ class Handler(http.server.BaseHTTPRequestHandler):
             stats = click_stats()
             total = sum(s["clicks"] for s in stats)
             self._send(200, json.dumps({"total_clicks": total, "by_channel": stats})); return
+        # Anonymous app + site stats (no personal data; see app_stats.py).
+        # /stats is Nic's dashboard (installable on the desktop as an app).
+        if path == "/stats.json":
+            try:
+                app_stats.prune()
+                body = app_stats.stats()
+            except Exception as e:  # noqa: BLE001
+                body = {"error": str(e)}
+            body["play_clicks"] = click_stats()   # older all-time counter (/clicks.json)
+            self._send(200, json.dumps(body)); return
+        if path.rstrip("/.") == "/stats":
+            self._send(200, _read(os.path.join("dashboard", "stats.html"), b"<h2>Coming soon.</h2>"),
+                       "text/html; charset=utf-8"); return
+        if path == "/stats.webmanifest":
+            self._send(200, _read(os.path.join("dashboard", "stats.webmanifest"), b"{}"),
+                       "application/manifest+json"); return
+        if path == "/hit.js":
+            self._send(200, _read(os.path.join("dashboard", "hit.js"), b""),
+                       "application/javascript; charset=utf-8"); return
         if path == "/health":
             # watchdog report — ungated so uptime pingers can watch the watcher.
             # 200 all green / 503 anything down (component names only, no intel).

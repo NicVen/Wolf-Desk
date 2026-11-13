@@ -1448,6 +1448,27 @@ function calcSizer(){
 }
 function fmtUsd(n){ return (Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
+// ---------- anonymous usage counter (no personal data: random install id is hashed on the server,
+// country comes from the phone's time zone; no key, name or IP is stored) ----------
+function HIT(e,k){
+  try{
+    var tz=""; try{ tz=Intl.DateTimeFormat().resolvedOptions().timeZone||""; }catch(x){}
+    var app=((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone || document.referrer.indexOf("android-app://")===0) ? 1 : 0;
+    var b=JSON.stringify({e:e,k:k||"",tz:tz,d:DEV(),app:app});
+    if(navigator.sendBeacon && navigator.sendBeacon("/hit", new Blob([b],{type:"text/plain"}))) return;
+    fetch("/hit",{method:"POST",body:b,keepalive:true}).catch(function(){});
+  }catch(x){}
+}
+[["openSizer","risk-sizer"],["openHours","prime-hours"],["openGuardian","guardian"],["openQuiz","quiz"],
+ ["openIdeas","ideas-board"],["openSuggest","suggest"],["showOutlook","outlook"],["pick","market-switch"]].forEach(function(p){
+  var f=window[p[0]]; if(typeof f!=="function") return;
+  window[p[0]]=function(){ HIT("tool",p[1]); return f.apply(this,arguments); };
+});
+var _hitAt=0;
+function hitOpen(){ var t=Date.now(); if(t-_hitAt>30*60*1000){ _hitAt=t; HIT("open","app"); } }
+hitOpen();
+document.addEventListener("visibilitychange", function(){ if(!document.hidden) hitOpen(); });
+
 // ---------- boot + PWA ----------
 try{ var _tf=localStorage.getItem("sc_tf"); if(_tf==="daily"||_tf==="1h") TF=_tf; }catch(e){}
 setVerLabel();
