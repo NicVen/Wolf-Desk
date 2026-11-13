@@ -673,7 +673,8 @@ class H(BaseHTTPRequestHandler):
             if one("tok"):
                 if _token_ok(one("tok")):
                     return self._send(302, b"", "text/plain",
-                                      {"Location": "/", "Set-Cookie": _hq_cookie()})
+                                      {"Location": "/?k=" + _hq_cookie_value(),
+                                       "Set-Cookie": _hq_cookie()})
                 return self._send(302, b"", "text/plain", {"Location": "/"})
             return self._admin_page()
 
@@ -701,6 +702,11 @@ class H(BaseHTTPRequestHandler):
             self._admin_list()
         elif u.path == "/admin/app_stats":
             self._admin_app_stats()
+        elif u.path == "/admin/hq_key":
+            # the device key for an HQ address that unlocks itself (see ADMIN_HTML)
+            if not self._admin_ok():
+                return self._send(403, {"error": "forbidden"})
+            self._send(200, {"key": _hq_cookie_value()})
         elif u.path == "/admin/suggestions":
             self._admin_suggestions()
         elif u.path == "/admin/quiz_stats":
@@ -807,7 +813,8 @@ class H(BaseHTTPRequestHandler):
             data = {}
         if not _token_ok(str(data.get("token") or "").strip()):
             return self._send(403, {"error": "forbidden"})
-        self._send(200, {"ok": True}, headers={"Set-Cookie": _hq_cookie()})
+        self._send(200, {"ok": True, "key": _hq_cookie_value()},
+                   headers={"Set-Cookie": _hq_cookie()})
 
     # ---- handlers ----
     def _verify(self, key, account, machine, product):
@@ -1701,13 +1708,20 @@ window.addEventListener('unhandledrejection',function(e){window.showDiag('PROMIS
  </div>
 </div>
 <script>
+// HQ address that unlocks itself: ...?k=DEVICEKEY. Some browsers wipe cookies and
+// storage every time they close, so the key also rides in the address itself
+// (bookmark / installed app). It is a fingerprint of the token, never the token.
+function K(){try{return new URLSearchParams(location.search).get("k")||""}catch(e){return""}}
+(function(){var k=K();if(k)document.cookie="hq_auth="+encodeURIComponent(k)+"; Max-Age=34560000; Path=/; Secure; SameSite=Strict";})();
+function keepKey(k){if(k&&K()!==k){try{history.replaceState(null,"",location.pathname+"?k="+encodeURIComponent(k))}catch(e){}}}
 function T(){try{return localStorage.getItem("hq_tok")||""}catch(e){return""}}
 function H(){return {"X-Admin-Token":T()}}
 function esc(x){return (x==null?"":String(x)).replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
 function unlock(){var t=document.getElementById("tok").value.trim();if(!t)return;try{localStorage.setItem("hq_tok",t)}catch(e){}
  var g=document.getElementById("gerr");if(g)g.textContent="Checking…";
  fetch("/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:t}),credentials:"same-origin"})
-  .then(function(r){if(r.status==403){if(g)g.textContent="Wrong token (403).";return;}loadAll(true);})
+  .then(function(r){if(r.status==403){if(g)g.textContent="Wrong token (403).";return;}
+   return r.json().then(function(d){keepKey(d.key);loadAll(true);});})
   .catch(function(){if(g)g.textContent="Couldn't reach HQ.";});}
 function tab(p){var ts=document.querySelectorAll(".tab");for(var i=0;i<ts.length;i++)ts[i].className="tab"+(ts[i].getAttribute("data-p")===p?" on":"");
  var ps=document.querySelectorAll(".pane");for(var j=0;j<ps.length;j++)ps[j].className="pane"+(ps[j].id==="p-"+p?" on":"");}
@@ -1749,6 +1763,7 @@ function loadAll(loud){
   document.getElementById("gate").style.display="none";document.getElementById("hq").style.display="";
   document.getElementById("gtiles").innerHTML=tile(s.installed,"App keys")+tile(s.subscribed,"Active subs",1)+tile(s.active_7d,"Using (7d)")+tile(s.suggestions_new,"New suggestions");
   loadHealth();loadApp();loadLic();renderLinks();
+  if(!K())fetch("/admin/hq_key",{headers:H()}).then(function(r){return r.ok?r.json():{}}).then(function(d){keepKey(d.key)}).catch(function(){});
  }).catch(function(e){
   // Not remembered on this device yet: just show the unlock box, no alarm.
   if(e===0&&!loud){showGate("");return;}
