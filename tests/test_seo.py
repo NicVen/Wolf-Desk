@@ -141,6 +141,17 @@ class SeoTest(unittest.TestCase):
         for other in ("/lot-size-calculator", "/pip-value-calculator"):
             self.assertIn('href="/risk-reward-calculator"', self.get(other)[2])
 
+    def test_prop_firm_drawdown_calculator_page(self):
+        code, _, body = self.get("/prop-firm-drawdown-calculator")
+        self.assertEqual(code, 200)
+        self.assertIn('<link rel="canonical" href="https://staalwag.com/prop-firm-drawdown-calculator"', body)
+        self.assertIn('href="/play?s=prop-page"', body)
+        json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>', body, re.S).group(1))
+        for word in ("BUY", "SELL"):   # facts-only rule
+            self.assertNotRegex(body, r"\b%s\b" % word)
+        for other in ("/lot-size-calculator", "/pip-value-calculator", "/risk-reward-calculator"):
+            self.assertIn('href="/prop-firm-drawdown-calculator"', self.get(other)[2])
+
 
 if __name__ == "__main__":
     unittest.main()

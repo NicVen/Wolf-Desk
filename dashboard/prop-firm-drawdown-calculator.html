@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0e15" />
+<title>Prop Firm Daily Drawdown Calculator · Free · STAALWAG</title>
+<meta name="description" content="Free prop firm drawdown calculator. See how much you can still lose today and overall before breaking your challenge's daily loss and max drawdown rules, and how many losing trades that is." />
+<link rel="canonical" href="https://staalwag.com/prop-firm-drawdown-calculator" />
+<meta property="og:url" content="https://staalwag.com/prop-firm-drawdown-calculator" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="STAALWAG" />
+<meta property="og:title" content="Free prop firm daily drawdown calculator" />
+<meta property="og:description" content="How close are you to breaking your challenge? Find out in seconds." />
+<meta property="og:image" content="https://staalwag.com/og-staalwag.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="/favicon-32.png" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "WebApplication",
+   "name": "STAALWAG Prop Firm Drawdown Calculator",
+   "url": "https://staalwag.com/prop-firm-drawdown-calculator",
+   "applicationCategory": "FinanceApplication",
+   "operatingSystem": "Any",
+   "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+   "publisher": {"@id": "https://staalwag.com/#org"}
+  },
+  {
+   "@type": "FAQPage",
+   "mainEntity": [
+    {"@type": "Question", "name": "How is the daily drawdown limit worked out?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Most prop firm challenges take a percentage of the account size (often 5%) away from the balance or equity you started the day with. On a $100,000 account starting the day at $101,000 with a 5% daily limit, your equity must stay above $96,000 today."}},
+    {"@type": "Question", "name": "What is the difference between daily and maximum drawdown?",
+     "acceptedAnswer": {"@type": "Answer", "text": "The daily limit resets every day. The maximum (overall) drawdown is a floor for the whole challenge, often 10% below the starting account size, so a $100,000 account must never drop below $90,000."}},
+    {"@type": "Question", "name": "Do all prop firms use the same rules?",
+     "acceptedAnswer": {"@type": "Answer", "text": "No. Firms differ on the percentages, whether the daily limit uses balance or equity, when the day resets, and whether the overall limit trails your highest balance. Check your own firm's rules and enter its numbers."}}
+   ]
+  }
+ ]
+}
+</script>
+<style>
+  :root{--bg:#0a0e15;--card:#131a26;--card2:#18212f;--line:#1e2a3a;--fg:#e7edf3;--mut:#7d8a9c;
+    --steel:#8aa0b4;--chrome:#c7d2dd;--accent:#6ea8fe;--good:#2ecc71;--bad:#ff5b5b;--watch:#f2c14e}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:22px 18px 40px}
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .logo{font-weight:900;letter-spacing:2px;color:var(--chrome);text-decoration:none}
+  .top a.small{color:var(--steel);font-size:13px;text-decoration:none}
+  h1{font-size:28px;line-height:1.2;margin:6px 0 8px}
+  h2{font-size:19px;margin:30px 0 8px}
+  p,li{color:var(--chrome)}
+  .lead{color:var(--mut);margin:0 0 18px}
+  .calc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+  label{display:block;font-size:13px;color:var(--steel);margin:12px 0 5px}
+  input,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--card2);
+    color:var(--fg);font-size:16px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .two label{margin-top:0}
+  .hidden{display:none}
+  .out{margin-top:16px;padding:14px;border-radius:12px;background:#0d131d;border:1px solid var(--line);text-align:center}
+  .big{font-size:34px;font-weight:900}
+  .sm{font-size:14px;color:var(--mut)}
+  .muted{font-size:12px;color:var(--mut);margin-top:12px}
+  .cta{margin-top:26px;background:linear-gradient(135deg,#142033,#0f1826);border:1px solid #2a3b55;border-radius:16px;padding:18px;text-align:center}
+  .cta h3{margin:0 0 6px}
+  .btn{display:inline-block;margin-top:10px;padding:14px 22px;border-radius:12px;background:var(--good);color:#04140a;
+    font-weight:800;text-decoration:none}
+  .faq b{display:block;color:var(--fg);margin-top:14px}
+  footer{margin-top:34px;font-size:12px;color:var(--mut);text-align:center}
+  footer a{color:var(--steel)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="logo" href="/">STAALWAG</a><a class="small" href="/play?s=prop-top">Get the free app &rarr;</a></div>
+
+  <h1>Prop firm daily drawdown calculator</h1>
+  <p class="lead">How much can you still lose today, and overall, before you break your challenge rules? And how many losing trades is that? Free, no sign-up.</p>
+
+  <div class="calc">
+    <div class="two">
+      <div><label for="pfSize">Account size ($)</label><input id="pfSize" inputmode="decimal" placeholder="100000"></div>
+      <div><label for="pfDay0">Balance at start of today ($)</label><input id="pfDay0" inputmode="decimal" placeholder="101000"></div>
+    </div>
+    <div class="two" style="margin-top:12px">
+      <div><label for="pfDaily">Daily loss limit (%)</label><input id="pfDaily" inputmode="decimal" value="5"></div>
+      <div><label for="pfMax">Max drawdown (%)</label><input id="pfMax" inputmode="decimal" value="10"></div>
+    </div>
+    <div class="two" style="margin-top:12px">
+      <div><label for="pfNow">Equity right now ($)</label><input id="pfNow" inputmode="decimal" placeholder="99500"></div>
+      <div><label for="pfRisk">Risk per trade (%)</label><input id="pfRisk" inputmode="decimal" value="1"></div>
+    </div>
+    <div class="out" id="pfOut"></div>
+    <div class="muted">Uses the common rules: daily limit = % of account size below today's starting balance; max drawdown = % below the account size (not trailing). Check your firm's exact rules. Education only, not financial advice.</div>
+  </div>
+
+  <div class="cta">
+    <h3>Take it with you</h3>
+    <p class="sm" style="margin:0"><b>STAALCALIBUR</b>, our free Android app, sizes every trade to your risk so a losing streak can't blow your challenge, and shows the trend, trend strength and key levels for gold, forex, indices and crypto.</p>
+    <a class="btn" href="/play?s=prop-page">Get it free on Google Play</a>
+  </div>
+
+  <h2>How it is worked out</h2>
+  <ul>
+    <li><b>Today's floor</b> = balance at start of today &minus; (account size &times; daily limit %).</li>
+    <li><b>Overall floor</b> = account size &minus; (account size &times; max drawdown %).</li>
+    <li><b>Room left</b> = equity now &minus; the higher of the two floors.</li>
+    <li><b>Losing trades left</b> = room left &divide; (account size &times; risk per trade %), rounded down.</li>
+  </ul>
+
+  <h2>Worked example</h2>
+  <p>$100,000 challenge, 5% daily and 10% max. You started today at $101,000, so today's floor is $96,000. The overall floor is $90,000. Your equity is $99,500, so you have <b>$3,500</b> of room today. At 1% ($1,000) per trade that is <b>3 full losing trades</b> before you would break the daily rule.</p>
+
+  <h2>Why traders keep risk small</h2>
+  <p>At 1% per trade, five losses in a row costs about 5% and ends the day. At 0.5% it costs about 2.5%, leaving room to recover. The <a href="/lot-size-calculator" style="color:var(--accent)">lot size calculator</a> turns your risk % into a lot size.</p>
+
+  <footer>&copy; <span id="yr"></span> STAALWAG · <a href="/">Home</a> · <a href="/lot-size-calculator">Lot size calculator</a> · <a href="/pip-value-calculator">Pip value calculator</a> · <a href="/risk-reward-calculator">Risk reward calculator</a> · <a href="/store">STAALCALIBUR app</a> · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a><br>
+  Education only. Not financial advice. Trading carries risk; never risk money you cannot afford to lose.</footer>
+</div>
+<script>
+function el(id){ return document.getElementById(id); }
+function num(id){ return parseFloat(String(el(id).value||"").replace(/[, ]/g,"")); }
+function usd(n){ return (Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function room(size, day0, dailyPct, maxPct, now, riskPct){
+  if(!(size>0)||!(day0>0)||!(dailyPct>0)||!(maxPct>0)||!(now>0)) return null;
+  var dayFloor=day0-size*dailyPct/100, maxFloor=size-size*maxPct/100;
+  var floor=Math.max(dayFloor,maxFloor), left=now-floor;
+  var perTrade = riskPct>0 ? size*riskPct/100 : 0;
+  return {dayFloor:dayFloor, maxFloor:maxFloor, floor:floor, left:left,
+          dayLeft:now-dayFloor, maxLeft:now-maxFloor,
+          trades: perTrade>0 ? Math.max(0,Math.floor(left/perTrade+1e-9)) : null, perTrade:perTrade};
+}
+function calc(){
+  var r=room(num("pfSize"),num("pfDay0"),num("pfDaily"),num("pfMax"),num("pfNow"),num("pfRisk")), out=el("pfOut");
+  if(!r){ out.innerHTML='<div class="sm">Fill in the boxes above.</div>'; return; }
+  if(r.left<=0){
+    out.innerHTML='<div class="big" style="color:var(--bad)">Limit reached</div><div class="sm">Equity is at or below the '+(r.floor===r.dayFloor?'daily':'overall')+' floor of $'+usd(r.floor)+'.</div>';
+    return;
+  }
+  var colour = r.trades!==null && r.trades<2 ? 'var(--watch)' : 'var(--good)';
+  out.innerHTML='<div class="big" style="color:'+colour+'">$'+usd(r.left)+' left</div>'+
+    '<div class="sm">before the '+(r.floor===r.dayFloor?'daily':'overall')+' limit (floor $'+usd(r.floor)+')</div>'+
+    (r.trades!==null ? '<div class="sm">That is <b>'+r.trades+'</b> full losing trade'+(r.trades===1?'':'s')+' at $'+usd(r.perTrade)+' each</div>' : '')+
+    '<div class="sm">Today: $'+usd(r.dayLeft)+' left · Overall: $'+usd(r.maxLeft)+' left</div>';
+}
+["pfSize","pfDay0","pfDaily","pfMax","pfNow","pfRisk"].forEach(function(id){ el(id).oninput=calc; });
+el("yr").textContent=new Date().getFullYear();
+calc();
+</script>
+</body>
+</html>
