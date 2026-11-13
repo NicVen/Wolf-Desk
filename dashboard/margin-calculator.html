@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0e15" />
+<title>Forex Margin Calculator · Free · STAALWAG</title>
+<meta name="description" content="Free forex margin calculator. Enter the market, lot size and your leverage to see the margin your broker holds for the trade, how much of your account it uses, and the most lots your balance allows." />
+<link rel="canonical" href="https://staalwag.com/margin-calculator" />
+<meta property="og:url" content="https://staalwag.com/margin-calculator" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="STAALWAG" />
+<meta property="og:title" content="Free forex margin calculator" />
+<meta property="og:description" content="How much margin does this trade need at your leverage? Find out in seconds." />
+<meta property="og:image" content="https://staalwag.com/og-staalwag.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="/favicon-32.png" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "WebApplication",
+   "name": "STAALWAG Forex Margin Calculator",
+   "url": "https://staalwag.com/margin-calculator",
+   "applicationCategory": "FinanceApplication",
+   "operatingSystem": "Any",
+   "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+   "publisher": {"@id": "https://staalwag.com/#org"}
+  },
+  {
+   "@type": "FAQPage",
+   "mainEntity": [
+    {"@type": "Question", "name": "How is forex margin worked out?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Margin = contract size x lots x price of the base currency in dollars, divided by your leverage. One lot of EURUSD at 1.1000 is $110,000 of currency; at 1:100 leverage the broker holds $1,100 as margin."}},
+    {"@type": "Question", "name": "Is margin the same as the money I can lose?",
+     "acceptedAnswer": {"@type": "Answer", "text": "No. Margin is a deposit the broker sets aside while the trade is open. What you can lose depends on your stop loss and lot size, not on the margin. Use a lot size calculator for that."}},
+    {"@type": "Question", "name": "What happens if my margin level gets too low?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Margin level is equity divided by used margin. If losses push it below your broker's margin call level (often 100%) you cannot open new trades, and below the stop-out level (often 50%) the broker starts closing trades for you."}}
+   ]
+  }
+ ]
+}
+</script>
+<style>
+  :root{--bg:#0a0e15;--card:#131a26;--card2:#18212f;--line:#1e2a3a;--fg:#e7edf3;--mut:#7d8a9c;
+    --steel:#8aa0b4;--chrome:#c7d2dd;--accent:#6ea8fe;--good:#2ecc71;--bad:#ff5b5b;--watch:#f2c14e}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:22px 18px 40px}
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .logo{font-weight:900;letter-spacing:2px;color:var(--chrome);text-decoration:none}
+  .top a.small{color:var(--steel);font-size:13px;text-decoration:none}
+  h1{font-size:28px;line-height:1.2;margin:6px 0 8px}
+  h2{font-size:19px;margin:30px 0 8px}
+  p,li{color:var(--chrome)}
+  .lead{color:var(--mut);margin:0 0 18px}
+  .calc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+  label{display:block;font-size:13px;color:var(--steel);margin:12px 0 5px}
+  input,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--card2);
+    color:var(--fg);font-size:16px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .two label{margin-top:0}
+  .hidden{display:none}
+  .out{margin-top:16px;padding:14px;border-radius:12px;background:#0d131d;border:1px solid var(--line);text-align:center}
+  .big{font-size:34px;font-weight:900}
+  .sm{font-size:14px;color:var(--mut)}
+  .muted{font-size:12px;color:var(--mut);margin-top:12px}
+  .cta{margin-top:26px;background:linear-gradient(135deg,#142033,#0f1826);border:1px solid #2a3b55;border-radius:16px;padding:18px;text-align:center}
+  .cta h3{margin:0 0 6px}
+  .btn{display:inline-block;margin-top:10px;padding:14px 22px;border-radius:12px;background:var(--good);color:#04140a;
+    font-weight:800;text-decoration:none}
+  .faq b{display:block;color:var(--fg);margin-top:14px}
+  footer{margin-top:34px;font-size:12px;color:var(--mut);text-align:center}
+  footer a{color:var(--steel)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="logo" href="/">STAALWAG</a><a class="small" href="/play?s=margin-top">Get the free app &rarr;</a></div>
+
+  <h1>Forex margin calculator</h1>
+  <p class="lead">How much margin your broker holds for a trade at your leverage, and how much of your account that uses. Free, no sign-up, works on your phone.</p>
+
+  <div class="calc">
+    <label for="mgSym">Market</label>
+    <select id="mgSym"></select>
+    <div class="two" style="margin-top:12px">
+      <div><label for="mgLots">Lot size</label><input id="mgLots" inputmode="decimal" value="1"></div>
+      <div id="mgPriceW"><label for="mgPrice">Current price</label><input id="mgPrice" inputmode="decimal"></div>
+    </div>
+    <div class="two" style="margin-top:12px">
+      <div><label for="mgLev">Leverage (1:)</label><input id="mgLev" inputmode="numeric" value="100"></div>
+      <div><label for="mgBal">Account balance ($, optional)</label><input id="mgBal" inputmode="decimal" placeholder="10000"></div>
+    </div>
+    <div class="out" id="mgOut"></div>
+    <div class="muted">Assumes a US-dollar account and standard contract sizes. Some brokers use different leverage for gold or for big positions; check yours. Education only, not financial advice.</div>
+  </div>
+
+  <div class="cta">
+    <h3>Take it with you</h3>
+    <p class="sm" style="margin:0"><b>STAALCALIBUR</b>, our free Android app, works out your lot size from your risk and stop, and shows the trend, trend strength and key levels for gold, forex, indices, stocks and crypto.</p>
+    <a class="btn" href="/play?s=margin-page">Get it free on Google Play</a>
+  </div>
+
+  <h2>How margin is worked out</h2>
+  <p><b>Margin = contract size &times; lots &times; price in dollars &divide; leverage.</b></p>
+  <ul>
+    <li><b>EURUSD, GBPUSD, AUDUSD, NZDUSD:</b> 100,000 units &times; the price. At 1.1000 that's $110,000 per lot, so at 1:100 the margin is <b>$1,100</b>.</li>
+    <li><b>USDJPY, USDCAD, USDCHF:</b> the first currency is already dollars, so 1 lot is $100,000 whatever the price. At 1:100 that's <b>$1,000</b>.</li>
+    <li><b>Gold (XAUUSD):</b> 100 ounces per lot. At $2,400 that's $240,000 per lot, so at 1:100 the margin is <b>$2,400</b>.</li>
+    <li><b>Silver (XAGUSD):</b> 5,000 ounces per lot.</li>
+  </ul>
+
+  <h2>Worked example: gold at 1:30</h2>
+  <p>You open 0.20 lots of gold at $2,400 with 1:30 leverage. 100 &times; 0.20 &times; 2,400 = $48,000 of gold. $48,000 &divide; 30 = <b>$1,600 margin</b>. On a $10,000 account that ties up 16% of it. With 1:100 the same trade needs only $480, but the loss if gold moves against you is exactly the same.</p>
+
+  <h2>Margin is not your risk</h2>
+  <p>Higher leverage lowers the margin, not the loss. What you can lose is set by your stop and your lot size. The <a href="/lot-size-calculator" style="color:var(--accent)">lot size calculator</a> works that out.</p>
+
+  <footer>&copy; <span id="yr"></span> STAALWAG · <a href="/">Home</a> · <a href="/lot-size-calculator">Lot size calculator</a> · <a href="/pip-value-calculator">Pip value calculator</a> · <a href="/risk-reward-calculator">Risk reward calculator</a> · <a href="/prop-firm-drawdown-calculator">Prop firm drawdown calculator</a> · <a href="/store">STAALCALIBUR app</a> · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a><br>
+  Education only. Not financial advice. Trading carries risk; never risk money you cannot afford to lose.</footer>
+</div>
+<script>
+// [code, label, contract size per lot, quote type, price placeholder]
+// "usd" = quoted in dollars (EURUSD, gold): notional = contract x lots x price
+// "base" = dollar is the first currency (USDJPY): notional = contract x lots
+var MG=[
+  ["EURUSD","EURUSD",100000,"usd","1.1000"],
+  ["GBPUSD","GBPUSD",100000,"usd","1.2700"],
+  ["AUDUSD","AUDUSD",100000,"usd","0.6500"],
+  ["NZDUSD","NZDUSD",100000,"usd","0.5900"],
+  ["USDJPY","USDJPY",100000,"base",""],
+  ["USDCAD","USDCAD",100000,"base",""],
+  ["USDCHF","USDCHF",100000,"base",""],
+  ["XAUUSD","Gold (XAUUSD)",100,"usd","2400"],
+  ["XAGUSD","Silver (XAGUSD)",5000,"usd","30"]
+];
+function el(id){ return document.getElementById(id); }
+function sym(c){ for(var i=0;i<MG.length;i++) if(MG[i][0]===c) return MG[i]; return MG[0]; }
+function num(id){ return parseFloat(String(el(id).value||"").replace(/[, ]/g,"")); }
+function usd(n){ return (Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function margin(code, lots, price, lev){
+  var s=sym(code); if(!(lots>0) || !(lev>0)) return null;
+  var perLot = s[3]==="base" ? s[2] : (price>0 ? s[2]*price : null);
+  if(perLot===null) return null;
+  return {notional: perLot*lots, margin: perLot*lots/lev, perLotMargin: perLot/lev};
+}
+function calc(){
+  var s=sym(el("mgSym").value);
+  el("mgPriceW").style.visibility = s[3]==="usd" ? "visible" : "hidden";
+  el("mgPrice").placeholder = s[4];
+  var lots=num("mgLots"), r=margin(s[0], lots, num("mgPrice"), num("mgLev")), out=el("mgOut");
+  if(r===null){ out.innerHTML='<div class="sm">'+(s[3]==="usd"?"Enter the lot size, current price and leverage.":"Enter the lot size and leverage.")+'</div>'; return; }
+  var html='<div class="big" style="color:var(--good)">$'+usd(r.margin)+'</div><div class="sm">margin for '+lots+' lot'+(lots===1?'':'s')+' at 1:'+num("mgLev")+' · trade size $'+usd(r.notional)+'</div>';
+  var bal=num("mgBal");
+  if(bal>0){
+    var pct=r.margin/bal*100, maxLots=Math.floor(bal/r.perLotMargin*100)/100;
+    html+='<div class="sm">Uses '+(Math.round(pct*10)/10)+'% of your $'+usd(bal)+' balance · margin level '+(r.margin>0?Math.round(bal/r.margin*100):0)+'% at open</div>';
+    html+='<div class="sm">Most your balance can open at this leverage: '+maxLots+' lots (with no room for any loss)</div>';
+  }
+  out.innerHTML=html;
+}
+el("mgSym").innerHTML=MG.map(function(s){ return '<option value="'+s[0]+'">'+s[1]+'</option>'; }).join("");
+["mgLots","mgPrice","mgLev","mgBal"].forEach(function(id){ el(id).oninput=calc; });
+el("mgSym").onchange=function(){ el("mgPrice").value=""; calc(); };
+el("yr").textContent=new Date().getFullYear();
+calc();
+</script>
+</body>
+</html>
