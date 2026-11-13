@@ -89,11 +89,25 @@ class HQLogin(unittest.TestCase):
         code, h, _ = self.req("GET", "/?tok=" + config.ADMIN_TOKEN,
                               headers={"Host": "hq.staalwag.com"})
         self.assertEqual(code, 302)
-        self.assertEqual(h.get("Location"), "/")
+        key = server._hq_cookie_value()
+        self.assertEqual(h.get("Location"), "/?k=" + key)   # never the raw token
         self.assertIn("hq_auth=", h.get("Set-Cookie"))
         code, h, _ = self.req("GET", "/?tok=wrong", headers={"Host": "hq.staalwag.com"})
         self.assertEqual(code, 302)
         self.assertIsNone(h.get("Set-Cookie"))
+
+    def test_device_key_address_unlocks_with_storage_wiped(self):
+        # login hands back the device key the page puts in its own address
+        _, _, raw = self.req("POST", "/admin/login", {"token": config.ADMIN_TOKEN})
+        key = json.loads(raw)["key"]
+        self.assertNotEqual(key, config.ADMIN_TOKEN)
+        # the page turns ?k=KEY into the cookie; that alone is enough
+        code, _, _ = self.req("GET", "/admin/app_stats", headers={"Cookie": "hq_auth=" + key})
+        self.assertEqual(code, 200)
+        code, _, raw = self.req("GET", "/admin/hq_key", headers={"Cookie": "hq_auth=" + key})
+        self.assertEqual((code, json.loads(raw)["key"]), (200, key))
+        code, _, _ = self.req("GET", "/admin/hq_key")
+        self.assertEqual(code, 403)
 
     def test_logout_clears_cookie(self):
         code, h, _ = self.req("POST", "/admin/logout", {})
