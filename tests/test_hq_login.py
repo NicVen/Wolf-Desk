@@ -109,6 +109,36 @@ class HQLogin(unittest.TestCase):
         code, _, _ = self.req("GET", "/admin/hq_key")
         self.assertEqual(code, 403)
 
+    def test_trusted_connection_needs_no_storage(self):
+        me = {"X-Forwarded-For": "8.8.4.4", "User-Agent": "Edge-Nic"}   # a public address
+        code, _, _ = self.req("GET", "/admin/app_stats", headers=me)
+        self.assertEqual(code, 403)                 # unknown until unlocked once
+        code, _, _ = self.req("POST", "/admin/login", {"token": config.ADMIN_TOKEN}, headers=me)
+        self.assertEqual(code, 200)
+        # browser wiped everything: no cookie, no token, same connection
+        code, _, _ = self.req("GET", "/admin/app_stats", headers=me)
+        self.assertEqual(code, 200)
+        # another browser, another address, another site's script, a proxy: no
+        for h in ({**me, "User-Agent": "Other"}, {**me, "X-Forwarded-For": "8.8.8.8"},
+                  {**me, "Origin": "https://evil.example"},
+                  {**me, "Sec-Fetch-Site": "cross-site"},
+                  {**me, "X-Forwarded-For": "104.16.1.1"}):
+            code, _, _ = self.req("GET", "/admin/app_stats", headers=h)
+            self.assertEqual(code, 403, h)
+        # rotating the token forgets every trusted connection
+        old = config.ADMIN_TOKEN
+        config.ADMIN_TOKEN = old + "-rotated"
+        try:
+            code, _, _ = self.req("GET", "/admin/app_stats", headers=me)
+            self.assertEqual(code, 403)
+        finally:
+            config.ADMIN_TOKEN = old
+
+    def test_local_requests_are_never_trusted(self):
+        self.req("POST", "/admin/login", {"token": config.ADMIN_TOKEN})
+        code, _, _ = self.req("GET", "/admin/app_stats")
+        self.assertEqual(code, 403)
+
     def test_logout_clears_cookie(self):
         code, h, _ = self.req("POST", "/admin/logout", {})
         self.assertEqual(code, 200)
