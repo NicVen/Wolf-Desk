@@ -524,7 +524,7 @@ def _lic_post(path, payload, timeout=12):
 # search by design; app.*, sslip.io and the old Railway URL serve copies of the
 # same pages, so they all ask crawlers to stay out — otherwise Google splits the ranking across copies.
 SITE_URL = "https://staalwag.com"
-SITEMAP_PATHS = ["/", "/store", "/lot-size-calculator", "/pip-value-calculator", "/risk-reward-calculator", "/prop-firm-drawdown-calculator", "/margin-calculator", "/proof", "/download", "/privacy"]
+SITEMAP_PATHS = ["/", "/store", "/lot-size-calculator", "/pip-value-calculator", "/risk-reward-calculator", "/prop-firm-drawdown-calculator", "/margin-calculator", "/forex-market-hours", "/proof", "/download", "/privacy"]
 SITEMAP_XML = (
     '<?xml version="1.0" encoding="UTF-8"?>\n'
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -988,6 +988,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.end_headers(); return
         if path.rstrip("/.") in ("/prop-firm-drawdown-calculator", "/drawdown-calculator"):
             self._send(200, _read(os.path.join("dashboard", "prop-firm-drawdown-calculator.html"),
+                                  b"<h2>Coming soon.</h2>"),
+                       "text/html; charset=utf-8"); return
+        if path.rstrip("/.") in ("/forex-market-hours", "/market-hours", "/forex-sessions"):
+            self._send(200, _read(os.path.join("dashboard", "forex-market-hours.html"),
                                   b"<h2>Coming soon.</h2>"),
                        "text/html; charset=utf-8"); return
         if path.rstrip("/.") in ("/margin-calculator", "/forex-margin-calculator"):

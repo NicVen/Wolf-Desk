@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0e15" />
+<title>Forex Market Hours in Your Time Zone · Live · STAALWAG</title>
+<meta name="description" content="Live forex market hours clock in your own time zone. See when the Sydney, Tokyo, London and New York sessions open and close, which are open now, and when they overlap." />
+<link rel="canonical" href="https://staalwag.com/forex-market-hours" />
+<meta property="og:url" content="https://staalwag.com/forex-market-hours" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="STAALWAG" />
+<meta property="og:title" content="Forex market hours, live in your time zone" />
+<meta property="og:description" content="Which forex sessions are open right now? Sydney, Tokyo, London and New York in your local time." />
+<meta property="og:image" content="https://staalwag.com/og-staalwag.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="/favicon-32.png" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "WebApplication",
+   "name": "STAALWAG Forex Market Hours Clock",
+   "url": "https://staalwag.com/forex-market-hours",
+   "applicationCategory": "FinanceApplication",
+   "operatingSystem": "Any",
+   "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+   "publisher": {"@id": "https://staalwag.com/#org"}
+  },
+  {
+   "@type": "FAQPage",
+   "mainEntity": [
+    {"@type": "Question", "name": "When is the forex market open?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Forex trades 24 hours a day from Monday to Friday. The week opens on Sunday at 5pm New York time when Sydney starts, and closes on Friday at 5pm New York time."}},
+    {"@type": "Question", "name": "What are the four forex sessions?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Sydney (about 7am to 4pm Sydney time), Tokyo (9am to 6pm Tokyo time), London (8am to 5pm London time) and New York (8am to 5pm New York time). Exact times move when daylight saving starts or ends in each city, and brokers may differ slightly."}},
+    {"@type": "Question", "name": "When do the forex sessions overlap?",
+     "acceptedAnswer": {"@type": "Answer", "text": "London and New York overlap for about four hours each weekday (8am to noon New York time). Sydney and Tokyo overlap in the Asian morning. Overlaps usually have the most trading volume."}}
+   ]
+  }
+ ]
+}
+</script>
+<style>
+  :root{--bg:#0a0e15;--card:#131a26;--card2:#18212f;--line:#1e2a3a;--fg:#e7edf3;--mut:#7d8a9c;
+    --steel:#8aa0b4;--chrome:#c7d2dd;--accent:#6ea8fe;--good:#2ecc71;--bad:#ff5b5b;--watch:#f2c14e}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:22px 18px 40px}
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .logo{font-weight:900;letter-spacing:2px;color:var(--chrome);text-decoration:none}
+  .top a.small{color:var(--steel);font-size:13px;text-decoration:none}
+  h1{font-size:28px;line-height:1.2;margin:6px 0 8px}
+  h2{font-size:19px;margin:30px 0 8px}
+  p,li{color:var(--chrome)}
+  .lead{color:var(--mut);margin:0 0 18px}
+  .calc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+  label{display:block;font-size:13px;color:var(--steel);margin:12px 0 5px}
+  input,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--card2);
+    color:var(--fg);font-size:16px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .two label{margin-top:0}
+  .hidden{display:none}
+  .out{margin-top:16px;padding:14px;border-radius:12px;background:#0d131d;border:1px solid var(--line);text-align:center}
+  .big{font-size:34px;font-weight:900}
+  .sm{font-size:14px;color:var(--mut)}
+  .muted{font-size:12px;color:var(--mut);margin-top:12px}
+  .cta{margin-top:26px;background:linear-gradient(135deg,#142033,#0f1826);border:1px solid #2a3b55;border-radius:16px;padding:18px;text-align:center}
+  .cta h3{margin:0 0 6px}
+  .btn{display:inline-block;margin-top:10px;padding:14px 22px;border-radius:12px;background:var(--good);color:#04140a;
+    font-weight:800;text-decoration:none}
+  .faq b{display:block;color:var(--fg);margin-top:14px}
+  footer{margin-top:34px;font-size:12px;color:var(--mut);text-align:center}
+  footer a{color:var(--steel)}
+
+  .sess{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+  .sess:last-child{border-bottom:0}
+  .badge{font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;align-self:center}
+  .on{background:rgba(46,204,113,.15);color:var(--good)} .off{background:rgba(255,255,255,.06);color:var(--mut)}
+  .tl{position:relative;height:120px;margin-top:14px}
+  .tl .row{position:absolute;left:0;right:0;height:18px}
+  .tl .seg{position:absolute;height:18px;border-radius:5px;opacity:.9;color:#0a0e15;font-size:11px;font-weight:700;line-height:18px;padding-left:5px;overflow:hidden;white-space:nowrap;box-sizing:border-box}
+  .tl .now{position:absolute;top:0;bottom:14px;width:2px;background:#ff6b6b}
+  .tl .ax{position:absolute;bottom:0;font-size:10px;color:var(--mut);transform:translateX(-50%)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="logo" href="/">STAALWAG</a><a class="small" href="/play?s=hours-top">Get the free app &rarr;</a></div>
+
+  <h1>Forex market hours, in your time zone</h1>
+  <p class="lead">A live clock of the Sydney, Tokyo, London and New York sessions, shown in your own local time. Free, no sign-up, works on your phone.</p>
+
+  <div class="calc">
+    <div class="out" id="fxNow" style="margin-top:0"></div>
+    <div id="fxList"></div>
+    <div class="tl" id="fxTl"></div>
+    <div class="muted">Times follow each city's own clock, daylight saving included. Your broker's server times may differ slightly. Education only, not financial advice.</div>
+  </div>
+
+  <div class="cta">
+    <h3>Take it with you</h3>
+    <p class="sm" style="margin:0"><b>STAALCALIBUR</b>, our free Android app, works out your lot size from your risk and stop, and shows the trend, trend strength and key levels for gold, forex, indices, stocks and crypto.</p>
+    <a class="btn" href="/play?s=hours-page">Get it free on Google Play</a>
+  </div>
+
+  <h2>The four sessions</h2>
+  <ul>
+    <li><b>Sydney:</b> about 7am to 4pm Sydney time. It opens the forex week on Sunday evening in New York.</li>
+    <li><b>Tokyo:</b> 9am to 6pm Tokyo time. Japan has no daylight saving, so this one never moves.</li>
+    <li><b>London:</b> 8am to 5pm London time. It's the biggest forex centre by volume.</li>
+    <li><b>New York:</b> 8am to 5pm New York time. The forex week closes on Friday at 5pm New York.</li>
+  </ul>
+
+  <h2>Why the times move twice a year</h2>
+  <p>London and New York change their clocks on different dates, and Sydney changes the opposite way to both. For a few weeks each spring and autumn the gaps between sessions shift by an hour. This clock works from each city's own time, so it stays right all year.</p>
+
+  <h2>Worked example: Johannesburg in November</h2>
+  <p>Johannesburg is UTC+2 with no daylight saving. In November London is on UTC+0 and New York on UTC&minus;5, so London runs <b>10:00 to 19:00</b> and New York <b>15:00 to 00:00</b> in Johannesburg time. They overlap from <b>15:00 to 19:00</b>.</p>
+
+  <h2>Size the trade too</h2>
+  <p>Knowing when the market is open is one part. The <a href="/lot-size-calculator" style="color:var(--accent)">lot size calculator</a> works out how big a trade keeps your loss inside your limit.</p>
+
+  <footer>&copy; <span id="yr"></span> STAALWAG · <a href="/">Home</a> · <a href="/lot-size-calculator">Lot size calculator</a> · <a href="/pip-value-calculator">Pip value calculator</a> · <a href="/risk-reward-calculator">Risk reward calculator</a> · <a href="/prop-firm-drawdown-calculator">Prop firm drawdown calculator</a> · <a href="/margin-calculator">Margin calculator</a> · <a href="/store">STAALCALIBUR app</a> · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a><br>
+  Education only. Not financial advice. Trading carries risk; never risk money you cannot afford to lose.</footer>
+</div>
+<script>
+// [name, IANA zone, open hour, close hour (local time in that city), colour]
+var FX=[["Sydney","Australia/Sydney",7,16,"#a78bfa"],["Tokyo","Asia/Tokyo",9,18,"#f5b041"],
+        ["London","Europe/London",8,17,"#6ea8ff"],["New York","America/New_York",8,17,"#2ecc71"]];
+function el(id){ return document.getElementById(id); }
+// minutes the zone is ahead of UTC at instant t
+function offsetMin(zone, t){
+  var p={}; new Intl.DateTimeFormat("en-US",{timeZone:zone,hourCycle:"h23",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"})
+    .formatToParts(t).forEach(function(x){ p[x.type]=x.value; });
+  var asUtc=Date.UTC(+p.year,+p.month-1,+p.day,+p.hour%24,+p.minute,+p.second);
+  return Math.round((asUtc-Math.floor(t/1000)*1000)/60000);
+}
+function localParts(zone, t){
+  var p={}; new Intl.DateTimeFormat("en-US",{timeZone:zone,hourCycle:"h23",weekday:"short",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"})
+    .formatToParts(t).forEach(function(x){ p[x.type]=x.value; });
+  return p;
+}
+// the instant when it is h:00 on the city's current local date (+dayShift days)
+function cityInstant(zone, h, t, dayShift){
+  var p=localParts(zone,t), guess=Date.UTC(+p.year,+p.month-1,+p.day+(dayShift||0),h,0,0);
+  return guess-offsetMin(zone,guess)*60000;
+}
+function sessionNow(s, t){
+  // today's session in that city; if it already closed, show tomorrow's
+  // skipping the city's weekend, so Saturday shows Monday's session
+  for(var k=0;k<4;k++){
+    var o=cityInstant(s[1],s[2],t,k), c=cityInstant(s[1],s[3],t,k), wd=localParts(s[1],o).weekday;
+    if(t<c && wd!=="Sat" && wd!=="Sun") return {open:o, close:c, isOpen:t>=o};
+  }
+  return {open:o, close:c, isOpen:false};
+}
+function marketOpen(t){
+  // forex week: Sunday 17:00 to Friday 17:00 New York time
+  var p=localParts("America/New_York",t), h=+p.hour%24, d=p.weekday;
+  if(d==="Sat") return false;
+  if(d==="Sun") return h>=17;
+  if(d==="Fri") return h<17;
+  return true;
+}
+function hm(t){ return new Date(t).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}); }
+function day(t){ return new Date(t).toLocaleDateString([], {weekday:"short"}); }
+function render(){
+  var t=Date.now(), mine=Intl.DateTimeFormat().resolvedOptions().timeZone||"your time zone";
+  var open=marketOpen(t), list=FX.map(function(s){ return [s, sessionNow(s,t)]; });
+  var openNames=list.filter(function(x){ return x[1].isOpen && open; }).map(function(x){ return x[0][0]; });
+  el("fxNow").innerHTML='<div class="sm">Your time ('+mine.replace(/_/g," ")+')</div><div class="big">'+hm(t)+'</div>'+
+    '<div class="sm" style="color:'+(open?'var(--good)':'var(--mut)')+'">'+(open ? (openNames.length ? 'Forex is open · '+openNames.join(" + ")+(openNames.length>1?' overlap':'')+' now' : 'Forex is open · between sessions') : 'Forex is closed for the weekend · opens Sunday 5pm New York time')+'</div>';
+  el("fxList").innerHTML=list.map(function(x){
+    var s=x[0], r=x[1], on=r.isOpen && open;
+    return '<div class="sess"><div><b>'+s[0]+'</b><div class="sm">'+day(r.open)+' '+hm(r.open)+' to '+day(r.close)+' '+hm(r.close)+' your time</div></div>'+
+      '<span class="badge '+(on?'on':'off')+'">'+(on?'Open now':'Closed')+'</span></div>';
+  }).join("");
+  // 24h timeline in the visitor's time, starting at local midnight
+  var d=new Date(t); d.setHours(0,0,0,0); var start=d.getTime(), span=24*3600*1000, html="";
+  FX.forEach(function(s,i){
+    var top=i*24, segs="";
+    [-1,0,1].forEach(function(k){
+      var o=cityInstant(s[1],s[2],start+k*span+12*3600*1000,0), c=cityInstant(s[1],s[3],start+k*span+12*3600*1000,0);
+      var a=Math.max(o,start), b=Math.min(c,start+span);
+      if(b>a) segs+='<div class="seg" style="left:'+((a-start)/span*100).toFixed(2)+'%;width:'+((b-a)/span*100).toFixed(2)+'%;background:'+s[4]+'">'+s[0]+'</div>';
+    });
+    html+='<div class="row" style="top:'+top+'px">'+segs+'</div>';
+  });
+  [0,6,12,18,24].forEach(function(h){ html+='<span class="ax" style="left:'+(h/24*100)+'%">'+(h===24?'24':('0'+h).slice(-2))+':00</span>'; });
+  html+='<div class="now" style="left:'+((t-start)/span*100).toFixed(2)+'%"></div>';
+  el("fxTl").innerHTML=html;
+}
+el("yr").textContent=new Date().getFullYear();
+render(); setInterval(render, 30000);
+</script>
+<script src="/hit.js" defer></script>
+</body>
+</html>
