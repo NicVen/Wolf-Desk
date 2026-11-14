@@ -13,7 +13,9 @@ Run:  python -m licensing.server     (BIND_ADDR/PORT from env; sits behind Caddy
 """
 import calendar
 import datetime
+import hashlib
 import hmac
+import ipaddress
 import json
 import os
 import re
@@ -618,6 +620,91 @@ def _hq_cookie(clear=False):
     return "%s=%s; Max-Age=%d; Path=/; HttpOnly; Secure; SameSite=Strict" % (HQ_COOKIE, val, age)
 
 
+# ---- HQ trusted device (no browser storage needed) ---------------------------
+# Some browsers wipe every cookie and saved item when they close, so HQ also
+# remembers the admin's own connection: after the token is accepted once, the
+# same public IP + same browser opens HQ for HQ_TRUST_DAYS (renewed on each
+# visit). Cloudflare/shared proxy addresses are never trusted.
+HQ_TRUST_DAYS = 30
+HQ_TRUST_FILE = os.path.join(os.path.dirname(config.DB_PATH) or ".", "hq_trusted.json")
+_CF_NETS = [ipaddress.ip_network(n) for n in (
+    "173.245.48.0/20", "103.21.244.0/22", "103.22.200.0/22", "103.31.4.0/22",
+    "141.101.64.0/18", "108.162.192.0/18", "190.93.240.0/20", "188.114.96.0/20",
+    "197.234.240.0/22", "198.41.128.0/17", "162.158.0.0/15", "104.16.0.0/13",
+    "104.24.0.0/14", "172.64.0.0/13", "131.0.72.0/22", "2400:cb00::/32",
+    "2606:4700::/32", "2803:f800::/32", "2405:b500::/32", "2405:8100::/32",
+    "2a06:98c0::/29", "2c0f:f248::/32")]
+_trust_lock = threading.Lock()
+
+
+def _device_id(handler):
+    """(ip|browser) fingerprint for a request that came through Caddy, or None."""
+    xff = (handler.headers.get("X-Forwarded-For") or "").split(",")[-1].strip()
+    try:
+        ip = ipaddress.ip_address(xff)
+    except ValueError:
+        return None
+    if not ip.is_global or any(ip in n for n in _CF_NETS):
+        return None
+    ua = handler.headers.get("User-Agent") or ""
+    return hashlib.sha256(("%s|%s|%s" % (ip, ua, config.ADMIN_TOKEN)).encode()).hexdigest()
+
+
+def _trust_load():
+    try:
+        with open(HQ_TRUST_FILE) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def _trust_save(d):
+    try:
+        tmp = HQ_TRUST_FILE + ".tmp"
+        with open(tmp, "w") as f:
+            json.dump(d, f)
+        os.replace(tmp, HQ_TRUST_FILE)
+    except OSError:
+        pass
+
+
+def _trust_remember(handler):
+    dev = _device_id(handler)
+    if not dev:
+        return
+    with _trust_lock:
+        d = _trust_load()
+        now = time.time()
+        d = {k: v for k, v in d.items() if v > now}
+        d[dev] = now + HQ_TRUST_DAYS * 86400
+        _trust_save(d)
+
+
+def _trust_forget(handler):
+    dev = _device_id(handler)
+    if dev:
+        with _trust_lock:
+            d = _trust_load()
+            d.pop(dev, None)
+            _trust_save(d)
+
+
+def _trust_ok(handler):
+    # only HQ's own page may use it: another site's script can't ride on it
+    if (handler.headers.get("Sec-Fetch-Site") or "same-origin") not in ("same-origin", "none"):
+        return False
+    dev = _device_id(handler)
+    if not dev or not config.ADMIN_TOKEN:
+        return False
+    with _trust_lock:
+        d = _trust_load()
+        if d.get(dev, 0) <= time.time():
+            return False
+        d[dev] = time.time() + HQ_TRUST_DAYS * 86400   # rolling: visiting keeps it alive
+        _trust_save(d)
+    return True
+
+
 def _cookie_ok(header):
     if not config.ADMIN_TOKEN or not header:
         return False
@@ -751,6 +838,7 @@ class H(BaseHTTPRequestHandler):
         elif u.path == "/admin/login":
             self._admin_login()
         elif u.path == "/admin/logout":
+            _trust_forget(self)
             self._send(200, {"ok": True}, headers={"Set-Cookie": _hq_cookie(clear=True)})
         elif u.path == "/admin/issue":
             self._admin_issue()
@@ -794,10 +882,12 @@ class H(BaseHTTPRequestHandler):
     # ---- admin auth ----
     def _admin_ok(self):
         if _token_ok(self.headers.get("X-Admin-Token")):
+            _trust_remember(self)
             return True
-        # HQ "remember this device" cookie. SameSite=Strict already keeps other
-        # sites from riding on it; the Origin check is a second lock for POSTs.
-        if not _cookie_ok(self.headers.get("Cookie")):
+        # HQ "remember this device" cookie, or the remembered connection.
+        # SameSite=Strict keeps other sites off the cookie; the Origin check is
+        # a second lock for POSTs (and the only one for the trusted connection).
+        if not (_cookie_ok(self.headers.get("Cookie")) or _trust_ok(self)):
             return False
         origin = self.headers.get("Origin")
         if origin and urllib.parse.urlparse(origin).netloc.lower() != (self.headers.get("Host") or "").lower():
@@ -813,6 +903,7 @@ class H(BaseHTTPRequestHandler):
             data = {}
         if not _token_ok(str(data.get("token") or "").strip()):
             return self._send(403, {"error": "forbidden"})
+        _trust_remember(self)
         self._send(200, {"ok": True, "key": _hq_cookie_value()},
                    headers={"Set-Cookie": _hq_cookie()})
 
