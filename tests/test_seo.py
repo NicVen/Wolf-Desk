@@ -202,5 +202,19 @@ class SeoTest(unittest.TestCase):
         for url in ["/l", "/l?k=1", "/go", "/go?t=x", "/play?s=site", "/stats", "/app"]:
             self.assertTrue(blocked(url), url)
 
+    def test_drawdown_recovery_page(self):
+        code, _, body = self.get("/drawdown-recovery-calculator")
+        self.assertEqual(code, 200)
+        self.assertIn('<link rel="canonical" href="https://staalwag.com/drawdown-recovery-calculator"', body)
+        self.assertIn('href="/play?s=recovery-page"', body)
+        json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>', body, re.S).group(1))
+        for word in ("BUY", "SELL"):   # facts-only rule
+            self.assertNotRegex(body, r"\b%s\b" % word)
+        for other in ("/lot-size-calculator", "/pip-value-calculator", "/risk-reward-calculator",
+                      "/prop-firm-drawdown-calculator", "/margin-calculator", "/forex-market-hours",
+                      "/gold-trading-hours"):
+            self.assertIn('href="/drawdown-recovery-calculator"', self.get(other)[2])
+        self.assertIn("/drawdown-recovery-calculator", self.get("/sitemap.xml")[2])
+
 if __name__ == "__main__":
     unittest.main()

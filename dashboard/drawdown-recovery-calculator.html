@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0e15" />
+<title>Drawdown Recovery Calculator · How Much Gain to Break Even · STAALWAG</title>
+<meta name="description" content="Free drawdown recovery calculator: see the exact percentage gain you need to get back to break even after a loss, how many winning trades that takes at your risk per trade, and how long at your monthly return." />
+<link rel="canonical" href="https://staalwag.com/drawdown-recovery-calculator" />
+<meta property="og:url" content="https://staalwag.com/drawdown-recovery-calculator" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="STAALWAG" />
+<meta property="og:title" content="Drawdown recovery calculator" />
+<meta property="og:description" content="Lost 20%? You need 25% to get back. Work out the gain, trades and time to recover any drawdown." />
+<meta property="og:image" content="https://staalwag.com/og-staalwag.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="/favicon-32.png" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "WebApplication",
+   "name": "STAALWAG Drawdown Recovery Calculator",
+   "url": "https://staalwag.com/drawdown-recovery-calculator",
+   "applicationCategory": "FinanceApplication",
+   "operatingSystem": "Any",
+   "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+   "publisher": {"@id": "https://staalwag.com/#org"}
+  },
+  {
+   "@type": "FAQPage",
+   "mainEntity": [
+    {"@type": "Question", "name": "How much do I need to gain to recover a drawdown?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Required gain = 1 / (1 - drawdown) - 1. A 10% loss needs an 11.1% gain, a 20% loss needs 25%, a 50% loss needs 100%, and a 75% loss needs 300%."}},
+    {"@type": "Question", "name": "Why does a loss need a bigger gain to recover?",
+     "acceptedAnswer": {"@type": "Answer", "text": "After a loss, every gain is earned on a smaller balance. Lose 50% of $10,000 and you have $5,000; you now need to make $5,000, which is 100% of what is left."}},
+    {"@type": "Question", "name": "How many winning trades does it take to recover?",
+     "acceptedAnswer": {"@type": "Answer", "text": "If each winner makes a fixed percentage of the balance, the number of winners in a row is ln(1 / (1 - drawdown)) / ln(1 + gain per win). Risking 1% at 2R (2% per win), a 20% drawdown takes about 12 straight winners."}}
+   ]
+  }
+ ]
+}
+</script>
+<style>
+  :root{--bg:#0a0e15;--card:#131a26;--card2:#18212f;--line:#1e2a3a;--fg:#e7edf3;--mut:#7d8a9c;
+    --steel:#8aa0b4;--chrome:#c7d2dd;--accent:#6ea8fe;--good:#2ecc71;--bad:#ff5b5b;--watch:#f2c14e}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:22px 18px 40px}
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .logo{font-weight:900;letter-spacing:2px;color:var(--chrome);text-decoration:none}
+  .top a.small{color:var(--steel);font-size:13px;text-decoration:none}
+  h1{font-size:28px;line-height:1.2;margin:6px 0 8px}
+  h2{font-size:19px;margin:30px 0 8px}
+  p,li{color:var(--chrome)}
+  .lead{color:var(--mut);margin:0 0 18px}
+  .calc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+  label{display:block;font-size:13px;color:var(--steel);margin:12px 0 5px}
+  input,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--card2);
+    color:var(--fg);font-size:16px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .two label{margin-top:0}
+  .hidden{display:none}
+  .out{margin-top:16px;padding:14px;border-radius:12px;background:#0d131d;border:1px solid var(--line);text-align:center}
+  .big{font-size:34px;font-weight:900}
+  .sm{font-size:14px;color:var(--mut)}
+  .muted{font-size:12px;color:var(--mut);margin-top:12px}
+  .cta{margin-top:26px;background:linear-gradient(135deg,#142033,#0f1826);border:1px solid #2a3b55;border-radius:16px;padding:18px;text-align:center}
+  .cta h3{margin:0 0 6px}
+  .btn{display:inline-block;margin-top:10px;padding:14px 22px;border-radius:12px;background:var(--good);color:#04140a;
+    font-weight:800;text-decoration:none}
+  .faq b{display:block;color:var(--fg);margin-top:14px}
+  footer{margin-top:34px;font-size:12px;color:var(--mut);text-align:center}
+  footer a{color:var(--steel)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="logo" href="/">STAALWAG</a><a class="small" href="/play?s=recovery-top">Get the free app &rarr;</a></div>
+
+  <h1>Drawdown recovery calculator</h1>
+  <p class="lead">How big a gain you need to get back to break even after a losing run, how many winning trades that takes, and how long. Free, no sign-up, works on your phone.</p>
+
+  <div class="calc">
+    <div class="two">
+      <div><label for="rcDd">Drawdown (%)</label><input id="rcDd" inputmode="decimal" value="20"></div>
+      <div><label for="rcBal">Starting balance ($, optional)</label><input id="rcBal" inputmode="decimal" placeholder="10000"></div>
+    </div>
+    <div class="two" style="margin-top:12px">
+      <div><label for="rcWin">Gain per winning trade (%)</label><input id="rcWin" inputmode="decimal" value="2"></div>
+      <div><label for="rcMon">Average monthly return (%, optional)</label><input id="rcMon" inputmode="decimal" placeholder="3"></div>
+    </div>
+    <div class="out" id="rcOut"></div>
+    <table id="rcTab" style="width:100%;margin-top:14px;border-collapse:collapse;font-size:14px"></table>
+    <div class="muted">Assumes gains compound on the balance and no new money is added. Education only, not financial advice.</div>
+  </div>
+
+  <div class="cta">
+    <h3>Keep drawdowns small</h3>
+    <p class="sm" style="margin:0"><b>STAALCALIBUR</b>, our free Android app, works out your lot size from your risk and stop, and shows the trend, trend strength and key levels for gold, forex, indices, stocks and crypto.</p>
+    <a class="btn" href="/play?s=recovery-page">Get it free on Google Play</a>
+  </div>
+
+  <h2>The formula</h2>
+  <p><b>Gain needed = 1 &divide; (1 &minus; drawdown) &minus; 1.</b> After a loss, every gain is earned on a smaller balance, so the way back is always steeper than the way down.</p>
+  <ul>
+    <li>10% down needs <b>11.1%</b> back.</li>
+    <li>20% down needs <b>25%</b> back.</li>
+    <li>30% down needs <b>42.9%</b> back.</li>
+    <li>50% down needs <b>100%</b> back.</li>
+  </ul>
+
+  <h2>Worked example: a $10,000 account down 20%</h2>
+  <p>The balance is now $8,000. To get back to $10,000 you need $2,000, which is <b>25%</b> of $8,000. If you risk 1% per trade and your winners make 2R (2% of the balance), that's about <b>12 winning trades in a row</b>, or more with losers in between. At 3% a month it takes about <b>7.5 months</b>.</p>
+
+  <h2>Smaller risk, shallower holes</h2>
+  <p>The easiest drawdown to recover is the one that stays small. The <a href="/lot-size-calculator" style="color:var(--accent)">lot size calculator</a> keeps each loss to a fixed slice of your account, and the <a href="/prop-firm-drawdown-calculator" style="color:var(--accent)">prop firm drawdown calculator</a> shows how much room your challenge has left.</p>
+
+  <footer>&copy; <span id="yr"></span> STAALWAG · <a href="/">Home</a> · <a href="/lot-size-calculator">Lot size calculator</a> · <a href="/pip-value-calculator">Pip value calculator</a> · <a href="/risk-reward-calculator">Risk reward calculator</a> · <a href="/prop-firm-drawdown-calculator">Prop firm drawdown calculator</a> · <a href="/margin-calculator">Margin calculator</a> · <a href="/forex-market-hours">Forex market hours</a> · <a href="/gold-trading-hours">Gold trading hours</a> · <a href="/store">STAALCALIBUR app</a> · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a><br>
+  Education only. Not financial advice. Trading carries risk; never risk money you cannot afford to lose.</footer>
+</div>
+<script>
+function el(id){ return document.getElementById(id); }
+function num(id){ return parseFloat(String(el(id).value||"").replace(/[,% ]/g,"")); }
+function usd(n){ return (Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function pct(n){ return (Math.round(n*10)/10).toLocaleString(undefined,{maximumFractionDigits:1})+"%"; }
+// gain (as a fraction) needed after losing dd (fraction)
+function needed(dd){ return 1/(1-dd)-1; }
+// periods of compounding at r to recover dd
+function periods(dd, r){ return Math.log(1/(1-dd))/Math.log(1+r); }
+function calc(){
+  var dd=num("rcDd")/100, out=el("rcOut");
+  if(!(dd>0) || dd>=1){ out.innerHTML='<div class="sm">Enter a drawdown between 0 and 100%.</div>'; return; }
+  var g=needed(dd), html='<div class="big" style="color:var(--watch)">+'+pct(g*100)+'</div><div class="sm">gain needed to get back to break even after a '+pct(dd*100)+' drawdown</div>';
+  var bal=num("rcBal");
+  if(bal>0) html+='<div class="sm" style="margin-top:8px">$'+usd(bal)+' &rarr; $'+usd(bal*(1-dd))+' · you need to make <b>$'+usd(bal*dd)+'</b> to get back</div>';
+  var w=num("rcWin")/100;
+  if(w>0) html+='<div class="sm" style="margin-top:8px">About <b>'+Math.ceil(periods(dd,w))+' winning trades</b> in a row at +'+pct(w*100)+' each</div>';
+  var m=num("rcMon")/100;
+  if(m>0){ var mo=periods(dd,m); html+='<div class="sm" style="margin-top:4px">About <b>'+(Math.round(mo*10)/10)+' months</b> at '+pct(m*100)+' a month</div>'; }
+  out.innerHTML=html;
+  var rows='<tr style="color:var(--steel)"><td>Drawdown</td><td style="text-align:right">Gain needed</td></tr>';
+  [5,10,15,20,25,30,40,50,60,75].forEach(function(d){
+    var on=Math.abs(d-dd*100)<0.01;
+    rows+='<tr style="border-top:1px solid var(--line)'+(on?';color:var(--watch);font-weight:700':'')+'"><td style="padding:6px 0">&minus;'+d+'%</td><td style="text-align:right">+'+pct(needed(d/100)*100)+'</td></tr>';
+  });
+  el("rcTab").innerHTML=rows;
+}
+["rcDd","rcBal","rcWin","rcMon"].forEach(function(id){ el(id).addEventListener("input", calc); });
+el("yr").textContent=new Date().getFullYear();
+calc();
+</script>
+<script src="/hit.js" defer></script>
+</body>
+</html>
