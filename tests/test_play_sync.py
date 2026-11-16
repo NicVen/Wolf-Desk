@@ -69,6 +69,30 @@ class PlaySyncTest(unittest.TestCase):
             finally:
                 play_sync.KEY_FILE, play_sync.OUT = old
 
+    def test_sync_reads_every_listed_file_and_reports_them(self):
+        old = (play_sync.KEY_FILE, play_sync.OUT, play_sync.access_token,
+               play_sync.list_reports, play_sync.fetch_name)
+        pre = "stats/installs/installs_com.staalwag.staalcalibur_"
+        files = {pre + "202611_overview.csv": OVERVIEW.encode("utf-16"),
+                 pre + "202611_country.csv": COUNTRY.encode("utf-16"),
+                 pre + "202611_app_version.csv": b"ignored"}
+        with tempfile.TemporaryDirectory() as d:
+            play_sync.KEY_FILE = os.path.join(d, "k.json")
+            play_sync.OUT = os.path.join(d, "out.json")
+            open(play_sync.KEY_FILE, "w").write('{"bucket": "gs://b/stats/"}')
+            play_sync.access_token = lambda key: "t"
+            play_sync.list_reports = lambda b, t: list(files)
+            play_sync.fetch_name = lambda b, t, n: files.get(n)
+            try:
+                out = play_sync.sync_once()
+            finally:
+                (play_sync.KEY_FILE, play_sync.OUT, play_sync.access_token,
+                 play_sync.list_reports, play_sync.fetch_name) = old
+        self.assertEqual(out["latest_day"], "2026-11-12")
+        self.assertEqual(len(out["files"]), 2)
+        self.assertTrue(out["listed"])
+        self.assertIn("Active Device Installs", out["columns"])
+
     def test_jwt_signature_verifies(self):
         with tempfile.TemporaryDirectory() as d:
             key = os.path.join(d, "k.pem"); pub = os.path.join(d, "p.pem"); sig = os.path.join(d, "s")

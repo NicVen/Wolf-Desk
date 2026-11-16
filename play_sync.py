@@ -80,8 +80,30 @@ def _get(url, token):
         return r.read()
 
 
+def list_reports(bucket, token):
+    """Names of every installs report Google has written (None if listing isn't allowed)."""
+    names, page = [], None
+    try:
+        while True:
+            q = {"prefix": "stats/installs/", "fields": "items(name),nextPageToken"}
+            if page:
+                q["pageToken"] = page
+            url = "https://storage.googleapis.com/storage/v1/b/%s/o?%s" % (
+                urllib.parse.quote(bucket, safe=""), urllib.parse.urlencode(q))
+            d = json.loads(_get(url, token))
+            names += [i["name"] for i in d.get("items", [])]
+            page = d.get("nextPageToken")
+            if not page:
+                return names
+    except urllib.error.HTTPError:
+        return None
+
+
 def fetch_report(bucket, token, month, dim):
-    name = "stats/installs/installs_%s_%s_%s.csv" % (PACKAGE, month, dim)
+    return fetch_name(bucket, token, "stats/installs/installs_%s_%s_%s.csv" % (PACKAGE, month, dim))
+
+
+def fetch_name(bucket, token, name):
     url = "https://storage.googleapis.com/storage/v1/b/%s/o/%s?alt=media" % (
         urllib.parse.quote(bucket, safe=""), urllib.parse.quote(name, safe=""))
     try:
@@ -184,11 +206,31 @@ def sync_once():
     if not bucket:
         raise ValueError("no 'bucket' in %s" % KEY_FILE)
     token = access_token(key)
-    overview, country = [], []
-    for m in _months():
-        overview += decode_csv(fetch_report(bucket, token, m, "overview"))
-        country += decode_csv(fetch_report(bucket, token, m, "country"))
-    out = summarise(overview, country)
+    listed = list_reports(bucket, token)
+    files = {"overview": [], "country": []}
+    if listed is not None:          # use what Google actually wrote (names can change)
+        for n in sorted(listed):
+            for dim in files:
+                if PACKAGE in n and n.endswith("_%s.csv" % dim):
+                    files[dim].append(n)
+    else:
+        for m in _months():
+            for dim in files:
+                files[dim].append("stats/installs/installs_%s_%s_%s.csv" % (PACKAGE, m, dim))
+    rows, found, columns = {"overview": [], "country": []}, [], []
+    for dim, names in files.items():
+        for n in names:
+            raw = fetch_name(bucket, token, n)
+            r = decode_csv(raw)
+            if raw is not None:
+                found.append("%s (%d rows)" % (n.rsplit("/", 1)[-1], len(r)))
+            if r and dim == "overview" and not columns:
+                columns = list(r[0].keys())
+            rows[dim] += r
+    out = summarise(rows["overview"], rows["country"])
+    out["files"] = found              # what was read, so a gap is visible on /stats.json
+    out["listed"] = listed is not None
+    out["columns"] = columns
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     tmp = OUT + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:

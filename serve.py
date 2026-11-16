@@ -524,14 +524,16 @@ def _lic_post(path, payload, timeout=12):
 # search by design; app.*, sslip.io and the old Railway URL serve copies of the
 # same pages, so they all ask crawlers to stay out — otherwise Google splits the ranking across copies.
 SITE_URL = "https://staalwag.com"
-SITEMAP_PATHS = ["/", "/store", "/lot-size-calculator", "/pip-value-calculator", "/risk-reward-calculator", "/prop-firm-drawdown-calculator", "/margin-calculator", "/forex-market-hours", "/proof", "/download", "/privacy"]
+SITEMAP_PATHS = ["/", "/store", "/lot-size-calculator", "/pip-value-calculator", "/risk-reward-calculator", "/prop-firm-drawdown-calculator", "/margin-calculator", "/forex-market-hours", "/gold-trading-hours", "/proof", "/download", "/privacy"]
 SITEMAP_XML = (
     '<?xml version="1.0" encoding="UTF-8"?>\n'
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     + "".join("  <url><loc>%s%s</loc></url>\n" % (SITE_URL, p) for p in SITEMAP_PATHS)
     + "</urlset>\n")
-_ROBOTS_PRIVATE = ["/app", "/data", "/refresh", "/news", "/login", "/auth", "/go",
-                   "/l", "/play", "/clicks.json", "/markov.json", "/health", "/stats", "/hit"]
+# robots.txt rules are prefixes: "/l" would also block /lot-size-calculator and
+# "/go" would block /gold-trading-hours, so the short redirect paths are anchored.
+_ROBOTS_PRIVATE = ["/app", "/data", "/refresh", "/news", "/login", "/auth", "/go$", "/go?",
+                   "/l$", "/l?", "/play", "/clicks.json", "/markov.json", "/health", "/stats", "/hit"]
 
 
 # ---- Google Play links -------------------------------------------------------
@@ -992,6 +994,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
                        "text/html; charset=utf-8"); return
         if path.rstrip("/.") in ("/forex-market-hours", "/market-hours", "/forex-sessions"):
             self._send(200, _read(os.path.join("dashboard", "forex-market-hours.html"),
+                                  b"<h2>Coming soon.</h2>"),
+                       "text/html; charset=utf-8"); return
+        if path.rstrip("/.") in ("/gold-trading-hours", "/gold-market-hours", "/gold-hours"):
+            self._send(200, _read(os.path.join("dashboard", "gold-trading-hours.html"),
                                   b"<h2>Coming soon.</h2>"),
                        "text/html; charset=utf-8"); return
         if path.rstrip("/.") in ("/margin-calculator", "/forex-margin-calculator"):
