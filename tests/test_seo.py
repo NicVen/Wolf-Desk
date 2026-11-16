@@ -177,5 +177,30 @@ class SeoTest(unittest.TestCase):
                       "/prop-firm-drawdown-calculator", "/margin-calculator"):
             self.assertIn('href="/forex-market-hours"', self.get(other)[2])
 
+    def test_gold_trading_hours_page(self):
+        code, _, body = self.get("/gold-trading-hours")
+        self.assertEqual(code, 200)
+        self.assertIn('<link rel="canonical" href="https://staalwag.com/gold-trading-hours"', body)
+        self.assertIn('href="/play?s=gold-hours-page"', body)
+        json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>', body, re.S).group(1))
+        for word in ("BUY", "SELL"):   # facts-only rule
+            self.assertNotRegex(body, r"\b%s\b" % word)
+        for other in ("/lot-size-calculator", "/pip-value-calculator", "/risk-reward-calculator",
+                      "/prop-firm-drawdown-calculator", "/margin-calculator", "/forex-market-hours"):
+            self.assertIn('href="/gold-trading-hours"', self.get(other)[2])
+        self.assertIn("/gold-trading-hours", self.get("/sitemap.xml")[2])
+
+    def test_robots_does_not_block_public_pages(self):
+        rules = [l.split(":", 1)[1].strip() for l in self.get("/robots.txt")[2].splitlines()
+                 if l.startswith("Disallow:")]
+
+        def blocked(url):   # Google's matching: prefix, '$' anchors the end
+            return any(url == r[:-1] if r.endswith("$") else url.startswith(r) for r in rules)
+        for url in ["/", "/lot-size-calculator", "/gold-trading-hours", "/pip-value-calculator",
+                    "/forex-market-hours", "/margin-calculator", "/store", "/proof", "/download"]:
+            self.assertFalse(blocked(url), url)
+        for url in ["/l", "/l?k=1", "/go", "/go?t=x", "/play?s=site", "/stats", "/app"]:
+            self.assertTrue(blocked(url), url)
+
 if __name__ == "__main__":
     unittest.main()

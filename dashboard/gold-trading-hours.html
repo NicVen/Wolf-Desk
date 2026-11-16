@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0e15" />
+<title>Gold Trading Hours in Your Time Zone · Live · STAALWAG</title>
+<meta name="description" content="Live gold (XAU/USD) trading hours in your own time zone: when gold opens and closes, the daily break, the London fix times, the COMEX open and the busiest hours of the day." />
+<link rel="canonical" href="https://staalwag.com/gold-trading-hours" />
+<meta property="og:url" content="https://staalwag.com/gold-trading-hours" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="STAALWAG" />
+<meta property="og:title" content="Gold trading hours, live in your time zone" />
+<meta property="og:description" content="Is gold open right now? Sessions, the London fix and the COMEX open in your local time." />
+<meta property="og:image" content="https://staalwag.com/og-staalwag.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="/favicon-32.png" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "WebApplication",
+   "name": "STAALWAG Gold Trading Hours Clock",
+   "url": "https://staalwag.com/gold-trading-hours",
+   "applicationCategory": "FinanceApplication",
+   "operatingSystem": "Any",
+   "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+   "publisher": {"@id": "https://staalwag.com/#org"}
+  },
+  {
+   "@type": "FAQPage",
+   "mainEntity": [
+    {"@type": "Question", "name": "What are gold's trading hours?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Gold (XAU/USD) trades almost 24 hours a day, from Sunday 6pm to Friday 5pm New York time, with a one-hour break every day from 5pm to 6pm New York time. Your broker's exact hours may differ slightly."}},
+    {"@type": "Question", "name": "What is the busiest time of day for gold?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Gold trading volume is usually highest when London and New York are both open, roughly 8am to noon New York time. Big US news at 8:30am New York time often moves gold sharply. The hours after the New York close are usually the quietest."}},
+    {"@type": "Question", "name": "What is the London gold fix?",
+     "acceptedAnswer": {"@type": "Answer", "text": "The LBMA Gold Price is set twice each London business day, at 10:30am and 3pm London time. Banks, refiners and central banks use it as a reference price."}}
+   ]
+  }
+ ]
+}
+</script>
+<style>
+  :root{--bg:#0a0e15;--card:#131a26;--card2:#18212f;--line:#1e2a3a;--fg:#e7edf3;--mut:#7d8a9c;
+    --steel:#8aa0b4;--chrome:#c7d2dd;--accent:#6ea8fe;--good:#2ecc71;--bad:#ff5b5b;--watch:#f2c14e}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:22px 18px 40px}
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .logo{font-weight:900;letter-spacing:2px;color:var(--chrome);text-decoration:none}
+  .top a.small{color:var(--steel);font-size:13px;text-decoration:none}
+  h1{font-size:28px;line-height:1.2;margin:6px 0 8px}
+  h2{font-size:19px;margin:30px 0 8px}
+  p,li{color:var(--chrome)}
+  .lead{color:var(--mut);margin:0 0 18px}
+  .calc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+  label{display:block;font-size:13px;color:var(--steel);margin:12px 0 5px}
+  input,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--card2);
+    color:var(--fg);font-size:16px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .two label{margin-top:0}
+  .hidden{display:none}
+  .out{margin-top:16px;padding:14px;border-radius:12px;background:#0d131d;border:1px solid var(--line);text-align:center}
+  .big{font-size:34px;font-weight:900}
+  .sm{font-size:14px;color:var(--mut)}
+  .muted{font-size:12px;color:var(--mut);margin-top:12px}
+  .cta{margin-top:26px;background:linear-gradient(135deg,#142033,#0f1826);border:1px solid #2a3b55;border-radius:16px;padding:18px;text-align:center}
+  .cta h3{margin:0 0 6px}
+  .btn{display:inline-block;margin-top:10px;padding:14px 22px;border-radius:12px;background:var(--good);color:#04140a;
+    font-weight:800;text-decoration:none}
+  .faq b{display:block;color:var(--fg);margin-top:14px}
+  footer{margin-top:34px;font-size:12px;color:var(--mut);text-align:center}
+  footer a{color:var(--steel)}
+
+  .sess{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+  .sess:last-child{border-bottom:0}
+  .badge{font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;align-self:center}
+  .on{background:rgba(46,204,113,.15);color:var(--good)} .off{background:rgba(255,255,255,.06);color:var(--mut)}
+  .tl{position:relative;height:120px;margin-top:14px}
+  .tl .row{position:absolute;left:0;right:0;height:18px}
+  .tl .seg{position:absolute;height:18px;border-radius:5px;opacity:.9;color:#0a0e15;font-size:11px;font-weight:700;line-height:18px;padding-left:5px;overflow:hidden;white-space:nowrap;box-sizing:border-box}
+  .tl .now{position:absolute;top:0;bottom:14px;width:2px;background:#ff6b6b}
+  .tl .ax{position:absolute;bottom:0;font-size:10px;color:var(--mut);transform:translateX(-50%)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="logo" href="/">STAALWAG</a><a class="small" href="/play?s=gold-hours-top">Get the free app &rarr;</a></div>
+
+  <h1>Gold trading hours, in your time zone</h1>
+  <p class="lead">Is gold open right now? A live clock of gold's trading day, the London fix and the COMEX open, all shown in your own local time. Free, no sign-up.</p>
+
+  <div class="calc">
+    <div class="out" id="gNow" style="margin-top:0"></div>
+    <div id="gList"></div>
+    <div class="tl" id="gTl" style="height:96px"></div>
+    <div class="muted">Times follow each city's own clock, daylight saving included. Your broker's server times may differ slightly. Education only, not financial advice.</div>
+  </div>
+
+  <div class="cta">
+    <h3>Trade gold with the right size</h3>
+    <p class="sm" style="margin:0"><b>STAALCALIBUR</b>, our free Android app, works out your gold lot size from your risk and stop, and shows the trend, trend strength and key levels for gold, forex, indices, stocks and crypto.</p>
+    <a class="btn" href="/play?s=gold-hours-page">Get it free on Google Play</a>
+  </div>
+
+  <h2>Gold's trading week</h2>
+  <ul>
+    <li><b>Opens:</b> Sunday 6pm New York time.</li>
+    <li><b>Daily break:</b> 5pm to 6pm New York time, Monday to Thursday. Most brokers show no prices in that hour.</li>
+    <li><b>Closes:</b> Friday 5pm New York time.</li>
+  </ul>
+
+  <h2>The key times of a gold day</h2>
+  <ul>
+    <li><b>Asia (Shanghai 9am to 3:30pm Beijing time):</b> China is one of the biggest gold markets. Asian hours are usually calmer.</li>
+    <li><b>London open (8am London):</b> volume picks up as Europe starts.</li>
+    <li><b>London fix (10:30am and 3pm London):</b> the twice-daily LBMA Gold Price.</li>
+    <li><b>COMEX open (8:20am New York):</b> the main US gold futures session runs to 1:30pm New York.</li>
+    <li><b>US news (8:30am New York):</b> jobs, inflation and other big US releases come out at this time and often move gold sharply.</li>
+    <li><b>London and New York overlap (8am to noon New York):</b> usually the busiest part of the day.</li>
+  </ul>
+
+  <h2>Worked example: Auckland in November</h2>
+  <p>Auckland is on summer time (UTC+13) in November, and New York is on UTC&minus;5, so Auckland is 18 hours ahead. The COMEX open (8:20am New York) is <b>2:20am</b> the next day in Auckland, the US news at 8:30am is <b>2:30am</b>, and the daily break (5pm to 6pm New York) is <b>11am to noon</b>. Gold opens for the week on <b>Monday at noon</b> Auckland time.</p>
+
+  <h2>Size the trade too</h2>
+  <p>Knowing when gold moves is one part. The <a href="/lot-size-calculator" style="color:var(--accent)">lot size calculator</a> works out how many lots of gold keep your loss inside your limit.</p>
+
+  <footer>&copy; <span id="yr"></span> STAALWAG · <a href="/">Home</a> · <a href="/lot-size-calculator">Lot size calculator</a> · <a href="/pip-value-calculator">Pip value calculator</a> · <a href="/risk-reward-calculator">Risk reward calculator</a> · <a href="/prop-firm-drawdown-calculator">Prop firm drawdown calculator</a> · <a href="/margin-calculator">Margin calculator</a> · <a href="/forex-market-hours">Forex market hours</a> · <a href="/store">STAALCALIBUR app</a> · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a><br>
+  Education only. Not financial advice. Trading carries risk; never risk money you cannot afford to lose.</footer>
+</div>
+<script>
+// sessions: [name, IANA zone, start hour, end hour (city's own clock, 8.333 = 8:20), colour]
+var SESS=[["Asia (Shanghai)","Asia/Shanghai",9,15.5,"#f5b041"],["London","Europe/London",8,17,"#6ea8ff"],
+          ["New York (COMEX)","America/New_York",8+20/60,13.5,"#2ecc71"]];
+// one-off moments: [label, zone, hour]
+var KEY=[["London fix (AM)","Europe/London",10.5],["US news time","America/New_York",8.5],
+         ["London fix (PM)","Europe/London",15],["Daily break starts","America/New_York",17]];
+function el(id){ return document.getElementById(id); }
+// minutes the zone is ahead of UTC at instant t
+function offsetMin(zone, t){
+  var p={}; new Intl.DateTimeFormat("en-US",{timeZone:zone,hourCycle:"h23",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"})
+    .formatToParts(t).forEach(function(x){ p[x.type]=x.value; });
+  var asUtc=Date.UTC(+p.year,+p.month-1,+p.day,+p.hour%24,+p.minute,+p.second);
+  return Math.round((asUtc-Math.floor(t/1000)*1000)/60000);
+}
+function localParts(zone, t){
+  var p={}; new Intl.DateTimeFormat("en-US",{timeZone:zone,hourCycle:"h23",weekday:"short",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"})
+    .formatToParts(t).forEach(function(x){ p[x.type]=x.value; });
+  return p;
+}
+// the instant when it is h:00 on the city's current local date (+dayShift days)
+function cityInstant(zone, h, t, dayShift){
+  var p=localParts(zone,t), guess=Date.UTC(+p.year,+p.month-1,+p.day+(dayShift||0),0,0,0)+Math.round(h*60)*60000;
+  return guess-offsetMin(zone,guess)*60000;
+}
+function sessionNow(s, t){
+  // today's session in that city; if it already closed, show tomorrow's
+  // skipping the city's weekend, so Saturday shows Monday's session
+  for(var k=0;k<4;k++){
+    var o=cityInstant(s[1],s[2],t,k), c=cityInstant(s[1],s[3],t,k), wd=localParts(s[1],o).weekday;
+    if(t<c && wd!=="Sat" && wd!=="Sun") return {open:o, close:c, isOpen:t>=o};
+  }
+  return {open:o, close:c, isOpen:false};
+}
+function goldState(t){
+  // gold week: Sunday 18:00 to Friday 17:00 New York time, with a daily break 17:00-18:00
+  var p=localParts("America/New_York",t), h=+p.hour%24, d=p.weekday;
+  if(d==="Sat" || (d==="Sun" && h<18) || (d==="Fri" && h>=17)) return "weekend";
+  if(h===17) return "break";
+  return "open";
+}
+function hm(t){ return new Date(t).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}); }
+function day(t){ return new Date(t).toLocaleDateString([], {weekday:"short"}); }
+function nextMoment(k, t){
+  for(var d=0;d<8;d++){
+    var at=cityInstant(k[1],k[2],t,d), wd=localParts(k[1],at).weekday;
+    if(at>t && wd!=="Sat" && wd!=="Sun" && goldState(at+60000)!=="weekend") return at;
+  }
+  return null;
+}
+function render(){
+  var t=Date.now(), mine=Intl.DateTimeFormat().resolvedOptions().timeZone||"your time zone";
+  var st=goldState(t), list=SESS.map(function(s){ return [s, sessionNow(s,t)]; });
+  var on=list.filter(function(x){ return x[1].isOpen && st==="open"; }).map(function(x){ return x[0][0].split(" (")[0]; });
+  var msg = st==="weekend" ? 'Gold is closed for the weekend · opens Sunday 6pm New York time'
+          : st==="break" ? 'Gold is on its daily break · back at 6pm New York time'
+          : 'Gold is open' + (on.length ? ' · '+on.join(" + ")+(on.length>1?' overlap':'')+' now' : ' · quiet hours between sessions');
+  el("gNow").innerHTML='<div class="sm">Your time ('+mine.replace(/_/g," ")+')</div><div class="big">'+hm(t)+'</div>'+
+    '<div class="sm" style="color:'+(st==="open"?'var(--good)':'var(--mut)')+'">'+msg+'</div>';
+  var rows=list.map(function(x){
+    var s=x[0], r=x[1], live=r.isOpen && st==="open";
+    return '<div class="sess"><div><b>'+s[0]+'</b><div class="sm">'+day(r.open)+' '+hm(r.open)+' to '+day(r.close)+' '+hm(r.close)+' your time</div></div>'+
+      '<span class="badge '+(live?'on':'off')+'">'+(live?'Open now':'Closed')+'</span></div>';
+  });
+  KEY.map(function(k){ return [k, nextMoment(k,t)]; }).filter(function(x){ return x[1]; })
+     .sort(function(a,b){ return a[1]-b[1]; }).forEach(function(x){
+    var k=x[0], at=x[1];
+    rows.push('<div class="sess"><div><b>'+k[0]+'</b><div class="sm">next: '+day(at)+' '+hm(at)+' your time</div></div><span class="badge off">'+
+      (at-t<3600000 ? 'in '+Math.max(1,Math.round((at-t)/60000))+' min' : 'in '+Math.round((at-t)/3600000)+' h')+'</span></div>');
+  });
+  el("gList").innerHTML=rows.join("");
+  var d=new Date(t); d.setHours(0,0,0,0); var start=d.getTime(), span=24*3600*1000, html="";
+  SESS.forEach(function(s,i){
+    var segs="";
+    [-1,0,1].forEach(function(k){
+      var mid=start+k*span+12*3600*1000, o=cityInstant(s[1],s[2],mid,0), c=cityInstant(s[1],s[3],mid,0);
+      var a=Math.max(o,start), b=Math.min(c,start+span);
+      if(b>a) segs+='<div class="seg" style="left:'+((a-start)/span*100).toFixed(2)+'%;width:'+((b-a)/span*100).toFixed(2)+'%;background:'+s[4]+'">'+s[0]+'</div>';
+    });
+    html+='<div class="row" style="top:'+(i*24)+'px">'+segs+'</div>';
+  });
+  [0,6,12,18,24].forEach(function(h){ html+='<span class="ax" style="left:'+(h/24*100)+'%">'+(h===24?'24':('0'+h).slice(-2))+':00</span>'; });
+  html+='<div class="now" style="left:'+((t-start)/span*100).toFixed(2)+'%"></div>';
+  el("gTl").innerHTML=html;
+}
+el("yr").textContent=new Date().getFullYear();
+render(); setInterval(render, 30000);
+</script>
+<script src="/hit.js" defer></script>
+</body>
+</html>
