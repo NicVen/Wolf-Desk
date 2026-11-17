@@ -530,6 +530,8 @@ class H(BaseHTTPRequestHandler):
             self._admin_partners()
         elif u.path == "/admin/daily_plan":
             self._admin_daily_plan()
+        elif u.path == "/admin/bots":
+            self._admin_bots()
         elif u.path in ("/admin", "/admin/"):
             self._admin_page()
         elif u.path == "/pricing":
@@ -1213,6 +1215,17 @@ class H(BaseHTTPRequestHandler):
         except Exception as e:  # noqa: BLE001
             self._send(500, {"error": "plan_failed", "detail": str(e)})
 
+    def _admin_bots(self):
+        """Signal-bot + paper-trading scoreboard, computed from the records the
+        bots publish (Markov signals.json, desk track_record.json)."""
+        if not self._admin_ok():
+            return self._send(403, {"error": "forbidden"})
+        try:
+            from . import botstats
+            self._send(200, botstats.build())
+        except Exception as e:  # noqa: BLE001
+            self._send(500, {"error": "bots_failed", "detail": str(e)})
+
     def _admin_page(self):
         self._send(200, ADMIN_HTML, "text/html; charset=utf-8")
 
@@ -1337,14 +1350,18 @@ td .k{font-family:ui-monospace,Menlo,monospace}
 </style></head><body>
 <script>
 window.showDiag=function(m){try{var b=document.getElementById('diag');if(!b){b=document.createElement('div');b.id='diag';b.style.cssText='position:fixed;top:0;left:0;right:0;background:#7a1f1f;color:#fff;font:13px monospace;padding:10px;z-index:99999;white-space:pre-wrap';document.body.appendChild(b);}b.textContent=m;}catch(_){}}
-window.addEventListener('error',function(e){window.showDiag('JS ERROR: '+(e.message||e.type||'')+' @ '+(e.filename||'')+':'+(e.lineno||''));});
-window.addEventListener('unhandledrejection',function(e){window.showDiag('PROMISE: '+((e.reason&&e.reason.message)||e.reason||''));});
+window.isExt=function(t){t=String(t||"");return /-extension:|metamask/i.test(t);};
+window.addEventListener('error',function(e){if(window.isExt(e.filename)||window.isExt(e.message)||window.isExt(e.error&&e.error.stack))return;window.showDiag('JS ERROR: '+(e.message||e.type||'')+' @ '+(e.filename||'')+':'+(e.lineno||''));});
+window.addEventListener('unhandledrejection',function(e){var r=e.reason;if(window.isExt(r&&r.stack)||window.isExt(r&&r.message)||window.isExt(r))return;window.showDiag('PROMISE: '+((e.reason&&e.reason.message)||e.reason||''));});
 </script>
 <div class="wrap">
 <div id=gate class=gate>
  <h1>STAALWAG <span class=a>HQ</span></h1><div class=sub>Central command center</div>
- <input id=tok type=text placeholder="Admin token" autocomplete=off autocapitalize=off autocorrect=off spellcheck=false>
- <button class=btn style=width:100% onclick=unlock()>Unlock</button>
+ <form onsubmit="unlock();return false" autocomplete=on>
+ <input type=text name=username value="admin" autocomplete=username style=display:none aria-hidden=true>
+ <input id=tok name=password type=password placeholder="Admin token" autocomplete=current-password autocapitalize=off autocorrect=off spellcheck=false>
+ <button class=btn type=submit style=width:100%>Unlock</button>
+ </form>
  <div id=gerr class=muted style="margin-top:10px;min-height:16px"></div>
 </div>
 <div id=hq style=display:none>
@@ -1356,6 +1373,7 @@ window.addEventListener('unhandledrejection',function(e){window.showDiag('PROMIS
  </div>
  <div class=tabs>
   <button class="tab on" data-p=overview onclick=tab('overview')>Overview</button>
+  <button class=tab data-p=bots onclick=tab('bots')>Bots &amp; paper trading</button>
   <button class=tab data-p=plan onclick=tab('plan')>Daily Plan</button>
   <button class=tab data-p=desks onclick=tab('desks')>Desks &amp; links</button>
   <button class=tab data-p=app onclick=tab('app')>App</button>
@@ -1367,6 +1385,11 @@ window.addEventListener('unhandledrejection',function(e){window.showDiag('PROMIS
   <div class=sec>Service health</div><div id=svc></div>
   <div class=sec>Server</div><div class=tiles id=htiles></div>
   <div class=sec>At a glance</div><div class=tiles id=gtiles></div>
+ </div>
+
+ <div id=p-bots class=pane>
+  <div class=sec>Signal bots &amp; paper trading <span id=bgen class=muted></span></div>
+  <div id=bots class=muted>Loading the bot records…</div>
  </div>
 
  <div id=p-plan class=pane>
@@ -1472,7 +1495,7 @@ function loadAll(){
   if(g)g.textContent="";
   document.getElementById("gate").style.display="none";document.getElementById("hq").style.display="";
   document.getElementById("gtiles").innerHTML=tile(s.installed,"App keys")+tile(s.subscribed,"Active subs",1)+tile(s.active_7d,"Using (7d)")+tile(s.suggestions_new,"New suggestions");
-  loadHealth();loadApp();loadLic();renderLinks();
+  loadHealth();loadApp();loadLic();renderLinks();loadBots();
  }).catch(function(e){var m=(e===0?"Wrong token (403).":"Couldn't reach HQ (status "+code+").");if(g)g.textContent=m;if(window.showDiag)window.showDiag("Login failed: "+m+" token len="+(T()||"").length);});
 }
 function loadHealth(){
@@ -1541,6 +1564,33 @@ function lact(key,what){
  var url=what==="extend"?"/admin/extend":what==="revoke"?"/admin/revoke":"/admin/reset_device";
  var body=what==="extend"?{key:key,days:30}:{key:key};
  fetch(url,{method:"POST",headers:Object.assign({"Content-Type":"application/json"},H()),body:JSON.stringify(body)}).then(loadLic);
+}
+function sgn(x,d){if(x==null)return"&#8212;";var v=Number(x).toFixed(d==null?2:d);return (x>0?"+":"")+v;}
+function col(x){return x>0?"var(--buy)":(x<0?"var(--sell)":"var(--mut)");}
+var VCOL={good:"var(--buy)",bad:"var(--sell)",broken:"var(--sell)",early:"var(--steel)"};
+function loadBots(){
+ var box=document.getElementById("bots");
+ fetch("/admin/bots",{headers:H()}).then(function(r){return r.json()}).then(function(d){
+  document.getElementById("bgen").textContent="· live, "+String(d.generated||"").replace("T"," ").slice(0,16)+" UTC";
+  box.className="";
+  box.innerHTML=(d.bots||[]).map(function(b){
+   var s=b.stats||{},v=b.verdict||{},isR=(s.net_r!==undefined);
+   var net=isR?s.net_r:s.net,unit=isR?"R":(s.unit||"pips");
+   var h='<div class=sg><div class=m>'+esc(b.what||"")+'</div>';
+   h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b style="font-size:16px">'+esc(b.name)+'</b><span style="font-weight:800;color:'+(VCOL[v.level]||"var(--mut)")+'">'+esc(v.text||"")+'</span></div>';
+   if(s.closed){
+    h+='<div class=tiles style="margin-top:8px">'+tile('<span style="color:'+col(net)+'">'+sgn(net,isR?2:1)+' '+unit+'</span>',"Net result",1)+tile(s.closed,"Closed trades")+tile((s.win_rate!=null?s.win_rate+"%":"&#8212;"),"Win rate")+tile((s.pf!=null?s.pf:"&#8212;"),"Profit factor")+'</div>';
+   }
+   if(b.last_30d&&b.last_30d.closed){var m=b.last_30d;h+='<div class=muted style="margin-top:4px">Last 30 days: '+m.closed+' trades, <b style="color:'+col(m.net_r)+'">'+sgn(m.net_r)+' R</b>, win rate '+m.win_rate+'%</div>';}
+   if(b.best&&b.best.length){h+='<div class=muted style="margin-top:4px">Best: '+b.best.map(function(p){return esc(p.pair)+' '+sgn(p.net_r)+'R'}).join(", ")+(b.worst&&b.worst.length?' · Worst: '+b.worst.map(function(p){return esc(p.pair)+' '+sgn(p.net_r)+'R'}).join(", "):"")+'</div>';}
+   if(b.open&&b.open.length){h+='<div class=muted style="margin-top:6px">Open now: '+b.open.map(function(o){return esc(o.pair||o.symbol)+' '+esc(o.direction)+' @ '+esc(o.entry)}).join(" · ")+'</div>';}
+   if(b.recent&&b.recent.length){
+    h+='<div style="overflow-x:auto;margin-top:8px"><table><thead><tr><th>Closed<th>Market<th>Result<th>'+(isR?"R":unit)+'</tr></thead><tbody>'+b.recent.map(function(t){var x=(t.r!=null?t.r:t.pips);
+     return '<tr><td>'+esc(String(t.closed||"").replace("T"," ").slice(0,16))+'<td>'+esc((t.pair||t.symbol||"")+" "+(t.direction||""))+'<td>'+esc(t.result||"")+'<td style="color:'+col(x)+'">'+sgn(x,isR?2:1)+'</tr>';}).join("")+'</tbody></table></div>';
+   }
+   return h+'</div>';
+  }).join("")+'<div class=muted style="margin-top:8px">A verdict needs at least '+(d.min_sample||30)+' closed trades. Paper results only, no real money.</div>';
+ }).catch(function(){box.innerHTML='<div class=muted>Bot records unavailable right now. Press Refresh.</div>';});
 }
 function renderLinks(){
  var L=[
