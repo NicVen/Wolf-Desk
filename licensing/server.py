@@ -1442,7 +1442,8 @@ window.addEventListener('unhandledrejection',function(e){var r=e.reason;if(windo
     <li>Caddy config: <code>/etc/caddy/Caddyfile</code></li>
    </ul>
    <h3>Common admin commands</h3>
-   <div class=box><code>python3 -m licensing.adminctl list</code> &#8212; every key<br>
+   <div class=box><code>python3 -m licensing.adminctl hq-link</code> &#8212; one-click HQ login link (and checks the token works)<br>
+    <code>python3 -m licensing.adminctl list</code> &#8212; every key<br>
     <code>python3 -m licensing.adminctl admin-key</code> &#8212; your master key<br>
     <code>python3 -m licensing.adminctl announce</code> &#8212; tell renters about an update<br>
     <code>python3 -m licensing.adminctl quiz-winner --dry-run</code> &#8212; preview the quiz winner</div>
