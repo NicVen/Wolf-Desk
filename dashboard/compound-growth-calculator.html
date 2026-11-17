@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0e15" />
+<title>Trading Compounding Calculator · Monthly Growth · STAALWAG</title>
+<meta name="description" content="Free trading compounding calculator: see how an account grows at a monthly return, with optional monthly deposits, month by month. Plus what a losing month does to the curve." />
+<link rel="canonical" href="https://staalwag.com/compound-growth-calculator" />
+<meta property="og:url" content="https://staalwag.com/compound-growth-calculator" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="STAALWAG" />
+<meta property="og:title" content="Trading compounding calculator" />
+<meta property="og:description" content="How does a trading account grow at a steady monthly return? Month-by-month compounding, with deposits." />
+<meta property="og:image" content="https://staalwag.com/og-staalwag.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="/favicon-32.png" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "WebApplication",
+   "name": "STAALWAG Trading Compounding Calculator",
+   "url": "https://staalwag.com/compound-growth-calculator",
+   "applicationCategory": "FinanceApplication",
+   "operatingSystem": "Any",
+   "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+   "publisher": {"@id": "https://staalwag.com/#org"}
+  },
+  {
+   "@type": "FAQPage",
+   "mainEntity": [
+    {"@type": "Question", "name": "How do you calculate compounding in trading?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Each month the balance grows by the monthly return, and the next month's return is earned on the new, bigger balance. End balance = start x (1 + monthly return) ^ months, plus any deposits, which also compound from the month they are added."}},
+    {"@type": "Question", "name": "How much does $1,000 grow at 5% a month for a year?",
+     "acceptedAnswer": {"@type": "Answer", "text": "$1,000 x 1.05^12 = about $1,796, a gain of about 79.6%. Without compounding, 5% of $1,000 for 12 months would only be $600 of gain."}},
+    {"@type": "Question", "name": "Are steady monthly returns realistic?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Real trading returns go up and down, and losing months happen. A compounding table shows the maths of a steady rate, not what any trader will earn. A loss also compounds: a 10% losing month needs an 11.1% gain just to get back."}}
+   ]
+  }
+ ]
+}
+</script>
+<style>
+  :root{--bg:#0a0e15;--card:#131a26;--card2:#18212f;--line:#1e2a3a;--fg:#e7edf3;--mut:#7d8a9c;
+    --steel:#8aa0b4;--chrome:#c7d2dd;--accent:#6ea8fe;--good:#2ecc71;--bad:#ff5b5b;--watch:#f2c14e}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:22px 18px 40px}
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .logo{font-weight:900;letter-spacing:2px;color:var(--chrome);text-decoration:none}
+  .top a.small{color:var(--steel);font-size:13px;text-decoration:none}
+  h1{font-size:28px;line-height:1.2;margin:6px 0 8px}
+  h2{font-size:19px;margin:30px 0 8px}
+  p,li{color:var(--chrome)}
+  .lead{color:var(--mut);margin:0 0 18px}
+  .calc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+  label{display:block;font-size:13px;color:var(--steel);margin:12px 0 5px}
+  input,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--card2);
+    color:var(--fg);font-size:16px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .two label{margin-top:0}
+  .hidden{display:none}
+  .out{margin-top:16px;padding:14px;border-radius:12px;background:#0d131d;border:1px solid var(--line);text-align:center}
+  .big{font-size:34px;font-weight:900}
+  .sm{font-size:14px;color:var(--mut)}
+  .muted{font-size:12px;color:var(--mut);margin-top:12px}
+  .cta{margin-top:26px;background:linear-gradient(135deg,#142033,#0f1826);border:1px solid #2a3b55;border-radius:16px;padding:18px;text-align:center}
+  .cta h3{margin:0 0 6px}
+  .btn{display:inline-block;margin-top:10px;padding:14px 22px;border-radius:12px;background:var(--good);color:#04140a;
+    font-weight:800;text-decoration:none}
+  .faq b{display:block;color:var(--fg);margin-top:14px}
+  footer{margin-top:34px;font-size:12px;color:var(--mut);text-align:center}
+  footer a{color:var(--steel)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="logo" href="/">STAALWAG</a><a class="small" href="/play?s=compound-top">Get the free app &rarr;</a></div>
+
+  <h1>Trading compounding calculator</h1>
+  <p class="lead">See how an account grows at a steady monthly return, month by month, with or without monthly deposits. Free, no sign-up, works on your phone.</p>
+
+  <div class="calc">
+    <div class="two">
+      <div><label for="cgBal">Starting balance ($)</label><input id="cgBal" inputmode="decimal" value="1000"></div>
+      <div><label for="cgRate">Return per month (%)</label><input id="cgRate" inputmode="decimal" value="5"></div>
+    </div>
+    <div class="two" style="margin-top:12px">
+      <div><label for="cgMon">Months</label><input id="cgMon" inputmode="numeric" value="12"></div>
+      <div><label for="cgDep">Added each month ($, optional)</label><input id="cgDep" inputmode="decimal" placeholder="0"></div>
+    </div>
+    <div class="out" id="cgOut"></div>
+    <table id="cgTab" style="width:100%;margin-top:14px;border-collapse:collapse;font-size:14px"></table>
+    <div class="muted">Shows the maths of a steady rate. Real trading returns vary and losing months happen. Education only, not financial advice.</div>
+  </div>
+
+  <div class="cta">
+    <h3>Protect the base you compound from</h3>
+    <p class="sm" style="margin:0"><b>STAALCALIBUR</b>, our free Android app, works out your lot size from your risk and stop, and shows the trend, trend strength and key levels for gold, forex, indices, stocks and crypto.</p>
+    <a class="btn" href="/play?s=compound-page">Get it free on Google Play</a>
+  </div>
+
+  <h2>The formula</h2>
+  <p><b>End balance = start &times; (1 + monthly return)<sup>months</sup></b>, plus each deposit grown from the month it went in. The return is earned on the growing balance, so the curve bends upward over time.</p>
+
+  <h2>Worked example: $1,000 at 5% a month</h2>
+  <p>After 12 months: $1,000 &times; 1.05<sup>12</sup> = <b>$1,795.86</b>, a gain of 79.6%. Simple 5% of $1,000 each month would give only $600 of gain. After 24 months the compounded balance is <b>$3,225.10</b>.</p>
+
+  <h2>Losses compound too</h2>
+  <p>One 10% losing month needs an 11.1% gain just to get back to where you were. The <a href="/drawdown-recovery-calculator" style="color:var(--accent)">drawdown recovery calculator</a> shows the climb back from any loss, and the <a href="/lot-size-calculator" style="color:var(--accent)">lot size calculator</a> keeps each loss to a fixed slice of the account.</p>
+
+  <footer>&copy; <span id="yr"></span> STAALWAG · <a href="/">Home</a> · <a href="/lot-size-calculator">Lot size calculator</a> · <a href="/pip-value-calculator">Pip value calculator</a> · <a href="/risk-reward-calculator">Risk reward calculator</a> · <a href="/prop-firm-drawdown-calculator">Prop firm drawdown calculator</a> · <a href="/margin-calculator">Margin calculator</a> · <a href="/forex-market-hours">Forex market hours</a> · <a href="/gold-trading-hours">Gold trading hours</a> · <a href="/drawdown-recovery-calculator">Drawdown recovery calculator</a> · <a href="/store">STAALCALIBUR app</a> · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a><br>
+  Education only. Not financial advice. Trading carries risk; never risk money you cannot afford to lose.</footer>
+</div>
+<script>
+function el(id){ return document.getElementById(id); }
+function num(id){ return parseFloat(String(el(id).value||"").replace(/[,%$ ]/g,"")); }
+function usd(n){ return (Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+// balance after each month: grow first, then add the deposit at month end
+function grow(start, r, months, dep){
+  var b=start, out=[];
+  for(var m=1;m<=months;m++){ b=b*(1+r)+dep; out.push(b); }
+  return out;
+}
+function calc(){
+  var s=num("cgBal"), r=num("cgRate")/100, n=Math.floor(num("cgMon")), dep=num("cgDep")||0, out=el("cgOut");
+  if(!(s>=0) || !(r>-1) || !(n>0) || n>600 || (s===0 && !(dep>0))){ out.innerHTML='<div class="sm">Enter a starting balance, monthly return and number of months (up to 600).</div>'; el("cgTab").innerHTML=""; return; }
+  var path=grow(s,r,n,dep), end=path[n-1], paid=s+dep*n, gain=end-paid;
+  out.innerHTML='<div class="big" style="color:var(--good)">$'+usd(end)+'</div><div class="sm">after '+n+' month'+(n===1?'':'s')+' at '+(r*100)+'% a month</div>'+
+    '<div class="sm" style="margin-top:8px">Put in $'+usd(paid)+' · growth $'+usd(gain)+(paid>0?' ('+(Math.round(gain/paid*1000)/10)+'%)':'')+'</div>';
+  var step=n<=24?1:(n<=120?6:12), rows='<tr style="color:var(--steel)"><td>Month</td><td style="text-align:right">Balance</td></tr>';
+  for(var m=step;m<=n;m+=step) rows+='<tr style="border-top:1px solid var(--line)"><td style="padding:6px 0">'+m+'</td><td style="text-align:right">$'+usd(path[m-1])+'</td></tr>';
+  if(n%step) rows+='<tr style="border-top:1px solid var(--line)"><td style="padding:6px 0">'+n+'</td><td style="text-align:right">$'+usd(end)+'</td></tr>';
+  el("cgTab").innerHTML=rows;
+}
+["cgBal","cgRate","cgMon","cgDep"].forEach(function(id){ el(id).addEventListener("input", calc); });
+el("yr").textContent=new Date().getFullYear();
+calc();
+</script>
+<script src="/hit.js" defer></script>
+</body>
+</html>
