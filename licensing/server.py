@@ -1167,8 +1167,8 @@ class H(BaseHTTPRequestHandler):
         self._send(200, s)
 
     def _admin_health(self):
-        if not self._admin_ok():
-            return self._send(403, {"error": "forbidden"})
+        # Public on purpose (Nic, 2026-11-17: HQ opens without a token). Only
+        # service up/down and disk/load; nothing about customers or licences.
         services = []
         for u in config.HQ_UNITS:
             try:
@@ -1217,9 +1217,8 @@ class H(BaseHTTPRequestHandler):
 
     def _admin_bots(self):
         """Signal-bot + paper-trading scoreboard, computed from the records the
-        bots publish (Markov signals.json, desk track_record.json)."""
-        if not self._admin_ok():
-            return self._send(403, {"error": "forbidden"})
+        bots publish (Markov signals.json, desk track_record.json). Public on
+        purpose: those records are already public on staalwag.com."""
         try:
             from . import botstats
             self._send(200, botstats.build())
@@ -1355,39 +1354,40 @@ window.addEventListener('error',function(e){if(window.isExt(e.filename)||window.
 window.addEventListener('unhandledrejection',function(e){var r=e.reason;if(window.isExt(r&&r.stack)||window.isExt(r&&r.message)||window.isExt(r))return;window.showDiag('PROMISE: '+((e.reason&&e.reason.message)||e.reason||''));});
 </script>
 <div class="wrap">
-<div id=gate class=gate>
- <h1>STAALWAG <span class=a>HQ</span></h1><div class=sub>Central command center</div>
- <form onsubmit="unlock();return false" autocomplete=on>
- <input type=text name=username value="admin" autocomplete=username style=display:none aria-hidden=true>
- <input id=tok name=password type=password placeholder="Admin token" autocomplete=current-password autocapitalize=off autocorrect=off spellcheck=false>
- <button class=btn type=submit style=width:100%>Unlock</button>
- </form>
- <div id=gerr class=muted style="margin-top:10px;min-height:16px"></div>
-</div>
-<div id=hq style=display:none>
+<div id=hq>
  <div class=top>
   <img src="/icon-192.png" alt="" onerror="this.style.display='none'">
   <div><h1>STAALWAG <span class=a>HQ</span></h1><div class=sub id=hsub>Central command center</div></div>
   <div class=sp></div>
   <button class=rbtn onclick=loadAll()>&#8635; Refresh</button>
  </div>
+<details id=gate style="display:none;margin:6px 0 4px;font-size:12px">
+ <summary class=muted style="cursor:pointer">&#128274; Licences, App &amp; Daily Plan (admin only)</summary>
+ <div class=muted style="margin:8px 0">These stay locked so nobody on the internet can issue or cancel licences. Unlock once on this device and it stays unlocked.</div>
+ <form onsubmit="unlock();return false" autocomplete=on style="display:flex;gap:8px;flex-wrap:wrap">
+ <input type=text name=username value="admin" autocomplete=username style=display:none aria-hidden=true>
+ <input id=tok name=password type=password placeholder="Admin token" autocomplete=current-password autocapitalize=off autocorrect=off spellcheck=false style="flex:1;min-width:180px">
+ <button class=btn type=submit>Unlock admin</button>
+ </form>
+ <div id=gerr class=muted style="margin-top:6px"></div>
+</details>
  <div class=tabs>
-  <button class="tab on" data-p=overview onclick=tab('overview')>Overview</button>
-  <button class=tab data-p=bots onclick=tab('bots')>Bots &amp; paper trading</button>
-  <button class=tab data-p=plan onclick=tab('plan')>Daily Plan</button>
+  <button class="tab on" data-p=bots onclick=tab('bots')>Bots &amp; paper trading</button>
+  <button class=tab data-p=overview onclick=tab('overview')>Overview</button>
+  <button class="tab adm" data-p=plan onclick=tab('plan') style=display:none>Daily Plan</button>
   <button class=tab data-p=desks onclick=tab('desks')>Desks &amp; links</button>
-  <button class=tab data-p=app onclick=tab('app')>App</button>
-  <button class=tab data-p=lic onclick=tab('lic')>Licenses</button>
+  <button class="tab adm" data-p=app onclick=tab('app') style=display:none>App</button>
+  <button class="tab adm" data-p=lic onclick=tab('lic') style=display:none>Licenses</button>
   <button class=tab data-p=map onclick=tab('map')>Map</button>
  </div>
 
- <div id=p-overview class="pane on">
+ <div id=p-overview class=pane>
   <div class=sec>Service health</div><div id=svc></div>
   <div class=sec>Server</div><div class=tiles id=htiles></div>
   <div class=sec>At a glance</div><div class=tiles id=gtiles></div>
  </div>
 
- <div id=p-bots class=pane>
+ <div id=p-bots class="pane on">
   <div class=sec>Signal bots &amp; paper trading <span id=bgen class=muted></span></div>
   <div id=bots class=muted>Loading the bot records…</div>
  </div>
@@ -1488,15 +1488,23 @@ function getPlan(){
 }
 function base(){var h=location.hostname;var p=h.split(".");return p.length>2?p.slice(1).join("."):h;}
 function sub(s){return location.protocol+"//"+s+"."+base();}
+function showAdmin(on){
+ document.getElementById("gate").style.display=on?"none":"";
+ var a=document.querySelectorAll(".tab.adm");for(var i=0;i<a.length;i++)a[i].style.display=on?"":"none";
+}
 function loadAll(){
- var g=document.getElementById("gerr");if(g)g.textContent="Checking…";
+ // Open view: no token needed for bot results, service health and links.
+ loadHealth();loadBots();renderLinks();
+ var g=document.getElementById("gerr");
+ if(!T()){showAdmin(false);if(g)g.textContent="";return;}
+ if(g)g.textContent="Checking…";
  var code=0;
  fetch("/admin/app_stats",{headers:H()}).then(function(r){code=r.status;if(r.status==403)throw 0;if(!r.ok)throw 1;return r.json()}).then(function(s){
   if(g)g.textContent="";
-  document.getElementById("gate").style.display="none";document.getElementById("hq").style.display="";
+  showAdmin(true);
   document.getElementById("gtiles").innerHTML=tile(s.installed,"App keys")+tile(s.subscribed,"Active subs",1)+tile(s.active_7d,"Using (7d)")+tile(s.suggestions_new,"New suggestions");
-  loadHealth();loadApp();loadLic();renderLinks();loadBots();
- }).catch(function(e){var m=(e===0?"Wrong token (403).":"Couldn't reach HQ (status "+code+").");if(g)g.textContent=m;if(window.showDiag)window.showDiag("Login failed: "+m+" token len="+(T()||"").length);});
+  loadApp();loadLic();
+ }).catch(function(e){showAdmin(false);document.getElementById("gate").open=true;if(g)g.textContent=(e===0?"That token was not accepted.":"Couldn't reach HQ (status "+code+").");});
 }
 function loadHealth(){
  var box=document.getElementById("svc");if(box)box.innerHTML='<div class=muted>Checking services…</div>';
@@ -1611,7 +1619,7 @@ function renderLinks(){
 // one-click login: open hq...?tok=YOURTOKEN once; it's saved and stripped from the URL.
 (function(){try{var p=new URLSearchParams(location.search).get("tok");
  if(p){localStorage.setItem("hq_tok",p);history.replaceState({},"",location.pathname);}}catch(e){}})();
-if(T()) loadAll();
+loadAll();
 </script></div></body></html>"""
 
 
