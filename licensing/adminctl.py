@@ -19,6 +19,7 @@ import os
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 from . import config
@@ -152,6 +153,27 @@ def cmd_announce(a):
     return 0
 
 
+def cmd_hq_link(a):
+    """Print a one-click HQ login link. Opening it once saves the token in that
+    browser and strips it from the address bar, so the token never needs typing."""
+    token = os.environ.get("ADMIN_TOKEN", config.ADMIN_TOKEN)
+    if not token:
+        print("ADMIN_TOKEN is empty in %s, so HQ cannot unlock for anyone." % ENV_FILE)
+        print("Fix: add a line ADMIN_TOKEN=<long random string> to that file, then:")
+        print("  systemctl restart staalwag-licensing")
+        return 1
+    check = _call("GET", "/admin/app_stats")
+    if "error" in check and check["error"].startswith("HTTP 403"):
+        print("Warning: the running HQ rejects the token in %s." % ENV_FILE)
+        print("It was probably changed without a restart. Fix: systemctl restart staalwag-licensing")
+    elif "error" in check:
+        print("Warning: could not reach the HQ service (%s)." % check["error"])
+        print("Fix: systemctl restart staalwag-licensing")
+    print("Open this link once on your PC (it stays unlocked after that):")
+    print("  %s/admin?tok=%s" % (a.host.rstrip("/"), urllib.parse.quote(token, safe="")))
+    return 0
+
+
 def main(argv=None):
     _load_env()
     ap = argparse.ArgumentParser(prog="adminctl", description="STAALWAG licensing control")
@@ -192,6 +214,10 @@ def main(argv=None):
     pan.add_argument("--product", default="APP")
     pan.add_argument("--file", default="dashboard/appversion.json")
     pan.set_defaults(fn=cmd_announce)
+
+    ph = sub.add_parser("hq-link", help="print a one-click HQ login link (checks the token works)")
+    ph.add_argument("--host", default="https://hq.staalwag.com")
+    ph.set_defaults(fn=cmd_hq_link)
 
     args = ap.parse_args(argv)
     return args.fn(args)
