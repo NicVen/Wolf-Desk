@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0e15" />
+<title>NAS100 Lot Size Calculator · Nasdaq 100 Position Size · STAALWAG</title>
+<meta name="description" content="Free NAS100 lot size calculator: enter your balance, risk and stop in points, and your broker's dollar value per point, and get the exact lot size for the Nasdaq 100 (US100, USTEC)." />
+<link rel="canonical" href="https://staalwag.com/nas100-lot-size-calculator" />
+<meta property="og:url" content="https://staalwag.com/nas100-lot-size-calculator" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="STAALWAG" />
+<meta property="og:title" content="NAS100 lot size calculator" />
+<meta property="og:description" content="How many lots of NAS100 for your risk and stop? Works with any broker's dollar-per-point value." />
+<meta property="og:image" content="https://staalwag.com/og-staalwag.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="/favicon-32.png" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "WebApplication",
+   "name": "STAALWAG NAS100 Lot Size Calculator",
+   "url": "https://staalwag.com/nas100-lot-size-calculator",
+   "applicationCategory": "FinanceApplication",
+   "operatingSystem": "Any",
+   "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+   "publisher": {"@id": "https://staalwag.com/#org"}
+  },
+  {
+   "@type": "FAQPage",
+   "mainEntity": [
+    {"@type": "Question", "name": "How do you calculate lot size for NAS100?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Lots = money you are willing to lose / (stop in points x dollars per point for 1 lot). Risking $100 with a 50-point stop at $1 per point per lot gives 2 lots."}},
+    {"@type": "Question", "name": "How much is 1 point on NAS100 worth?",
+     "acceptedAnswer": {"@type": "Answer", "text": "It depends on the broker. On many CFD brokers 1 lot of NAS100 is $1 per point, on some it is $10 or $20 per point. In MT5, open the symbol's Specification: the value per point for 1 lot is the contract size times the tick value divided by the tick size, worked out per 1.0 point."}},
+    {"@type": "Question", "name": "What is a point on NAS100?",
+     "acceptedAnswer": {"@type": "Answer", "text": "A point is a move of 1.0 in the index price, for example from 18,250.0 to 18,251.0. Some platforms call 0.1 a point, so check whether your stop is in whole index points."}}
+   ]
+  }
+ ]
+}
+</script>
+<style>
+  :root{--bg:#0a0e15;--card:#131a26;--card2:#18212f;--line:#1e2a3a;--fg:#e7edf3;--mut:#7d8a9c;
+    --steel:#8aa0b4;--chrome:#c7d2dd;--accent:#6ea8fe;--good:#2ecc71;--bad:#ff5b5b;--watch:#f2c14e}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:720px;margin:0 auto;padding:22px 18px 40px}
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .logo{font-weight:900;letter-spacing:2px;color:var(--chrome);text-decoration:none}
+  .top a.small{color:var(--steel);font-size:13px;text-decoration:none}
+  h1{font-size:28px;line-height:1.2;margin:6px 0 8px}
+  h2{font-size:19px;margin:30px 0 8px}
+  p,li{color:var(--chrome)}
+  .lead{color:var(--mut);margin:0 0 18px}
+  .calc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+  label{display:block;font-size:13px;color:var(--steel);margin:12px 0 5px}
+  input,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--card2);
+    color:var(--fg);font-size:16px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .two label{margin-top:0}
+  .hidden{display:none}
+  .out{margin-top:16px;padding:14px;border-radius:12px;background:#0d131d;border:1px solid var(--line);text-align:center}
+  .big{font-size:34px;font-weight:900}
+  .sm{font-size:14px;color:var(--mut)}
+  .muted{font-size:12px;color:var(--mut);margin-top:12px}
+  .cta{margin-top:26px;background:linear-gradient(135deg,#142033,#0f1826);border:1px solid #2a3b55;border-radius:16px;padding:18px;text-align:center}
+  .cta h3{margin:0 0 6px}
+  .btn{display:inline-block;margin-top:10px;padding:14px 22px;border-radius:12px;background:var(--good);color:#04140a;
+    font-weight:800;text-decoration:none}
+  .faq b{display:block;color:var(--fg);margin-top:14px}
+  footer{margin-top:34px;font-size:12px;color:var(--mut);text-align:center}
+  footer a{color:var(--steel)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="logo" href="/">STAALWAG</a><a class="small" href="/play?s=nas100-top">Get the free app &rarr;</a></div>
+
+  <h1>NAS100 lot size calculator</h1>
+  <p class="lead">How many lots of the Nasdaq 100 (NAS100, US100, USTEC) keep your loss inside your limit. Works with any broker: you enter what one point is worth. Free, no sign-up.</p>
+
+  <div class="calc">
+    <div class="two">
+      <div><label for="nqBal">Account balance ($)</label><input id="nqBal" inputmode="decimal" value="10000"></div>
+      <div><label for="nqRisk">Risk per trade (%)</label><input id="nqRisk" inputmode="decimal" value="1"></div>
+    </div>
+    <div class="two" style="margin-top:12px">
+      <div><label for="nqStop">Stop distance (points)</label><input id="nqStop" inputmode="decimal" value="50"></div>
+      <div><label for="nqPpp">$ per point for 1 lot</label><select id="nqPpp">
+        <option value="1">$1 (most brokers)</option><option value="10">$10</option><option value="20">$20</option><option value="c">Other...</option></select></div>
+    </div>
+    <div id="nqCustW" class="hidden" style="margin-top:12px"><label for="nqCust">Your broker's $ per point for 1 lot</label><input id="nqCust" inputmode="decimal" placeholder="e.g. 2"></div>
+    <div class="out" id="nqOut"></div>
+    <div class="muted">A point = a 1.0 move in the index. Lot sizes are rounded down to your broker's 0.01 step. Education only, not financial advice.</div>
+  </div>
+
+  <div class="cta">
+    <h3>Size every market, not just NAS100</h3>
+    <p class="sm" style="margin:0"><b>STAALCALIBUR</b>, our free Android app, works out your lot size from your risk and stop, and shows the trend, trend strength and key levels for gold, forex, indices, stocks and crypto.</p>
+    <a class="btn" href="/play?s=nas100-page">Get it free on Google Play</a>
+  </div>
+
+  <h2>The formula</h2>
+  <p><b>Lots = risk in dollars &divide; (stop in points &times; $ per point for 1 lot).</b></p>
+
+  <h2>Worked example: $10,000 account, 1% risk, 50-point stop</h2>
+  <p>1% of $10,000 is $100. At a broker where 1 lot is $1 per point, a 50-point stop costs $50 per lot, so you can trade <b>2.00 lots</b>. At a broker where 1 lot is $20 per point, the same stop costs $1,000 per lot, so the size is <b>0.10 lots</b>. Same trade, same risk, very different lot sizes. That's why you need your broker's number.</p>
+
+  <h2>How to find your broker's $ per point</h2>
+  <p>In MT5, long-press or right-click NAS100 and open <b>Specification</b>. Multiply the <b>contract size</b> by the price move of 1.0 point: if the contract size is 1, one point on 1 lot is $1; if it is 10, it's $10; if it is 20, it's $20. If your account isn't in dollars, the broker converts it.</p>
+
+  <h2>Other markets</h2>
+  <p>For forex and gold, use the <a href="/lot-size-calculator" style="color:var(--accent)">lot size calculator</a>. To see what a losing run costs to win back, try the <a href="/drawdown-recovery-calculator" style="color:var(--accent)">drawdown recovery calculator</a>.</p>
+
+  <footer>&copy; <span id="yr"></span> STAALWAG · <a href="/">Home</a> · <a href="/lot-size-calculator">Lot size calculator</a> · <a href="/pip-value-calculator">Pip value calculator</a> · <a href="/risk-reward-calculator">Risk reward calculator</a> · <a href="/prop-firm-drawdown-calculator">Prop firm drawdown calculator</a> · <a href="/margin-calculator">Margin calculator</a> · <a href="/forex-market-hours">Forex market hours</a> · <a href="/gold-trading-hours">Gold trading hours</a> · <a href="/drawdown-recovery-calculator">Drawdown recovery calculator</a> · <a href="/compound-growth-calculator">Compounding calculator</a> · <a href="/store">STAALCALIBUR app</a> · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a><br>
+  Education only. Not financial advice. Trading carries risk; never risk money you cannot afford to lose.</footer>
+</div>
+<script>
+function el(id){ return document.getElementById(id); }
+function num(id){ return parseFloat(String(el(id).value||"").replace(/[,%$ ]/g,"")); }
+function usd(n){ return (Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function lots(riskUsd, stopPts, ppp){
+  if(!(riskUsd>0) || !(stopPts>0) || !(ppp>0)) return null;
+  var raw=riskUsd/(stopPts*ppp);
+  return {raw:raw, lots:Math.floor(raw*100+1e-9)/100};
+}
+function calc(){
+  var custom=el("nqPpp").value==="c";
+  el("nqCustW").className = custom ? "" : "hidden";
+  var ppp = custom ? num("nqCust") : parseFloat(el("nqPpp").value);
+  var bal=num("nqBal"), risk=bal*num("nqRisk")/100, stop=num("nqStop"), r=lots(risk, stop, ppp), out=el("nqOut");
+  if(r===null){ out.innerHTML='<div class="sm">Enter your balance, risk %, stop in points and $ per point.</div>'; return; }
+  if(r.lots<0.01){ out.innerHTML='<div class="big" style="color:var(--bad)">Too small</div><div class="sm">Even 0.01 lots would risk $'+usd(0.01*stop*ppp)+', more than your $'+usd(risk)+'. Use a closer stop or a bigger risk.</div>'; return; }
+  var real=r.lots*stop*ppp;
+  out.innerHTML='<div class="big" style="color:var(--good)">'+r.lots.toFixed(2)+' lots</div><div class="sm">risking $'+usd(real)+' of your $'+usd(risk)+' limit · '+stop+'-point stop at $'+ppp+' per point per lot</div>';
+}
+["nqBal","nqRisk","nqStop","nqPpp","nqCust"].forEach(function(id){ el(id).addEventListener("input", calc); el(id).addEventListener("change", calc); });
+el("yr").textContent=new Date().getFullYear();
+calc();
+</script>
+<script src="/hit.js" defer></script>
+</body>
+</html>
