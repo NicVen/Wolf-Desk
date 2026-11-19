@@ -244,5 +244,20 @@ class SeoTest(unittest.TestCase):
             self.assertIn('href="/nas100-lot-size-calculator"', self.get(other)[2])
         self.assertIn("/nas100-lot-size-calculator", self.get("/sitemap.xml")[2])
 
+    def test_what_is_a_lot_page(self):
+        code, _, body = self.get("/what-is-a-lot-in-forex")
+        self.assertEqual(code, 200)
+        self.assertIn('<link rel="canonical" href="https://staalwag.com/what-is-a-lot-in-forex"', body)
+        self.assertIn('href="/play?s=lots-page"', body)
+        json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>', body, re.S).group(1))
+        for word in ("BUY", "SELL"):   # facts-only rule
+            self.assertNotRegex(body, r"\b%s\b" % word)
+        for other in ("/lot-size-calculator", "/pip-value-calculator", "/risk-reward-calculator",
+                      "/prop-firm-drawdown-calculator", "/margin-calculator", "/forex-market-hours",
+                      "/gold-trading-hours", "/drawdown-recovery-calculator", "/compound-growth-calculator",
+                      "/nas100-lot-size-calculator"):
+            self.assertIn('href="/what-is-a-lot-in-forex"', self.get(other)[2])
+        self.assertIn("/what-is-a-lot-in-forex", self.get("/sitemap.xml")[2])
+
 if __name__ == "__main__":
     unittest.main()
