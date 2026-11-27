@@ -1,0 +1,23 @@
+name: Strategy lab - gold intraday
+
+# Gold rules that trade more often (intraday breakouts). Runs when the file
+# changes, weekly, or by hand. Read the scorecard in the job summary.
+on:
+  push:
+    paths: ["lab/intraday.py", ".github/workflows/lab-intraday.yml"]
+  workflow_dispatch:
+  schedule:
+    - cron: "30 6 * * 1"
+
+jobs:
+  intraday:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Gold intraday rules
+        working-directory: lab
+        run: python intraday.py | tee -a "$GITHUB_STEP_SUMMARY"
